@@ -47,9 +47,9 @@ The following documents are official Bioware Aurora Engine file format specifica
 - **[Faction Format](Bioware-Aurora-Faction)** - Official faction data format
 - **[Palette/ITP Format](Bioware-Aurora-PaletteITP)** - Official palette and ITP formats
 
-### Aurora Engine Basics (KotOR)
+### Odyssey Engine Basics (KotOR)
 
-The following information describes the resource system used by **KotOR and TSL**. While KotOR shares the Aurora engine with Neverwinter Nights, this section focuses on **KotOR-specific** behavior and file locations. Some details (like `nwn.ini`) are NWN-specific and are noted as such.
+The following information describes the resource system used by **KotOR and TSL**. While KotOR is derived from the Aurora engine (Neverwinter Nights) and shares the same resource system, this section focuses on **KotOR-specific** behavior and file locations. Some details (like `nwn.ini`) are NWN-specific and are noted as such.
 
 #### KEY Files
 
@@ -57,7 +57,7 @@ The following information describes the resource system used by **KotOR and TSL*
 - **[`dialog.tlk`](TLK-File-Format)**: Text resource file containing localized strings referenced by [StrRef](TLK-File-Format#string-references-strref) IDs. This centralizes strings for easy localization and allows changing text without modifying or recompiling scripts. Different language versions of [dialog.tlk](TLK-File-Format) can be installed for localization support.
 - **`kotor.ini`**: Configuration file with `[Alias]` section mapping logical directory names to physical paths. This allows the game to locate data files regardless of installation directory structure. **Note**: `nwn.ini` is the Neverwinter Nights equivalent and is not used in KotOR.
 
-**Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/basics.html) - Tim Smith (Torlack)'s Aurora engine basics documentation (originally NWN-focused, but resource resolution order and key file concepts apply to KotOR)
+**Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/basics.html) - Tim Smith (Torlack)'s Aurora engine basics documentation (NWN-focused)
 
 #### Resource Resolution Order
 
@@ -69,7 +69,7 @@ The following information describes the resource system used by **KotOR and TSL*
 
 #### Resource Types
 
-KotOR uses hexadecimal resource type identifiers inherited from the Aurora engine. The following table lists resource types valid in the four BioWare engines. Note that some are not used in KotOR.
+KotOR uses hexadecimal resource type identifiers derived from the Aurora engine and further expanded upon for its Odyssey engine. The following table lists resource types valid in the four BioWare engines. Due to this, some of these are obviously not supported in KotOR.
 
 | Resource Name | type ID | Description                                    |
 | ------------- | ------- | ---------------------------------------------- |
@@ -310,7 +310,7 @@ PyKotor includes many vendor submodules that provide alternative implementations
 
 Complete game engine rewrites that can load and play KotOR:
 
-- **[xoreos](https://github.com/xoreos/xoreos)** - C++ reimplementation of BioWare's Aurora engine, supports multiple Aurora games including KotOR. Focus on accuracy and cross-platform compatibility. ([Mirror: th3w1zard1/xoreos](https://github.com/th3w1zard1/xoreos))
+- **[xoreos](https://github.com/xoreos/xoreos)** - C++ reimplementation of BioWare's Aurora/Odyssey/Eclipse engine, supports multiple BioWare games including KotOR. ([Mirror: th3w1zard1/xoreos](https://github.com/th3w1zard1/xoreos))
 - **[reone](https://github.com/seedhartha/reone)** - Modern C++ KotOR engine with OpenGL rendering. Focus on performance and clean architecture. ([Mirror: th3w1zard1/reone](https://github.com/th3w1zard1/reone))
 - **[KotOR.js](https://github.com/KobaltBlu/KotOR.js)** - TypeScript/JavaScript engine running in browsers via WebGL. Enables playing KotOR directly in web browsers. ([Mirror: th3w1zard1/KotOR.js](https://github.com/th3w1zard1/KotOR.js))
 - **[NorthernLights](https://github.com/lachjames/NorthernLights)** - .NET/C# engine implementation with Unity integration capabilities (based on KotOR-Unity project with further improvements) ([Mirror: th3w1zard1/NorthernLights](https://github.com/th3w1zard1/NorthernLights))
@@ -346,7 +346,7 @@ Tools for writing and editing NWScript:
 
 Tools for creating and installing mods:
 
-- **KotorCLI (PyKotor)** - CLI-first toolset for packing, conversion, Holocron kit generation, and [GUI](GFF-File-Format#gui-graphical-user-interface) layout scaling. `uv run kotorcli kit-generate --installation <path> --module <module> --output <dir>` runs headless; launching with no arguments opens the Tkinter kit generator [GUI](GFF-File-Format#gui-graphical-user-interface) for interactive use. `uv run kotorcli gui-convert --input <gui_or_folder> --output <dir> --resolution ALL` runs headless for [GUI](GFF-File-Format#gui-graphical-user-interface) resizing; omitting args opens the converter [GUI](GFF-File-Format#gui-graphical-user-interface). (Implementations: `Tools/KotorCLI/src/kotorcli/kit_generator.py` wraps `Libraries/PyKotor/src/pykotor/tools/kit.py`; `Tools/KotorCLI/src/kotorcli/gui_converter.py` delegates to `pykotor.resource.formats.gff`.)
+- **KotorCLI (PyKotor)** - CLI-first toolset for packing, conversion, Holocron kit generation, and [GUI](GFF-File-Format#gui-graphical-user-interface) layout scaling. `uv --directory Libraries/PyKotor/src run pykotor kit-generate --installation <path> --module <module> --output <dir>` runs headless; launching with no arguments opens the Tkinter kit generator [GUI](GFF-File-Format#gui-graphical-user-interface) for interactive use. `uv run pykotor gui-convert --input <gui_or_folder> --output <dir> --resolution ALL` runs headless for [GUI](GFF-File-Format#gui-graphical-user-interface) resizing; omitting args opens the converter [GUI](GFF-File-Format#gui-graphical-user-interface). (Implementations: `Tools/KotorCLI/src/kotorcli/kit_generator.py` wraps `Libraries/PyKotor/src/pykotor/tools/kit.py`; `Tools/KotorCLI/src/kotorcli/gui_converter.py` delegates to `pykotor.resource.formats.gff`.)
 - **[HoloPatcher.NET](https://github.com/th3w1zard1/HoloPatcher.NET)** - .NET reimplementation of TSLPatcher
 - **[Kotor-Patch-Manager](https://github.com/LaneDibello/Kotor-Patch-Manager)** - Alternative mod manager ([Mirror: th3w1zard1/Kotor-Patch-Manager](https://github.com/th3w1zard1/Kotor-Patch-Manager))
 - **[KotOR ModSync](https://github.com/th3w1zard1/KotORModSync)** - Mod synchronization and installation
