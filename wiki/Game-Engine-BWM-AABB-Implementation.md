@@ -565,7 +565,7 @@ Based on this analysis, our PyKotor/HolocronToolset implementation MUST:
 - `vendor/swkotor.h` - Decompiled game engine headers
 - `wiki/BWM-File-Format.md` - Complete BWM format specification
 - `Libraries/PyKotor/src/pykotor/resource/formats/bwm/` - PyKotor BWM implementation
-- `Tools/KotorCLI/src/kotorcli/commands/indoor_builder.py` - Indoor map builder using BWM
+- `Libraries/PyKotor/src/pykotor/clicommands/indoor_builder.py` - Indoor map builder using BWM
 
 ---
 

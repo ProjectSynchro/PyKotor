@@ -96,7 +96,7 @@ This document verifies that KotorCLI achieves 1:1 syntax compatibility with cli 
 - ✅ TSLPatcher generation via `--tslpatchdata`/`--ini`, with optional `--incremental` writer
 - ✅ Hash toggles (`--compare-hashes/--no-compare-hashes`) and `--output-mode` (`full`, `normal`, `quiet`)
 - ✅ Script entrypoints registered (`kotordiff`, `kotor-diff`, `diff`)
-- **Implementation**: `Tools/KotorCLI/src/kotorcli/diff_tool/cli.py`, `Tools/KotorCLI/src/kotorcli/diff_tool/app.py`, `Tools/KotorCLI/src/kotorcli/diff_tool/__main__.py`
+- **Implementation**: `Libraries/PyKotor/src/pykotor/clidiff_tool/cli.py`, `Libraries/PyKotor/src/pykotor/clidiff_tool/app.py`, `Libraries/PyKotor/src/pykotor/clidiff_tool/__main__.py`
 
 ## ✅ Configuration File Compatibility
 

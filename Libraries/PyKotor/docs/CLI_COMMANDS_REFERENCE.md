@@ -975,7 +975,7 @@ Based on the comprehensive analysis above, KotorCLI should support:
 ### Utility Commands (Implemented)
 
 - `diff` - Compare resources
-- `diff` / `kotordiff` - Structured n-way comparisons with optional GUI and TSLPatcher output (see `Tools/KotorCLI/src/kotorcli/diff_tool/`)
+- `diff` / `kotordiff` - Structured n-way comparisons with optional GUI and TSLPatcher output (see `Libraries/PyKotor/src/pykotor/clidiff_tool/`)
 - `grep` - Search resources
 - `stats` - Show resource statistics
 - `validate` - Validate file formats
@@ -1029,9 +1029,9 @@ Key options:
 
 Implementation references:
 
-- `Tools/KotorCLI/src/kotorcli/diff_tool/app.py` (orchestration, incremental TSLPatcher writer)
-- `Tools/KotorCLI/src/kotorcli/diff_tool/cli.py` (argument wiring/headless execution)
-- `Tools/KotorCLI/src/kotorcli/diff_tool/gui.py` (Tkinter UI fallback)
+- `Libraries/PyKotor/src/pykotor/clidiff_tool/app.py` (orchestration, incremental TSLPatcher writer)
+- `Libraries/PyKotor/src/pykotor/clidiff_tool/cli.py` (argument wiring/headless execution)
+- `Libraries/PyKotor/src/pykotor/clidiff_tool/gui.py` (Tkinter UI fallback)
 
 ### Advanced Commands (To Add)
 
