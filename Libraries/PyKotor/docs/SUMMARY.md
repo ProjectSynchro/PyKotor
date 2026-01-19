@@ -1,8 +1,8 @@
-# KotorCLI Implementation Summary
+# PyKotorCLI Implementation Summary
 
 ## Overview
 
-KotorCLI is a complete implementation of a cli-compatible build tool for KOTOR, built entirely on PyKotor's comprehensive libraries. It maintains 1:1 syntax compatibility with cli while leveraging PyKotor's native Python implementations and extensive vendor code references.
+PyKotorCLI is a complete implementation of a cli-compatible build tool for KOTOR, built entirely on PyKotor's comprehensive libraries. It maintains 1:1 syntax compatibility with cli while leveraging PyKotor's native Python implementations and extensive vendor code references.
 
 ## What Was Accomplished
 
@@ -107,8 +107,8 @@ All commands include inline references to vendor code with file paths and notes 
 ### 5. Project Structure
 
 ```shell
-Tools/KotorCLI/
-├── src/KotorCLI/
+Tools/PyKotorCLI/
+├── src/PyKotorCLI/
 │   ├── __main__.py              # Entry point
 │   ├── config.py                # Version metadata
 │   ├── logger.py                # Logging
@@ -134,7 +134,7 @@ Tools/KotorCLI/
 ├── SUMMARY.md                   # This file
 ├── CHANGELOG.md                 # Version history
 ├── .gitignore                   # Git ignores
-└── KotorCLI.code-workspace      # VS Code workspace
+└── PyKotorCLI.code-workspace      # VS Code workspace
 ```
 
 **Total Lines of Code**: ~2,500 lines
@@ -144,34 +144,34 @@ Tools/KotorCLI/
 
 ### 1. Built-in NSS Compiler ⭐
 
-**Major Feature**: KotorCLI includes PyKotor's native NSS compiler.
+**Major Feature**: PyKotorCLI includes PyKotor's native NSS compiler.
 
 - **cli**: Requires external nwnsc/nwnnsscomp
-- **KotorCLI**: Works without external dependencies
+- **PyKotorCLI**: Works without external dependencies
 - **Fallback**: Still uses external compiler if available for performance
 
 ### 2. Pure Python Implementation
 
 - **cli**: Nim + neverwinter.nim + C tools
-- **KotorCLI**: Python 3.8+ + PyKotor
+- **PyKotorCLI**: Python 3.8+ + PyKotor
 - **Benefit**: Easier installation, better Python ecosystem integration
 
 ### 3. Type-Safe Resource Handling
 
 - **cli**: String-based type checking
-- **KotorCLI**: `ResourceType` enum with `.is_gff()` method
+- **PyKotorCLI**: `ResourceType` enum with `.is_gff()` method
 - **Benefit**: Catches errors at runtime
 
 ### 4. Multiple Vendor References
 
 - **cli**: Based on neverwinter.nim only
-- **KotorCLI**: Cross-referenced with xoreos, KotOR.js, reone, Kotor.NET
+- **PyKotorCLI**: Cross-referenced with xoreos, KotOR.js, reone, Kotor.NET
 - **Benefit**: Cross-validated implementations
 
 ### 5. Comprehensive Documentation
 
 - **cli**: README + wiki
-- **KotorCLI**: 6 documentation files + inline references
+- **PyKotorCLI**: 6 documentation files + inline references
 - **Benefit**: Better maintainability and onboarding
 
 ## Technical Highlights
@@ -266,7 +266,7 @@ All commands reference relevant vendor code.
 ### Installation
 
 ```bash
-cd Tools/KotorCLI
+cd Tools/PyKotorCLI
 pip install -e .
 ```
 
@@ -274,23 +274,23 @@ pip install -e .
 
 ```bash
 # 1. Create new project
-KotorCLI init mymod
+PyKotorCLI init mymod
 
 # 2. Unpack existing module
 cd mymod
-KotorCLI unpack --file /path/to/existing.mod
+PyKotorCLI unpack --file /path/to/existing.mod
 
 # 3. Edit source files
 # ... edit src/*.json, src/*.nss ...
 
 # 4. Pack and install
-KotorCLI install --installDir /path/to/kotor
+PyKotorCLI install --installDir /path/to/kotor
 ```
 
 ## Example Configuration
 
 ```toml
-# KotorCLI.cfg
+# PyKotorCLI.cfg
 [package]
 name = "My KOTOR Mod"
 description = "An awesome mod"
@@ -347,7 +347,7 @@ Potential improvements:
 
 ## Conclusion
 
-**KotorCLI successfully delivers a complete, production-ready build tool for KOTOR modding that:**
+**PyKotorCLI successfully delivers a complete, production-ready build tool for KOTOR modding that:**
 
 1. ✅ Maintains 100% syntax compatibility with cli
 2. ✅ Leverages PyKotor's comprehensive libraries
@@ -356,7 +356,7 @@ Potential improvements:
 5. ✅ Provides comprehensive documentation
 6. ✅ Delivers clean, maintainable code
 
-**KotorCLI is ready for production use and provides the familiar ergonomics of cli with the power and flexibility of PyKotor.**
+**PyKotorCLI is ready for production use and provides the familiar ergonomics of cli with the power and flexibility of PyKotor.**
 
 ---
 

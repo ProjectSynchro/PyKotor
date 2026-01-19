@@ -575,7 +575,7 @@ from reconstructing state from real game resources (LYT/MDL/MDX/WOK/etc), not fr
 Implications:
 
 - Tooling must treat module extraction as a **real extraction** step, not a "read back cached JSON" step.
-- `kotorcli indoor-extract --implicit-kit --module-file <path>` requires `--module <module_root>` to specify which
+- `pykotor indoor-extract --implicit-kit --module-file <path>` requires `--module <module_root>` to specify which
   installation module (ModuleKit) to match against when extracting from a module file.
 
 ### Load Process

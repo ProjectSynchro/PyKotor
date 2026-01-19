@@ -421,7 +421,7 @@ const similar = await listResources({
 KotorMCP is built on the [Model Context Protocol](https://modelcontextprotocol.io) specification and uses the official Python MCP SDK. The server:
 
 - **Caches installations** for performance across multiple tool calls
-- **Resolves resources** using the same logic as `KotorCLI` and PyKotor's `Installation` class
+- **Resolves resources** using the same logic as `PyKotorCLI` and PyKotor's `Installation` class
 - **Provides structured summaries** optimized for LLM consumption
 - **Follows established patterns** from engine reimplementations (reone, xoreos, kotor.js)
 
@@ -484,7 +484,7 @@ This project is part of the PyKotor ecosystem and is licensed under the LGPL-3.0
 ## Related Projects
 
 - **[PyKotor](https://github.com/OldRepublicDevs/PyKotor)** - Core library for KOTOR file formats
-- **[KotorCLI](https://github.com/OldRepublicDevs/PyKotor/tree/main/Tools/KotorCLI)** - Command-line interface for KOTOR resources
+- **[PyKotorCLI](https://github.com/OldRepublicDevs/PyKotor/tree/main/Tools/PyKotorCLI)** - Command-line interface for KOTOR resources
 - **[Holocron Toolset](https://github.com/OldRepublicDevs/PyKotor/tree/main/Tools/HolocronToolset)** - GUI editor for KOTOR files
 
 ## Acknowledgments

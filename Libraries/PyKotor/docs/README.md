@@ -1,12 +1,12 @@
-# KotorCLI
+# PyKotorCLI
 
 A build tool for KOTOR projects with cli-compatible syntax.
 
 ## Overview
 
-KotorCLI is a command-line tool for converting KOTOR modules, ERFs, and haks between binary and text-based source files. This allows git-based version control and team collaboration for KOTOR modding projects.
+PyKotorCLI is a command-line tool for converting KOTOR modules, ERFs, and haks between binary and text-based source files. This allows git-based version control and team collaboration for KOTOR modding projects.
 
-**Built on PyKotor** - KotorCLI leverages PyKotor's comprehensive KOTOR file format libraries, providing native support for all KOTOR formats without external dependencies.
+**Built on PyKotor** - PyKotorCLI leverages PyKotor's comprehensive KOTOR file format libraries, providing native support for all KOTOR formats without external dependencies.
 
 ### Features
 
@@ -26,7 +26,7 @@ KotorCLI is a command-line tool for converting KOTOR modules, ERFs, and haks bet
 ### From Source
 
 ```bash
-cd Tools/KotorCLI
+cd Tools/PyKotorCLI
 pip install -e .
 ```
 
@@ -41,14 +41,14 @@ pip install -e .
 ### 1. Initialize a new project
 
 ```bash
-KotorCLI init myproject
+PyKotorCLI init myproject
 cd myproject
 ```
 
 ### 2. Unpack an existing module
 
 ```bash
-KotorCLI unpack --file path/to/mymodule.mod
+PyKotorCLI unpack --file path/to/mymodule.mod
 ```
 
 ### 3. Edit source files
@@ -58,7 +58,7 @@ Edit the files in the `src/` directory as needed.
 ### 4. Pack and install
 
 ```bash
-KotorCLI install
+PyKotorCLI install
 ```
 
 ### 5. Generate a kit (GUI or headless)
@@ -66,13 +66,13 @@ KotorCLI install
 Headless CLI (recommended for automation):
 
 ```bash
-python -m kotorcli kit-generate --installation "C:\Games\KOTOR" --module danm13 --output .\kits --kit-id danm13
+python -m pykotor kit-generate --installation "C:\Games\KOTOR" --module danm13 --output .\kits --kit-id danm13
 ```
 
 GUI (no arguments provided):
 
 ```bash
-python -m kotorcli
+python -m pykotor
 ```
 
 ### 6. Convert GUI layouts (GUI or headless)
@@ -80,13 +80,13 @@ python -m kotorcli
 Headless CLI:
 
 ```bash
-python -m kotorcli gui-convert --input ./gui_inputs --output ./gui_outputs --resolution 1920x1080,1280x720 --log-level info
+python -m pykotor gui-convert --input ./gui_inputs --output ./gui_outputs --resolution 1920x1080,1280x720 --log-level info
 ```
 
 Interactive GUI (omit args):
 
 ```bash
-python -m kotorcli gui-convert
+python -m pykotor gui-convert
 ```
 
 ### 7. Run KotorDiff comparisons (headless or GUI)
@@ -94,9 +94,9 @@ python -m kotorcli gui-convert
 Headless CLI (stays in the console when paths are provided):
 
 ```bash
-python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode normal
+python -m pykotor diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode normal
 # Write TSLPatcher output incrementally while diffing
-python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --incremental
+python -m pykotor diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --incremental
 ```
 
 GUI (omit paths or pass `--gui`):
@@ -104,12 +104,12 @@ GUI (omit paths or pass `--gui`):
 ```bash
 kotordiff
 # or
-python -m kotorcli diff --gui
+python -m pykotor diff --gui
 ```
 
 ## PyKotor Integration
 
-KotorCLI is built on PyKotor and uses the following modules:
+PyKotorCLI is built on PyKotor and uses the following modules:
 
 - **GFF/JSON Conversion**: `pykotor.resource.formats.gff` - Reads/writes GFF files in binary and JSON format
 - **ERF/Module Handling**: `pykotor.resource.formats.erf` - Reads/writes ERF, MOD, SAV files
@@ -119,7 +119,7 @@ KotorCLI is built on PyKotor and uses the following modules:
 
 ### Vendor Code References
 
-KotorCLI's implementation is informed by code from PyKotor's vendor directory:
+PyKotorCLI's implementation is informed by code from PyKotor's vendor directory:
 
 - **xoreos-tools** (`vendor/xoreos-tools/`) - C++ reference for GFF, ERF, and NSS formats
 - **KotOR.js** (`vendor/KotOR.js/`) - TypeScript reference for all KOTOR formats
@@ -133,29 +133,29 @@ KotorCLI's implementation is informed by code from PyKotor's vendor directory:
 Get, set, or unset user-defined configuration options.
 
 ```bash
-KotorCLI config <key> [<value>]
-KotorCLI config --list
-KotorCLI config --global nssCompiler /path/to/nwnnsscomp
+PyKotorCLI config <key> [<value>]
+PyKotorCLI config --list
+PyKotorCLI config --global nssCompiler /path/to/nwnnsscomp
 ```
 
 ### init
 
-Create a new KotorCLI package.
+Create a new PyKotorCLI package.
 
 ```bash
-KotorCLI init [dir] [file]
-KotorCLI init myproject
-KotorCLI init myproject --file mymodule.mod
+PyKotorCLI init [dir] [file]
+PyKotorCLI init myproject
+PyKotorCLI init myproject --file mymodule.mod
 ```
 
 ### list
 
-List all targets defined in KotorCLI.cfg.
+List all targets defined in PyKotorCLI.cfg.
 
 ```bash
-KotorCLI list
-KotorCLI list [target]
-KotorCLI list --verbose
+PyKotorCLI list
+PyKotorCLI list [target]
+PyKotorCLI list --verbose
 ```
 
 ### unpack
@@ -163,9 +163,9 @@ KotorCLI list --verbose
 Unpack a file into the project source tree.
 
 ```bash
-KotorCLI unpack [target] [file]
-KotorCLI unpack
-KotorCLI unpack --file mymodule.mod
+PyKotorCLI unpack [target] [file]
+PyKotorCLI unpack
+PyKotorCLI unpack --file mymodule.mod
 ```
 
 ### extract
@@ -181,9 +181,9 @@ Extract resources from archive files (`.key`, `.bif`, `.rim`, `.erf/.mod/.sav/.h
 Examples (PowerShell):
 
 ```powershell
-$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color extract --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --output "tmp\utc_templates" --filter "p_bastila.utc"
-$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color extract --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --output "tmp\utc_templates" --filter "p_cand.utc"
-$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color extract --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --output "tmp\utc_templates" --filter "p_cand"
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Libraries/PyKotor/src" run --module pykotor --no-color extract --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --output "tmp\utc_templates" --filter "p_bastila.utc"
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Libraries/PyKotor/src" run --module pykotor --no-color extract --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --output "tmp\utc_templates" --filter "p_cand.utc"
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Libraries/PyKotor/src" run --module pykotor --no-color extract --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --output "tmp\utc_templates" --filter "p_cand"
 ```
 
 ### list-archive (ls-archive)
@@ -191,10 +191,10 @@ $Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module 
 List resources inside an archive file (`.key`, `.bif`, `.rim`, `.erf/.mod/.sav/.hak`). Use `--key-file` when listing a `.bif` if you want proper resource names.
 
 ```powershell
-$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color list-archive --help
-$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color list-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --resources --filter "p_bastila*" --verbose
-$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color list-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --filter "p_bastila*"
-$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color list-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --resources --filter "p_cand*"
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Libraries/PyKotor/src" run --module pykotor --no-color list-archive --help
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Libraries/PyKotor/src" run --module pykotor --no-color list-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --resources --filter "p_bastila*" --verbose
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Libraries/PyKotor/src" run --module pykotor --no-color list-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --filter "p_bastila*"
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Libraries/PyKotor/src" run --module pykotor --no-color list-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --resources --filter "p_cand*"
 ```
 
 ### search-archive (grep-archive)
@@ -202,8 +202,8 @@ $Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module 
 Search for resources in an archive by name (glob patterns) or by content (`--content`).
 
 ```powershell
-$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color search-archive --help
-$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color search-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" "p_cand*"
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Libraries/PyKotor/src" run --module pykotor --no-color search-archive --help
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Libraries/PyKotor/src" run --module pykotor --no-color search-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" "p_cand*"
 ```
 
 ### convert
@@ -211,10 +211,10 @@ $Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module 
 Convert all JSON sources to their GFF counterparts.
 
 ```bash
-KotorCLI convert [targets...]
-KotorCLI convert
-KotorCLI convert all
-KotorCLI convert demo test
+PyKotorCLI convert [targets...]
+PyKotorCLI convert
+PyKotorCLI convert all
+PyKotorCLI convert demo test
 ```
 
 ### compile
@@ -224,9 +224,9 @@ Compile all NWScript sources for target.
 **Note**: Uses PyKotor's built-in compiler by default. External compiler (nwnnsscomp) used if found in PATH.
 
 ```bash
-KotorCLI compile [targets...]
-KotorCLI compile
-KotorCLI compile --file myscript.nss
+PyKotorCLI compile [targets...]
+PyKotorCLI compile
+PyKotorCLI compile --file myscript.nss
 ```
 
 ### pack
@@ -234,10 +234,10 @@ KotorCLI compile --file myscript.nss
 Convert, compile, and pack all sources for target.
 
 ```bash
-KotorCLI pack [targets...]
-KotorCLI pack
-KotorCLI pack all
-KotorCLI pack demo --clean
+PyKotorCLI pack [targets...]
+PyKotorCLI pack
+PyKotorCLI pack all
+PyKotorCLI pack demo --clean
 ```
 
 ### install
@@ -245,18 +245,18 @@ KotorCLI pack demo --clean
 Convert, compile, pack, and install target.
 
 ```bash
-KotorCLI install [targets...]
-KotorCLI install
-KotorCLI install demo
-KotorCLI install --installDir /path/to/kotor
+PyKotorCLI install [targets...]
+PyKotorCLI install
+PyKotorCLI install demo
+PyKotorCLI install --installDir /path/to/kotor
 ```
 
 ### kit-generate (Holocron kits)
 
-Generate a Holocron-compatible kit from a module. When no CLI args are supplied (`python -m kotorcli`), the Tkinter GUI launches; supplying required args keeps execution headless for CI.
+Generate a Holocron-compatible kit from a module. When no CLI args are supplied (`python -m pykotor`), the Tkinter GUI launches; supplying required args keeps execution headless for CI.
 
 ```bash
-python -m kotorcli kit-generate --installation "C:\Games\KOTOR" --module danm13 --output .\kits --kit-id danm13 --log-level info
+python -m pykotor kit-generate --installation "C:\Games\KOTOR" --module danm13 --output .\kits --kit-id danm13 --log-level info
 ```
 
 ### diff (KotorDiff)
@@ -265,13 +265,13 @@ Structured comparisons for files, folders, modules, or full installations. Stays
 
 ```bash
 # Installation vs installation with filtering
-python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode normal --log-level info
+python -m pykotor diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode normal --log-level info
 
 # Generate incremental TSLPatcher output while diffing
-python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --ini changes.ini --incremental
+python -m pykotor diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --ini changes.ini --incremental
 
 # Launch the GUI explicitly
-python -m kotorcli diff --gui
+python -m pykotor diff --gui
 ```
 
 Key options:
@@ -288,15 +288,15 @@ Key options:
 Convert, compile, pack, install, and launch target in-game.
 
 ```bash
-KotorCLI launch [target]
-KotorCLI serve [target]
-KotorCLI play [target]
-KotorCLI test [target]
+PyKotorCLI launch [target]
+PyKotorCLI serve [target]
+PyKotorCLI play [target]
+PyKotorCLI test [target]
 ```
 
 ## Configuration File
 
-The `KotorCLI.cfg` file uses TOML format and is compatible with cli's syntax.
+The `PyKotorCLI.cfg` file uses TOML format and is compatible with cli's syntax.
 
 ### Example Configuration
 
@@ -325,7 +325,7 @@ description = "Default module target"
 
 ## Differences from cli
 
-While KotorCLI maintains cli's command syntax for familiarity, it has key differences:
+While PyKotorCLI maintains cli's command syntax for familiarity, it has key differences:
 
 1. **Built on PyKotor** - Uses PyKotor's native Python libraries instead of neverwinter.nim
 2. **Built-in Compiler** - Includes a native NSS compiler, no external tools required

@@ -1,6 +1,6 @@
 # PyKotor Integration Guide
 
-This document details how KotorCLI leverages PyKotor's comprehensive libraries and vendor code references.
+This document details how PyKotorCLI leverages PyKotor's comprehensive libraries and vendor code references.
 
 ## Key Advantages Over Initial Implementation
 
@@ -238,7 +238,7 @@ write_erf(erf, "output.mod")
    - Field accessors
    - Type safety
 
-**Usage in KotorCLI**:
+**Usage in PyKotorCLI**:
 - `convert.py`: JSON → GFF conversion
 - `unpack.py`: GFF → JSON conversion
 - Both use PyKotor's implementations, vendor for reference
@@ -261,7 +261,7 @@ write_erf(erf, "output.mod")
    - Performance patterns
    - Edge cases
 
-**Usage in KotorCLI**:
+**Usage in PyKotorCLI**:
 - `pack.py`: Creating ERF/MOD/HAK files
 - `unpack.py`: Reading ERF/MOD/HAK files
 
@@ -283,7 +283,7 @@ write_erf(erf, "output.mod")
    - Instruction set
    - Stack operations
 
-**Usage in KotorCLI**:
+**Usage in PyKotorCLI**:
 - `compile.py`: Uses PyKotor's InbuiltNCSCompiler
 - Fallback to external compiler if available
 
@@ -369,8 +369,8 @@ pytest tests/resource/formats/test_erf.py
 
 ```bash
 # Test without external compiler
-cd Tools/KotorCLI
-KotorCLI compile --clean
+cd Tools/PyKotorCLI
+PyKotorCLI compile --clean
 # Should use InbuiltNCSCompiler
 ```
 
@@ -379,7 +379,7 @@ KotorCLI compile --clean
 ```bash
 # Compare output with vendor implementations
 # Use files from vendor/Vanilla_KOTOR_Script_Source for testing
-KotorCLI unpack --file /path/to/module.mod
+PyKotorCLI unpack --file /path/to/module.mod
 # Verify JSON matches vendor expectations
 ```
 
@@ -404,7 +404,7 @@ KotorCLI unpack --file /path/to/module.mod
 
 ## Summary
 
-KotorCLI successfully leverages PyKotor's comprehensive KOTOR modding library while maintaining cli's familiar syntax. Key achievements:
+PyKotorCLI successfully leverages PyKotor's comprehensive KOTOR modding library while maintaining cli's familiar syntax. Key achievements:
 
 1. **100% PyKotor Integration** - All file operations use PyKotor
 2. **Built-in Compiler** - No external tools required
@@ -412,7 +412,7 @@ KotorCLI successfully leverages PyKotor's comprehensive KOTOR modding library wh
 4. **Type-Safe** - Leverages PyKotor's resource type system
 5. **cli-Compatible** - Maintains familiar command syntax
 
-This makes KotorCLI a powerful, self-contained KOTOR modding tool with the ergonomics of cli and the capabilities of PyKotor.
+This makes PyKotorCLI a powerful, self-contained KOTOR modding tool with the ergonomics of cli and the capabilities of PyKotor.
 
 
 

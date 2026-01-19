@@ -1,13 +1,13 @@
-# KotorCLI Verification Checklist
+# PyKotorCLI Verification Checklist
 
-This document verifies that KotorCLI achieves 1:1 syntax compatibility with cli while properly leveraging PyKotor and vendor code references.
+This document verifies that PyKotorCLI achieves 1:1 syntax compatibility with cli while properly leveraging PyKotor and vendor code references.
 
 ## ✅ Command Syntax Verification
 
 ### Config Command
-- ✅ `KotorCLI config <key> [<value>]` - Get/set configuration
-- ✅ `KotorCLI config --list` - List all configuration
-- ✅ `KotorCLI config --global` - Global configuration support
+- ✅ `PyKotorCLI config <key> [<value>]` - Get/set configuration
+- ✅ `PyKotorCLI config --list` - List all configuration
+- ✅ `PyKotorCLI config --global` - Global configuration support
 - ✅ Supported keys match cli exactly:
   - userName, userEmail
   - nssCompiler, erfUtil, gffUtil, tlkUtil
@@ -20,77 +20,77 @@ This document verifies that KotorCLI achieves 1:1 syntax compatibility with cli 
   - skipCompile
 
 **cli Reference**: `src/cli/config.nim`
-**Implementation**: `src/KotorCLI/commands/config.py`
+**Implementation**: `src/PyKotorCLI/commands/config.py`
 
 ### Init Command
-- ✅ `KotorCLI init [dir] [file]` - Create new package
-- ✅ Generates `KotorCLI.cfg` in TOML format
+- ✅ `PyKotorCLI init [dir] [file]` - Create new package
+- ✅ Generates `PyKotorCLI.cfg` in TOML format
 - ✅ Optional `--file` to initialize from existing module
 
 **cli Reference**: `src/cli/init.nim`
-**Implementation**: `src/KotorCLI/commands/init.py`
+**Implementation**: `src/PyKotorCLI/commands/init.py`
 
 ### List Command
-- ✅ `KotorCLI list [target]` - List targets
-- ✅ `KotorCLI list --verbose` - Detailed information
+- ✅ `PyKotorCLI list [target]` - List targets
+- ✅ `PyKotorCLI list --verbose` - Detailed information
 - ✅ Shows target name, file, description
 
 **cli Reference**: `src/cli/list.nim`
-**Implementation**: `src/KotorCLI/commands/list.py`
+**Implementation**: `src/PyKotorCLI/commands/list.py`
 
 ### Unpack Command
-- ✅ `KotorCLI unpack [target] [file]` - Unpack to source tree
-- ✅ `KotorCLI unpack --file <file>` - Unpack specific file
+- ✅ `PyKotorCLI unpack [target] [file]` - Unpack to source tree
+- ✅ `PyKotorCLI unpack --file <file>` - Unpack specific file
 - ✅ Extracts to directories based on rules
 - ✅ Converts GFF to JSON automatically
 
 **cli Reference**: `src/cli/unpack.nim`
-**Implementation**: `src/KotorCLI/commands/unpack.py`
+**Implementation**: `src/PyKotorCLI/commands/unpack.py`
 
 ### Convert Command
-- ✅ `KotorCLI convert [targets...]` - Convert JSON to GFF
+- ✅ `PyKotorCLI convert [targets...]` - Convert JSON to GFF
 - ✅ Converts all JSON sources to binary GFF
 - ✅ Outputs to cache directory
 
 **cli Reference**: `src/cli/convert.nim`
-**Implementation**: `src/KotorCLI/commands/convert.py`
+**Implementation**: `src/PyKotorCLI/commands/convert.py`
 
 ### Compile Command
-- ✅ `KotorCLI compile [targets...]` - Compile NSS sources
-- ✅ `KotorCLI compile --file <file>` - Compile specific file
+- ✅ `PyKotorCLI compile [targets...]` - Compile NSS sources
+- ✅ `PyKotorCLI compile --file <file>` - Compile specific file
 - ✅ Searches for external compiler
 - ✅ **BONUS**: Falls back to built-in PyKotor compiler
 
 **cli Reference**: `src/cli/compile.nim`
-**Implementation**: `src/KotorCLI/commands/compile.py`
+**Implementation**: `src/PyKotorCLI/commands/compile.py`
 
 ### Pack Command
-- ✅ `KotorCLI pack [targets...]` - Pack sources
-- ✅ `KotorCLI pack --clean` - Clean cache first
+- ✅ `PyKotorCLI pack [targets...]` - Pack sources
+- ✅ `PyKotorCLI pack --clean` - Clean cache first
 - ✅ Runs convert, compile, then packs
 - ✅ Creates MOD/ERF/HAK files
 
 **cli Reference**: `src/cli/pack.nim`
-**Implementation**: `src/KotorCLI/commands/pack.py`
+**Implementation**: `src/PyKotorCLI/commands/pack.py`
 
 ### Install Command
-- ✅ `KotorCLI install [targets...]` - Pack and install
-- ✅ `KotorCLI install --installDir <dir>` - Custom install path
+- ✅ `PyKotorCLI install [targets...]` - Pack and install
+- ✅ `PyKotorCLI install --installDir <dir>` - Custom install path
 - ✅ Installs to KOTOR directory
 
 **cli Reference**: `src/cli/install.nim`
-**Implementation**: `src/KotorCLI/commands/install.py`
+**Implementation**: `src/PyKotorCLI/commands/install.py`
 
 ### Launch Command
-- ✅ `KotorCLI launch [target]` - Install and launch game
+- ✅ `PyKotorCLI launch [target]` - Install and launch game
 - ✅ Aliases: `serve`, `play`, `test`
 - ✅ Starts game after installation
 
 **cli Reference**: `src/cli/launch.nim`
-**Implementation**: `src/KotorCLI/commands/launch.py`
+**Implementation**: `src/PyKotorCLI/commands/launch.py`
 
 ### diff / kotordiff (KotorDiff)
-- ✅ `python -m kotorcli diff --path1 <p1> --path2 <p2>` stays headless when paths are provided
+- ✅ `python -m pykotor diff --path1 <p1> --path2 <p2>` stays headless when paths are provided
 - ✅ `--gui` or omitting paths launches the Tkinter KotorDiff GUI
 - ✅ Supports multi-path (`--path1/--path2/--path3/--path`) comparisons, filters, and logging controls
 - ✅ TSLPatcher generation via `--tslpatchdata`/`--ini`, with optional `--incremental` writer
@@ -108,7 +108,7 @@ This document verifies that KotorCLI achieves 1:1 syntax compatibility with cli 
 - ✅ `[target]` sections for build targets
 
 **cli Reference**: cli uses similar TOML-like format
-**Implementation**: `src/KotorCLI/cfg_parser.py`
+**Implementation**: `src/PyKotorCLI/cfg_parser.py`
 
 ### Configuration Keys
 ```toml
@@ -145,8 +145,8 @@ parent = "base_target"         # ✅ Supported (inheritance)
 - ✅ Auto-detection with `detect_gff()`
 
 **Files**:
-- `src/KotorCLI/commands/convert.py`: JSON → GFF
-- `src/KotorCLI/commands/unpack.py`: GFF → JSON
+- `src/PyKotorCLI/commands/convert.py`: JSON → GFF
+- `src/PyKotorCLI/commands/unpack.py`: GFF → JSON
 
 **Vendor References**:
 - ✅ `vendor/xoreos-tools/src/aurora/gff3file.cpp` - Referenced
@@ -160,8 +160,8 @@ parent = "base_target"         # ✅ Supported (inheritance)
 - ✅ Supports MOD, ERF, SAV, HAK types
 
 **Files**:
-- `src/KotorCLI/commands/pack.py`: Creates ERF/MOD files
-- `src/KotorCLI/commands/unpack.py`: Reads ERF/MOD files
+- `src/PyKotorCLI/commands/pack.py`: Creates ERF/MOD files
+- `src/PyKotorCLI/commands/unpack.py`: Reads ERF/MOD files
 
 **Vendor References**:
 - ✅ `vendor/xoreos-tools/src/aurora/erffile.cpp` - Referenced
@@ -173,7 +173,7 @@ parent = "base_target"         # ✅ Supported (inheritance)
 - ✅ Reads RIM archives
 
 **Files**:
-- `src/KotorCLI/commands/unpack.py`: Reads RIM files
+- `src/PyKotorCLI/commands/unpack.py`: Reads RIM files
 
 **Vendor References**:
 - ✅ `vendor/xoreos-tools/src/aurora/rimfile.cpp` - Referenced
@@ -185,7 +185,7 @@ parent = "base_target"         # ✅ Supported (inheritance)
 - ✅ Falls back to built-in if external not found
 
 **Files**:
-- `src/KotorCLI/commands/compile.py`: Compiles NSS to NCS
+- `src/PyKotorCLI/commands/compile.py`: Compiles NSS to NCS
 
 **Vendor References**:
 - ✅ `vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts` - Referenced
@@ -229,9 +229,9 @@ parent = "base_target"         # ✅ Supported (inheritance)
 
 ### Directory Layout
 ```
-Tools/KotorCLI/
+Tools/PyKotorCLI/
 ├── src/
-│   └── KotorCLI/
+│   └── PyKotorCLI/
 │       ├── __init__.py           # ✅ Package init
 │       ├── __main__.py           # ✅ Entry point
 │       ├── config.py             # ✅ Version metadata
@@ -258,34 +258,34 @@ Tools/KotorCLI/
 ├── VERIFICATION.md               # ✅ This file
 ├── CHANGELOG.md                  # ✅ Version history
 ├── .gitignore                    # ✅ Git ignore rules
-└── KotorCLI.code-workspace       # ✅ VS Code workspace
+└── PyKotorCLI.code-workspace       # ✅ VS Code workspace
 ```
 
 ## ✅ Key Improvements Over cli
 
 ### 1. Built-in NSS Compiler
 - **cli**: Requires nwnsc or nwn_script_comp (external)
-- **KotorCLI**: Includes PyKotor's InbuiltNCSCompiler
+- **PyKotorCLI**: Includes PyKotor's InbuiltNCSCompiler
 - **Benefit**: Works without external dependencies
 
 ### 2. Pure Python
 - **cli**: Nim + neverwinter.nim + C tools
-- **KotorCLI**: Pure Python + PyKotor
+- **PyKotorCLI**: Pure Python + PyKotor
 - **Benefit**: Easier to install and extend
 
 ### 3. Type Safety
 - **cli**: String-based type handling
-- **KotorCLI**: ResourceType enum with type checking
+- **PyKotorCLI**: ResourceType enum with type checking
 - **Benefit**: Catches errors at runtime
 
 ### 4. Comprehensive Documentation
 - **cli**: README + wiki
-- **KotorCLI**: README + QUICKSTART + IMPLEMENTATION_NOTES + PYKOTOR_INTEGRATION + inline references
+- **PyKotorCLI**: README + QUICKSTART + IMPLEMENTATION_NOTES + PYKOTOR_INTEGRATION + inline references
 - **Benefit**: Better maintainability
 
 ### 5. Vendor Code Integration
 - **cli**: Uses neverwinter.nim (single reference)
-- **KotorCLI**: References xoreos, KotOR.js, reone, Kotor.NET (multiple references)
+- **PyKotorCLI**: References xoreos, KotOR.js, reone, Kotor.NET (multiple references)
 - **Benefit**: Cross-validated implementations
 
 ## ✅ Testing Verification
@@ -294,43 +294,43 @@ Tools/KotorCLI/
 
 ```bash
 # 1. Installation
-cd Tools/KotorCLI
+cd Tools/PyKotorCLI
 pip install -e .
-KotorCLI --version  # ✅ Should show version
+PyKotorCLI --version  # ✅ Should show version
 
 # 2. Init
-KotorCLI init test_project
+PyKotorCLI init test_project
 cd test_project
-# ✅ Should create KotorCLI.cfg
+# ✅ Should create PyKotorCLI.cfg
 
 # 3. List
-KotorCLI list
+PyKotorCLI list
 # ✅ Should show default target
 
 # 4. Compile (built-in)
 echo 'void main() {}' > src/test.nss
-KotorCLI compile
+PyKotorCLI compile
 # ✅ Should compile without external compiler
 
 # 5. Convert
 echo '{"__type": "UTC", "fields": []}' > src/test.utc.json
-KotorCLI convert
+PyKotorCLI convert
 # ✅ Should create cache/test.utc
 
 # 6. Pack
-KotorCLI pack
+PyKotorCLI pack
 # ✅ Should create dist/test_project.mod
 
 # 7. Unpack
-KotorCLI unpack --file dist/test_project.mod
+PyKotorCLI unpack --file dist/test_project.mod
 # ✅ Should extract JSON files
 
 # 8. Install (requires KOTOR path)
-# KotorCLI install --installDir /path/to/kotor
+# PyKotorCLI install --installDir /path/to/kotor
 # ✅ Should install to modules directory
 
 # 9. Config
-KotorCLI config --list
+PyKotorCLI config --list
 # ✅ Should list all configuration
 ```
 
@@ -400,7 +400,7 @@ No linter errors, proper typing, comprehensive error handling.
 
 ## Final Verdict
 
-**KotorCLI successfully achieves 1:1 syntax compatibility with cli while fully leveraging PyKotor's capabilities and properly referencing vendor code implementations.**
+**PyKotorCLI successfully achieves 1:1 syntax compatibility with cli while fully leveraging PyKotor's capabilities and properly referencing vendor code implementations.**
 
 Key achievements:
 1. ✅ Complete cli command syntax compatibility
@@ -411,7 +411,7 @@ Key achievements:
 6. ✅ Type-safe resource handling
 7. ✅ Clean, maintainable code
 
-KotorCLI is ready for use and provides a powerful, self-contained KOTOR modding workflow with the familiar syntax of cli and the comprehensive capabilities of PyKotor.
+PyKotorCLI is ready for use and provides a powerful, self-contained KOTOR modding workflow with the familiar syntax of cli and the comprehensive capabilities of PyKotor.
 
 
 

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to KotorCLI will be documented in this file.
+All notable changes to PyKotor's CLI will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Integrated KotorDiff into KotorCLI with `diff-installation` / `kotordiff` entrypoints
+- Integrated KotorDiff into PyKotor's CLI with `diff` / `kotordiff` entrypoints
 - Headless-by-default comparisons when CLI arguments are provided; GUI launches when arguments are omitted or `--gui` is passed
 - Option to generate TSLPatcher output (including incremental writer) from comparisons
 - Documentation updates covering the new diff workflow and GUI/CLI behavior
@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of KotorCLI
+- Initial release of PyKotor's CLI
 - cli-compatible command syntax
 - Support for all major commands:
   - `config` - Configuration management
@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `pack` - Pack sources into module/ERF/hak
   - `install` - Pack and install to KOTOR directory
   - `launch` - Install and launch game (with aliases: serve, play, test)
-- TOML-based configuration file (KotorCLI.cfg)
+- TOML-based configuration file (PyKotorCLI.cfg)
 - Variable expansion support
 - Target inheritance
 - Source filtering and rules
@@ -53,5 +53,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multiple target support
 - Group-based target building
 
-[1.2.0]: https://github.com/OldRepublicDevs/PyKotor/releases/tag/KotorCLI-v1.2.0
-[1.0.0]: https://github.com/OldRepublicDevs/PyKotor/releases/tag/KotorCLI-v1.0.0
+[1.2.0]: https://github.com/OldRepublicDevs/PyKotor/releases/tag/PyKotorCLI-v1.2.0
+[1.0.0]: https://github.com/OldRepublicDevs/PyKotor/releases/tag/PyKotorCLI-v1.0.0

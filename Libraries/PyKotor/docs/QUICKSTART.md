@@ -1,9 +1,9 @@
-# KotorCLI Quick Start Guide
+# PyKotorCLI Quick Start Guide
 
 ## Installation
 
 ```bash
-cd Tools/KotorCLI
+cd Tools/PyKotorCLI
 pip install -e .
 ```
 
@@ -12,21 +12,21 @@ pip install -e .
 ### 1. Create a new project
 
 ```bash
-KotorCLI init mymod
+PyKotorCLI init mymod
 cd mymod
 ```
 
 This creates:
 
-- `KotorCLI.cfg` - Configuration file
+- `PyKotorCLI.cfg` - Configuration file
 - `src/` - Source directory structure
 - `.gitignore` - Git ignore file
-- `.KotorCLI/` - Local config directory
+- `.PyKotorCLI/` - Local config directory
 
 ### 2. Unpack an existing module (optional)
 
 ```bash
-KotorCLI unpack --file ~/path/to/mymodule.mod
+PyKotorCLI unpack --file ~/path/to/mymodule.mod
 ```
 
 This extracts all files from the module into your `src/` directory, converting GFF files to JSON format.
@@ -34,10 +34,10 @@ This extracts all files from the module into your `src/` directory, converting G
 ### 3. View your targets
 
 ```bash
-KotorCLI list
+PyKotorCLI list
 ```
 
-Shows all configured targets in your `KotorCLI.cfg`.
+Shows all configured targets in your `PyKotorCLI.cfg`.
 
 ### 4. Make changes
 
@@ -52,7 +52,7 @@ Edit files in the `src/` directory:
 ### 5. Pack your module
 
 ```bash
-KotorCLI pack
+PyKotorCLI pack
 ```
 
 This will:
@@ -64,7 +64,7 @@ This will:
 ### 6. Install and test
 
 ```bash
-KotorCLI install
+PyKotorCLI install
 ```
 
 This installs the packed module to your KOTOR directory.
@@ -72,7 +72,7 @@ This installs the packed module to your KOTOR directory.
 Or launch the game directly:
 
 ```bash
-KotorCLI play
+PyKotorCLI play
 ```
 
 ### 7. Diff installs/files with KotorDiff (headless or GUI)
@@ -80,9 +80,9 @@ KotorCLI play
 Headless CLI (preferred for automation):
 
 ```bash
-python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode normal
+python -m pykotor diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode normal
 # Generate incremental TSLPatcher data while diffing
-python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --incremental
+python -m pykotor diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --incremental
 ```
 
 GUI (omit paths or pass `--gui`):
@@ -90,7 +90,7 @@ GUI (omit paths or pass `--gui`):
 ```bash
 kotordiff
 # or
-python -m kotorcli diff --gui
+python -m pykotor diff --gui
 ```
 
 ## Common Workflows
@@ -98,26 +98,26 @@ python -m kotorcli diff --gui
 ### Starting from scratch
 
 ```bash
-KotorCLI init mynewmod
+PyKotorCLI init mynewmod
 cd mynewmod
 # Create/edit source files
-KotorCLI pack
+PyKotorCLI pack
 ```
 
 ### Working with an existing module
 
 ```bash
-KotorCLI init mynewmod
+PyKotorCLI init mynewmod
 cd mynewmod
-KotorCLI unpack --file ~/modules/existing.mod
+PyKotorCLI unpack --file ~/modules/existing.mod
 # Edit source files
-KotorCLI install
+PyKotorCLI install
 ```
 
 ### Testing changes quickly
 
 ```bash
-KotorCLI play
+PyKotorCLI play
 ```
 
 This runs convert, compile, pack, install, and launches the game in one command.
@@ -125,7 +125,7 @@ This runs convert, compile, pack, install, and launches the game in one command.
 ### Building multiple targets
 
 ```toml
-# In KotorCLI.cfg
+# In PyKotorCLI.cfg
 [target]
 name = "demo"
 file = "demo.mod"
@@ -136,9 +136,9 @@ file = "full.mod"
 ```
 
 ```bash
-KotorCLI pack all        # Build all targets
-KotorCLI pack demo       # Build specific target
-KotorCLI install full    # Install specific target
+PyKotorCLI pack all        # Build all targets
+PyKotorCLI pack demo       # Build specific target
+PyKotorCLI install full    # Install specific target
 ```
 
 ## Configuration
@@ -147,20 +147,20 @@ KotorCLI install full    # Install specific target
 
 ```bash
 # Set script compiler path
-KotorCLI config --global nssCompiler /path/to/nwnnsscomp
+PyKotorCLI config --global nssCompiler /path/to/nwnnsscomp
 
 # Set KOTOR install directory
-KotorCLI config --global installDir ~/Documents/KotOR
+PyKotorCLI config --global installDir ~/Documents/KotOR
 
 # List all settings
-KotorCLI config --list --global
+PyKotorCLI config --list --global
 ```
 
 ### Local (per-project) settings
 
 ```bash
-KotorCLI config --local modName "My Awesome Mod"
-KotorCLI config --list --local
+PyKotorCLI config --local modName "My Awesome Mod"
+PyKotorCLI config --list --local
 ```
 
 ## Tips & Tricks
@@ -178,7 +178,7 @@ git push -u origin main
 ### Clean builds
 
 ```bash
-KotorCLI pack --clean
+PyKotorCLI pack --clean
 ```
 
 Clears the cache before building.
@@ -186,41 +186,41 @@ Clears the cache before building.
 ### Skip steps
 
 ```bash
-KotorCLI pack --noConvert    # Don't convert JSON
-KotorCLI pack --noCompile    # Don't compile scripts
-KotorCLI install --noPack    # Just install existing file
+PyKotorCLI pack --noConvert    # Don't convert JSON
+PyKotorCLI pack --noCompile    # Don't compile scripts
+PyKotorCLI install --noPack    # Just install existing file
 ```
 
 ### Compile specific files
 
 ```bash
-KotorCLI compile --file myscript.nss
+PyKotorCLI compile --file myscript.nss
 ```
 
 ### Verbose output
 
 ```bash
-KotorCLI pack --verbose
-KotorCLI pack --debug
+PyKotorCLI pack --verbose
+PyKotorCLI pack --debug
 ```
 
 ### Quiet mode
 
 ```bash
-KotorCLI pack --quiet
+PyKotorCLI pack --quiet
 ```
 
 ## Next Steps
 
 - Read the [README.md](README.md) for full command documentation
 - Check [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md) for technical details
-- See [KotorCLI.cfg examples](https://github.com/squattingmonk/cli#clicfg) (cli-compatible)
+- See [PyKotorCLI.cfg examples](https://github.com/squattingmonk/cli#clicfg) (cli-compatible)
 
 ## Getting Help
 
 ```bash
-KotorCLI --help
-KotorCLI <command> --help
+PyKotorCLI --help
+PyKotorCLI <command> --help
 ```
 
 For issues or questions, visit the [PyKotor repository](https://github.com/OldRepublicDevs/PyKotor).

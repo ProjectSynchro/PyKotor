@@ -18,7 +18,7 @@
 - **[TSLPatcher GFFList Syntax Guide](TSLPatcher-GFFList-Syntax)** ← Complete reference for [GFF](GFF-File-Format) modifications
 - **[TSLPatcher SSFList Syntax Guide](TSLPatcher-SSFList-Syntax)** ← Complete reference for SSF ([sound set files](SSF-File-Format)) modifications
 - [Mod Creation Best Practices](Mod-Creation-Best-Practices)
-- [KotorDiff Integration in KotorCLI](KotorDiff-Integration)
+- [KotorDiff Integration in PyKotorCLI](KotorDiff-Integration)
 
 ### Official Bioware Aurora Documentation
 
@@ -346,7 +346,7 @@ Tools for writing and editing NWScript:
 
 Tools for creating and installing mods:
 
-- **KotorCLI (PyKotor)** - CLI-first toolset for packing, conversion, Holocron kit generation, and [GUI](GFF-File-Format#gui-graphical-user-interface) layout scaling. `uv --directory Libraries/PyKotor/src run pykotor kit-generate --installation <path> --module <module> --output <dir>` runs headless; launching with no arguments opens the Tkinter kit generator [GUI](GFF-File-Format#gui-graphical-user-interface) for interactive use. `uv run pykotor gui-convert --input <gui_or_folder> --output <dir> --resolution ALL` runs headless for [GUI](GFF-File-Format#gui-graphical-user-interface) resizing; omitting args opens the converter [GUI](GFF-File-Format#gui-graphical-user-interface). (Implementations: `kit_generator.py` wraps `Libraries/PyKotor/src/pykotor/tools/kit.py`; `Libraries/PyKotor/src/pykotor/cli/gui_converter.py` delegates to `pykotor.resource.formats.gff`.)
+- **PyKotorCLI (PyKotor)** - CLI-first toolset for packing, conversion, Holocron kit generation, and [GUI](GFF-File-Format#gui-graphical-user-interface) layout scaling. `uv --directory Libraries/PyKotor/src run pykotor kit-generate --installation <path> --module <module> --output <dir>` runs headless; launching with no arguments opens the Tkinter kit generator [GUI](GFF-File-Format#gui-graphical-user-interface) for interactive use. `uv run pykotor gui-convert --input <gui_or_folder> --output <dir> --resolution ALL` runs headless for [GUI](GFF-File-Format#gui-graphical-user-interface) resizing; omitting args opens the converter [GUI](GFF-File-Format#gui-graphical-user-interface). (Implementations: `kit_generator.py` wraps `Libraries/PyKotor/src/pykotor/tools/kit.py`; `Libraries/PyKotor/src/pykotor/cli/gui_converter.py` delegates to `pykotor.resource.formats.gff`.)
 - **[HoloPatcher.NET](https://github.com/th3w1zard1/HoloPatcher.NET)** - .NET reimplementation of TSLPatcher
 - **[Kotor-Patch-Manager](https://github.com/LaneDibello/Kotor-Patch-Manager)** - Alternative mod manager ([Mirror: th3w1zard1/Kotor-Patch-Manager](https://github.com/th3w1zard1/Kotor-Patch-Manager))
 - **[KotOR ModSync](https://github.com/th3w1zard1/KotORModSync)** - Mod synchronization and installation
