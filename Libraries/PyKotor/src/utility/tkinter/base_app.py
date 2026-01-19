@@ -668,7 +668,7 @@ class ThemedApp(BaseApp):
 
     def create_themed_frame(
         self,
-        parent: tk.Widget,
+        parent: tk.Widget | tk.Tk,
         label_text: str | None = None,
         padx: int = 5,
         pady: int = 5,

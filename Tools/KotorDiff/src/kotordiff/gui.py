@@ -36,7 +36,8 @@ if not getattr(sys, "frozen", False):
         update_sys_path(pathlib.Path(__file__).parents[1])
 
 
-from pykotor.diff_tool.app import KotorDiffConfig, run_application  # noqa: E402
+from pykotor.cli.version import VERSION as pykotor_version  # noqa: E402
+from pykotor.diff_tool.app import DiffConfig, run_application  # noqa: E402
 from pykotor.extract.installation import Installation  # noqa: E402
 from pykotor.tools.path import find_kotor_paths_from_default  # noqa: E402
 from pykotor.tslpatcher.logger import LogType  # noqa: E402
@@ -44,8 +45,6 @@ from utility.tkinter.base_app import ThemedApp  # noqa: E402
 
 if TYPE_CHECKING:
     from pykotor.tslpatcher.logger import PatchLog
-
-from pykotor.cli.version import VERSION as pykotor_version  # noqa: E402
 
 CURRENT_VERSION = pykotor_version
 
@@ -189,7 +188,14 @@ class KotorDiffApp(ThemedApp):
         self.path2_combobox = ttk.Combobox(paths_frame, style="TCombobox")
         self.path2_combobox.grid(row=5, column=0, columnspan=3, sticky="ew", padx=5, pady=2)
         self.path2_combobox["values"] = self._get_installation_paths()
-        self.path2_combobox.bind("<<ComboboxSelected>>", lambda e: self.root.after(10, lambda: self.move_cursor_to_end(cast("ttk.Combobox", e.widget))))
+
+        def on_path2_combobox_selected(event: tk.Event):
+            def move_cursor_later():
+                self.move_cursor_to_end(cast("ttk.Combobox", event.widget))
+
+            self.root.after(10, move_cursor_later)
+
+        self.path2_combobox.bind("<<ComboboxSelected>>", on_path2_combobox_selected)
 
         self.path2_browse_button = self.create_themed_button(paths_frame, "Browse...", self._browse_path2)
         self.path2_browse_button.grid(row=5, column=3, padx=5, pady=2)
@@ -255,7 +261,8 @@ class KotorDiffApp(ThemedApp):
         self.root.grid_rowconfigure(2, weight=1)
 
         # Move main_text to the new output frame
-        self.main_text.master.destroy()  # Destroy old frame
+        if self.main_text is not None:
+            self.main_text.master.destroy()  # Destroy old frame
         self.main_text = tk.Text(
             output_frame,
             wrap=tk.WORD,
@@ -292,7 +299,8 @@ class KotorDiffApp(ThemedApp):
         self.close_button.grid(row=0, column=2, sticky="ew", padx=5)
 
         # Move progress bar to row 4
-        self.progress_bar.master.grid(row=4, column=0, sticky="ew", padx=10, pady=(0, 10))
+        if self.progress_bar is not None and isinstance(self.progress_bar.master, tk.Widget):
+            self.progress_bar.master.grid(row=4, column=0, sticky="ew", padx=10, pady=(0, 10))
 
     def _get_installation_paths(self) -> list[str]:
         """Get list of KOTOR installation paths."""
@@ -398,12 +406,13 @@ class KotorDiffApp(ThemedApp):
                     self._log_to_ui(f"[INFO] Using Path (not Installation) for: {path_str}")
 
             # Create configuration
-            config = KotorDiffConfig(
+            config = DiffConfig(
                 paths=resolved_paths,
                 tslpatchdata_path=Path(tslpatchdata_str) if tslpatchdata_str else None,
                 ini_filename=self.ini_filename_entry.get().strip() or "changes.ini",
                 log_level=self.log_level_combobox.get(),
                 compare_hashes=self.compare_hashes_var.get(),
+                ui_log_func=self._log_to_ui,
             )
 
             self._log_to_ui(f"\n{'=' * 60}")

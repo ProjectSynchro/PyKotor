@@ -41,7 +41,7 @@ class DiffFormatter(ABC):
 
 
 class DefaultFormatter(DiffFormatter):
-    """Default formatter that maintains existing KotorDiff behavior."""
+    """Default formatter that maintains existing diff operations behavior."""
 
     def format_diff(self, diff_result: DiffResult[Any]) -> str:  # noqa: PLR0911
         """Format using the default style."""

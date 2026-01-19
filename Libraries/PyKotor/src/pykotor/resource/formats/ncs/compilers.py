@@ -93,7 +93,7 @@ class KnownExternalCompilers(Enum):
         Original BioWare engine binaries
         Derivations and Other Implementations:
         ----------
-        https://github.com/th3w1zard1/TSLPatcher/tree/master/TSLPatcher.pl
+        https://github.com/th3w1zard1/TSLPatcher/tree/master/TSLPatcher.pl (unfinished perl rewrite of TSLPatcher)
         https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET.Patcher/
 
 

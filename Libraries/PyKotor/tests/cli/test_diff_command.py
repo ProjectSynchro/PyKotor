@@ -692,10 +692,10 @@ class TestCompositeModules:
 
 
 class TestOutputModes:
-    """Tests for different output modes (full, diff_only, quiet)."""
+    """Tests for different output modes (full, normal, quiet)."""
 
     def test_diff_only_mode_file_vs_file(self, tmp_path: Path, capsys):
-        """Test diff_only mode produces only diff output for files."""
+        """Test normal mode produces only diff output for files."""
         # Use same filename so they get compared as content rather than separate resources
         file1 = tmp_path / "test.txt"
         file2 = tmp_path / "test.txt"
@@ -707,7 +707,7 @@ class TestOutputModes:
         file2.write_text("line 1\nline 2 modified\nline 3")
 
         args = Namespace(
-            path1=str(file1), path2=str(file2), output=None, format="unified", output_mode="diff_only", verbose=False, debug=False, no_color=False, generate_ini=False
+            path1=str(file1), path2=str(file2), output=None, format="unified", output_mode="normal", verbose=False, debug=False, no_color=False, generate_ini=False
         )
         logger = RobustLogger()
         result = cmd_diff(args, logger)
@@ -720,7 +720,7 @@ class TestOutputModes:
         assert "@@ -1,3 +1,3 @@" in output
         assert "-line 2" in output
         assert "+line 2 modified" in output
-        # Should NOT contain summary messages in diff_only mode
+        # Should NOT contain summary messages in normal mode
         assert "MATCHES" not in output
         assert "DOES NOT MATCH" not in output
         # Should NOT contain logging messages
@@ -733,7 +733,7 @@ class TestOutputModes:
         tmp_path: Path,
         capsys: pytest.CaptureFixture[str],
     ):
-        """Test diff_only mode produces only diff output for archives."""
+        """Test normal mode produces only diff output for archives."""
         # Create two different RIM files
         rim1_path = tmp_path / "test1.rim"
         rim2_path = tmp_path / "test2.rim"
@@ -744,7 +744,7 @@ class TestOutputModes:
         write_rim(rim2, rim2_path)
 
         args = Namespace(
-            path1=str(rim1_path), path2=str(rim2_path), output=None, format="unified", output_mode="diff_only", verbose=False, debug=False, no_color=False, generate_ini=False
+            path1=str(rim1_path), path2=str(rim2_path), output=None, format="unified", output_mode="normal", verbose=False, debug=False, no_color=False, generate_ini=False
         )
         logger = RobustLogger()
         result = cmd_diff(args, logger)
@@ -752,7 +752,7 @@ class TestOutputModes:
         assert result == 0
         output = capsys.readouterr().out
 
-        # Should be empty or minimal output in diff_only mode for matching files
+        # Should be empty or minimal output in normal mode for matching files
         # No summary messages
         assert "MATCHES" not in output
         assert "DOES NOT MATCH" not in output
@@ -1084,7 +1084,7 @@ class TestDiffWithTestFiles:
                 path1=str(file1),
                 path2=str(file2),
                 format="unified",
-                output_mode="diff_only",
+                output_mode="normal",
                 generate_ini=False,
                 verbose=False,
                 output=None,
@@ -1110,7 +1110,7 @@ class TestDiffWithTestFiles:
                 path1=str(file1),
                 path2=str(file2),
                 format="unified",
-                output_mode="diff_only",
+                output_mode="normal",
                 generate_ini=False,
                 verbose=False,
                 output=None,
@@ -1141,7 +1141,7 @@ class TestDiffWithTestFiles:
                 path1=str(file1),
                 path2=str(file2),
                 format="unified",
-                output_mode="diff_only",
+                output_mode="normal",
                 generate_ini=False,
                 verbose=False,
                 output=None,
@@ -1167,7 +1167,7 @@ class TestDiffWithTestFiles:
                 path1=str(corrupted_gff),
                 path2=str(valid_gff),
                 format="unified",
-                output_mode="diff_only",
+                output_mode="normal",
                 generate_ini=False,
                 verbose=False,
                 output=None,
@@ -1193,7 +1193,7 @@ class TestDiffWithTestFiles:
                 path1=str(file1),
                 path2=str(file2),
                 format="unified",
-                output_mode="diff_only",
+                output_mode="normal",
                 generate_ini=False,
                 verbose=False,
                 output=None,
@@ -1221,7 +1221,7 @@ class TestDiffWithTestFiles:
                 path1=str(file1),
                 path2=str(file2),
                 format="side_by_side",
-                output_mode="diff_only",
+                output_mode="normal",
                 generate_ini=False,
                 verbose=False,
                 output=None,

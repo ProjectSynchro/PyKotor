@@ -1,6 +1,6 @@
-"""KotorDiff CLI module.
+"""diff operations CLI module.
 
-This module provides command-line interface functionality for KotorDiff,
+This module provides command-line interface functionality for diff operations,
 separate from the GUI to allow CLI usage without tkinter installed.
 """
 
@@ -24,9 +24,9 @@ CURRENT_VERSION = VERSION
 
 
 def add_kotordiff_arguments(parser: ArgumentParser) -> None:
-    """Add KotorDiff arguments to an existing argument parser.
+    """Add diff operations arguments to an existing argument parser.
 
-    This function is used to integrate KotorDiff arguments into other CLI tools
+    This function is used to integrate diff operations arguments into other CLI tools
     (like PyKotor CLI) without creating a separate parser.
 
     Args:
@@ -67,8 +67,8 @@ def add_kotordiff_arguments(parser: ArgumentParser) -> None:
         "--output-mode",
         type=str,
         default="full",
-        choices=["full", "diff_only", "quiet"],
-        help="Output mode: full (all logs), diff_only (only diff results), quiet (minimal) (default: full)",
+        choices=["full", "normal", "quiet"],
+        help="Output mode: full (all logs), normal (only diff results), quiet (minimal) (default: full)",
     )
     parser.add_argument("--no-color", action="store_true", help="Disable colored output")
 
@@ -154,18 +154,17 @@ def execute_cli(cmdline_args: Namespace):
     Args:
         cmdline_args: Parsed command line arguments
     """
-    print("execute_cli called", file=sys.stderr)
-    from pykotor.diff_tool.app import KotorDiffConfig, run_application
+    from pykotor.diff_tool.app import DiffConfig, run_application
     from pykotor.extract.installation import Installation
 
     # Set up logging ONCE at the CLI level
     import logging
 
-    output_mode = getattr(cmdline_args, "output_mode", "full")
+    output_mode = getattr(cmdline_args, "output_mode", "normal")
     log_level_arg = getattr(cmdline_args, "log_level", None)
 
     # Determine log level based on output_mode or explicit log_level
-    if log_level_arg:
+    if log_level_arg is not None:
         log_level_map = {
             "debug": logging.DEBUG,
             "info": logging.INFO,
@@ -177,8 +176,8 @@ def execute_cli(cmdline_args: Namespace):
     else:
         # Default log levels based on output mode
         log_level = {
-            "full": logging.INFO,
-            "diff_only": 100,  # Disable ALL logging for pure diff output (level higher than CRITICAL)
+            "full": logging.DEBUG,
+            "normal": logging.INFO,
             "quiet": logging.ERROR,
         }.get(output_mode, logging.INFO)
 
@@ -188,10 +187,6 @@ def execute_cli(cmdline_args: Namespace):
         format="%(levelname)s: %(message)s",
         stream=sys.stderr,  # All logging goes to stderr
     )
-
-    if output_mode == "diff_only" and log_level >= logging.CRITICAL:
-        # Disable all logging for pure diff output when using default logging level
-        logging.disable(logging.CRITICAL)
 
     # Configure console for UTF-8 output on Windows
     if sys.platform == "win32":
@@ -212,7 +207,7 @@ def execute_cli(cmdline_args: Namespace):
             logging.error("Failed to configure console for UTF-8 output on Windows")
             logging.error(traceback.format_exc())
 
-    logging.info(f"KotorDiff version {CURRENT_VERSION}")
+    logging.info(f"diff operations version {CURRENT_VERSION}")
 
     # Gather all path inputs
     raw_path_inputs: list[str] = []
@@ -235,47 +230,25 @@ def execute_cli(cmdline_args: Namespace):
 
     # Convert string paths to Path/Installation objects
     resolved_paths: list[Path | Installation] = []
-    logging.error(f"raw_path_inputs: {raw_path_inputs}")
     for path_str in raw_path_inputs:
         path_obj = Path(path_str)
         try:
             # Try to create an Installation object (for KOTOR installations)
             installation = Installation(path_obj)
             resolved_paths.append(installation)
-            logging.debug(f"Loaded Installation for: {path_str}")
-        except Exception as e:  # noqa: BLE001
+        except Exception:  # noqa: BLE001
             # Fall back to Path object (for folders/files)
             resolved_paths.append(path_obj)
-            logging.debug(f"Using Path (not Installation) for: {path_str}")
-            logging.debug(f"Installation load failed: {e.__class__.__name__}: {e}")
 
-    # Special case: if comparing exactly two files, use direct diff
-    print(f"[DEBUG] Checking special case: len={len(resolved_paths)}, output_mode={output_mode}", file=sys.stderr)
     if (
         len(resolved_paths) == 2
         and all(isinstance(path, Path)
         and path.is_file()
         for path in resolved_paths)
-        and output_mode == "diff_only"
+        and output_mode == "normal"
     ):
-        print("[DEBUG] Using special case for file-to-file diff", file=sys.stderr)
         # Use direct file-to-file diff for unified output
         from pykotor.tslpatcher.diff.engine import DiffContext, diff_data
-
-        # Create a custom log function that sends diff output to stdout
-        def stdout_log_func(
-            message: str,
-            *,
-            message_type: str = "info",
-            separator: bool = False,  # pyright: ignore[reportUnusedParameter]
-            **kwargs,  # pyright: ignore[reportUnusedParameter]
-        ) -> None:
-            """Route diff output to stdout, everything else to logging."""
-            import logging
-
-            if message_type == "diff":
-                print(message)  # Print diff to stdout
-            # For diff_only mode, suppress all other output completely
 
         path1, path2 = resolved_paths
         context = DiffContext(
@@ -309,12 +282,17 @@ def execute_cli(cmdline_args: Namespace):
                 (path1.path() if isinstance(path1, Installation) else path1).read_bytes(),
                 (path2.path() if isinstance(path2, Installation) else path2).read_bytes(),
                 context,
-                log_func=stdout_log_func,
-                compare_hashes=True,
+                log_func=print,
+                compare_hashes=not bool(cmdline_args.compare_hashes),
                 format_type="unified",
             )
-            # DO NOT REMOVE THIS LOG LINE!
-            sys.exit(0 if result else 1)
+            path1 = path1.path() if isinstance(path1, Installation) else path1
+            path2 = path2.path() if isinstance(path2, Installation) else path2
+            if result:
+                print(f"{path1} MATCHES {path2}")
+            else:
+                print(f"{path1} DOES NOT MATCH {path2}")
+            sys.exit(2 if result is None else result)
         except Exception as e:
             import logging
 
@@ -323,8 +301,9 @@ def execute_cli(cmdline_args: Namespace):
             sys.exit(1)
 
     # Create configuration object
-    config = KotorDiffConfig(
+    config = DiffConfig(
         paths=resolved_paths,
+        generate_tslpatcher_config=bool(cmdline_args.generate_ini),
         tslpatchdata_path=Path(cmdline_args.tslpatchdata) if cmdline_args.tslpatchdata else None,
         ini_filename=getattr(cmdline_args, "ini", "changes.ini"),
         output_log_path=Path(cmdline_args.output_log) if cmdline_args.output_log else None,

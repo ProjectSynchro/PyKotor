@@ -463,7 +463,7 @@ switch ($LASTEXITCODE) {
 A: Ensure the module files exist in the specified directory. KotorDiff looks for `.mod`, `.rim`, `_s.rim`, and `_dlg.erf` files.
 
 **Q: Too much output when comparing installations**
-A: Use `--filter` to target specific modules or `--output-mode diff_only` to see only differences.
+A: Use `--filter` to target specific modules or `--output-mode normal` to see only differences.
 
 **Q: Module resolution seems wrong**
 A: Check the verbose logs to see which files were found and prioritized. The tool follows KOTOR's standard module loading order.

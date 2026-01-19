@@ -32,7 +32,7 @@ if KOTORDIFF_PATH.joinpath("kotordiff").exists():
     add_sys_path(KOTORDIFF_PATH)
 
 
-from pykotor.diff_tool.app import KotorDiffConfig, run_application
+from pykotor.diff_tool.app import DiffConfig, run_application
 from pykotor.common.misc import Game
 from pykotor.resource.formats.gff.gff_auto import read_gff, write_gff
 from pykotor.resource.formats.gff.gff_data import GFFContent
@@ -111,7 +111,7 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
                 write_ssf(obj, modded_dir / filename, ResourceType.SSF)
 
         # Run diff
-        config_diff = KotorDiffConfig(
+        config_diff = DiffConfig(
             paths=[vanilla_dir, modded_dir],
             tslpatchdata_path=self.tslpatchdata_path,
             ini_filename="changes.ini",

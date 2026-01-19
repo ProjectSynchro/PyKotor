@@ -46,7 +46,7 @@ if HOLOPATCHER_PATH.as_posix() not in sys.path:
     sys.path.insert(0, HOLOPATCHER_PATH.as_posix())
 
 from holopatcher.core import uninstall_mod, install_mod, load_mod, validate_game_directory, validate_install_paths, format_install_time  # pyright: ignore[reportMissingImports]
-from pykotor.diff_tool.app import KotorDiffConfig, run_application
+from pykotor.diff_tool.app import DiffConfig, run_application
 from pykotor.extract.installation import Installation  # pyright: ignore[reportMissingImports]
 from pykotor.tslpatcher.logger import PatchLogger  # pyright: ignore[reportMissingImports]
 from pathlib import Path
@@ -313,7 +313,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
             ]
 
             # Create configuration
-            config = KotorDiffConfig(
+            config = DiffConfig(
                 paths=paths,
                 tslpatchdata_path=self.tslpatchdata_path,
                 ini_filename="changes.ini",
@@ -466,7 +466,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
             # If installation worked correctly, this diff should show the same changes as the original diff
             print("[TEST] Running KotorDiff to diff installed test installation to path1 (vanilla)...")
             verify_result = run_application(
-                config=KotorDiffConfig(
+                config=DiffConfig(
                     paths=[Installation(self.test_install_path), Installation(self.path1_vanilla)],
                     tslpatchdata_path=verify_tslpatchdata_path,
                     ini_filename="verify_changes.ini",

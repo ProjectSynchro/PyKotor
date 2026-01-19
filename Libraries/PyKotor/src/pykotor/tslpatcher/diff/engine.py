@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Core comparison operations for KotorDiff.
+"""Core comparison operations for diff operations.
 
-This module offers unified diff/comparison logic for KotorDiff and is the main entry point
+This module offers unified diff/comparison logic for diff operations and is the main entry point
 for resource diffing operations. It brings together helpers for:
 
 - Resource walking: walking any path (installation root, container, directory, or single file)
@@ -13,19 +13,11 @@ Designed for both 2-way and 3-way comparisons including changes.ini generation.
 
 Handlers for individual resource formats can be added to the _HANDLERS map to extend support.
 
-References:
+Derivations and Other Implementations:
 ----------
-        Based on swkotor.exe GFF structure:
-        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
-        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
-        Original BioWare engine binaries
-        Derivations and Other Implementations:
-        ----------
-        https://github.com/th3w1zard1/TSLPatcher/tree/master/TSLPatcher.pl
-        https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/
-        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET.Patcher/
-
-
+    https://github.com/th3w1zard1/TSLPatcher/tree/master/TSLPatcher.pl (unfinished perl rewrite of TSLPatcher)
+    https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/
+    https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET.Patcher/
 """
 
 from __future__ import annotations
@@ -1330,7 +1322,7 @@ def diff_data(  # noqa: PLR0913
     data2: bytes | Path,
     context: DiffContext,
     *,
-    log_func: Callable,
+    log_func: Callable[[str], None] = print,
     compare_hashes: bool = True,
     modifications_by_type: ModificationsByType | None = None,
     incremental_writer: IncrementalTSLPatchDataWriter | None = None,
@@ -1404,30 +1396,14 @@ def diff_data(  # noqa: PLR0913
             for line in traceback.format_exc().splitlines():
                 log_func(f"  {line}")
             return None
-        if not gff1 and not gff2:
-            log_func(f"Both GFF resources missing in memory:\t'{context.where}'")
-            return None
-        if not gff1:
-            log_func(f"GFF resource missing in memory:\t'{context.file1_rel.parent / where}'")
-            return None
-        if not gff2:
-            log_func(f"GFF resource missing in memory:\t'{context.file2_rel.parent / where}'")
-            return None
         # Extract just the filename from context.where to avoid duplication in field paths
         # If context.where is "swkotor\Override\journal.gui", use just "journal.gui" as the root path
         compare_path = PureWindowsPath(Path(str(context.where)).name)
         comparison_result = GFFComparisonResult()
-        if not (gff1 and gff2):
-            return True
         # For GFF comparison, always use structured format to get field-by-field diffs
         are_same = gff1.compare(gff2, log_func, compare_path, comparison_result=comparison_result, format_type="structured")
         if are_same and not comparison_result.has_field_differences():
             return True
-
-        # For GFF files, we've already done the structured comparison above.
-        # Return False to indicate differences without falling through to binary text comparison.
-        log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
-        return False
 
         if modifications_by_type is not None or format_type != "unified":
             try:
@@ -1436,7 +1412,8 @@ def diff_data(  # noqa: PLR0913
                     # For unified diff format, continue to text comparison instead of returning early
                     if format_type != "unified":
                         # Log final separator AFTER all patch info
-                        log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
+                        log_func(f"^ '{context.where}': GFF is different ^")
+                        log_func("---------------------------------------")
                         return False
                     # Fall through to text comparison for unified diff
 
@@ -1499,13 +1476,12 @@ def diff_data(  # noqa: PLR0913
                 log_func("Full traceback:")
                 for line in traceback.format_exc().splitlines():
                     log_func(f"  {line}")
-
-        # Log final separator AFTER all patch info
-        if format_type != "unified":
-            log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
+        else:
+            # For GFF files, we've already done the structured comparison above.
+            # Return False to indicate differences without falling through to binary text comparison.
+            log_func(f"^ '{context.where}': GFF is different ^")
+            log_func("---------------------------------------")
             return False
-        # Fall through to text comparison for unified diff
-
     # Define known binary formats that should never be treated as text
     BINARY_FORMATS = {
         # Scripts and models
@@ -1561,21 +1537,22 @@ def diff_data(  # noqa: PLR0913
                         return True
 
                     # Provide a summary of differences
-                    log_func("NCS scripts differ:", message_type="diff")
-                    log_func(f"  Old: {len(obj1.instructions)} instructions", message_type="diff")
-                    log_func(f"  New: {len(obj2.instructions)} instructions", message_type="diff")
+                    log_func("NCS scripts differ:")
+                    log_func(f"  Old: {len(obj1.instructions)} instructions")
+                    log_func(f"  New: {len(obj2.instructions)} instructions")
 
                     # Show first few differences only
                     MAX_DIFF_LINES = 20
                     if len(comparison_lines) > MAX_DIFF_LINES:
                         for line in comparison_lines[:MAX_DIFF_LINES]:
-                            log_func(line.rstrip(), message_type="diff")
-                        log_func(f"  ... ({len(comparison_lines) - MAX_DIFF_LINES} more difference lines omitted)", message_type="diff")
+                            log_func(line.rstrip())
+                        log_func(f"  ... ({len(comparison_lines) - MAX_DIFF_LINES} more difference lines omitted)")
                     else:
                         for line in comparison_lines:
-                            log_func(line.rstrip(), message_type="diff")
+                            log_func(line.rstrip())
 
-                    log_func(f"^ '{context.where}': {context.ext.upper()} is different ^", separator=True, message_type="diff")
+                    log_func(f"^ '{context.where}': {context.ext.upper()} is different ^")
+                    log_func("---------------------------------------------------------")
                     return False
 
                 # Use the structured compare method for other files
@@ -2631,65 +2608,6 @@ class DiffDirectoriesFunc(Protocol):
         ...
 
 
-def diff_installs_implementation(
-    install_path1: Path,
-    install_path2: Path,
-    *,
-    filters: list[str] | None = None,
-    log_func: Callable[[str], None],
-    diff_files_func: Callable[[Path, Path], bool | None],
-    diff_directories_func: DiffDirectoriesFunc,
-) -> bool | None:
-    """Compare two KOTOR installations by diffing their standard directories."""
-    rinstall_path1: CaseAwarePath = CaseAwarePath(install_path1).resolve()
-    rinstall_path2: CaseAwarePath = CaseAwarePath(install_path2).resolve()
-    log_func("")
-    log_func((max(len(str(rinstall_path1)) + 29, len(str(rinstall_path2)) + 30)) * "-")
-    log_func(f"Searching first install dir: {rinstall_path1}")
-    log_func(f"Searching second install dir: {rinstall_path2}")
-    if filters:
-        log_func(f"Using filters: {filters}")
-    log_func("")
-
-    is_same_result: bool | None = True
-
-    # Compare dialog.tlk
-    if not filters or any("dialog.tlk" in f.lower() or "tlk" in f.lower() for f in filters):
-        is_same_result = (
-            diff_files_func(
-                rinstall_path1.joinpath("dialog.tlk"),
-                rinstall_path2 / "dialog.tlk",
-            )
-            and is_same_result
-        )
-
-    # Compare standard directories
-    for dir_name in ["Modules", "Override", "Lips"]:
-        mine = rinstall_path1 / dir_name
-        older = rinstall_path2 / dir_name
-        is_same_result = (
-            diff_directories_func(
-                mine,
-                older,
-                filters=filters,
-            )
-            and is_same_result
-        )
-
-    # Streamwaves (may be named streamvoice)
-    streamwaves_path1 = rinstall_path1.joinpath("streamwaves") if rinstall_path1.joinpath("streamwaves").is_dir() else rinstall_path1.joinpath("streamvoice")
-    streamwaves_path2 = rinstall_path2.joinpath("streamwaves") if rinstall_path2.joinpath("streamwaves").is_dir() else rinstall_path2.joinpath("streamvoice")
-    is_same_result = (
-        diff_directories_func(
-            streamwaves_path1,
-            streamwaves_path2,
-            filters=filters,
-        )
-        and is_same_result
-    )
-    return is_same_result
-
-
 # ---------------------------------------------------------------------------
 # Resource resolution
 # ---------------------------------------------------------------------------
@@ -2776,7 +2694,7 @@ def determine_source_location(filepath: str) -> str:
     if "rims" in filepath:
         return f"RIM: {filepath}"
     if "chitin.key" in filepath or "data" in filepath.lower():
-        return f"Chitin: {filepath}"
+        return f"Chitin/BIF: {filepath}"
     return f"Other: {filepath}"
 
 

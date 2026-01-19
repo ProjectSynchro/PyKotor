@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""Enhanced logging system for KotorDiff with colorama support and configurable levels."""
+"""Enhanced logging system for diff operations with colorama support and configurable levels."""
+
 from __future__ import annotations
 
 import logging
 import sys
 
-from enum import Enum
 from io import StringIO
 from typing import ClassVar, TextIO
+
+from pykotor.cli.logger import LogLevel, OutputMode
 
 try:
     import colorama  # type: ignore[import-untyped]
 
     from colorama import Fore, Style
+
     colorama.init(autoreset=True)
     HAS_COLORAMA = True
 except ImportError:
@@ -38,29 +41,13 @@ except ImportError:
     Style = _FakeStyle()
 
 
-class LogLevel(Enum):
-    """Logging levels for KotorDiff."""
-    DEBUG = logging.DEBUG
-    INFO = logging.INFO
-    WARNING = logging.WARNING
-    ERROR = logging.ERROR
-    CRITICAL = logging.CRITICAL
-
-
-class OutputMode(Enum):
-    """Output modes for KotorDiff."""
-    FULL = "full"  # Include all logging output
-    DIFF_ONLY = "diff_only"  # Only diff results
-    QUIET = "quiet"  # Minimal output
-
-
 class DiffLogger:
-    """Enhanced logger for KotorDiff with color support and configurable output modes."""
+    """Enhanced logger for diff operations with color support and configurable output modes."""
 
     def __init__(
         self,
         level: LogLevel = LogLevel.INFO,
-        output_mode: OutputMode = OutputMode.FULL,
+        output_mode: OutputMode = OutputMode.NORMAL,
         *,
         use_colors: bool = True,
         output_file: TextIO | None = None,
@@ -77,7 +64,7 @@ class DiffLogger:
         # Clear any existing handlers
         self._logger.handlers.clear()
 
-        # Add console handler (but not in DIFF_ONLY or QUIET modes)
+        # Add console handler (but not in NORMAL or QUIET modes)
         if self.output_mode == OutputMode.FULL:
             console_handler = logging.StreamHandler(sys.stdout)
             console_handler.setLevel(level.value)
@@ -90,7 +77,7 @@ class DiffLogger:
             self._logger.addHandler(console_handler)
 
         # Add file handler if specified
-        if output_file:
+        if output_file is not None:
             file_handler = logging.StreamHandler(output_file)
             file_handler.setLevel(level.value)
             file_formatter = logging.Formatter("%(asctime)s - %(levelname)s: %(message)s")
@@ -99,7 +86,7 @@ class DiffLogger:
 
     def debug(self, message: str, *args, **kwargs):
         """Log a debug message."""
-        if self.output_mode != OutputMode.DIFF_ONLY:
+        if self.output_mode == OutputMode.FULL:
             self._logger.debug(message, *args, **kwargs)
 
     def info(self, message: str, *args, **kwargs):
@@ -122,7 +109,7 @@ class DiffLogger:
 
     def diff_output(self, message: str, *args, **kwargs):
         """Output diff-specific content based on output mode."""
-        if self.output_mode == OutputMode.FULL or self.output_mode == OutputMode.DIFF_ONLY:
+        if self.output_mode == OutputMode.FULL or self.output_mode == OutputMode.NORMAL:
             print(message, *args, **kwargs)
             if self.output_file:
                 print(message, *args, file=self.output_file, **kwargs)
@@ -155,7 +142,7 @@ class ColoredFormatter(logging.Formatter):
         logging.CRITICAL: Fore.MAGENTA + Style.BRIGHT,
     }
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         if record.levelno in self.COLORS:
             color = self.COLORS[record.levelno]
             record.levelname = f"{color}{record.levelname}{Style.RESET_ALL}"
@@ -169,7 +156,7 @@ _logger: DiffLogger | None = None
 
 def setup_logger(
     level: LogLevel = LogLevel.INFO,
-    output_mode: OutputMode = OutputMode.FULL,
+    output_mode: OutputMode = OutputMode.NORMAL,
     *,
     use_colors: bool = True,
     output_file: TextIO | None = None,
@@ -218,7 +205,13 @@ def diff_output(message: str, *args, **kwargs):
     get_logger().diff_output(message, *args, **kwargs)
 
 
-def separator(message: str, char: str = "-", *, above: bool = False, below: bool = True):
+def separator(
+    message: str,
+    char: str = "-",
+    *,
+    above: bool = False,
+    below: bool = True,
+) -> None:
     """Output a separator line."""
     get_logger().separator(message, char=char, above=above, below=below)
 
@@ -226,6 +219,7 @@ def separator(message: str, char: str = "-", *, above: bool = False, below: bool
 # ---------------------------------------------------------------------------
 # Legacy log_output functions for backwards compatibility with __main__.py
 # ---------------------------------------------------------------------------
+
 
 def log_output_basic(*args, **kwargs):
     """Basic logging output without file handling (used when global config not set)."""

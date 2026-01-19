@@ -19,7 +19,7 @@ All cli commands implemented with identical syntax, plus the merged KotorDiff wo
 7. **pack** - Pack sources into modules/ERFs/haks
 8. **install** - Pack and install to KOTOR directory
 9. **launch** - Install and launch game
-10. **diff-installation / kotordiff** - Structured comparisons across files, modules, and installations with headless CLI + GUI fallback
+10. **diff / kotordiff** - Structured comparisons across files, modules, and installations with headless CLI + GUI fallback
 
 ### 2. PyKotor Integration
 

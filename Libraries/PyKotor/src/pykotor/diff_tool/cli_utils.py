@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI utilities for KotorDiff including path normalization and argument handling."""
+"""CLI utilities for diff operations including path normalization and argument handling."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

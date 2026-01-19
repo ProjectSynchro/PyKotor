@@ -1,4 +1,4 @@
-"""KotorDiff-driven comparison command for PyKotor CLI."""
+"""diff operations-driven comparison command for PyKotor CLI."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from loggerplus import RobustLogger as Logger  # type: ignore[import-untyped]
 
 
 def cmd_diff_installation(args: Namespace, logger: Logger) -> int:
-    """Run the KotorDiff tool via the kotordiff package.
+    """Run the diff operations tool via the kotordiff package.
 
     This command delegates to the `kotor-diff` package if installed.
     If not available, provides a helpful error message.
@@ -76,11 +76,11 @@ def cmd_diff_installation(args: Namespace, logger: Logger) -> int:
         return kotordiff_main(argv)
     except ImportError:
         logger.error(
-            "KotorDiff functionality requires the 'kotor-diff' package to be installed.\n"
+            "diff operations functionality requires the 'kotor-diff' package to be installed.\n"
             "Install it with: pip install kotor-diff\n"
             "Or use the standalone kotordiff tool."
         )
         return 1
     except Exception:
-        logger.exception("KotorDiff execution failed")
+        logger.exception("diff operations execution failed")
         return 1

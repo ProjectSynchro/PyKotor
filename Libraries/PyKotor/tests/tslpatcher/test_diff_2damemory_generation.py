@@ -31,7 +31,7 @@ add_sys_path(REPO_ROOT / "Tools" / "KotorDiff" / "src")
 
 from configparser import ConfigParser
 
-from pykotor.diff_tool.app import KotorDiffConfig, run_application
+from pykotor.diff_tool.app import DiffConfig, run_application
 from pykotor.resource.formats.gff import GFF, write_gff
 from pykotor.resource.formats.twoda import TwoDA, write_2da
 from pykotor.resource.type import ResourceType
@@ -107,7 +107,7 @@ class TestDiff2DAMemoryGeneration(unittest.TestCase):
         write_gff(modded_gff, modded_dir / "creature.utc", ResourceType.GFF)
 
         # Run diff
-        config_diff = KotorDiffConfig(
+        config_diff = DiffConfig(
             paths=[vanilla_dir, modded_dir],
             tslpatchdata_path=self.tslpatchdata_path,
             ini_filename="changes.ini",
@@ -186,7 +186,7 @@ class TestDiff2DAMemoryGeneration(unittest.TestCase):
         write_gff(modded_gff, modded_dir / "item.uti", ResourceType.GFF)
 
         # Run diff
-        config_diff = KotorDiffConfig(
+        config_diff = DiffConfig(
             paths=[vanilla_dir, modded_dir],
             tslpatchdata_path=self.tslpatchdata_path,
             ini_filename="changes.ini",
@@ -267,7 +267,7 @@ class TestDiff2DAMemoryGeneration(unittest.TestCase):
         write_gff(modded_gff2, modded_dir / "creature2.utc", ResourceType.GFF)
 
         # Run diff
-        config_diff = KotorDiffConfig(
+        config_diff = DiffConfig(
             paths=[vanilla_dir, modded_dir],
             tslpatchdata_path=self.tslpatchdata_path,
             ini_filename="changes.ini",
@@ -330,7 +330,7 @@ class TestDiff2DAMemoryGeneration(unittest.TestCase):
         write_2da(modded_appearance, modded_dir / "appearance.2da", ResourceType.TwoDA)
 
         # Run diff
-        config_diff = KotorDiffConfig(
+        config_diff = DiffConfig(
             paths=[vanilla_dir, modded_dir],
             tslpatchdata_path=self.tslpatchdata_path,
             ini_filename="changes.ini",
@@ -422,7 +422,7 @@ class TestDiff2DAMemoryGeneration(unittest.TestCase):
         write_gff(modded_gff, modded_dir / "test_item.uti", ResourceType.GFF)
 
         # Run diff
-        config_diff = KotorDiffConfig(
+        config_diff = DiffConfig(
             paths=[vanilla_dir, modded_dir],
             tslpatchdata_path=self.tslpatchdata_path,
             ini_filename="changes.ini",
@@ -561,7 +561,7 @@ class TestDiff2DAMemoryGeneration(unittest.TestCase):
         modded_template.root.set_uint16("Appearance_Type", 1)
         write_gff(modded_template, modded_dir / "droid.utc", ResourceType.GFF)
 
-        config = KotorDiffConfig(
+        config = DiffConfig(
             paths=[vanilla_dir, modded_dir],
             tslpatchdata_path=self.tslpatchdata_path,
             ini_filename="changes.ini",

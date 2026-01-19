@@ -134,30 +134,6 @@ def _organize_commands_by_category() -> dict[str, list[str]]:
     return categories
 
 
-def _add_kotordiff_arguments_fallback(parser: ArgumentParser) -> ArgumentParser:
-    """Fallback implementation of kotordiff arguments if kotordiff package is not available."""
-    parser.add_argument("--path1", type=str, help="Path to compare")
-    parser.add_argument("--path2", type=str, help="Additional path to compare")
-    parser.add_argument("--path3", type=str, help="Additional path to compare")
-    parser.add_argument("--path", action="append", dest="extra_paths", help="Additional paths for N-way comparison")
-    parser.add_argument("--tslpatchdata", type=str, help="Path where tslpatchdata folder should be created")
-    parser.add_argument("--ini", type=str, default="changes.ini", help="Filename for changes.ini")
-    parser.add_argument("--output-log", type=str, help="Filepath of the desired output logfile")
-    parser.add_argument("--log-level", type=str, default="info", choices=["debug", "info", "warning", "error", "critical"], help="Logging level")
-    parser.add_argument("--output-mode", type=str, default="full", choices=["full", "diff_only", "quiet"], help="Output mode")
-    parser.add_argument("--no-color", action="store_true", help="Disable colored output")
-    parser.add_argument("--compare-hashes", dest="compare_hashes", action="store_true", default=True, help="Compare hashes")
-    parser.add_argument("--no-compare-hashes", dest="compare_hashes", action="store_false", help="Disable hash comparison")
-    parser.add_argument("--filter", action="append", help="Filter specific files/modules")
-    parser.add_argument("--logging", dest="logging", action="store_true", default=True, help="Whether to log results")
-    parser.add_argument("--no-logging", dest="logging", action="store_false", help="Disable log file generation")
-    parser.add_argument("--use-profiler", action="store_true", default=False, help="Use cProfile")
-    parser.add_argument("--incremental", dest="use_incremental_writer", action="store_true", default=False, help="Write TSLPatcher data incrementally")
-    parser.add_argument("--console", action="store_true", help="Show console window even in GUI mode")
-    parser.add_argument("--gui", action="store_true", help="Force GUI mode even with paths provided")
-    return parser
-
-
 def _get_invocation_command() -> str:
     """Get the actual command used to invoke the CLI."""
     if not sys.argv:
@@ -241,7 +217,7 @@ def create_parser(prog: str | None = None) -> ArgumentParser:  # noqa: PLR0915
 
 \033[1;33mCommon Workflows:\033[0m
   {prog} unpack mymod.mod && {prog} convert && {prog} pack
-  {prog} diff path1 path2 --output-mode diff_only
+  {prog} diff path1 path2 --output-mode normal
   {prog} extract --file chitin.key --filter "*.utc"
 
 \033[1;32mGlobal Options:\033[0m
@@ -386,7 +362,7 @@ def create_parser(prog: str | None = None) -> ArgumentParser:  # noqa: PLR0915
 Extract files from Bioware archive formats including:
 • ERF files (.erf, .mod, .sav)
 • RIM files (.rim)
-• KEY/BIF archives (chitin.key)
+• BIF archives (.bif)
 
 \033[1;36mExamples:\033[0m
   {prog} extract --file mymodule.mod
@@ -525,7 +501,7 @@ Compare two paths and show differences. Supports any combination of:
 
 \033[1;36mExamples:\033[0m
   {prog} diff module1.mod module2.mod
-  {prog} diff /path/to/kotor1 /path/to/kotor2 --output-mode diff_only
+  {prog} diff /path/to/kotor1 /path/to/kotor2 --output-mode normal
   {prog} diff file1.gff file2.gff --format side_by_side
   {prog} diff --generate-ini installation1 installation2
 """
@@ -534,8 +510,8 @@ Compare two paths and show differences. Supports any combination of:
     diff_parser.add_argument("path2", help="Second path (file, folder, installation, or archive)")
     diff_parser.add_argument("--format", choices=["unified", "context", "side_by_side"], default="unified",
                            help="Output format: unified (default), context, or side_by_side")
-    diff_parser.add_argument("--output-mode", choices=["full", "diff_only", "quiet"], default="full",
-                           help="Output mode: full (with logging), diff_only (diffs only), quiet (minimal)")
+    diff_parser.add_argument("--output-mode", choices=["full", "normal", "quiet"], default="full",
+                           help="Output mode: full (with debug logging), normal (with informatic logging), quiet (diff only)")
     diff_parser.add_argument("--generate-ini", action="store_true",
                            help="Generate TSLPatcher changes.ini and tslpatchdata folder")
     diff_parser.add_argument("--output", "-o", dest="output", help="Write diff output to file")

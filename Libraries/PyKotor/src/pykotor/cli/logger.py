@@ -1,15 +1,33 @@
+#!/usr/bin/env python3
 """Logging utilities for PyKotor CLI."""
 
 from __future__ import annotations
 
 import logging
 import sys
-from typing import TYPE_CHECKING, ClassVar
+
+from enum import Enum
+from typing import ClassVar
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped]
 
-if TYPE_CHECKING:
-    from logging import Logger
+
+class LogLevel(Enum):
+    """Logging levels for diff operations."""
+
+    DEBUG = logging.DEBUG
+    INFO = logging.INFO
+    WARNING = logging.WARNING
+    ERROR = logging.ERROR
+    CRITICAL = logging.CRITICAL
+
+
+class OutputMode(Enum):
+    """Output modes for diff operations."""
+
+    FULL = "full"  # Include all logging output
+    NORMAL = "normal"
+    QUIET = "quiet"  # Minimal output
 
 
 # ANSI color codes

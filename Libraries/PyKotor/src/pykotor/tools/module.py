@@ -90,7 +90,7 @@ def clone_module(  # noqa: C901, PLR0915, PLR0912, PLR0913
         Original BioWare engine binaries
         Derivations and Other Implementations:
         ----------
-        https://github.com/th3w1zard1/TSLPatcher/tree/master/TSLPatcher.pl (Module installation/cloning logic)
+        https://github.com/th3w1zard1/TSLPatcher/tree/master/TSLPatcher.pl (unfinished perl rewrite of TSLPatcher) (Module installation/cloning logic)
         https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/TSLPatcher.Core/Patcher/ModInstaller.cs (Module handling)
 
 

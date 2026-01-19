@@ -15,7 +15,8 @@ from typing import Any
 from loggerplus import RobustLogger as Logger  # type: ignore[import-untyped]
 
 # Import the proper diff logging system
-from pykotor.diff_tool.logger import DiffLogger, LogLevel, OutputMode
+from pykotor.cli.logger import LogLevel, OutputMode
+from pykotor.diff_tool.logger import DiffLogger
 from pykotor.extract.installation import Installation
 from pykotor.resource.formats.gff import GFF, read_gff, write_gff
 from pykotor.tools.misc import is_capsule_file
@@ -92,13 +93,11 @@ def _diff_archives_or_directories(
 
         # Report added/removed resources
         for resource_key in sorted(only_in_1):
-            if output_mode != OutputMode.QUIET:
-                diff_logger.info(f"Only in {args.path1}: {resource_key}")
+            diff_logger.debug(f"Only in {args.path1}: {resource_key}")
             differences_found = True
 
         for resource_key in sorted(only_in_2):
-            if output_mode != OutputMode.QUIET:
-                diff_logger.info(f"Only in {args.path2}: {resource_key}")
+            diff_logger.debug(f"Only in {args.path2}: {resource_key}")
             differences_found = True
 
         # Compare common resources
@@ -119,7 +118,7 @@ def _diff_archives_or_directories(
 
                 if result is False:  # Different
                     differences_found = True
-                    if output_mode == OutputMode.DIFF_ONLY:
+                    if output_mode == OutputMode.NORMAL:
                         # Try to output unified diff for the raw data
                         try:
                             import difflib
@@ -135,23 +134,21 @@ def _diff_archives_or_directories(
                                 print("".join(diff_lines), end="")
                         except Exception:
                             # Fallback to simple message
+                            diff_logger._logger.exception("Error formatting unified diff")
                             diff_logger.info(f"Files differ: {resource_key}")
 
-            except Exception as e:
+            except Exception:
                 # If structured diff fails, fall back to simple comparison
                 if data1 != data2:
                     differences_found = True
-                    if output_mode != OutputMode.QUIET:
-                        diff_logger.info(f"Files differ: {resource_key}")
+                    diff_logger.info(f"Files differ: {resource_key}")
 
         # Summary
         if not differences_found:
-            if output_mode != OutputMode.DIFF_ONLY:
-                diff_logger.info(f"'{args.path1}' MATCHES '{args.path2}'")
+            diff_logger.info(f"'{args.path1}' MATCHES '{args.path2}'")
             return 0
         else:
-            if output_mode != OutputMode.DIFF_ONLY:
-                diff_logger.info(f"'{args.path1}' DOES NOT MATCH '{args.path2}'")
+            diff_logger.info(f"'{args.path1}' DOES NOT MATCH '{args.path2}'")
             return 1
 
     except Exception as e:
@@ -274,13 +271,13 @@ def cmd_diff(
         return 1
 
     # Set up proper diff logging system
-    output_mode_str = getattr(args, "output_mode", "full").lower()
+    output_mode_str = getattr(args, "output_mode", "normal").lower()
     output_mode_map = {
         "full": OutputMode.FULL,
-        "diff_only": OutputMode.DIFF_ONLY,
+        "normal": OutputMode.NORMAL,
         "quiet": OutputMode.QUIET,
     }
-    output_mode = output_mode_map.get(output_mode_str, OutputMode.FULL)
+    output_mode = output_mode_map.get(output_mode_str, OutputMode.NORMAL)
 
     # Display CLI arguments (for parity with other diff tools)
     if output_mode != OutputMode.QUIET:
@@ -295,8 +292,7 @@ def cmd_diff(
 
     # Handle special case: identical paths should always match
     if args.path1 == args.path2:
-        if output_mode != OutputMode.DIFF_ONLY:
-            print(f"'{args.path1}' MATCHES '{args.path2}'")
+        print(f"'{args.path1}' MATCHES '{args.path2}'")
         return 0
 
     # Handle output redirection
@@ -374,7 +370,7 @@ def cmd_diff(
 
     if generate_ini:
         # Use the full TSLPatcher application for INI generation
-        from pykotor.tslpatcher.diff.application import DiffConfig, handle_diff, run_application  # noqa: PLC0415
+        from pykotor.cli.diff_tool.app import DiffConfig, handle_diff, run_application  # noqa: PLC0415
 
         # Convert Path objects to the format expected by TSLPatcher
         paths_for_tslpatcher = []
@@ -450,12 +446,11 @@ def cmd_diff(
                 format_type=format_type,
             )
 
-            # Add summary message (but not in diff_only mode)
-            if output_mode != OutputMode.DIFF_ONLY:
-                if result:
-                    diff_logger.info(f"'{args.path1}' MATCHES '{args.path2}'")
-                else:
-                    diff_logger.info(f"'{args.path1}' DOES NOT MATCH '{args.path2}'")
+            # Add summary message (but not in normal mode)
+            if result:
+                diff_logger.info(f"'{args.path1}' MATCHES '{args.path2}'")
+            else:
+                diff_logger.info(f"'{args.path1}' DOES NOT MATCH '{args.path2}'")
 
             return 0 if result else 1
 

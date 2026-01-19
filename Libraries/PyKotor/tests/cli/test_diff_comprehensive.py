@@ -11,7 +11,7 @@ This test suite covers ALL diff scenarios including:
 - Single resource vs Installation (with proper resolution order)
 - Resource conflicts (same resref in multiple archives/locations)
 - Complex installation layout (Override, Modules, BIFs, etc.)
-- Output modes (full, diff_only, quiet)
+- Output modes (full, normal, quiet)
 - Context and comparison options
 
 Test organization mirrors test_are_editor.py:
@@ -537,7 +537,7 @@ class TestDiffFileVsFile:
                 path1=str(file1),
                 path2=str(file2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -562,7 +562,7 @@ class TestDiffFileVsFile:
                 path1=str(file1),
                 path2=str(file2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -588,7 +588,7 @@ class TestDiffFileVsFile:
                 path1=str(file1),
                 path2=str(file2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -613,7 +613,7 @@ class TestDiffFileVsFile:
                 path1=str(file1),
                 path2=str(file2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -655,7 +655,7 @@ class TestDiffFolderVsFolder:
                 path1=str(path1),
                 path2=str(path2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -689,7 +689,7 @@ class TestDiffFolderVsFolder:
                 path1=str(path1),
                 path2=str(path2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -720,7 +720,7 @@ class TestDiffFolderVsFolder:
                 path1=str(path1),
                 path2=str(path2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -904,7 +904,7 @@ class TestOutputModes:
             DiffTestDataHelper.cleanup_test_env(temp_dir)
 
     def test_output_mode_diff_only(self, tmp_path: Path):
-        """Test diff_only output mode."""
+        """Test normal output mode."""
         temp_dir, path1, path2 = DiffTestDataHelper.create_test_env()
 
         try:
@@ -916,7 +916,7 @@ class TestOutputModes:
                 path1=str(file1),
                 path2=str(file2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -950,7 +950,7 @@ class TestEdgeCases:
                 path1=str(file1),
                 path2=str(file2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -975,7 +975,7 @@ class TestEdgeCases:
                 path1=str(file1),
                 path2=str(file2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -998,7 +998,7 @@ class TestEdgeCases:
                 path1=str(path1),
                 path2=str(path1),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -1021,7 +1021,7 @@ class TestEdgeCases:
                 path1=str(file1),
                 path2=str(file2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -1064,7 +1064,7 @@ class TestComplexScenarios:
                 path1=str(path1),
                 path2=str(path2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,
@@ -1097,7 +1097,7 @@ class TestComplexScenarios:
                 path1=str(path1),
                 path2=str(path2),
                 output=None,
-                output_mode="diff_only",
+                output_mode="normal",
                 verbose=False,
                 debug=False,
                 context=3,

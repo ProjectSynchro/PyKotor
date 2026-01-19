@@ -10,27 +10,29 @@ import traceback
 
 from typing import TYPE_CHECKING, Any
 
-from pykotor.resource.formats.gff.gff_auto import read_gff
-from pykotor.resource.formats.gff.gff_data import GFFFieldType
-from pykotor.resource.formats.tlk.tlk_auto import read_tlk
-from pykotor.resource.formats.twoda.twoda_auto import read_2da
+from pykotor.resource.formats.gff import GFFFieldType, read_gff
+from pykotor.resource.formats.tlk import read_tlk
+from pykotor.resource.formats.twoda import read_2da
+from pykotor.tslpatcher.diff.objects import (
+    ColumnDiff,
+    DiffType,
+    HeaderDiff,
+    TwoDADiffResult,
+)
 
 if TYPE_CHECKING:
     from pykotor.common.language import LocalizedString
     from pykotor.common.misc import ResRef
-    from pykotor.resource.formats.gff.gff_data import GFFList, GFFStruct
-    from pykotor.resource.formats.twoda.twoda_data import TwoDA
+    from pykotor.resource.formats.gff import GFFList, GFFStruct
+    from pykotor.resource.formats.twoda import TwoDA
     from pykotor.tslpatcher.diff.objects import (  # noqa: PLC0415
         CellDiff,
-        ColumnDiff,
         FieldDiff,
         GFFDiffResult,
-        HeaderDiff,
         RowDiff,
         StructDiff,
         TLKDiffResult,
         TLKEntryDiff,
-        TwoDADiffResult,
     )
     from utility.common.geometry import Vector3, Vector4
 
@@ -46,10 +48,7 @@ class StructuredDiffEngine:
         right_id: str,
     ) -> TwoDADiffResult:
         """Compare two 2DA files and return structured diff."""
-        from pykotor.tslpatcher.diff.objects import (  # noqa: PLC0415
-            DiffType,
-            TwoDADiffResult,
-        )
+
         try:
             left_2da = read_2da(left_data)
             right_2da = read_2da(right_data)
@@ -92,10 +91,6 @@ class StructuredDiffEngine:
         right_2da: TwoDA,
     ) -> list[HeaderDiff]:
         """Compare 2DA headers."""
-        from pykotor.tslpatcher.diff.objects import (  # noqa: PLC0415
-            DiffType,
-            HeaderDiff,
-        )
         header_diffs: list[HeaderDiff] = []
 
         left_headers = left_2da.get_headers()
@@ -132,10 +127,6 @@ class StructuredDiffEngine:
         right_2da: TwoDA,
     ) -> list[ColumnDiff]:
         """Compare 2DA columns."""
-        from pykotor.tslpatcher.diff.objects import (  # noqa: PLC0415
-            ColumnDiff,
-            DiffType,
-        )
         column_diffs: list[ColumnDiff] = []
 
         left_headers = set(left_2da.get_headers())
@@ -178,6 +169,7 @@ class StructuredDiffEngine:
             DiffType,
             RowDiff,
         )
+
         row_diffs: list[RowDiff] = []
 
         left_height = left_2da.get_height()
@@ -264,6 +256,7 @@ class StructuredDiffEngine:
             DiffType,
             GFFDiffResult,
         )
+
         try:
             left_gff = read_gff(left_data)
             right_gff = read_gff(right_data)
@@ -311,6 +304,7 @@ class StructuredDiffEngine:
             DiffType,
             FieldDiff,
         )
+
         field_diffs: list[FieldDiff] = []
         struct_diffs: list[StructDiff] = []
 
@@ -410,6 +404,7 @@ class StructuredDiffEngine:
             DiffType,
             FieldDiff,
         )
+
         try:
             if not left_struct.exists(field_label) or not right_struct.exists(field_label):
                 return None
@@ -436,14 +431,22 @@ class StructuredDiffEngine:
 
         # Handle nested structures
         if left_field_type == GFFFieldType.Struct:
-            left_nested: GFFStruct = left_struct.get_struct(field_label)
-            right_nested: GFFStruct = right_struct.get_struct(field_label)
+            left_nested: GFFStruct | None = left_struct.get_struct(field_label)
+            if left_nested is None:
+                return None
+            right_nested: GFFStruct | None = right_struct.get_struct(field_label)
+            if right_nested is None:
+                return None
             return self._compare_gff_structs(left_nested, right_nested, field_path)
 
         if left_field_type == GFFFieldType.List:
             # List comparison is complex, simplified here
-            left_list: GFFList = left_struct.get_list(field_label)
-            right_list: GFFList = right_struct.get_list(field_label)
+            left_list: GFFList | None = left_struct.get_list(field_label)
+            if left_list is None:
+                return None
+            right_list: GFFList | None = right_struct.get_list(field_label)
+            if right_list is None:
+                return None
 
             if len(left_list) != len(right_list):
                 return FieldDiff(
@@ -519,6 +522,7 @@ class StructuredDiffEngine:
             TLKDiffResult,
             TLKEntryDiff,
         )
+
         try:
             left_tlk = read_tlk(left_data)
             right_tlk = read_tlk(right_data)
@@ -604,4 +608,3 @@ class StructuredDiffEngine:
             right_value=right_data,
             entry_diffs=entry_diffs,
         )
-

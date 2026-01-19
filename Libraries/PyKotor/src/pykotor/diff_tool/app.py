@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Main application logic for KotorDiff.
+"""Main application logic for diff operations.
 
 This module contains the core application flow, keeping __main__.py focused
 exclusively on CLI argument parsing.
@@ -13,17 +13,22 @@ import traceback
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, TextIO
+from typing import TYPE_CHECKING, Any, Callable, TextIO
 
 from pykotor.common.misc import Game
 from pykotor.extract.installation import Installation
 from pykotor.resource.formats import gff
 from pykotor.tools.reference_cache import StrRefReferenceCache
 
-# Cache support removed
-from pykotor.tslpatcher.diff.analyzers import analyze_tlk_strref_references
-from pykotor.tslpatcher.diff.engine import diff_data, get_module_root, run_differ_from_args_impl
-from pykotor.tslpatcher.diff.generator import TSLPatchDataGenerator, determine_install_folders
+from pykotor.tslpatcher.diff.engine import (
+    diff_data,
+    get_module_root,
+    run_differ_from_args_impl,
+)
+from pykotor.tslpatcher.diff.generator import (
+    TSLPatchDataGenerator,
+    determine_install_folders,
+)
 from pykotor.tslpatcher.writer import IncrementalTSLPatchDataWriter, ModificationsByType, TSLPatcherINISerializer
 
 if TYPE_CHECKING:
@@ -34,38 +39,35 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class KotorDiffConfig:
-    """Configuration for KotorDiff operations."""
+class DiffConfig:
+    """Configuration for diff operations."""
 
     paths: list[Path | Installation]
+    generate_tslpatcher_config: bool = False
     tslpatchdata_path: Path | None = None
     ini_filename: str = "changes.ini"
     output_log_path: Path | None = None
     log_level: str = "info"
-    output_mode: Literal["full", "diff_only", "quiet"] = "diff_only"
+    output_mode: Literal["full", "normal", "quiet"] = "normal"
     use_colors: bool = True
     compare_hashes: bool = True
     use_profiler: bool = False
     filters: list[str] | None = None
     logging_enabled: bool = True
     use_incremental_writer: bool = False
+    ui_log_func: Callable[..., Any] | None = None
 
 
 gff_types: list[str] = list(gff.GFFContent.get_extensions())
 
 
-def find_module_root(filename: str) -> str:
-    """Wrapper around get_module_root for backwards compatibility."""
-    return get_module_root(Path(filename))
-
-
 @dataclass
 class GlobalConfig:
-    """Global configuration state for KotorDiff."""
+    """Global configuration state for diff operations."""
 
     output_log: Path | None = None
     logging_enabled: bool | None = None
-    config: KotorDiffConfig | None = None
+    config: DiffConfig | None = None
     modifications_by_type: ModificationsByType | None = None
 
 
@@ -94,6 +96,9 @@ def log_output(*args, **kwargs):
     # Retrieve the printed content
     msg = buffer.getvalue()
 
+    if _global_config.config is not None and _global_config.config.ui_log_func is not None:
+        _global_config.config.ui_log_func(msg.strip())
+
     # For diff output, print directly to stdout
     if message_type == "diff":
         print(msg, end="")
@@ -105,18 +110,21 @@ def log_output(*args, **kwargs):
     if msg.strip():
         logger.info(msg.strip())
 
-    if not _global_config.logging_enabled or not _global_config.config:
+    if _global_config.config is None:
         return
 
-    if not _global_config.output_log:
+    if not _global_config.logging_enabled:
+        return
+
+    if _global_config.output_log is None:
         chosen_log_file_path: str = "log_install_differ.log"
         _global_config.output_log = Path(chosen_log_file_path).resolve()
-        assert _global_config.output_log is not None
+        assert _global_config.output_log is not None, "Output log cannot be None"
         if not _global_config.output_log.parent.is_dir():
             while True:
                 chosen_log_file_path = str(_global_config.config.output_log_path or input("Filepath of the desired output logfile: ").strip() or "log_install_differ.log")
                 _global_config.output_log = Path(chosen_log_file_path).resolve()
-                assert _global_config.output_log is not None
+                assert _global_config.output_log is not None, "Output log cannot be None"
                 if _global_config.output_log.parent.is_dir():
                     break
                 print("Invalid path:", _global_config.output_log)
@@ -194,30 +202,14 @@ def stop_profiler(profiler: cProfile.Profile):
     log_output(f"Profiler output saved to: {profiler_output_file}")
 
 
-def _import_logging_system():
-    """Import the logging system components.
-
-    Returns:
-        Tuple of (LogLevel, OutputMode, setup_logger) or (None, None, None) if unavailable
-    """
-    try:
-        from pykotor.diff_tool.logger import LogLevel, OutputMode, setup_logger
-    except ImportError:
-        return None, None, None
-    else:
-        return LogLevel, OutputMode, setup_logger
-
-
-def _setup_logging(config: KotorDiffConfig) -> None:
+def _setup_logging(config: DiffConfig) -> None:
     """Set up the logging system with the provided configuration.
 
     Args:
-        config: KotorDiff configuration
+        config: diff operations configuration
     """
-    LogLevel, OutputMode, setup_logger = _import_logging_system()
-    if setup_logger is None or LogLevel is None or OutputMode is None:
-        # Logging system not available, skip setup
-        return
+    from pykotor.cli.logger import LogLevel, OutputMode
+    from pykotor.diff_tool.logger import setup_logger
 
     log_level = getattr(LogLevel, config.log_level.upper())
     output_mode = getattr(OutputMode, config.output_mode.upper())
@@ -234,7 +226,7 @@ def _setup_logging(config: KotorDiffConfig) -> None:
     setup_logger(log_level, output_mode, use_colors=use_colors, output_file=output_file)
 
 
-def _log_configuration(config: KotorDiffConfig) -> None:
+def _log_configuration(config: DiffConfig) -> None:
     """Log the current configuration."""
     log_output()
     log_output("Configuration:")
@@ -248,7 +240,7 @@ def _log_configuration(config: KotorDiffConfig) -> None:
 
 
 def _execute_diff(
-    config: KotorDiffConfig,
+    config: DiffConfig,
 ) -> tuple[bool | None, int | None]:
     """Execute the diff operation based on configuration.
 
@@ -262,13 +254,13 @@ def _execute_diff(
 
 def _format_comparison_output(
     comparison: bool | None,  # noqa: FBT001
-    config: KotorDiffConfig,
+    config: DiffConfig,
 ) -> int:
     """Format and output the final comparison result.
 
     Args:
         comparison: True if files match, False if different, None if error
-        config: KotorDiff configuration containing paths
+        config: Diff configuration containing paths
 
     Returns:
         Exit code: 0 for match, 2 for mismatch, 3 for error
@@ -306,6 +298,7 @@ def generate_tslpatcher_data(
         log_output("Searching entire installation/folder for files that reference modified StrRefs...")
 
         for tlk_mod in modifications.tlk:
+            from pykotor.tslpatcher.diff.analyzers import analyze_tlk_strref_references
             try:
                 # Build the tuple expected by new analyze_tlk_strref_references signature.
                 # Here we do not have strref_mappings directly, so pass empty mapping for now.
@@ -406,7 +399,7 @@ def handle_diff_internal(
     return comparison, 1
 
 
-def handle_diff(config: KotorDiffConfig) -> tuple[bool | None, int | None]:
+def handle_diff(config: DiffConfig) -> tuple[bool | None, int | None]:
     """Handle N-way diff execution.
 
     Returns:
@@ -414,8 +407,8 @@ def handle_diff(config: KotorDiffConfig) -> tuple[bool | None, int | None]:
         If comparison_result is not None, use that for final output
         Otherwise use exit_code
     """
-    # For diff_only mode, skip TSLPatcher generation and just do diff output
-    if config.output_mode == "diff_only":
+    # Only generate INI and high level diff objects when creating tslpatcher changes.ini
+    if config.tslpatchdata_path is not None:
         _global_config.modifications_by_type = None
     else:
         # Create modifications collection for INI generation
@@ -427,7 +420,7 @@ def handle_diff(config: KotorDiffConfig) -> tuple[bool | None, int | None]:
     # Create incremental writer if requested
     incremental_writer: IncrementalTSLPatchDataWriter | None = None
     base_path: Path | Installation | None = None
-    if config.tslpatchdata_path:
+    if config.tslpatchdata_path is not None:
         for candidate_path in all_paths:
             if isinstance(candidate_path, Installation) or candidate_path.is_dir():
                 base_path = candidate_path
@@ -476,8 +469,8 @@ def handle_diff(config: KotorDiffConfig) -> tuple[bool | None, int | None]:
     )
 
     # Finalize TSLPatcher data if requested
-    if config.tslpatchdata_path:
-        if config.use_incremental_writer and incremental_writer:
+    if config.tslpatchdata_path is not None:
+        if config.use_incremental_writer and incremental_writer is not None:
             try:
                 # Finalize INI by writing InstallList section
                 incremental_writer.finalize()
@@ -504,7 +497,7 @@ def handle_diff(config: KotorDiffConfig) -> tuple[bool | None, int | None]:
                 return None, 0
         elif not config.use_incremental_writer:
             try:
-                assert _global_config.modifications_by_type is not None
+                assert _global_config.modifications_by_type is not None, "Modifications by type cannot be None"
                 generate_tslpatcher_data(
                     config.tslpatchdata_path,
                     config.ini_filename,
@@ -575,11 +568,11 @@ def run_differ_from_args(
     )
 
 
-def run_application(config: KotorDiffConfig) -> int:
-    """Run the main KotorDiff application with parsed configuration.
+def run_application(config: DiffConfig) -> int:
+    """Run the main diff application with parsed configuration.
 
     Args:
-        config: KotorDiff configuration
+        config: Diff configuration
 
     Returns:
         Exit code (0 for success, non-zero for errors)
@@ -589,15 +582,14 @@ def run_application(config: KotorDiffConfig) -> int:
     _global_config.logging_enabled = config.logging_enabled
 
     # Set up output log path
-    if config.output_log_path:
+    if config.output_log_path is not None:
         _global_config.output_log = config.output_log_path
 
     # Set up the logging system
     _setup_logging(config)
 
-    # Log configuration (unless in diff_only mode)
-    if config.output_mode != "diff_only":
-        _log_configuration(config)
+    # Log configuration
+    _log_configuration(config)
 
     # Run with optional profiler
     profiler: cProfile.Profile | None = None
@@ -613,14 +605,10 @@ def run_application(config: KotorDiffConfig) -> int:
 
         # Format and return final output
         if comparison is not None:
-            if config.output_mode != "diff_only":
-                return _format_comparison_output(comparison, config)
-            else:
-                # In diff_only mode, just return the exit code without printing summary
-                return 0 if comparison is True else (2 if comparison is False else 3)
+            return _format_comparison_output(comparison, config)
 
     except KeyboardInterrupt:
-        log_output("KeyboardInterrupt - KotorDiff was cancelled by user.")
+        log_output("KeyboardInterrupt - Diff was cancelled by user.")
         if profiler:
             stop_profiler(profiler)
         raise

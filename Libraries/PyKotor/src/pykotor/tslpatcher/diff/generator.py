@@ -1,7 +1,7 @@
 """TSLPatcher data folder generator.
 
 This module creates complete tslpatchdata folder structures with all necessary
-resource files (TLK, 2DA, GFF, SSF) based on modifications detected by KotorDiff.
+resource files (TLK, 2DA, GFF, SSF) based on modifications detected by diff operations.
 """
 
 from __future__ import annotations

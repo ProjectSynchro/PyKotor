@@ -344,7 +344,7 @@ class Installation:
         self._initialized = True
 
     def _report_main_progress(self, message: str):
-        if self.progress_callback:
+        if self.progress_callback is not None:
             self.progress_callback(message, "update_maintask_text")
             self.progress_callback(1, "increment")
         # self._log.info(message)
@@ -356,7 +356,7 @@ class Installation:
     ) -> FileResource | None:
         resource: FileResource | None = None
         try:
-            if self.progress_callback:
+            if self.progress_callback is not None:
                 self.progress_callback(f"Loading '{os.path.relpath(filepath, self._path)}'", "update_subtask_text")
             resname, restype = ResourceIdentifier.from_path(filepath).unpack()
             if restype.is_invalid:
@@ -376,7 +376,7 @@ class Installation:
         try:
             if not capsule_check(filepath):
                 return None
-            if self.progress_callback:
+            if self.progress_callback is not None:
                 self.progress_callback(f"Indexing capsule '{os.path.relpath(filepath, self._path)}'", "update_subtask_text")
             resource_list = list(Capsule(filepath))
         except Exception as e:  # noqa: BLE001
@@ -408,7 +408,8 @@ class Installation:
             self._log.info("The '%s' folder did not exist when loading the installation at '%s', skipping...", r_path.name, self._path)
             return {}
 
-        self._log.info("Loading '%s' from installation...", r_path.relative_to(self._path))
+        str_path = str(r_path)
+        self._log.debug("Loading '%s' resources dict from installation...", os.path.relpath(str_path, self._path))
         files_iter = r_path.rglob("*") if recurse else r_path.iterdir()
 
         resources_dict: dict[str, list[FileResource]] = {}
@@ -445,13 +446,9 @@ class Installation:
             self._log.info("The '%s' folder did not exist when loading the installation at '%s', skipping...", r_path.name, self._path)
             return []
 
-        self._log.info("Loading '%s' from installation...", r_path.relative_to(self._path))
-
         resources_list: list[FileResource] = []
         str_path = str(r_path)
-        # Use debug level instead of info to reduce logging overhead during prewarm
-        # This is called hundreds of times and causes expensive flush operations
-        RobustLogger().debug(f"Loading '{os.path.relpath(str_path, self._path)}' from installation...")
+        self._log.debug("Loading '%s' resources list from installation...", os.path.relpath(str_path, self._path))
 
         try:
             for entry in os.scandir(str_path):
@@ -478,9 +475,9 @@ class Installation:
         chitin_path: CaseAwarePath = self._path / "chitin.key"
         chitin_exists: bool | None = chitin_path.is_file()
         if chitin_exists:
-            self._log.info("Loading BIFs from chitin.key at '%s'...", self._path)
+            self._log.debug("Loading BIFs from chitin.key at '%s'...", self._path)
             self._chitin_data = list(Chitin(key_path=chitin_path))
-            self._log.info("Done loading chitin")
+            self._log.debug("Done loading chitin")
         elif chitin_exists is False:
             RobustLogger().warning(f"The chitin.key file did not exist at '{self._path}', skipping...")
         elif chitin_exists is None:
@@ -689,7 +686,7 @@ class Installation:
                                 # Only update progress callback periodically to reduce overhead
                                 if self.progress_callback and file_count % PROGRESS_UPDATE_INTERVAL == 0:
                                     relpath = entry.path[len(install_path_str) :].strip("\\").strip("/")
-                                    self.progress_callback(f"Loading '{relpath}'... ({file_count} files)", "update_subtask_text")
+                                    self.progress_callback(f"(Fast) Loading '{relpath}' resources ({file_count} files)", "update_subtask_text")
                                 files.append(FileResource.from_path(entry.path))
                             except Exception:  # noqa: BLE001
                                 self._log.exception("Error loading resource:", entry.path)

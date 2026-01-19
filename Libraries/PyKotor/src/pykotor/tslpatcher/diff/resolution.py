@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resource resolution order handling for KotorDiff.
+"""Resource resolution order handling for diff operations.
 
 This module resolves resources in the same priority order the game uses:
 1. Override
@@ -13,12 +13,13 @@ both an InstallList entry and a corresponding modification entry.
 
 from __future__ import annotations
 
+import logging
 import traceback
 
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from pykotor.extract.installation import Installation
 from pykotor.resource.formats.gff.gff_data import GFFContent
@@ -28,6 +29,9 @@ if TYPE_CHECKING:
     from pykotor.extract.file import FileResource, ResourceIdentifier
     from pykotor.tslpatcher.mods.tlk import ModificationsTLK
     from pykotor.tslpatcher.writer import IncrementalTSLPatchDataWriter, ModificationsByType
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -163,10 +167,12 @@ def resolve_resource_in_installation(
                         module_rim_files.append(filepath)
             elif "data" in parent_names_lower or filepath.suffix.lower() == ".bif":
                 chitin_files.append(filepath)
-            elif filepath.parent == install_root:
+            # TODO: Verify dialog.tlk is still being diffed, despite this code commented out.
+            #elif filepath.parent == install_root:
                 # Files directly in installation root (like dialog.tlk, chitin.key, etc.)
                 # Treat as Override priority since they're loose files at root level
-                override_files.append(filepath)
+            #    override_files.append(filepath)
+            # TODO: Verify the below line comment's claim.
             # StreamWaves/etc in subdirectories are NOT added - they don't participate in resolution
 
         # Within each module basename group, apply composite loading priority
@@ -314,7 +320,7 @@ def _log_consolidated_resolution(  # noqa: PLR0913
     identifier: ResourceIdentifier,  # noqa: ARG001
     resolved1: ResolvedResource,
     resolved2: ResolvedResource,
-    log_func: Callable[[str], None],
+    log_func: Callable[..., Any] = logger.info,
     *,
     additional_resolved: list[ResolvedResource] | None = None,
     additional_installs: list[Installation] | None = None,
@@ -539,7 +545,7 @@ def diff_installations_with_resolution(  # noqa: PLR0913, PLR0915, C901
     files_and_folders_and_installations: list[Path | Installation],
     *,
     filters: list[str] | None = None,
-    log_func: Callable[[str], None],
+    log_func: Callable[..., Any] = logger.info,
     compare_hashes: bool = True,
     modifications_by_type: ModificationsByType | None = None,
     incremental_writer: IncrementalTSLPatchDataWriter | None = None,
@@ -619,7 +625,7 @@ def _diff_installations_with_resolution_impl(  # noqa: PLR0913, PLR0915, C901
     install2: Installation,
     *,
     filters: list[str] | None = None,
-    log_func: Callable[[str], None],
+    log_func: Callable[..., Any] = logger.info,
     compare_hashes: bool = True,
     modifications_by_type: ModificationsByType | None = None,
     incremental_writer: IncrementalTSLPatchDataWriter | None = None,
@@ -701,14 +707,9 @@ def _diff_installations_with_resolution_impl(  # noqa: PLR0913, PLR0915, C901
 
     all_identifiers = list(all_identifiers_set)
     log_func(f"  Total unique resources across all installations: {len(all_identifiers)}")
-    log_func("  Index build complete - ready for O(1) lookups")
-    log_func("")
 
     # PROCESS TLK FILES FIRST AND IMMEDIATELY (before StrRef cache building)
     # TLKList must come immediately after [Settings] per TSLPatcher design
-    log_func("Processing TLK files first for immediate TLKList generation...")
-    log_func("")
-
     tlk_identifiers: list[ResourceIdentifier] = [ident for ident in all_identifiers if ident.restype.extension.lower() == "tlk"]
     filtered_tlk_identifiers: list[ResourceIdentifier] = []
     if tlk_identifiers:
@@ -1229,7 +1230,7 @@ def explain_resolution_order(
     identifier: ResourceIdentifier,
     install1_resolved: ResolvedResource,
     install2_resolved: ResolvedResource,
-    log_func: Callable[[str], None],
+    log_func: Callable[..., Any] = logger.info,
     *,
     additional_resolved: list[ResolvedResource] | None = None,
     install_names: list[str] | None = None,

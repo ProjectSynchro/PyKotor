@@ -4,6 +4,7 @@
     "dependsOn": "install_requirements",
     "configurations":
     [
+
         {
             "type": "bashdb",
             "request": "launch",
@@ -112,6 +113,40 @@
             "request": "launch",
             "cwd": "${workspaceFolder}/Tools/HoloPatcher/src/",
             "module": "holopatcher",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/Libraries/PyKotor/src;${env:PYTHONPATH}",
+                "K1_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor",
+                "K2_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II"
+            },
+            "justMyCode": true,
+            "autoReload": {
+                "enable": true
+            },
+        },
+        {
+            "name": "Run KotorDiff",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/Tools/KotorDiff/src/",
+            "module": "kotordiff",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/Libraries/PyKotor/src;${env:PYTHONPATH}",
+                "K1_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor",
+                "K2_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II"
+            },
+            "justMyCode": true,
+            "autoReload": {
+                "enable": true
+            },
+        },
+        {
+            "name": "Run KitGenerator",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/Tools/KitGenerator/src/",
+            "module": "kitgenerator",
             "console": "integratedTerminal",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/Libraries/PyKotor/src;${env:PYTHONPATH}",

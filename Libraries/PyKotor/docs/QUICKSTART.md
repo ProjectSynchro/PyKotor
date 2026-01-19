@@ -80,9 +80,9 @@ KotorCLI play
 Headless CLI (preferred for automation):
 
 ```bash
-python -m kotorcli diff-installation --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode diff_only
+python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode normal
 # Generate incremental TSLPatcher data while diffing
-python -m kotorcli diff-installation --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --incremental
+python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --incremental
 ```
 
 GUI (omit paths or pass `--gui`):
@@ -90,7 +90,7 @@ GUI (omit paths or pass `--gui`):
 ```bash
 kotordiff
 # or
-python -m kotorcli diff-installation --gui
+python -m kotorcli diff --gui
 ```
 
 ## Common Workflows

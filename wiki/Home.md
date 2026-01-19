@@ -69,7 +69,7 @@ The following information describes the resource system used by **KotOR and TSL*
 
 #### Resource Types
 
-KotOR uses hexadecimal resource type identifiers inherited from the Aurora engine. The following table lists resource types which are the same in all four Bioware engines. Note that some are not used in KotOR.
+KotOR uses hexadecimal resource type identifiers inherited from the Aurora engine. The following table lists resource types valid in the four BioWare engines. Note that some are not used in KotOR.
 
 | Resource Name | type ID | Description                                    |
 | ------------- | ------- | ---------------------------------------------- |
@@ -83,7 +83,7 @@ KotOR uses hexadecimal resource type identifiers inherited from the Aurora engin
 | MPG           | 0x0009  | MPEG video  Not used in KotOR                            |
 | TXT           | 0x000A  | Text file  Not used in KotOR                                  |
 | PLH           | 0x07D0  | Placeable header  Not used in KotOR                      |
-| TEX           | 0x07D1  | Texture (legacy, replaced by [TPC](TPC-File-Format))  Not used in KotOR                      |
+| TEX           | 0x07D1  | Texture                      |
 | [MDL](MDL-MDX-File-Format)           | 0x07D2  | 3D [model](MDL-MDX-File-Format) file (see [MDL/MDX File Format](MDL-MDX-File-Format))                                   |
 | THG           | 0x07D3  | Unknown  Not used in KotOR                                |
 | FNT           | 0x07D5  | Font file  Not used in KotOR                                  |
@@ -106,14 +106,14 @@ KotOR uses hexadecimal resource type identifiers inherited from the Aurora engin
 | BTC           | 0x07EA  | Blueprint creature    Not used in KotOR                |
 | [UTC](GFF-File-Format#utc-creature)           | 0x07EB  | [creature templates](GFF-File-Format#utc-creature) (see [GFF-UTC](GFF-UTC))                               |
 | [DLG](GFF-File-Format#dlg-dialogue)           | 0x07ED  | Dialogue/conversation (see [GFF-DLG](GFF-DLG))                           |
-| ITP           | 0x07EE  | ITP format (legacy name for [GFF](GFF-File-Format), see [GFF File Format](GFF-File-Format))  Not used in KotOR                         |
+| ITP           | 0x07EE  | ITP format (legacy name for [GFF](GFF-File-Format))  Not used in KotOR                         |
 | BTT           | 0x07EF  | Blueprint trigger    Not used in KotOR                 |
 | [UTT](GFF-File-Format#utt-trigger)           | 0x07F0  | Trigger template (see [GFF-UTT](GFF-UTT))                                |
 | DDS           | 0x07F1  | DirectDraw Surface texture (see [DDS File Format](DDS-File-Format))                                |
 | [UTS](GFF-File-Format#uts-sound)           | 0x07F3  | Sound template (see [GFF-UTS](GFF-UTS))                                |
 | LTR           | 0x07F4  | Letter format (see [LTR File Format](LTR-File-Format))                                |
 | [GFF](GFF-File-Format)           | 0x07F5  | Generic file format (container, see [GFF File Format](GFF-File-Format))                 |
-| FAC           | 0x07F6  | Faction                               |
+| [FAC](GFF-File-Format#fac-faction)           | 0x07F6  | Faction                               |
 | BTE           | 0x07F7  | Blueprint encounter                   |
 | [UTE](GFF-File-Format#ute-encounter)           | 0x07F8  | [encounter template](GFF-File-Format#ute-encounter) (see [GFF-UTE](GFF-UTE))                              |
 | BTD           | 0x07F9  | Blueprint door    Not used in KotOR     |
@@ -132,11 +132,11 @@ KotOR uses hexadecimal resource type identifiers inherited from the Aurora engin
 | BTG           | 0x0806  | Blueprint trigger  Not used in KotOR       |
 | UTG           | 0x0807  | Unknown            Not used in KotOR   |
 | [JRL](GFF-File-Format#jrl-journal)           | 0x0808  | Journal/quest log (see [GFF-JRL](GFF-JRL))                               |
-| SAV           | 0x0809  | [save game archives](ERF-File-Format) (see [ERF File Format](ERF-File-Format))                               |
-| [UTW](GFF-File-Format#utw-waypoint)           | 0x080A  | [waypoint template](GFF-File-Format#utw-waypoint) (see [GFF-UTW](GFF-UTW))                               |
+| SAV           | 0x0809  | [Save game archives](ERF-File-Format) (see [ERF File Format](ERF-File-Format))                               |
+| [UTW](GFF-File-Format#utw-waypoint)           | 0x080A  | [Waypoint Template](GFF-File-Format#utw-waypoint)                               |
 | 4PC           | 0x080B  | Unknown  Not used in KotOR          |
 | [SSF](SSF-File-Format)           | 0x080C  | [Sound Set Files](SSF-File-Format) (see [SSF File Format](SSF-File-Format))                                  |
-| HAK           | 0x080D  | Hak pak archive ([ERF](ERF-File-Format) variant)                                 |
+| HAK           | 0x080D  | Hak pak archive. Not used in KotOR                                |
 | NWM           | 0x080E  | Neverwinter Nights module ([ERF](ERF-File-Format) variant, not used in KotOR)                                 |
 | BIK           | 0x080F  | Bink video format                                |
 | PTM           | 0x0811  | Unknown       Not used in KotOR         |
@@ -149,21 +149,18 @@ KotOR uses hexadecimal resource type identifiers inherited from the Aurora engin
 
 This language ID usually is represented as an enum. It is equivalent within all engines and all games, with some newer games specifying more formats but always staying backwards compatible with the others.
 
-**KotOR** (odyssey) specifically can only support 
+**KotOR** (odyssey) specifically can only support
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/basics.html) - Language ID definitions (NWN-focused but applicable to KotOR)
 
-| Language        | ID |
-| --------------- | -- |
-| English         | 0  |
-| French (Male)   | 2  |
-| French (Female) | 3  |
-| German (Male)   | 4  |
-| German (Female) | 5  |
-| Italian (Male)  | 6  |
-| Italian (Female)| 7  |
-| Spanish (Male)  | 8  |
-| Spanish (Female)| 9  |
+| Language        | ID | Notes                                |
+| --------------- | -- |                                      |
+| English         | 0  |                                      |
+| French          | 1  |                                      |
+| German          | 2  |                                      |
+| Italian         | 3  |                                      |
+| Spanish         | 4  |                                      |
+| Polish          | 5  |  cp-1250, only released for KotOR 1  |
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/basics.html) - Tim Smith (Torlack)'s NWN data file Basics documentation (Aurora engine fundamentals)
 

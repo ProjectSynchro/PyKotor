@@ -94,9 +94,9 @@ python -m kotorcli gui-convert
 Headless CLI (stays in the console when paths are provided):
 
 ```bash
-python -m kotorcli diff-installation --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode diff_only
+python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode normal
 # Write TSLPatcher output incrementally while diffing
-python -m kotorcli diff-installation --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --incremental
+python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --incremental
 ```
 
 GUI (omit paths or pass `--gui`):
@@ -104,7 +104,7 @@ GUI (omit paths or pass `--gui`):
 ```bash
 kotordiff
 # or
-python -m kotorcli diff-installation --gui
+python -m kotorcli diff --gui
 ```
 
 ## PyKotor Integration
@@ -259,26 +259,26 @@ Generate a Holocron-compatible kit from a module. When no CLI args are supplied 
 python -m kotorcli kit-generate --installation "C:\Games\KOTOR" --module danm13 --output .\kits --kit-id danm13 --log-level info
 ```
 
-### diff-installation (KotorDiff)
+### diff (KotorDiff)
 
 Structured comparisons for files, folders, modules, or full installations. Stays headless when paths are supplied; falls back to the GUI when arguments are omitted or `--gui` is passed.
 
 ```bash
 # Installation vs installation with filtering
-python -m kotorcli diff-installation --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode diff_only --log-level info
+python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode normal --log-level info
 
 # Generate incremental TSLPatcher output while diffing
-python -m kotorcli diff-installation --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --ini changes.ini --incremental
+python -m kotorcli diff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --ini changes.ini --incremental
 
 # Launch the GUI explicitly
-python -m kotorcli diff-installation --gui
+python -m kotorcli diff --gui
 ```
 
 Key options:
 
 - `--path1/--path2/--path3/--path`: up to N-way comparisons
 - `--filter`: limit comparisons to specific modules/resources (e.g., `tat_m17ac`, `dialog.tlk`)
-- `--output-mode`: `full`, `diff_only`, or `quiet`
+- `--output-mode`: `full`, `normal`, or `quiet`
 - `--output-log`: write logs to a file (UTF-8)
 - `--tslpatchdata` + `--ini`: emit TSLPatcher-ready output; add `--incremental` to stream writes during diffing
 - `--compare-hashes/--no-compare-hashes`: toggle hash comparison for unsupported resource types

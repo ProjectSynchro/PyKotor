@@ -57,8 +57,8 @@ generator = ConfigurationGenerator()
 
 # Generate configuration
 result = generator.generate_config(
-    Path("/path/to/original/kotor"),
-    Path("/path/to/modified/kotor"),
+    Path("/path/to/original/kotor"),  # e.g. C:\Program Files (x86)\Steam\steamapps\common\swkotor
+    Path("/path/to/modified/kotor"),  # e.g. C:\Program Files (x86)\Steam\steamapps\common\swkotor_modded
     Path("changes.ini")
 )
 

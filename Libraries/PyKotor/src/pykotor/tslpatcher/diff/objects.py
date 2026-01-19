@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Structured diff objects for KotorDiff that separate diff logic from output formatting."""
+"""Structured diff objects for diff operations that separate diff logic from output formatting."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ class DiffType(Enum):
 class DiffFormat(Enum):
     """Supported diff output formats."""
 
-    DEFAULT = "default"  # KotorDiff's native format
+    DEFAULT = "default"  # diff operations's native format
     UNIFIED = "unified"  # Standard unified diff format
     CONTEXT = "context"  # Context diff format
     SIDE_BY_SIDE = "side_by_side"  # Side-by-side comparison
@@ -68,7 +68,7 @@ class DiffResult(Generic[T]):
 class ResourceDiffResult(DiffResult[bytes]):
     """Result of comparing two resources."""
 
-    resource_type: str | None = None
+    resource_type: DiffResourceType | None = None
     left_size: int | None = None
     right_size: int | None = None
 
@@ -402,22 +402,11 @@ class DiffEngine:
             DiffResourceType.LIP: LIPDiffComparator(),
             DiffResourceType.BYTES: BytesDiffComparator(),
         }
-        # Import structured engine lazily to avoid circular imports
-        self._structured_engine = None
-
-    @property
-    def structured_engine(self):
-        """Lazy load structured engine."""
-        if self._structured_engine is None:
-            from pykotor.tslpatcher.diff.structured import StructuredDiffEngine  # noqa: PLC0415
-
-            self._structured_engine = StructuredDiffEngine()
-        return self._structured_engine
 
     def compare_resources(
         self,
-        left_data: bytes,
-        right_data: bytes,
+        left_data: bytes | None,
+        right_data: bytes | None,
         left_id: str,
         right_id: str,
         resource_type: DiffResourceType,
@@ -447,6 +436,7 @@ class DiffEngine:
                 right_identifier=right_id,
                 resource_type=resource_type,
             )
+        assert left_data is not None and right_data is not None, "Both data cannot be None, at least one must be provided"
 
         # Get the appropriate comparator
         comparator = self.comparators.get(resource_type, self.comparators[DiffResourceType.BYTES])

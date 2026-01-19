@@ -12,7 +12,7 @@ References:
         - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
         - Load2DArray @ 0x004143b0 - Loads 2DA array data
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
-        Tools/KotorDiff/ - File diffing implementation
+        Tools/diff operations/ - File diffing implementation
         Libraries/PyKotor/src/pykotor/tslpatcher/diff/ - Structured diff engine
 
 """
@@ -56,7 +56,7 @@ def diff_files(
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
         - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
-        Tools/KotorDiff/src/kotordiff/differ.py
+        Tools/diff operations/src/kotordiff/differ.py
         Libraries/PyKotor/src/pykotor/tslpatcher/diff/structured.py
 
     """
