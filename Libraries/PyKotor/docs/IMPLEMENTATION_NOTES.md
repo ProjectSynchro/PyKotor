@@ -12,7 +12,7 @@ KotorCLI is a 1:1 implementation of cli's syntax for KOTOR development, built en
 2. **`cfg_parser.py`** - TOML configuration file parser (cli-compatible)
 3. **`logger.py`** - Colored logging system
 4. **`config.py`** - Version and metadata
-5. **`diff_tool/`** - Integrated KotorDiff (headless CLI + GUI fallback) for structured comparisons and optional TSLPatcher output (`Libraries/PyKotor/src/pykotor/clidiff_tool/cli.py`, `app.py`, `gui.py`)
+5. **`diff_tool/`** - Integrated KotorDiff (headless CLI + GUI fallback) for structured comparisons and optional TSLPatcher output (`diff_tool/cli.py`, `app.py`, `gui.py`)
 
 ### Commands
 

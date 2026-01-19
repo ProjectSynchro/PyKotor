@@ -112,8 +112,8 @@ write_erf(erf, "output.mod")
 
 ### 5. KotorDiff (Structured Comparisons + TSLPatcher Output)
 
-- **Entrypoints**: `Libraries/PyKotor/src/pykotor/clidiff_tool/cli.py` (headless), `diff_tool/__main__.py` (CLI vs GUI routing), `diff_tool/gui.py` (Tkinter fallback)
-- **Core orchestration**: `Libraries/PyKotor/src/pykotor/clidiff_tool/app.py`
+- **Entrypoints**: `diff_tool/cli.py` (headless), `diff_tool/__main__.py` (CLI vs GUI routing), `diff_tool/gui.py` (Tkinter fallback)
+- **Core orchestration**: `diff_tool/app.py`
   - Uses `pykotor.tslpatcher.diff.engine.run_differ_from_args_impl` for n-way comparisons
   - Optional incremental TSLPatcher generation via `pykotor.tslpatcher.writer.IncrementalTSLPatchDataWriter`
   - StrRef analysis with `pykotor.tslpatcher.diff.analyzers.analyze_tlk_strref_references`

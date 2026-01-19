@@ -975,7 +975,7 @@ Based on the comprehensive analysis above, KotorCLI should support:
 ### Utility Commands (Implemented)
 
 - `diff` - Compare resources
-- `diff` / `kotordiff` - Structured n-way comparisons with optional GUI and TSLPatcher output (see `Libraries/PyKotor/src/pykotor/clidiff_tool/`)
+- `diff` / `kotordiff` - Structured n-way comparisons with optional GUI and TSLPatcher output (see `Libraries/PyKotor/src/pykotor/cli/diff_tool/`)
 - `grep` - Search resources
 - `stats` - Show resource statistics
 - `validate` - Validate file formats
@@ -1007,7 +1007,7 @@ python -m kotorcli gui-convert --input <file_or_folder> --output <dir> --resolut
 
 ### diff (KotorDiff)
 
-Structured comparisons across files, folders, modules, or entire installations. Stays headless when CLI paths are provided; launches the Tk KotorDiff GUI when arguments are omitted or `--gui` is passed.
+Structured comparisons across files, folders, modules, or entire installations.
 
 ```bash
 # Installation vs installation with filtering
@@ -1025,13 +1025,11 @@ Key options:
 - `--tslpatchdata` + `--ini` + `--incremental` to emit TSLPatcher-ready output while diffing
 - `--compare-hashes/--no-compare-hashes` to toggle hashing for unsupported resource types
 - `--log-level`, `--no-color`, `--use-profiler` for diagnostics
-- `--gui` to force the GUI even when paths are provided
 
 Implementation references:
 
-- `Libraries/PyKotor/src/pykotor/clidiff_tool/app.py` (orchestration, incremental TSLPatcher writer)
-- `Libraries/PyKotor/src/pykotor/clidiff_tool/cli.py` (argument wiring/headless execution)
-- `Libraries/PyKotor/src/pykotor/clidiff_tool/gui.py` (Tkinter UI fallback)
+- `Libraries/PyKotor/src/pykotor/diff_tool/app.py` (orchestration, incremental TSLPatcher writer)
+- `Libraries/PyKotor/src/pykotor/diff_tool/cli.py` (argument wiring/headless execution)
 
 ### Advanced Commands (To Add)
 
