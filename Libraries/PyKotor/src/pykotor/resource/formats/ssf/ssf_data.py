@@ -93,7 +93,7 @@ class SSF(ComparableMixin):
 
     def get(
         self,
-        sound: SSFSound,
+        sound: SSFSound | int,
     ) -> int | None:
         """Returns the stringref for the specified sound.
 
@@ -105,7 +105,13 @@ class SSF(ComparableMixin):
         -------
             The corresponding stringref.
         """
-        return self._sounds[sound]
+        if isinstance(sound, SSFSound):
+            return self._sounds[sound.value]
+        if isinstance(sound, int):
+            if sound < 0 or sound >= 28:
+                raise ValueError(f"Sound index must be between 0 and 27, got {sound}")
+            return self._sounds[sound]
+        raise ValueError(f"Sound must be a SSFSound or int, got {type(sound)}")
 
 
 class SSFSound(IntEnum):

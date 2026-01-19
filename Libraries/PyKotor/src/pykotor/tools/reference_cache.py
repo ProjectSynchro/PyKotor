@@ -20,7 +20,7 @@ from pykotor.resource.formats.gff.gff_auto import read_gff
 from pykotor.resource.formats.gff.gff_data import GFFContent, GFFFieldType, GFFList, GFFStruct
 from pykotor.resource.formats.ncs.ncs_auto import read_ncs  # noqa: PLC0415
 from pykotor.resource.formats.ssf.ssf_auto import read_ssf
-from pykotor.resource.formats.ssf.ssf_data import SSFSound
+from pykotor.resource.formats.ssf.ssf_data import SSF
 from pykotor.resource.formats.twoda.twoda_auto import read_2da
 from pykotor.resource.type import ResourceType
 
@@ -98,7 +98,8 @@ class TwoDARefLocation:
 class SSFRefLocation:
     """A reference to a StrRef in an SSF file."""
 
-    sound: SSFSound
+    sound: SSF
+    sound_index: int
 
 
 @dataclass
@@ -231,11 +232,11 @@ class StrRefReferenceCache:
         ssf_obj = read_ssf(data)
         filename: str = f"{identifier.resname}.{identifier.restype.extension}"
 
-        for sound in SSFSound:
-            strref: int | None = ssf_obj.get(sound)
+        for sound_index in range(28):
+            strref: int | None = ssf_obj.get(sound_index)
             if strref is not None and strref != -1:
-                location = f"sound_{sound.name}"
-                _log_debug(f"Found StrRef {strref} in SSF file '{filename}' at sound slot '{sound.name}'")
+                location = f"sound_{sound_index}"
+                _log_debug(f"Found StrRef {strref} in SSF file '{filename}' at sound slot '{sound_index}'")
                 self._add_reference(strref, identifier, location)
 
     def _scan_ncs(

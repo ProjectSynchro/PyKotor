@@ -24,6 +24,7 @@ from qtpy.QtWidgets import (
 from pykotor.common.language import Language
 from pykotor.common.misc import ResRef
 from pykotor.extract.file import FileResource
+from pykotor.resource.formats.ssf.ssf_data import SSFSound
 from pykotor.resource.formats.tlk import TLK, TLKEntry, bytes_tlk, read_tlk, write_tlk
 from pykotor.resource.type import ResourceType
 from toolset.gui.common.localization import tr, trf
@@ -39,13 +40,15 @@ if TYPE_CHECKING:
 
     from qtpy.QtCore import (
         QAbstractItemModel,
-        QCloseEvent,  # pyright: ignore[reportPrivateImportUsage]
         QItemSelection,
         QItemSelectionModel,  # pyright: ignore[reportPrivateImportUsage]
         QModelIndex,
         QPoint,
     )
-    from qtpy.QtGui import QKeyEvent
+    from qtpy.QtGui import (
+        QKeyEvent,
+        QCloseEvent,  # pyright: ignore[reportPrivateImportUsage]
+    )
     from qtpy.QtWidgets import QWidget
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
@@ -220,7 +223,7 @@ class TLKEditor(Editor):
                 tlk: TLK = read_tlk(self._revert)
                 self.change_language(tlk.language)
             else:
-                self.change_language(Language.UNKNOWN)
+                self.change_language(Language.ENGLISH)
 
     def change_language(
         self,
@@ -264,6 +267,7 @@ class TLKEditor(Editor):
         self.source_model = dialog.source_model
         self.proxy_model = QSortFilterProxyModel(self)
         self.proxy_model.setSourceModel(self.source_model)
+        self.proxy_model.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.ui.talkTable.setModel(self.proxy_model)
         sel_model: QItemSelectionModel | None = self.ui.talkTable.selectionModel()
         assert sel_model is not None
@@ -292,8 +296,18 @@ class TLKEditor(Editor):
         self,
         index: QModelIndex,
     ):
-        # Implement the logic to find references based on the provided index
-        stringref: int = index.row()
+        # The index passed is a proxy model index (from the filtered view)
+        # We need to map it to the source model index to get the correct row number
+        if not index.isValid():
+            return
+        
+        # Map proxy index to source index to get the correct stringref
+        source_index: QModelIndex = self.proxy_model.mapToSource(index)
+        if not source_index.isValid():
+            return
+        
+        # Use the source model row number as the stringref
+        stringref: int = source_index.row()
         print(f"Finding references to stringref: {stringref}")
 
         assert self._installation is not None
@@ -324,7 +338,7 @@ class TLKEditor(Editor):
                         field_path = f"Row {location.row_index}, Column '{location.column_name}'"
                         byte_offset = None
                     elif isinstance(location, SSFRefLocation):
-                        field_path = f"Sound index {location.sound.strref}"
+                        field_path = f"Sound index {location.sound_index} ({SSFSound(location.sound_index).name})"
                         byte_offset = None
                     elif isinstance(location, NCSRefLocation):
                         field_path = "(NCS bytecode)"
