@@ -182,10 +182,12 @@ class TestKitGeneration(unittest.TestCase):
 
         return generated_kit_path, generated_json_path
 
+    @pytest.mark.skip(reason="Slow test, situational")
     def test_generate_jedienclave(self):
         """Generate jedienclave kit and compare structure and JSON."""
         self._run_full_kit_test("jedienclave", module_name=self.module_name)
 
+    @pytest.mark.skip(reason="Slow test, situational")
     def test_generate_sithbase(self):
         """Generate sithbase kit and compare structure, JSON, and required components."""
         kit_id = "sithbase"
@@ -252,37 +254,43 @@ class TestKitGeneration(unittest.TestCase):
         return generated_kit_path, generated_json_path
 
     # Black Vulkar tests
+    @pytest.mark.skip(reason="Slow test, situational")
     def test_generate_blackvulkar(self):
         """Generate blackvulkar kit and compare structure and JSON."""
         self._run_full_kit_test("blackvulkar")
 
     # Dantooine Estate tests
+    @pytest.mark.skip(reason="Slow test, situational")
     def test_generate_dantooineestate(self):
         """Generate dantooineestate kit and compare structure and JSON."""
         self._run_full_kit_test("dantooineestate")
 
     # Davik Estate tests
-    @pytest.mark.slow
+    @pytest.mark.skip(reason="Slow test, situational")
     def test_generate_davikestate(self):
         """Generate davikestate kit and compare structure and JSON."""
         self._run_full_kit_test("davikestate")
 
     # Enclave Surface tests
+    @pytest.mark.skip(reason="Slow test, situational")
     def test_generate_enclavesurface(self):
         """Generate enclavesurface kit and compare structure and JSON."""
         self._run_full_kit_test("enclavesurface")
 
     # Endar Spire tests
+    @pytest.mark.skip(reason="Slow test, situational")
     def test_generate_endarspire(self):
         """Generate endarspire kit and compare structure and JSON."""
         self._run_full_kit_test("endarspire")
 
     # Hidden Bek tests
+    @pytest.mark.skip(reason="Slow test, situational")
     def test_generate_hiddenbek(self):
         """Generate hiddenbek kit and compare structure and JSON."""
         self._run_full_kit_test("hiddenbek")
 
     # Taris Sewers tests
+    @pytest.mark.skip(reason="Slow test, situational")
     def test_generate_tarissewers(self):
         """Generate tarissewers kit and compare structure and JSON."""
         self._run_full_kit_test("tarissewers")

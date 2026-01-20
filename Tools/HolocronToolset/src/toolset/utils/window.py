@@ -244,7 +244,10 @@ def _open_resource_editor_impl(  # noqa: C901, PLR0913, PLR0912, PLR0915
             editor = UTDEditor(None, installation)
 
     elif restype.target_type() is ResourceType.IFO:
-        editor = IFOEditor(None, installation)
+        if installation is None or not gff_specialized:  # noqa: SIM108
+            editor = GFFEditor(None, installation)
+        else:
+            editor = IFOEditor(None, installation)
 
     elif restype.target_type() is ResourceType.UTS:
         if installation is None or not gff_specialized:  # noqa: SIM108

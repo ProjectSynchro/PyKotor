@@ -11,6 +11,7 @@ from qtpy.QtWidgets import QDialog, QListWidgetItem
 
 from pykotor.extract.file import FileResource
 from pykotor.resource.type import ResourceType
+from pykotor.tools.reference_finder import ReferenceSearchResult
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.asyncloader import AsyncLoader
 from toolset.utils.window import open_resource_editor
@@ -19,9 +20,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from qtpy.QtWidgets import QWidget
-
-    from pykotor.tools.reference_finder import ReferenceSearchResult
-
 
 
 @dataclass
@@ -50,19 +48,20 @@ class FileSearcher(QDialog):
         self.setWindowFlags(
             Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
             | Qt.WindowType.WindowCloseButtonHint
-            | Qt.WindowType.WindowMinMaxButtonsHint
-            & ~Qt.WindowType.WindowContextHelpButtonHint
+            | Qt.WindowType.WindowMinMaxButtonsHint & ~Qt.WindowType.WindowContextHelpButtonHint
         )
 
         from toolset.uic.qtpy.dialogs.search import Ui_Dialog
+
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
-        
+
         assert installations, "No installations passed to FileSearcher"
 
         self._installations: dict[str, HTInstallation] = installations
@@ -117,25 +116,44 @@ class FileSearcher(QDialog):
             None
         """
         check_types: list[ResourceType] = []
-        if self.ui.typeARECheck.isChecked(): check_types.append(ResourceType.ARE)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeGITCheck.isChecked(): check_types.append(ResourceType.GIT)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeIFOCheck.isChecked(): check_types.append(ResourceType.IFO)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeVISCheck.isChecked(): check_types.append(ResourceType.VIS)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeLYTCheck.isChecked(): check_types.append(ResourceType.LYT)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeDLGCheck.isChecked(): check_types.append(ResourceType.DLG)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeJRLCheck.isChecked(): check_types.append(ResourceType.JRL)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTCCheck.isChecked(): check_types.append(ResourceType.UTC)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTDCheck.isChecked(): check_types.append(ResourceType.UTD)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTECheck.isChecked(): check_types.append(ResourceType.UTE)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTICheck.isChecked(): check_types.append(ResourceType.UTI)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTPCheck.isChecked(): check_types.append(ResourceType.UTP)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTMCheck.isChecked(): check_types.append(ResourceType.UTM)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTSCheck.isChecked(): check_types.append(ResourceType.UTS)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTTCheck.isChecked(): check_types.append(ResourceType.UTT)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTWCheck.isChecked(): check_types.append(ResourceType.UTW)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.type2DACheck.isChecked(): check_types.append(ResourceType.TwoDA)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeNSSCheck.isChecked(): check_types.append(ResourceType.NSS)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeNCSCheck.isChecked(): check_types.append(ResourceType.NCS)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeARECheck.isChecked():
+            check_types.append(ResourceType.ARE)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeGITCheck.isChecked():
+            check_types.append(ResourceType.GIT)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeIFOCheck.isChecked():
+            check_types.append(ResourceType.IFO)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeVISCheck.isChecked():
+            check_types.append(ResourceType.VIS)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeLYTCheck.isChecked():
+            check_types.append(ResourceType.LYT)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeDLGCheck.isChecked():
+            check_types.append(ResourceType.DLG)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeJRLCheck.isChecked():
+            check_types.append(ResourceType.JRL)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTCCheck.isChecked():
+            check_types.append(ResourceType.UTC)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTDCheck.isChecked():
+            check_types.append(ResourceType.UTD)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTECheck.isChecked():
+            check_types.append(ResourceType.UTE)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTICheck.isChecked():
+            check_types.append(ResourceType.UTI)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTPCheck.isChecked():
+            check_types.append(ResourceType.UTP)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTMCheck.isChecked():
+            check_types.append(ResourceType.UTM)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTSCheck.isChecked():
+            check_types.append(ResourceType.UTS)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTTCheck.isChecked():
+            check_types.append(ResourceType.UTT)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTWCheck.isChecked():
+            check_types.append(ResourceType.UTW)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.type2DACheck.isChecked():
+            check_types.append(ResourceType.TwoDA)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeNSSCheck.isChecked():
+            check_types.append(ResourceType.NSS)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeNCSCheck.isChecked():
+            check_types.append(ResourceType.NCS)  # noqa: E701  # pylint: disable=multiple-statements
 
         query = FileSearchQuery(
             installation=self.ui.installationSelect.currentData(),
@@ -211,7 +229,7 @@ class FileResults(QDialog):
             installation (HTInstallation): HT installation object
 
         Processing Logic:
-        ---------------- 
+        ----------------
             - Populate the list widget with search results
             - Connect button click signals to accept and open actions
             - Save search results and installation object as member variables
@@ -223,16 +241,17 @@ class FileResults(QDialog):
             Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
             | Qt.WindowType.WindowCloseButtonHint
             | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.WindowMinMaxButtonsHint
-            & ~Qt.WindowType.WindowContextHelpButtonHint
+            | Qt.WindowType.WindowMinMaxButtonsHint & ~Qt.WindowType.WindowContextHelpButtonHint
         )
 
         from toolset.uic.qtpy.dialogs.search_result import Ui_Dialog
+
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 

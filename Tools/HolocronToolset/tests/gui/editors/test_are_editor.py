@@ -397,15 +397,23 @@ def test_are_editor_manipulate_map_image_points(qtbot: QtBot, installation: HTIn
     ]
     
     for point1, point2 in test_points:
+        # Block signals to prevent redoMinimap from being called during test setup
+        # This avoids potential access violations from renderer resources in test environment
+        editor.ui.mapImageX1Spin.blockSignals(True)
+        editor.ui.mapImageY1Spin.blockSignals(True)
+        editor.ui.mapImageX2Spin.blockSignals(True)
+        editor.ui.mapImageY2Spin.blockSignals(True)
+        
         editor.ui.mapImageX1Spin.setValue(point1.x)
         editor.ui.mapImageY1Spin.setValue(point1.y)
         editor.ui.mapImageX2Spin.setValue(point2.x)
         editor.ui.mapImageY2Spin.setValue(point2.y)
         
-        # Process Qt events to ensure spinbox values are updated
-        qtbot.wait(10)
-        from qtpy.QtWidgets import QApplication
-        QApplication.processEvents()
+        # Unblock signals after setting values
+        editor.ui.mapImageX1Spin.blockSignals(False)
+        editor.ui.mapImageY1Spin.blockSignals(False)
+        editor.ui.mapImageX2Spin.blockSignals(False)
+        editor.ui.mapImageY2Spin.blockSignals(False)
         
         # Verify spinbox values are set correctly before building
         assert abs(editor.ui.mapImageX1Spin.value() - point1.x) < 0.001
@@ -613,40 +621,33 @@ def test_are_editor_manipulate_weather_checkboxes(qtbot: QtBot, tsl_installation
     
     # Test rain checkbox (TSL only)
     editor.ui.rainCheck.setChecked(True)
-    qtbot.wait(10)  # Wait for Qt to process the state change
-    
     data, _ = editor.build()
     modified_are = read_are(data)
     assert modified_are.chance_rain == 100
     
     editor.ui.rainCheck.setChecked(False)
-    qtbot.wait(10)
     data, _ = editor.build()
     modified_are = read_are(data)
     assert modified_are.chance_rain == 0
     
     # Test snow checkbox (TSL only)
     editor.ui.snowCheck.setChecked(True)
-    qtbot.wait(10)
     data, _ = editor.build()
     modified_are = read_are(data)
     assert modified_are.chance_snow == 100
     
     editor.ui.snowCheck.setChecked(False)
-    qtbot.wait(10)
     data, _ = editor.build()
     modified_are = read_are(data)
     assert modified_are.chance_snow == 0
     
     # Test lightning checkbox (TSL only)
     editor.ui.lightningCheck.setChecked(True)
-    qtbot.wait(10)
     data, _ = editor.build()
     modified_are = read_are(data)
     assert modified_are.chance_lightning == 100
     
     editor.ui.lightningCheck.setChecked(False)
-    qtbot.wait(10)
     data, _ = editor.build()
     modified_are = read_are(data)
     assert modified_are.chance_lightning == 0
@@ -1143,7 +1144,6 @@ def test_are_editor_manipulate_all_weather_fields_combination(qtbot: QtBot, tsl_
     editor.ui.lightningCheck.setChecked(True)
     editor.ui.shadowsCheck.setChecked(True)
     editor.ui.shadowsSpin.setValue(128)
-    qtbot.wait(100)  # Wait longer for Qt to process checkbox state changes
     # Process events to ensure state is synchronized
     from qtpy.QtWidgets import QApplication
     QApplication.processEvents()
@@ -1152,13 +1152,35 @@ def test_are_editor_manipulate_all_weather_fields_combination(qtbot: QtBot, tsl_
     data, _ = editor.build()
     modified_are = read_are(data)
     
+    # Verify fog settings
     assert modified_are.fog_enabled
     assert abs(modified_are.fog_color.r - 0.5) < 0.01
-    assert modified_are.fog_near == 5.0
-    assert modified_are.fog_far == 100.0
+    assert abs(modified_are.fog_color.g - 0.5) < 0.01
+    assert abs(modified_are.fog_color.b - 0.5) < 0.01
+    assert abs(modified_are.fog_near - 5.0) < 0.001
+    assert abs(modified_are.fog_far - 100.0) < 0.001
+    
+    # Verify sun colors
+    assert abs(modified_are.sun_ambient.r - 0.2) < 0.01
+    assert abs(modified_are.sun_ambient.g - 0.2) < 0.01
+    assert abs(modified_are.sun_ambient.b - 0.2) < 0.01
+    assert abs(modified_are.sun_diffuse.r - 0.8) < 0.01
+    assert abs(modified_are.sun_diffuse.g - 0.8) < 0.01
+    assert abs(modified_are.sun_diffuse.b - 0.8) < 0.01
+    assert abs(modified_are.dynamic_light.r - 1.0) < 0.01
+    assert abs(modified_are.dynamic_light.g - 1.0) < 0.01
+    assert abs(modified_are.dynamic_light.b - 1.0) < 0.01
+    
+    # Verify wind power (only if combo box had items)
+    if editor.ui.windPowerSelect.count() > 0:
+        assert modified_are.wind_power == AREWindPower(2)
+    
+    # Verify weather checkboxes (TSL only)
     assert modified_are.chance_rain == 100
     assert modified_are.chance_snow == 0
     assert modified_are.chance_lightning == 100
+    
+    # Verify shadows
     assert modified_are.shadows
     assert modified_are.shadow_opacity == 128
 
@@ -1675,14 +1697,20 @@ def test_are_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: H
     
     # Trigger help dialog with the correct file for AREEditor
     editor._show_help_dialog("GFF-ARE.md")
-    qtbot.wait(200)  # Wait for dialog to be created
+    
+    # Process events to allow dialog to be created
+    qtbot.waitUntil(lambda: len(editor.findChildren(EditorHelpDialog)) > 0, timeout=2000)
     
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
     assert len(dialogs) > 0, "Help dialog should be opened"
     
     dialog = dialogs[0]
-    qtbot.waitExposed(dialog)
+    qtbot.addWidget(dialog)  # Add to qtbot for proper lifecycle management
+    qtbot.waitExposed(dialog, timeout=2000)
+    
+    # Wait for content to load by checking if HTML is populated
+    qtbot.waitUntil(lambda: dialog.text_browser.toHtml().strip() != "", timeout=2000)
     
     # Get the HTML content
     html = dialog.text_browser.toHtml()

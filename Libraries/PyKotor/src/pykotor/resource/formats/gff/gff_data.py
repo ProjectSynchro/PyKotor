@@ -423,9 +423,6 @@ class GFF(ComparableMixin):
             - Collect statistics about field usage and mismatches
             - Return comprehensive comparison results
         """
-        # Debug: check if this method is called 
-        print(f"DEBUG: GFF.compare called for {path}, len(self.root)={len(self.root)}", file=sys.stderr)
-        print(f"DEBUG: self.root: {self.root}", file=sys.stderr)
         # For unified diff format, skip structured logging and just return comparison result
         if format_type == "unified":
             if not isinstance(other, GFF):
@@ -444,10 +441,14 @@ class GFF(ComparableMixin):
             log_func("", message_type="diff")
             log_func("", message_type="diff")
             return False
-        if len(self.root) != len(other.root):
+        
+        # Don't check field count here if ignoring default changes - let GFFStruct.compare() handle it
+        # as it can check if extra fields are all default/empty
+        if not ignore_default_changes and len(self.root) != len(other.root):
             log_func(f"GFF counts have changed at '{path}': '{len(self.root)}' --> '{len(other.root)}'", message_type="diff")
             log_func("", message_type="diff")
             return False
+        
         comparison_result = comparison_result or GFFComparisonResult()
         return self.root.compare(
             other.root,
@@ -805,27 +806,60 @@ class GFFStruct(ComparableMixin, dict):
         if not isinstance(other, GFFStruct):
             log_func(f"GFFStruct counts have changed at '{current_path}': '{len(self)}' --> '<unknown>'", message_type="diff")
             log_func("", message_type="diff")
-            is_same = False
-            return is_same
-        if len(self) != len(other) and not ignore_default_changes:
-            log_func("", message_type="diff")
-            log_func(f"GFFStruct: number of fields have changed at '{current_path}': '{len(self)}' --> '{len(other)}'", message_type="diff")
-            is_same = False
-        if self.struct_id != other.struct_id:
-            log_func("", message_type="diff")
-            is_same = False
-
-        # Create dictionaries for both old and new structures
-        old_dict: dict[str, tuple[GFFFieldType, Any]] = {
+            comparison_result.add_field_count_mismatch(str(current_path), len(self), 0)
+            return False
+        # Create dictionaries for both old and new structures (needed for field count check with ignore_default_changes)
+        old_dict_pre: dict[str, tuple[GFFFieldType, Any]] = {
             label or f"gffstruct({idx})": (ftype, value)
             for idx, (label, ftype, value) in enumerate(self)
             if label not in ignore_labels
         }
-        new_dict: dict[str, tuple[GFFFieldType, Any]] = {
+        new_dict_pre: dict[str, tuple[GFFFieldType, Any]] = {
             label or f"gffstruct({idx})": (ftype, value)
             for idx, (label, ftype, value) in enumerate(other)
             if label not in ignore_labels
         }
+        
+        # Check field count difference, but only report if not ignoring default changes or if extra fields are non-default
+        if len(old_dict_pre) != len(new_dict_pre):
+            if not ignore_default_changes:
+                log_func("", message_type="diff")
+                log_func(f"GFFStruct: number of fields have changed at '{current_path}': '{len(old_dict_pre)}' --> '{len(new_dict_pre)}'", message_type="diff")
+                comparison_result.add_field_count_mismatch(str(current_path), len(old_dict_pre), len(new_dict_pre))
+            else:
+                # When ignoring default changes, check if extra fields in old/new are all default/empty
+                extra_in_old = set(old_dict_pre.keys()) - set(new_dict_pre.keys())
+                extra_in_new = set(new_dict_pre.keys()) - set(old_dict_pre.keys())
+                
+                # If no extra fields in either direction, no mismatch
+                if not extra_in_old and not extra_in_new:
+                    pass  # Field counts match after filtering
+                else:
+                    # Check if extra fields in old are all ignorable (empty sets return True from all())
+                    all_extra_ignorable = (
+                        not extra_in_old or
+                        all(is_ignorable_value(label, old_dict_pre[label][1]) for label in extra_in_old)
+                    )
+                    
+                    # Check if extra fields in new are all ignorable
+                    all_new_extra_ignorable = (
+                        not extra_in_new or
+                        all(is_ignorable_value(label, new_dict_pre[label][1]) for label in extra_in_new)
+                    )
+                    
+                    # Only report mismatch if extra fields are non-default
+                    if not all_extra_ignorable or not all_new_extra_ignorable:
+                        log_func("", message_type="diff")
+                        log_func(f"GFFStruct: number of fields have changed at '{current_path}': '{len(old_dict_pre)}' --> '{len(new_dict_pre)}'", message_type="diff")
+                        comparison_result.add_field_count_mismatch(str(current_path), len(old_dict_pre), len(new_dict_pre))
+        
+        if self.struct_id != other.struct_id:
+            log_func("", message_type="diff")
+            comparison_result.add_struct_id_mismatch(str(current_path), self.struct_id, other.struct_id)
+
+        # Use the dictionaries already created above
+        old_dict: dict[str, tuple[GFFFieldType, Any]] = old_dict_pre
+        new_dict: dict[str, tuple[GFFFieldType, Any]] = new_dict_pre
 
         # Union of labels from both old and new structures
         all_labels: set[str] = set(old_dict.keys()) | set(new_dict.keys())

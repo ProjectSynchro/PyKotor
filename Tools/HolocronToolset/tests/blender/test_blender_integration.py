@@ -144,6 +144,13 @@ class TestBlenderDetection:
     def test_blender_settings_all_properties(self):
         """Test BlenderSettings all properties."""
         from toolset.blender.detection import BlenderSettings
+        from qtpy.QtCore import QSettings
+        from toolset.utils.misc import get_qsettings_organization
+
+        # Clear any persisted settings to test defaults
+        qsettings = QSettings(get_qsettings_organization("HolocronToolsetV4"), "Blender")
+        qsettings.clear()
+        qsettings.sync()
 
         settings = BlenderSettings()
 
@@ -679,7 +686,7 @@ class TestIPCSerialization:
 
         store = GITStore()
         store.position = Vector3(5.0, 5.0, 0.0)
-        store.resref = "store_001"
+        store.resref = ResRef("store_001")
         store.bearing = 0.0
 
         result = serialize_git_instance(store)

@@ -72,7 +72,7 @@ class FilePropertiesDialog(QDialog):
 
         # OK button at the bottom
         ok_button = QPushButton("OK")
-        ok_button.clicked.connect(self.accept)
+        ok_button.clicked.connect(lambda: self.accept())
         main_layout.addWidget(ok_button, alignment=Qt.AlignRight)
 
     def _get_relative_time(self, timestamp: datetime) -> str:

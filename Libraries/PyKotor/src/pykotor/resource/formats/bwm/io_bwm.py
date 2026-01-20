@@ -312,27 +312,55 @@ class BWMBinaryWriter(ResourceWriter):
         # pathfinding in the game.
         # Reference: wiki/BWM-File-Format.md - Edges section
         edges: list[BWMEdge] = []
+        edge_index_map: dict[int, BWMEdge] = {}
+        face_index_map: dict[int, int] = {id(face): idx for idx, face in enumerate(faces)}
         for edge in perimeter_edges:
             # Find the face index in the reordered list BY IDENTITY (not value equality)
             # This is critical: we need the exact object reference, not just an equal face
-            face_idx: int | None = next((i for i, f in enumerate(faces) if f is edge.face), None)
+            face_idx = face_index_map.get(id(edge.face))
             if face_idx is None:
                 # Face not found in reordered list (shouldn't happen, but handle gracefully)
                 continue
             # Create new BWMEdge with correct face reference and transition
             # The edge.index is the local edge index (0, 1, or 2) within the face
             from pykotor.resource.formats.bwm.bwm_data import BWMEdge
-            edges.append(BWMEdge(faces[face_idx], edge.index, edge.transition))
+            new_edge = BWMEdge(faces[face_idx], edge.index, edge.transition)
+            edge_index = face_idx * 3 + edge.index
+            edge_index_map[edge_index] = new_edge
+            edges.append(new_edge)
+
+        # Preserve all per-edge transitions, even for non-perimeter edges.
+        # Some game files include transition indices on edges that are not classified
+        # as perimeter by our adjacency pass. We must emit those transition entries
+        # to ensure roundtrip fidelity of face transitions.
+        for face in faces:
+            face_idx = face_index_map[id(face)]
+            transitions = (face.trans1, face.trans2, face.trans3)
+            for edge_idx, transition in enumerate(transitions):
+                if transition is None:
+                    continue
+                edge_index = face_idx * 3 + edge_idx
+                if edge_index in edge_index_map:
+                    existing = edge_index_map[edge_index]
+                    if existing.transition == -1:
+                        existing.transition = transition
+                    continue
+                from pykotor.resource.formats.bwm.bwm_data import BWMEdge
+                new_edge = BWMEdge(face, edge_idx, transition)
+                edge_index_map[edge_index] = new_edge
+                edges.append(new_edge)
 
         edge_data = bytearray()
         for edge in edges:
-            # Find face index by object identity
-            face_idx = next(i for i, f in enumerate(faces) if f is edge.face)
+            # Find face index by object identity using the map
+            face_idx = face_index_map[id(edge.face)]
             edge_index = face_idx * 3 + edge.index
             edge_data += struct.pack("ii", edge_index, edge.transition)
 
         # Find edge indices by object identity for perimeters
-        perimeters: list[int] = [next(i for i, e in enumerate(edges) if e is edge) + 1 for edge in edges if edge.final]
+        # Build edge identity map for efficient lookup
+        edge_identity_map: dict[int, int] = {id(edge): idx for idx, edge in enumerate(edges)}
+        perimeters: list[int] = [edge_identity_map[id(edge)] + 1 for edge in edges if edge.final]
         perimeter_offset = edge_offset + len(edge_data)
         perimeter_data = bytearray()
         for perimeter in perimeters:

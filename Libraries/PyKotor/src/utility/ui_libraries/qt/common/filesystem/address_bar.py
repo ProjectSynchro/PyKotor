@@ -224,7 +224,7 @@ class RobustAddressBar(QWidget):
         self.refreshButton = QPushButton(self.address_widget)
         self.refreshButton.setIcon(QIcon.fromTheme("view-refresh"))
         self.refreshButton.setToolTip("Refresh")
-        self.refreshButton.clicked.connect(self.refresh)
+        self.refreshButton.clicked.connect(lambda: self.refresh())
         layout.addWidget(self.refreshButton)  # Add refresh button to the far right side
 
     def refresh(self):

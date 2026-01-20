@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtWidgets import QDoubleSpinBox, QFormLayout, QGroupBox, QLineEdit, QPushButton, QSpinBox, QTextEdit, QVBoxLayout, QWidget
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QMessageBox
 
 from pykotor.common.misc import ResRef
 from pykotor.resource.formats.gff import write_gff
@@ -24,15 +25,22 @@ if TYPE_CHECKING:
 class IFOEditor(Editor):
     """Editor for module info (IFO) files."""
 
-    def __init__(self, parent: QWidget | None = None, installation: HTInstallation | None = None):
+    def __init__(self, parent=None, installation: HTInstallation | None = None):
         """Initialize the IFO editor."""
         supported = [ResourceType.IFO]
         super().__init__(parent, "Module Info Editor", "ifo", supported, supported, installation)
 
         self.ifo: IFO | None = None
-        self.setup_ui()
+
+        # Load UI from .ui file
+        from toolset.uic.qtpy.editors.ifo import Ui_MainWindow
+
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+
         self._setup_menus()
         self._add_help_action()
+        self._setup_signals()
 
         # Setup event filter to prevent scroll wheel interaction with controls
         self._no_scroll_filter = NoScrollEventFilter(self)
@@ -40,178 +48,188 @@ class IFOEditor(Editor):
 
         # Setup reference search for script fields
         if installation is not None:
-            for edit in self.script_fields.values():
-                installation.setup_file_context_menu(edit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-                edit.setToolTip(tr("Right-click to find references to this script in the installation."))
+            self._setup_installation(installation)
 
-    def setup_ui(self):
-        """Set up the UI elements."""
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
+        # Convert entry direction from radians (as stored) to degrees (as displayed)
+        self.ui.entryDirectionSpin.setRange(0.0, 360.0)
 
-        # Basic Info
-        basic_group = QGroupBox("Basic Information")
-        basic_form = QFormLayout()
+    def _setup_signals(self):
+        """Connect UI signals to handler methods."""
+        # Basic info fields
+        self.ui.tagEdit.textChanged.connect(self.on_value_changed)
+        self.ui.tagGenerateButton.clicked.connect(self.generate_tag)
+        self.ui.voIdEdit.textChanged.connect(self.on_value_changed)
+        self.ui.hakEdit.textChanged.connect(self.on_value_changed)
+        self.ui.creatorIdSpin.valueChanged.connect(self.on_value_changed)
+        self.ui.versionSpin.valueChanged.connect(self.on_value_changed)
 
-        self.name_edit = QTextEdit()
-        self.name_edit.setReadOnly(True)
-        self.name_edit_btn = QPushButton("Edit Name")
-        self.name_edit_btn.clicked.connect(self.edit_name)
-        name_layout = QVBoxLayout()
-        name_layout.addWidget(self.name_edit)
-        name_layout.addWidget(self.name_edit_btn)
-        basic_form.addRow("Module Name:", name_layout)
+        # Module name and description - connect to editing finished signal
+        if hasattr(self.ui, "modNameEdit"):
+            self.ui.modNameEdit.sig_editing_finished.connect(self.on_mod_name_changed)
+        if hasattr(self.ui, "descriptionEdit"):
+            self.ui.descriptionEdit.sig_editing_finished.connect(self.on_description_changed)
 
-        self.tag_edit = QLineEdit()
-        self.tag_edit.textChanged.connect(self.on_value_changed)
-        basic_form.addRow("Tag:", self.tag_edit)
+        # Entry point fields
+        self.ui.entryAreaEdit.textChanged.connect(self.on_value_changed)
+        self.ui.entryXSpin.valueChanged.connect(self.on_value_changed)
+        self.ui.entryYSpin.valueChanged.connect(self.on_value_changed)
+        self.ui.entryZSpin.valueChanged.connect(self.on_value_changed)
+        self.ui.entryDirectionSpin.valueChanged.connect(self.on_entry_direction_changed)
 
-        self.vo_id_edit = QLineEdit()
-        self.vo_id_edit.textChanged.connect(self.on_value_changed)
-        basic_form.addRow("VO ID:", self.vo_id_edit)
+        # Time settings (deprecated but still supported)
+        self.ui.dawnHourSpin.valueChanged.connect(self.on_value_changed)
+        self.ui.duskHourSpin.valueChanged.connect(self.on_value_changed)
+        self.ui.timeScaleSpin.valueChanged.connect(self.on_value_changed)
+        self.ui.startMonthSpin.valueChanged.connect(self.on_value_changed)
+        self.ui.startDaySpin.valueChanged.connect(self.on_value_changed)
+        self.ui.startHourSpin.valueChanged.connect(self.on_value_changed)
+        self.ui.startYearSpin.valueChanged.connect(self.on_value_changed)
+        self.ui.xpScaleSpin.valueChanged.connect(self.on_value_changed)
 
-        self.hak_edit = QLineEdit()
-        self.hak_edit.textChanged.connect(self.on_value_changed)
-        basic_form.addRow("Hak:", self.hak_edit)
+        # Script fields - map UI names to IFO attribute names
+        self._script_field_mapping = {
+            "onHeartbeatEdit": "on_heartbeat",
+            "onLoadEdit": "on_load",
+            "onStartEdit": "on_start",
+            "onEnterEdit": "on_enter",
+            "onLeaveEdit": "on_leave",
+            "onActivateItemEdit": "on_activate_item",
+            "onAcquireItemEdit": "on_acquire_item",
+            "onUnacquireItemEdit": "on_unacquire_item",
+            "onPlayerDeathEdit": "on_player_death",
+            "onPlayerDyingEdit": "on_player_dying",
+            "onPlayerLevelupEdit": "on_player_levelup",
+            "onPlayerRespawnEdit": "on_player_respawn",
+            "onUserDefinedEdit": "on_user_defined",
+            "onPlayerRestEdit": "on_player_rest",
+            "startMovieEdit": "start_movie",
+        }
 
-        self.desc_edit = QTextEdit()
-        self.desc_edit.setReadOnly(True)
-        self.desc_edit_btn = QPushButton("Edit Description")
-        self.desc_edit_btn.clicked.connect(self.edit_description)
-        desc_layout = QVBoxLayout()
-        desc_layout.addWidget(self.desc_edit)
-        desc_layout.addWidget(self.desc_edit_btn)
-        basic_form.addRow("Description:", desc_layout)
+        for ui_name, ifo_attr in self._script_field_mapping.items():
+            if hasattr(self.ui, ui_name):
+                widget = getattr(self.ui, ui_name)
+                if hasattr(widget, "currentTextChanged"):
+                    widget.currentTextChanged.connect(self.on_value_changed)
+                elif hasattr(widget, "textChanged"):
+                    widget.textChanged.connect(self.on_value_changed)
 
-        basic_group.setLayout(basic_form)
-        layout.addWidget(basic_group)
+        # Advanced settings
+        if hasattr(self.ui, "expansionPackSpin"):
+            self.ui.expansionPackSpin.valueChanged.connect(self.on_value_changed)
+        if hasattr(self.ui, "minGameVerEdit"):
+            self.ui.minGameVerEdit.textChanged.connect(self.on_value_changed)
+        if hasattr(self.ui, "cacheNSSDataCheck"):
+            self.ui.cacheNSSDataCheck.stateChanged.connect(self.on_value_changed)
 
-        # Entry Point
-        entry_group = QGroupBox("Entry Point")
-        entry_form = QFormLayout()
+        # Area list management (if implemented)
+        if hasattr(self.ui, "addAreaButton"):
+            self.ui.addAreaButton.clicked.connect(self.add_area)
+        if hasattr(self.ui, "removeAreaButton"):
+            self.ui.removeAreaButton.clicked.connect(self.remove_area)
 
-        self.entry_resref = QLineEdit()
-        self.entry_resref.textChanged.connect(self.on_value_changed)
-        entry_form.addRow("Area ResRef:", self.entry_resref)
+    def _setup_installation(self, installation: HTInstallation):
+        """Setup installation-specific features."""
+        # Setup localized string editors
+        if hasattr(self.ui, "modNameEdit"):
+            self.ui.modNameEdit.set_installation(installation)
+        if hasattr(self.ui, "descriptionEdit"):
+            self.ui.descriptionEdit.set_installation(installation)
 
-        self.entry_x = QDoubleSpinBox()
-        self.entry_x.setRange(-99999.0, 99999.0)
-        self.entry_x.valueChanged.connect(self.on_value_changed)
-        entry_form.addRow("Entry X:", self.entry_x)
+        # Setup script field context menus and reference search
+        script_field_names = [
+            "onHeartbeatEdit",
+            "onLoadEdit",
+            "onStartEdit",
+            "onEnterEdit",
+            "onLeaveEdit",
+            "onActivateItemEdit",
+            "onAcquireItemEdit",
+            "onUnacquireItemEdit",
+            "onPlayerDeathEdit",
+            "onPlayerDyingEdit",
+            "onPlayerLevelupEdit",
+            "onPlayerRespawnEdit",
+            "onUserDefinedEdit",
+            "onPlayerRestEdit",
+            "startMovieEdit",
+        ]
+        
+        script_fields = [getattr(self.ui, name, None) for name in script_field_names]
+        
+        for field in script_fields:
+            if field is not None:
+                installation.setup_file_context_menu(
+                    field,
+                    [ResourceType.NSS, ResourceType.NCS],
+                    enable_reference_search=True,
+                    reference_search_type="script",
+                )
+                tooltip = field.toolTip() or ""
+                if "Right-click" not in tooltip:
+                    field.setToolTip(
+                        tr("Right-click to find references to this script in the installation.")
+                        if not tooltip
+                        else f"{tooltip}\n\n{tr('Right-click to find references to this script in the installation.')}",
+                    )
 
-        self.entry_y = QDoubleSpinBox()
-        self.entry_y.setRange(-99999.0, 99999.0)
-        self.entry_y.valueChanged.connect(self.on_value_changed)
-        entry_form.addRow("Entry Y:", self.entry_y)
+        # Populate script combo boxes with available scripts
+        relevant_scripts = sorted(
+            iter(
+                {
+                    res.resname().lower()
+                    for res in installation.get_relevant_resources(ResourceType.NCS, self._filepath)
+                },
+            ),
+        )
 
-        self.entry_z = QDoubleSpinBox()
-        self.entry_z.setRange(-99999.0, 99999.0)
-        self.entry_z.valueChanged.connect(self.on_value_changed)
-        entry_form.addRow("Entry Z:", self.entry_z)
+        for ui_name in self._script_field_mapping.keys():
+            if hasattr(self.ui, ui_name):
+                widget = getattr(self.ui, ui_name)
+                if hasattr(widget, "populate_combo_box"):
+                    widget.populate_combo_box(relevant_scripts)
+                elif hasattr(widget, "addItems"):
+                    widget.clear()
+                    widget.addItems([""] + relevant_scripts)
 
-        self.entry_dir = QDoubleSpinBox()
-        self.entry_dir.setRange(-3.14159, 3.14159)
-        self.entry_dir.valueChanged.connect(self.on_value_changed)
-        entry_form.addRow("Entry Direction:", self.entry_dir)
-
-        entry_group.setLayout(entry_form)
-        layout.addWidget(entry_group)
-
-        # Time Settings
-        time_group = QGroupBox("Time Settings")
-        time_form = QFormLayout()
-
-        self.dawn_hour = QSpinBox()
-        self.dawn_hour.setRange(0, 23)
-        self.dawn_hour.valueChanged.connect(self.on_value_changed)
-        time_form.addRow("Dawn Hour:", self.dawn_hour)
-
-        self.dusk_hour = QSpinBox()
-        self.dusk_hour.setRange(0, 23)
-        self.dusk_hour.valueChanged.connect(self.on_value_changed)
-        time_form.addRow("Dusk Hour:", self.dusk_hour)
-
-        self.time_scale = QSpinBox()
-        self.time_scale.setRange(0, 100)
-        self.time_scale.valueChanged.connect(self.on_value_changed)
-        time_form.addRow("Time Scale:", self.time_scale)
-
-        self.start_month = QSpinBox()
-        self.start_month.setRange(1, 12)
-        self.start_month.valueChanged.connect(self.on_value_changed)
-        time_form.addRow("Start Month:", self.start_month)
-
-        self.start_day = QSpinBox()
-        self.start_day.setRange(1, 31)
-        self.start_day.valueChanged.connect(self.on_value_changed)
-        time_form.addRow("Start Day:", self.start_day)
-
-        self.start_hour = QSpinBox()
-        self.start_hour.setRange(0, 23)
-        self.start_hour.valueChanged.connect(self.on_value_changed)
-        time_form.addRow("Start Hour:", self.start_hour)
-
-        self.start_year = QSpinBox()
-        self.start_year.setRange(0, 9999)
-        self.start_year.valueChanged.connect(self.on_value_changed)
-        time_form.addRow("Start Year:", self.start_year)
-
-        self.xp_scale = QSpinBox()
-        self.xp_scale.setRange(0, 100)
-        self.xp_scale.valueChanged.connect(self.on_value_changed)
-        time_form.addRow("XP Scale:", self.xp_scale)
-
-        time_group.setLayout(time_form)
-        layout.addWidget(time_group)
-
-        # Scripts
-        script_group = QGroupBox("Scripts")
-        script_form = QFormLayout()
-
-        self.script_fields: dict[str, QLineEdit] = {}
-        for script_name in [
-            "on_heartbeat",
-            "on_load",
-            "on_start",
-            "on_enter",
-            "on_leave",
-            "on_activate_item",
-            "on_acquire_item",
-            "on_user_defined",
-            "on_unacquire_item",
-            "on_player_death",
-            "on_player_dying",
-            "on_player_levelup",
-            "on_player_respawn",
-            "on_player_rest",
-            "start_movie",
-        ]:
-            edit = QLineEdit()
-            edit.textChanged.connect(self.on_value_changed)
-            self.script_fields[script_name] = edit
-            script_form.addRow(script_name.replace("_", " ").title() + ":", edit)
-
-        script_group.setLayout(script_form)
-        layout.addWidget(script_group)
-
-    def edit_name(self):
-        """Edit module name using LocalizedStringDialog."""
-        if not self.ifo or not self._installation:
+    def generate_tag(self):
+        """Generate tag from module name/resref."""
+        if not self.ifo:
             return
-        dialog = LocalizedStringDialog(self, self._installation, self.ifo.mod_name)
-        if dialog.exec():
-            self.ifo.mod_name = dialog.locstring
-            self.update_ui_from_ifo()
 
-    def edit_description(self):
-        """Edit module description using LocalizedStringDialog."""
-        if not self.ifo or not self._installation:
+        # Try to generate tag from module name or resref
+        if hasattr(self.ui, "modNameEdit"):
+            locstring = self.ui.modNameEdit.locstring()
+            if locstring and locstring.stringref != -1:
+                # Try to get English text
+                from pykotor.common.language import Language, Gender
+                name = locstring.get(Language.ENGLISH, Gender.MALE) or ""
+                if not name and self._installation:
+                    name = self._installation.string(locstring) or ""
+                if name:
+                    # Generate tag from name (remove spaces, special chars)
+                    tag = "".join(c.lower() if c.isalnum() else "_" for c in name[:32])
+                    tag = tag.strip("_")
+                    if tag and hasattr(self.ui, "tagEdit"):
+                        self.ui.tagEdit.setText(tag)
+                        return
+
+        # Fallback to resref
+        resref = self._resname
+        if resref and hasattr(self.ui, "tagEdit"):
+            self.ui.tagEdit.setText(resref.lower())
+
+    def on_entry_direction_changed(self):
+        """Handle entry direction changes, converting degrees to radians."""
+        if not self.ifo:
             return
-        dialog = LocalizedStringDialog(self, self._installation, self.ifo.description)
-        if dialog.exec():
-            self.ifo.description = dialog.locstring
-            self.update_ui_from_ifo()
+
+        # Convert degrees to radians
+        degrees = self.ui.entryDirectionSpin.value()
+        radians = degrees * 3.141592653589793 / 180.0
+        self.ifo.entry_direction = radians
+        self.on_value_changed()
+
+
 
     def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes) -> None:
         """Load an IFO file."""
@@ -240,32 +258,91 @@ class IFOEditor(Editor):
             return
 
         # Basic Info
-        self.name_edit.setText(self._installation.string(self.ifo.mod_name) or "")
-        self.tag_edit.setText(self.ifo.tag)
-        self.vo_id_edit.setText(self.ifo.vo_id)
-        self.hak_edit.setText(self.ifo.hak)
-        self.desc_edit.setText(self._installation.string(self.ifo.description) or "")
+        if hasattr(self.ui, "modNameEdit"):
+            self.ui.modNameEdit.set_locstring(self.ifo.mod_name)
+        if hasattr(self.ui, "tagEdit"):
+            self.ui.tagEdit.setText(self.ifo.tag)
+        if hasattr(self.ui, "voIdEdit"):
+            self.ui.voIdEdit.setText(self.ifo.vo_id)
+        if hasattr(self.ui, "hakEdit"):
+            self.ui.hakEdit.setText(self.ifo.hak)
+        if hasattr(self.ui, "descriptionEdit"):
+            self.ui.descriptionEdit.set_locstring(self.ifo.description)
+
+        # Module ID (read-only, display as hex)
+        if hasattr(self.ui, "modIdEdit"):
+            mod_id_str = " ".join(f"{b:02x}" for b in self.ifo.mod_id[:16]) if self.ifo.mod_id else ""
+            self.ui.modIdEdit.setText(mod_id_str)
+
+        # Creator ID and Version (deprecated)
+        if hasattr(self.ui, "creatorIdSpin"):
+            self.ui.creatorIdSpin.setValue(self.ifo.creator_id)
+        if hasattr(self.ui, "versionSpin"):
+            self.ui.versionSpin.setValue(self.ifo.version)
 
         # Entry Point
-        self.entry_resref.setText(str(self.ifo.resref))
-        self.entry_x.setValue(self.ifo.entry_position.x)
-        self.entry_y.setValue(self.ifo.entry_position.y)
-        self.entry_z.setValue(self.ifo.entry_position.z)
-        self.entry_dir.setValue(self.ifo.entry_direction)
+        if hasattr(self.ui, "entryAreaEdit"):
+            self.ui.entryAreaEdit.setText(str(self.ifo.resref))
+        if hasattr(self.ui, "entryXSpin"):
+            self.ui.entryXSpin.setValue(self.ifo.entry_position.x)
+        if hasattr(self.ui, "entryYSpin"):
+            self.ui.entryYSpin.setValue(self.ifo.entry_position.y)
+        if hasattr(self.ui, "entryZSpin"):
+            self.ui.entryZSpin.setValue(self.ifo.entry_position.z)
 
-        # Time Settings
-        self.dawn_hour.setValue(self.ifo.dawn_hour)
-        self.dusk_hour.setValue(self.ifo.dusk_hour)
-        self.time_scale.setValue(self.ifo.time_scale)
-        self.start_month.setValue(self.ifo.start_month)
-        self.start_day.setValue(self.ifo.start_day)
-        self.start_hour.setValue(self.ifo.start_hour)
-        self.start_year.setValue(self.ifo.start_year)
-        self.xp_scale.setValue(self.ifo.xp_scale)
+        # Convert radians to degrees for display
+        if hasattr(self.ui, "entryDirectionSpin"):
+            degrees = self.ifo.entry_direction * 180.0 / 3.141592653589793
+            if degrees < 0:
+                degrees += 360.0
+            degrees = degrees % 360.0
+            self.ui.entryDirectionSpin.setValue(degrees)
 
-        # Scripts
-        for script_name, edit in self.script_fields.items():
-            edit.setText(str(getattr(self.ifo, script_name)))
+        # Area name (first area from list, read-only)
+        if hasattr(self.ui, "areaNameEdit"):
+            area_name = str(self.ifo.area_name) if hasattr(self.ifo, "area_name") else ""
+            self.ui.areaNameEdit.setText(area_name)
+
+        # Time Settings (deprecated)
+        if hasattr(self.ui, "dawnHourSpin"):
+            self.ui.dawnHourSpin.setValue(self.ifo.dawn_hour)
+        if hasattr(self.ui, "duskHourSpin"):
+            self.ui.duskHourSpin.setValue(self.ifo.dusk_hour)
+        if hasattr(self.ui, "timeScaleSpin"):
+            self.ui.timeScaleSpin.setValue(self.ifo.time_scale)
+        if hasattr(self.ui, "startMonthSpin"):
+            self.ui.startMonthSpin.setValue(self.ifo.start_month)
+        if hasattr(self.ui, "startDaySpin"):
+            self.ui.startDaySpin.setValue(self.ifo.start_day)
+        if hasattr(self.ui, "startHourSpin"):
+            self.ui.startHourSpin.setValue(self.ifo.start_hour)
+        if hasattr(self.ui, "startYearSpin"):
+            self.ui.startYearSpin.setValue(self.ifo.start_year)
+        if hasattr(self.ui, "xpScaleSpin"):
+            self.ui.xpScaleSpin.setValue(self.ifo.xp_scale)
+
+        # Scripts - update from IFO attributes to UI widgets
+        for ui_name, ifo_attr in self._script_field_mapping.items():
+            if hasattr(self.ui, ui_name):
+                widget = getattr(self.ui, ui_name)
+                script_value = str(getattr(self.ifo, ifo_attr))
+                if hasattr(widget, "setCurrentText"):
+                    widget.setCurrentText(script_value)
+                elif hasattr(widget, "setText"):
+                    widget.setText(script_value)
+
+        # Advanced settings
+        if hasattr(self.ui, "expansionPackSpin"):
+            self.ui.expansionPackSpin.setValue(self.ifo.expansion_id)
+        if hasattr(self.ui, "minGameVerEdit"):
+            # MinGameVer is not directly exposed in IFO class, may need to add it
+            pass
+        if hasattr(self.ui, "cacheNSSDataCheck"):
+            # CacheNSSData is not directly exposed in IFO class, may need to add it
+            pass
+        if hasattr(self.ui, "isSaveGameCheck"):
+            # IsSaveGame is read-only and managed by engine
+            pass
 
     def on_value_changed(self) -> None:
         """Handle UI value changes."""
@@ -273,35 +350,61 @@ class IFOEditor(Editor):
             return
 
         # Basic Info
-        self.ifo.tag = self.tag_edit.text()
-        self.ifo.vo_id = self.vo_id_edit.text()
-        self.ifo.hak = self.hak_edit.text()
+        self.ifo.tag = self.ui.tagEdit.text()
+        self.ifo.vo_id = self.ui.voIdEdit.text()
+        self.ifo.hak = self.ui.hakEdit.text()
+
+        # Creator ID and Version (deprecated)
+        if hasattr(self.ui, "creatorIdSpin"):
+            self.ifo.creator_id = self.ui.creatorIdSpin.value()
+        if hasattr(self.ui, "versionSpin"):
+            self.ifo.version = self.ui.versionSpin.value()
 
         # Entry Point
         try:
-            self.ifo.resref = ResRef(self.entry_resref.text())
+            self.ifo.resref = ResRef(self.ui.entryAreaEdit.text())
         except ResRef.ExceedsMaxLengthError:
             # Skip invalid ResRef values to prevent teardown errors
             pass
-        self.ifo.entry_position.x = self.entry_x.value()
-        self.ifo.entry_position.y = self.entry_y.value()
-        self.ifo.entry_position.z = self.entry_z.value()
-        self.ifo.entry_direction = self.entry_dir.value()
 
-        # Time Settings
-        self.ifo.dawn_hour = self.dawn_hour.value()
-        self.ifo.dusk_hour = self.dusk_hour.value()
-        self.ifo.time_scale = self.time_scale.value()
-        self.ifo.start_month = self.start_month.value()
-        self.ifo.start_day = self.start_day.value()
-        self.ifo.start_hour = self.start_hour.value()
-        self.ifo.start_year = self.start_year.value()
-        self.ifo.xp_scale = self.xp_scale.value()
+        self.ifo.entry_position.x = self.ui.entryXSpin.value()
+        self.ifo.entry_position.y = self.ui.entryYSpin.value()
+        self.ifo.entry_position.z = self.ui.entryZSpin.value()
 
-        # Scripts
-        for script_name, edit in self.script_fields.items():
-            try:
-                setattr(self.ifo, script_name, ResRef(edit.text()))
-            except ResRef.ExceedsMaxLengthError:
-                # Skip invalid ResRef values to prevent teardown errors
-                pass
+        # Entry direction is handled by on_entry_direction_changed (degrees to radians conversion)
+
+        # Time Settings (deprecated)
+        self.ifo.dawn_hour = self.ui.dawnHourSpin.value()
+        self.ifo.dusk_hour = self.ui.duskHourSpin.value()
+        self.ifo.time_scale = self.ui.timeScaleSpin.value()
+        self.ifo.start_month = self.ui.startMonthSpin.value()
+        self.ifo.start_day = self.ui.startDaySpin.value()
+        self.ifo.start_hour = self.ui.startHourSpin.value()
+        self.ifo.start_year = self.ui.startYearSpin.value()
+        self.ifo.xp_scale = self.ui.xpScaleSpin.value()
+
+        # Scripts - update from UI widgets to IFO attributes
+        for ui_name, ifo_attr in self._script_field_mapping.items():
+            if hasattr(self.ui, ui_name):
+                widget = getattr(self.ui, ui_name)
+                try:
+                    if hasattr(widget, "currentText"):
+                        script_text = widget.currentText()
+                    elif hasattr(widget, "text"):
+                        script_text = widget.text()
+                    else:
+                        continue
+
+                    if script_text:
+                        setattr(self.ifo, ifo_attr, ResRef(script_text))
+                    else:
+                        setattr(self.ifo, ifo_attr, ResRef.from_blank())
+                except ResRef.ExceedsMaxLengthError:
+                    # Skip invalid ResRef values to prevent teardown errors
+                    pass
+
+        # Advanced settings
+        if hasattr(self.ui, "expansionPackSpin"):
+            self.ifo.expansion_id = self.ui.expansionPackSpin.value()
+
+        self.signal_modified.emit()

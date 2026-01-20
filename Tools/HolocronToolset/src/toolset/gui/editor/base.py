@@ -11,16 +11,14 @@ from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence, cast
 
 import qtpy
 
-from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtCore import (
     QBuffer,
     QIODevice,
     QTimer,
     Qt,
-    Signal,  # pyright: ignore[reportPrivateImportUsage]  # pyright: ignore[reportPrivateImportUsage]
+    Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
 from qtpy.QtGui import QAction, QIcon, QPixmap
-from qtpy.QtMultimedia import QMediaPlayer
 from qtpy.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -28,11 +26,12 @@ from qtpy.QtWidgets import (
     QMainWindow,
     QMenu,
     QMessageBox,
-    QPlainTextEdit,  # pyright: ignore[reportPrivateImportUsage]  # pyright: ignore[reportPrivateImportUsage]
-    QShortcut,
+    QPlainTextEdit,  # pyright: ignore[reportPrivateImportUsage]
+    QShortcut,  # pyright: ignore[reportPrivateImportUsage]
     QStyle,
 )
 
+from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from pykotor.common.module import Module
 from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import ResourceIdentifier
@@ -51,8 +50,7 @@ from toolset.gui.dialogs.save.to_rim import RimSaveDialog, RimSaveOption
 from toolset.gui.widgets.edit.locstring import LocalizedStringLineEdit
 from toolset.gui.widgets.media_player_widget import MediaPlayerWidget
 from toolset.gui.widgets.settings.installations import GlobalSettings
-from utility.error_handling import format_exception_with_variables, universal_simplify_exception
-from utility.system.os_helper import remove_any
+from utility.error_handling import format_exception_with_variables
 
 if TYPE_CHECKING:
     import os
@@ -68,12 +66,12 @@ if TYPE_CHECKING:
         QWidget,
         _QMenu,
     )
-    from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]  # pyright: ignore[reportMissingModuleSource]
+    from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.common.language import LocalizedString
     from pykotor.resource.formats.bif import BIF
-    from pykotor.resource.formats.gff.gff_data import GFF
-    from pykotor.resource.formats.rim.rim_data import RIM
+    from pykotor.resource.formats.gff import GFF
+    from pykotor.resource.formats.rim import RIM
     from toolset.data.installation import HTInstallation
 
 
@@ -105,7 +103,6 @@ class Editor(QMainWindow):
         self._filepath: Path = self.setup_extract_path() / f"{self._resname}.{self._restype.extension}"
         self._revert: bytes = b""
         self._is_save_game_resource: bool = False  # Flag to track if resource is from a save game
-        self._global_settings: GlobalSettings = GlobalSettings()
 
         self.media_player: MediaPlayerWidget = MediaPlayerWidget(self)
         self.setWindowTitle(title)
@@ -119,42 +116,42 @@ class Editor(QMainWindow):
     def _setup_menus(self):
         menubar: QMenuBar | None = self.menuBar()
         assert menubar is not None, "menubar is somehow None"
-        
+
         # If menubar is empty, create a File menu with standard actions
         if not menubar.actions():
             file_menu = QMenu("File", self)
             menubar.addMenu(file_menu)
-            
+
             # Create standard file menu actions
             new_action = QAction("New", self)
             new_action.setShortcut("Ctrl+N")
             new_action.triggered.connect(self.new)
             file_menu.addAction(new_action)
-            
+
             open_action = QAction("Open", self)
             open_action.setShortcut("Ctrl+O")
             open_action.triggered.connect(self.open)
             file_menu.addAction(open_action)
-            
+
             save_action = QAction("Save", self)
             save_action.setShortcut("Ctrl+S")
             save_action.triggered.connect(self.save)
             file_menu.addAction(save_action)
-            
+
             save_as_action = QAction("Save As", self)
             save_as_action.setShortcut("Ctrl+Shift+S")
             save_as_action.triggered.connect(self.save_as)
             file_menu.addAction(save_as_action)
-            
+
             file_menu.addSeparator()
-            
+
             revert_action = QAction("Revert", self)
             revert_action.setShortcut("Ctrl+R")
             revert_action.triggered.connect(self.revert)
             file_menu.addAction(revert_action)
-            
+
             file_menu.addSeparator()
-            
+
             exit_action = QAction("Exit", self)
             exit_action.setShortcut("Ctrl+Q")
             # QAction.triggered emits a bool; QWidget.close takes no args.
@@ -188,13 +185,13 @@ class Editor(QMainWindow):
 
     def _add_help_action(self, wiki_filename: str | None = None):
         """Add a help action to the menu bar with question mark icon.
-        
+
         Args:
             wiki_filename: Name of the markdown file in the wiki directory (e.g., "GFF-File-Format.md").
                           If None, will try to auto-detect from editor class name.
         """
         from toolset.gui.editors.editor_wiki_mapping import EDITOR_WIKI_MAP
-        
+
         # Auto-detect wiki file if not provided
         if wiki_filename is None:
             editor_class_name = self.__class__.__name__
@@ -202,29 +199,29 @@ class Editor(QMainWindow):
             if wiki_filename is None:
                 # No wiki file for this editor, skip adding help
                 return
-        
+
         menubar: QMenuBar | None = self.menuBar()
         assert menubar is not None, "menubar is somehow None"
         help_menu: QMenu | None = None
-        
+
         # Check if Help menu already exists
         for action in menubar.actions():
             if action.text() == "Help":
                 help_menu = action.menu()
                 break
-        
+
         # Create Help menu if it doesn't exist
         if help_menu is None:
             help_menu = QMenu("Help", self)
             menubar.addMenu(help_menu)
-        
+
         # Check if Documentation action already exists (idempotent)
         doc_action = None
         for action in help_menu.actions():
             if action.text() == "Documentation":
                 doc_action = action
                 break
-        
+
         # Only add if it doesn't exist
         if doc_action is None:
             # Add help action with question mark icon
@@ -233,21 +230,22 @@ class Editor(QMainWindow):
                 help_icon = style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxQuestion)
             else:
                 help_icon = QIcon()
-            
+
             help_action = help_menu.addAction(help_icon, "Documentation")
+            assert help_action is not None, "help_action is somehow None"
             help_action.setShortcut("F1")
             help_action.triggered.connect(lambda: self._show_help_dialog(wiki_filename))
-            
+
             QShortcut("F1", self).activated.connect(lambda: self._show_help_dialog(wiki_filename))
-    
+
     def _show_help_dialog(self, wiki_filename: str):
         """Show the help dialog for this editor.
-        
+
         Args:
             wiki_filename: Name of the markdown file in the wiki directory
         """
         from toolset.gui.dialogs.editor_help import EditorHelpDialog
-        
+
         # Create non-blocking dialog
         dialog = EditorHelpDialog(self, wiki_filename)
         dialog.show()  # Non-blocking show
@@ -292,14 +290,18 @@ class Editor(QMainWindow):
         write_supported = read_supported.copy() if read_supported is write_supported else write_supported
         additional_formats: set[str] = {"XML", "JSON", "CSV", "ASCII", "YAML"}
         for add_format in additional_formats:
-            read_supported.extend(ResourceType.__members__[f"{restype.name}_{add_format}"] for restype in read_supported if f"{restype.name}_{add_format}" in ResourceType.__members__)  # noqa: E501
-            write_supported.extend(ResourceType.__members__[f"{restype.name}_{add_format}"] for restype in write_supported if f"{restype.name}_{add_format}" in ResourceType.__members__)  # noqa: E501
+            read_supported.extend(
+                ResourceType.__members__[f"{restype.name}_{add_format}"] for restype in read_supported if f"{restype.name}_{add_format}" in ResourceType.__members__
+            )  # noqa: E501
+            write_supported.extend(
+                ResourceType.__members__[f"{restype.name}_{add_format}"] for restype in write_supported if f"{restype.name}_{add_format}" in ResourceType.__members__
+            )  # noqa: E501
         self._read_supported: list[ResourceType] = read_supported
         self._write_supported: list[ResourceType] = write_supported
 
         self._save_filter: str = "All valid files ("
         for resource in write_supported:
-            self._save_filter += f'*.{resource.extension}{"" if write_supported[-1] == resource else " "}'
+            self._save_filter += f"*.{resource.extension}{'' if write_supported[-1] == resource else ' '}"
         self._save_filter += f" {self.CAPSULE_FILTER});;"
         for resource in write_supported:
             self._save_filter += f"{resource.category} File (*.{resource.extension});;"
@@ -307,7 +309,7 @@ class Editor(QMainWindow):
 
         self._open_filter: str = "All valid files ("
         for resource in read_supported:
-            self._open_filter += f'*.{resource.extension}{"" if read_supported[-1] == resource else " "}'
+            self._open_filter += f"*.{resource.extension}{'' if read_supported[-1] == resource else ' '}"
         self._open_filter += f" {self.CAPSULE_FILTER});;"
         for resource in read_supported:
             self._open_filter += f"{resource.category} File (*.{resource.extension});;"
@@ -380,17 +382,9 @@ class Editor(QMainWindow):
             # CRITICAL: For save game resources, ALWAYS preserve extra fields
             # Save game GFF files contain undocumented fields that must be preserved
             # to prevent save corruption. This is more important than the user setting.
-            should_preserve_fields = (
-                self._is_save_game_resource or self._global_settings.attemptKeepOldGFFFields
-            )
-            
-            if (
-                should_preserve_fields
-                and self._restype is not None
-                and self._restype.is_gff()
-                and not isinstance(self, GFFEditor)
-                and self._revert is not None
-            ):  # noqa: E501
+            should_preserve_fields = self._is_save_game_resource or self._global_settings.attemptKeepOldGFFFields
+
+            if should_preserve_fields and self._restype is not None and self._restype.is_gff() and not isinstance(self, GFFEditor) and self._revert is not None:  # noqa: E501
                 if self._is_save_game_resource:
                     print("Save game resource detected: Preserving all extra GFF fields to prevent save corruption.")
                 old_gff: GFF = read_gff(self._revert)
@@ -635,11 +629,11 @@ class Editor(QMainWindow):
         # Convert bytearray to bytes if needed
         data_bytes = bytes(data) if isinstance(data, bytearray) else data
         self._revert = data_bytes
-        
+
         # Detect if this resource is from a save game
         # Check if any parent in the filepath is a .sav file
         self._is_save_game_resource = self._detect_save_game_resource(self._filepath)
-        
+
         menu_bar: QMenuBar | None = cast("Optional[QMenuBar]", self.menuBar())
         assert menu_bar is not None, "Menu bar is None somehow? This should be impossible."
         menu_bar_actions: Sequence[_QAction] = menu_bar.actions()  # pyright: ignore[reportAssignmentType]
@@ -652,17 +646,17 @@ class Editor(QMainWindow):
                     break
         self.refresh_window_title()
         self.sig_loaded_file.emit(str(self._filepath), self._resname, self._restype, data_bytes)
-    
+
     def _detect_save_game_resource(self, filepath: Path) -> bool:
         """Detect if a resource is from a save game by checking the filepath.
-        
+
         Save game resources are nested inside SAVEGAME.sav or cached module .sav files.
         This method checks if any parent in the path is a .sav file.
-        
+
         Args:
         ----
             filepath: Path to check
-            
+
         Returns:
         -------
             bool: True if resource is from a save game, False otherwise
@@ -799,19 +793,6 @@ class Editor(QMainWindow):
         if not data:
             self.blink_window(sound=False)
         return self.play_byte_source_media(data)
-
-    def remove_temp_audio_file(
-        self,
-        status: QMediaPlayer.MediaStatus,
-        file_path: os.PathLike | str,
-    ):
-        if status != QMediaPlayer.MediaStatus.EndOfMedia:
-            return
-        try:
-            self.media_player.player.stop()
-            QTimer.singleShot(33, lambda: remove_any(file_path))
-        except OSError:
-            RobustLogger().exception(f"Error removing temporary file '{file_path}'")
 
     def filepath(self) -> str | None:
         return str(self._filepath)

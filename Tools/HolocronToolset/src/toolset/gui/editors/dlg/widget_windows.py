@@ -85,10 +85,10 @@ class ReferenceChooserDialog(QDialog):
 
         layout.addLayout(button_layout)
 
-        ok_button.clicked.connect(self.accept)
-        cancel_button.clicked.connect(self.reject)
-        self.back_button.clicked.connect(self.go_back)
-        self.forward_button.clicked.connect(self.go_forward)
+        ok_button.clicked.connect(lambda: self.accept())
+        cancel_button.clicked.connect(lambda: self.reject())
+        self.back_button.clicked.connect(lambda: self.go_back())
+        self.forward_button.clicked.connect(lambda: self.go_forward())
 
         self.setStyleSheet("""
         .link-container:hover .link-hover-text {

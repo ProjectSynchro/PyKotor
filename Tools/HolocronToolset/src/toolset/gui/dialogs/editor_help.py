@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
 
-def get_wiki_path() -> Path:
+def get_wiki_path() -> tuple[Path, Path | None]:
     """Get the path to the wiki directory.
     
     Returns:
@@ -27,19 +27,21 @@ def get_wiki_path() -> Path:
         exe_path = Path(sys.executable).parent
         wiki_path = exe_path / "wiki"
         if wiki_path.exists():
-            return wiki_path
+            return wiki_path, None
     
     # Development mode: check toolset/wiki first, then root wiki
-    toolset_wiki = Path(__file__).parent.parent.parent.parent.parent / "wiki"
+    path1 = Path("./wiki")
+    toolset_wiki = Path(__file__).parents[2] / "wiki"
     if toolset_wiki.exists():
-        return toolset_wiki
+        path1 = toolset_wiki
     
-    root_wiki = Path(__file__).parent.parent.parent.parent.parent.parent / "wiki"
+    path2 = None
+    root_wiki = Path(__file__).parents[6] / "wiki"
     if root_wiki.exists():
-        return root_wiki
+        path2 = root_wiki
     
     # Fallback
-    return Path("./wiki")
+    return path1, path2
 
 
 class EditorHelpDialog(QDialog):
@@ -69,8 +71,11 @@ class EditorHelpDialog(QDialog):
         layout.addWidget(self.text_browser)
         
         # Set search paths for relative links
-        wiki_path = get_wiki_path()
-        self.text_browser.setSearchPaths([str(wiki_path)])
+        toolset_wiki_path, root_wiki_path = get_wiki_path()
+        search_paths = [str(toolset_wiki_path)]
+        if root_wiki_path is not None:
+            search_paths.append(str(root_wiki_path))
+        self.text_browser.setSearchPaths(search_paths)
         
         # Load and display the markdown file
         self.load_wiki_file(wiki_filename)
@@ -256,9 +261,12 @@ class EditorHelpDialog(QDialog):
         Args:
             wiki_filename: Name of the markdown file (e.g., "GFF-File-Format.md")
         """
-        wiki_path = get_wiki_path()
-        file_path = wiki_path / wiki_filename
-        
+        toolset_wiki_path, root_wiki_path = get_wiki_path()
+        file_path = toolset_wiki_path / wiki_filename
+        if not file_path.exists():
+            assert root_wiki_path is not None
+            file_path = root_wiki_path / wiki_filename
+
         if not file_path.exists():
             from toolset.gui.common.localization import translate as tr, trf
             error_html = f"""
@@ -267,7 +275,9 @@ class EditorHelpDialog(QDialog):
             <h1>{tr("Help File Not Found")}</h1>
             <p>{trf("Could not find help file: <code>{filename}</code>", filename=wiki_filename)}</p>
             <p>{trf("Expected location: <code>{path}</code>", path=str(file_path))}</p>
-            <p>{trf("Wiki path: <code>{path}</code>", path=str(wiki_path))}</p>
+            <p>{trf("Wiki path: <code>{path}</code>", path=str(toolset_wiki_path))}</p>
+            <p>{trf("Root wiki path: <code>{path}</code>", path=str(root_wiki_path))}</p>
+            <p>{trf("Expected file: <code>{path}</code>", path=str(file_path))}</p>
             </body>
             </html>
             """

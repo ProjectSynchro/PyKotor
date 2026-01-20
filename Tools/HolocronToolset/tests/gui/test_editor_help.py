@@ -10,6 +10,9 @@ import os
 
 from typing import TYPE_CHECKING
 
+from pytest import MonkeyPatch
+from qtpy.QtGui import QAction
+
 # Set Qt API to PyQt5 (default) before any Qt imports
 # qtpy will use this to select the appropriate bindings
 if "QT_API" not in os.environ:
@@ -23,7 +26,7 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from qtpy.QtWidgets import QMenu
+from qtpy.QtWidgets import QMenu, QMenuBar
 
 from toolset.gui.dialogs.editor_help import EditorHelpDialog, get_wiki_path
 from toolset.gui.editors.are import AREEditor
@@ -31,6 +34,7 @@ from toolset.gui.editors.editor_wiki_mapping import EDITOR_WIKI_MAP
 
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
+    from toolset.data.installation import HTInstallation
 
 
 # ============================================================================
@@ -107,7 +111,7 @@ def test_editor_help_dialog_creation(qtbot: QtBot):
     assert dialog.isVisible() is False  # Not shown yet
 
 
-def test_editor_help_dialog_load_existing_file(qtbot, tmp_path, monkeypatch):
+def test_editor_help_dialog_load_existing_file(qtbot: QtBot, tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test loading an existing wiki file."""
     # Create a test wiki file
     wiki_dir = tmp_path / "wiki"
@@ -125,7 +129,7 @@ def test_editor_help_dialog_load_existing_file(qtbot, tmp_path, monkeypatch):
         assert "Test Document" in html or "test" in html.lower()
 
 
-def test_editor_help_dialog_load_nonexistent_file(qtbot, tmp_path, monkeypatch):
+def test_editor_help_dialog_load_nonexistent_file(qtbot: QtBot, tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test loading a non-existent wiki file shows error."""
     wiki_dir = tmp_path / "wiki"
     wiki_dir.mkdir()
@@ -140,7 +144,7 @@ def test_editor_help_dialog_load_nonexistent_file(qtbot, tmp_path, monkeypatch):
         assert "nonexistent.md" in html
 
 
-def test_editor_help_dialog_markdown_rendering(qtbot, tmp_path, monkeypatch):
+def test_editor_help_dialog_markdown_rendering(qtbot: QtBot, tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test that markdown is properly rendered to HTML."""
     wiki_dir = tmp_path / "wiki"
     wiki_dir.mkdir()
@@ -171,7 +175,7 @@ def test():
         assert "<" in html and ">" in html
 
 
-def test_editor_help_dialog_error_handling(qtbot, tmp_path, monkeypatch):
+def test_editor_help_dialog_error_handling(qtbot: QtBot, tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test error handling when file cannot be read."""
     wiki_dir = tmp_path / "wiki"
     wiki_dir.mkdir()
@@ -206,7 +210,7 @@ def test_editor_help_dialog_non_blocking(qtbot: QtBot):
 # ============================================================================
 
 
-def test_editor_add_help_action_creates_menu(qtbot, installation):
+def test_editor_add_help_action_creates_menu(qtbot: QtBot, installation: HTInstallation):
     """Test that _add_help_action creates a Help menu."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -226,7 +230,7 @@ def test_editor_add_help_action_creates_menu(qtbot, installation):
     assert isinstance(help_menu, QMenu)
 
 
-def test_editor_add_help_action_adds_documentation_item(qtbot, installation):
+def test_editor_add_help_action_adds_documentation_item(qtbot: QtBot, installation: HTInstallation):
     """Test that _add_help_action adds Documentation action to Help menu."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -254,7 +258,7 @@ def test_editor_add_help_action_adds_documentation_item(qtbot, installation):
     assert doc_action.shortcut().toString() == "F1"
 
 
-def test_editor_add_help_action_has_question_mark_icon(qtbot, installation):
+def test_editor_add_help_action_has_question_mark_icon(qtbot: QtBot, installation: HTInstallation):
     """Test that help action has question mark icon."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -282,7 +286,7 @@ def test_editor_add_help_action_has_question_mark_icon(qtbot, installation):
     assert doc_action.icon() is not None
 
 
-def test_editor_add_help_action_auto_detects_wiki_file(qtbot, installation):
+def test_editor_add_help_action_auto_detects_wiki_file(qtbot: QtBot, installation: HTInstallation):
     """Test that _add_help_action auto-detects wiki file from editor class name."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -303,7 +307,7 @@ def test_editor_add_help_action_auto_detects_wiki_file(qtbot, installation):
     assert help_menu is not None
 
 
-def test_editor_add_help_action_with_explicit_filename(qtbot, installation):
+def test_editor_add_help_action_with_explicit_filename(qtbot: QtBot, installation: HTInstallation):
     """Test that _add_help_action works with explicit wiki filename."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -321,7 +325,7 @@ def test_editor_add_help_action_with_explicit_filename(qtbot, installation):
     assert help_menu is not None
 
 
-def test_editor_add_help_action_no_wiki_file_skips(qtbot, installation):
+def test_editor_add_help_action_no_wiki_file_skips(qtbot: QtBot, installation: HTInstallation):
     """Test that _add_help_action skips if no wiki file is found."""
     from toolset.gui.editors.txt import TXTEditor
 
@@ -331,42 +335,44 @@ def test_editor_add_help_action_no_wiki_file_skips(qtbot, installation):
 
     # Count Documentation actions before
     menubar = editor.menuBar()
-    help_menu_before = None
+    help_menu_before: QMenu | None = None
+    assert menubar is not None, "menubar is somehow None"
     for action in menubar.actions():
         if action.text() == "Help":
             help_menu_before = action.menu()
             break
 
-    doc_actions_before = []
-    if help_menu_before:
+    doc_actions_before: list[QAction] = []
+    if help_menu_before is not None:
         doc_actions_before = [a for a in help_menu_before.actions() if "Documentation" in a.text()]
 
     # Call _add_help_action - should not crash and should skip since wiki_file is None
     editor._add_help_action()
 
     # Count Documentation actions after
-    help_menu_after = None
+    help_menu_after: QMenu | None = None
     for action in menubar.actions():
         if action.text() == "Help":
             help_menu_after = action.menu()
             break
 
-    doc_actions_after = []
-    if help_menu_after:
+    doc_actions_after: list[QAction] = []
+    if help_menu_after is not None:
         doc_actions_after = [a for a in help_menu_after.actions() if "Documentation" in a.text()]
 
     # Since TXTEditor has None in mapping, Documentation action count should be same
     assert len(doc_actions_after) == len(doc_actions_before), "TXTEditor with None wiki file should not add Documentation action"
 
 
-def test_editor_add_help_action_multiple_calls_idempotent(qtbot, installation):
+def test_editor_add_help_action_multiple_calls_idempotent(qtbot: QtBot, installation: HTInstallation):
     """Test that calling _add_help_action multiple times is idempotent."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
 
     # Count initial Documentation actions (AREEditor calls _add_help_action in __init__)
-    menubar = editor.menuBar()
-    help_menu_before = None
+    menubar: QMenuBar | None = editor.menuBar()
+    help_menu_before: QMenu | None = None
+    assert menubar is not None, "menubar is somehow None"
     for action in menubar.actions():
         if action.text() == "Help":
             help_menu_before = action.menu()
@@ -384,7 +390,7 @@ def test_editor_add_help_action_multiple_calls_idempotent(qtbot, installation):
     editor._add_help_action()
 
     # Should still have the same number of Documentation actions (idempotent)
-    help_menu_after = None
+    help_menu_after: QMenu | None = None
     for action in menubar.actions():
         if action.text() == "Help":
             help_menu_after = action.menu()
@@ -401,7 +407,7 @@ def test_editor_add_help_action_multiple_calls_idempotent(qtbot, installation):
 # ============================================================================
 
 
-def test_editor_show_help_dialog_opens_dialog(qtbot, installation, tmp_path, monkeypatch):
+def test_editor_show_help_dialog_opens_dialog(qtbot: QtBot, installation: HTInstallation, tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test that _show_help_dialog opens a non-blocking dialog."""
     # Create test wiki
     wiki_dir = tmp_path / "wiki"
@@ -424,7 +430,7 @@ def test_editor_show_help_dialog_opens_dialog(qtbot, installation, tmp_path, mon
         assert dialog.isVisible()
 
 
-def test_editor_help_action_triggered_opens_dialog(qtbot, installation, tmp_path, monkeypatch):
+def test_editor_help_action_triggered_opens_dialog(qtbot: QtBot, installation: HTInstallation, tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test that clicking help action opens dialog."""
     # Create test wiki
     wiki_dir = tmp_path / "wiki"
@@ -468,7 +474,7 @@ def test_editor_help_action_triggered_opens_dialog(qtbot, installation, tmp_path
 # ============================================================================
 
 
-def test_are_editor_has_help_button(qtbot, installation):
+def test_are_editor_has_help_button(qtbot: QtBot, installation: HTInstallation):
     """Test that AREEditor has help button after initialization."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -488,7 +494,7 @@ def test_are_editor_has_help_button(qtbot, installation):
     assert len(doc_actions) > 0, "Documentation action should exist"
 
 
-def test_multiple_editors_have_help_buttons(qtbot, installation):
+def test_multiple_editors_have_help_buttons(qtbot: QtBot, installation: HTInstallation):
     """Test that multiple editors have help buttons."""
     from toolset.gui.editors.utw import UTWEditor
     from toolset.gui.editors.uti import UTIEditor
@@ -555,12 +561,13 @@ def test_editor_wiki_map_files_exist():
     wiki_path = get_wiki_path()
 
     # Skip test if wiki path doesn't exist (e.g., in CI without wiki)
-    if not wiki_path.exists():
+    assert isinstance(wiki_path, Path), "wiki_path is not a Path"
+    if wiki_path is None or not wiki_path.exists():
         import pytest
 
         pytest.skip(f"Wiki path does not exist: {wiki_path}")
 
-    missing_files = []
+    missing_files: list[tuple[str, str, Path]] = []
     for editor_name, wiki_file in EDITOR_WIKI_MAP.items():
         if wiki_file is not None:
             file_path = wiki_path / wiki_file
@@ -584,7 +591,7 @@ def test_dlg_editor_uses_correct_wiki_file():
 def test_gff_specific_editors_use_specific_files():
     """Test that GFF-based editors use their specific GFF-*.md files, not the generic GFF-File-Format.md."""
     # Editors that should use specific GFF files
-    specific_gff_editors = {
+    specific_gff_editors: dict[str, str] = {
         "AREEditor": "GFF-ARE.md",
         "DLGEditor": "GFF-DLG.md",
         "GITEditor": "GFF-GIT.md",
@@ -610,7 +617,7 @@ def test_gff_specific_editors_use_specific_files():
 
 def test_generic_gff_editors_use_generic_file():
     """Test that generic GFF editors (GFFEditor, SaveGameEditor, MetadataEditor) use GFF-File-Format.md."""
-    generic_gff_editors = {
+    generic_gff_editors: dict[str, str] = {
         "GFFEditor": "GFF-File-Format.md",
         "SaveGameEditor": "GFF-File-Format.md",
         "MetadataEditor": "GFF-File-Format.md",
@@ -627,7 +634,7 @@ def test_generic_gff_editors_use_generic_file():
 # ============================================================================
 
 
-def test_f1_shortcut_opens_help(qtbot, installation, tmp_path, monkeypatch):
+def test_f1_shortcut_opens_help(qtbot: QtBot, installation: HTInstallation, tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test that F1 shortcut opens help dialog."""
     from qtpy.QtWidgets import QShortcut
 
@@ -644,6 +651,7 @@ def test_f1_shortcut_opens_help(qtbot, installation, tmp_path, monkeypatch):
         # Find Documentation action and verify it has F1 shortcut
         menubar = editor.menuBar()
         help_menu = None
+        assert menubar is not None, "menubar is somehow None"
         for action in menubar.actions():
             if action.text() == "Help":
                 help_menu = action.menu()
@@ -651,7 +659,8 @@ def test_f1_shortcut_opens_help(qtbot, installation, tmp_path, monkeypatch):
 
         assert help_menu is not None
 
-        doc_action = None
+        doc_action: QAction | None = None
+        assert help_menu is not None, "help_menu is somehow None"
         for action in help_menu.actions():
             if "Documentation" in action.text():
                 doc_action = action
@@ -661,10 +670,10 @@ def test_f1_shortcut_opens_help(qtbot, installation, tmp_path, monkeypatch):
         assert doc_action.shortcut().toString() == "F1"
 
         # Find QShortcut objects for F1
-        from qtpy.QtWidgets import QShortcut
+        from qtpy.QtWidgets import QShortcut  # pyright: ignore[reportPrivateImportUsage]
 
-        shortcuts = editor.findChildren(QShortcut)
-        f1_shortcuts = [s for s in shortcuts if s.key().toString() == "F1"]
+        shortcuts: list[QShortcut] = editor.findChildren(QShortcut)
+        f1_shortcuts: list[QShortcut] = [s for s in shortcuts if s.key().toString() == "F1"]
         assert len(f1_shortcuts) > 0, "F1 shortcut should exist"
 
         # Trigger the action (simulating F1 press)
@@ -672,8 +681,8 @@ def test_f1_shortcut_opens_help(qtbot, installation, tmp_path, monkeypatch):
         qtbot.wait(100)
 
         # Find the dialog
-        dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
-        assert len(dialogs) > 0
+        dialogs: list[EditorHelpDialog] = [child for child in editor.findChildren(EditorHelpDialog)]
+        assert len(dialogs) > 0, "dialogs is somehow empty"
 
 
 # ============================================================================
@@ -681,7 +690,7 @@ def test_f1_shortcut_opens_help(qtbot, installation, tmp_path, monkeypatch):
 # ============================================================================
 
 
-def test_editor_setup_menus_alias(qtbot, installation):
+def test_editor_setup_menus_alias(qtbot: QtBot, installation: HTInstallation):
     """Test that _setup_menus() alias calls _setupMenus()."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -694,7 +703,7 @@ def test_editor_setup_menus_alias(qtbot, installation):
     # We can't easily test it's calling _setupMenus without mocking,
     # but we can verify the menu is set up
     menubar = editor.menuBar()
-    assert menubar is not None
+    assert menubar is not None, "menubar is somehow None"
     # Menu should have actions (from _setupMenus)
     assert len(menubar.actions()) > 0
 
@@ -704,7 +713,7 @@ def test_editor_setup_menus_alias(qtbot, installation):
 # ============================================================================
 
 
-def test_editor_help_dialog_handles_invalid_markdown(qtbot, tmp_path, monkeypatch):
+def test_editor_help_dialog_handles_invalid_markdown(qtbot: QtBot, tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test that dialog handles invalid markdown gracefully."""
     wiki_dir = tmp_path / "wiki"
     wiki_dir.mkdir()
@@ -721,7 +730,7 @@ def test_editor_help_dialog_handles_invalid_markdown(qtbot, tmp_path, monkeypatc
         assert dialog is not None
 
 
-def test_editor_help_dialog_handles_unicode_content(qtbot, tmp_path, monkeypatch):
+def test_editor_help_dialog_handles_unicode_content(qtbot: QtBot, tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test that dialog handles unicode content correctly."""
     wiki_dir = tmp_path / "wiki"
     wiki_dir.mkdir()
@@ -742,7 +751,7 @@ def test_editor_help_dialog_handles_unicode_content(qtbot, tmp_path, monkeypatch
 # ============================================================================
 
 
-def test_full_help_workflow(qtbot, installation, tmp_path, monkeypatch):
+def test_full_help_workflow(qtbot: QtBot, installation: HTInstallation, tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test the complete workflow: editor -> help menu -> dialog -> content."""
     # Create test wiki with actual content
     wiki_dir = tmp_path / "wiki"
@@ -768,7 +777,8 @@ ARE files define static area properties.
     with patch("toolset.gui.dialogs.editor_help.get_wiki_path", return_value=wiki_dir):
         # Verify help menu exists
         menubar = editor.menuBar()
-        help_menu = None
+        help_menu: QMenu | None = None
+        assert menubar is not None, "menubar is somehow None"
         for action in menubar.actions():
             if action.text() == "Help":
                 help_menu = action.menu()
@@ -777,7 +787,8 @@ ARE files define static area properties.
         assert help_menu is not None
 
         # Find Documentation action
-        doc_action = None
+        doc_action: QAction | None = None
+        assert help_menu is not None, "help_menu is somehow None"
         for action in help_menu.actions():
             if "Documentation" in action.text():
                 doc_action = action
@@ -802,7 +813,7 @@ ARE files define static area properties.
         assert "ARE" in html or "area" in html.lower()
 
 
-def test_help_dialog_can_be_opened_multiple_times(qtbot, installation, tmp_path, monkeypatch):
+def test_help_dialog_can_be_opened_multiple_times(qtbot: QtBot, installation: HTInstallation, tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test that multiple help dialogs can be opened (non-blocking)."""
     wiki_dir = tmp_path / "wiki"
     wiki_dir.mkdir()
@@ -821,5 +832,5 @@ def test_help_dialog_can_be_opened_multiple_times(qtbot, installation, tmp_path,
         qtbot.wait(100)
 
         # Should have multiple dialogs
-        dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
-        assert len(dialogs) >= 1  # At least one dialog should exist
+        dialogs: list[EditorHelpDialog] = [child for child in editor.findChildren(EditorHelpDialog)]
+        assert len(dialogs) >= 1, "dialogs is somehow empty"

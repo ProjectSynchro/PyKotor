@@ -253,7 +253,7 @@ class DLGEditor(Editor):
         layout.addWidget(text_edit)
 
         close_button: QPushButton = QPushButton("Close", dialog)
-        close_button.clicked.connect(dialog.accept)
+        close_button.clicked.connect(lambda: dialog.accept())
         close_button.setFont(QFont("Arial", 10))
         button_layout: QHBoxLayout = QHBoxLayout()
         button_layout.addStretch()

@@ -68,11 +68,8 @@ class GIT:
     BINARY_TYPE = ResourceType.GIT
 
     def __init__(self):
-        
         # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:29-37
         # Area audio properties (ambient sounds, music, environment audio)
-        # NOTE: PyKotor uses separate fields instead of nested AreaProperties struct
-        # Discrepancy: https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs uses AreaProperties struct, PyKotor flattens to top-level
         self.ambient_sound_id: int = 0  # AmbientSndDay (day ambient sound ID)
         self.ambient_volume: int = 0  # AmbientSndDayVol (day ambient volume)
         self.env_audio: int = 0  # EnvAudio (environment audio index)
@@ -80,12 +77,8 @@ class GIT:
         self.music_battle_id: int = 0  # MusicBattle (battle music ID)
         self.music_delay: int = 0  # MusicDelay (music delay in seconds)
 
-        
-        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:16-24
-        # https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File Formats/GFF FileTypes/GIT.cs:29-39
         # Instance lists (creatures, doors, placeables, triggers, waypoints, stores, encounters, sounds, cameras)
         # NOTE: List names in GFF use spaces: "Creature List", "Door List", "Placeable List", "Encounter List"
-        #
         self.cameras: list[GITCamera] = []  # CameraList (area cameras)
         self.creatures: list[GITCreature] = []  # "Creature List" (spawned creatures)
         self.doors: list[GITDoor] = []  # "Door List" (area doors)
@@ -696,7 +689,7 @@ class GITDoor(GITInstance):
         """Serialize GITDoor-specific data."""
         # transition_destination is a LocalizedString, not Vector3
         transition_locstring = self.transition_destination
-        transition_stringref = transition_locstring.stringref
+        transition_stringref = transition_locstring.stringref if hasattr(transition_locstring, 'stringref') else -1
 
         return {
             "resref": str(self.resref),
@@ -704,7 +697,7 @@ class GITDoor(GITInstance):
             "tag": self.tag,
             "linked_to_module": str(self.linked_to_module),
             "linked_to": self.linked_to,
-            "linked_to_flags": self.linked_to_flags.value,
+            "linked_to_flags": self.linked_to_flags.value if hasattr(self.linked_to_flags, 'value') else int(self.linked_to_flags),
             "transition_destination_stringref": transition_stringref,
         }
 
@@ -1030,7 +1023,7 @@ class GITTrigger(GITInstance):
 
         # transition_destination is a LocalizedString
         transition_locstring = self.transition_destination
-        transition_stringref = transition_locstring.stringref
+        transition_stringref = transition_locstring.stringref if hasattr(transition_locstring, 'stringref') else -1
 
         return {
             "resref": str(self.resref),
@@ -1038,14 +1031,19 @@ class GITTrigger(GITInstance):
             "geometry": geometry,
             "linked_to_module": str(self.linked_to_module),
             "linked_to": self.linked_to,
-            "linked_to_flags": self.linked_to_flags.value,
+            "linked_to_flags": self.linked_to_flags.value if hasattr(self.linked_to_flags, 'value') else int(self.linked_to_flags),
             "transition_destination_stringref": transition_stringref,
         }
 
 
 class GITTransitionTrigger(GITTrigger):
-    def __init__(self):
-        super().__init__()
+    def __init__(
+        self,
+        x: float = 0.0,
+        y: float = 0.0,
+        z: float = 0.0,
+    ):
+        super().__init__(x, y, z)
         self.linked_to: str = ""
         self.linked_to_flags: GITModuleLink = GITModuleLink.NoLink
         self.linked_to_module: ResRef = ResRef.from_blank()

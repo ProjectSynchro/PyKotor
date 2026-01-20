@@ -86,9 +86,9 @@ class ThemeDialog(QDialog):
 
         # Buttons
         self._ok_button: QPushButton = QPushButton("Apply")
-        self._ok_button.clicked.connect(self.accept)
+        self._ok_button.clicked.connect(lambda: self.accept())
         self._cancel_button: QPushButton = QPushButton("Cancel")
-        self._cancel_button.clicked.connect(self.reject)
+        self._cancel_button.clicked.connect(lambda: self.reject())
 
         # Layout
         self._button_layout: QHBoxLayout = QHBoxLayout()

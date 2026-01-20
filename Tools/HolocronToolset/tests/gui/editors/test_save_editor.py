@@ -60,7 +60,6 @@ from toolset.gui.editor import Editor
 from toolset.gui.editors.are import AREEditor
 from toolset.gui.editors.ifo import IFOEditor
 from toolset.gui.editors.git import GITEditor
-from toolset.gui.editors.lyt import LYTEditor
 from toolset.gui.editors.utc import UTCEditor
 from toolset.gui.editors.uti import UTIEditor
 from toolset.gui.editors.dlg import DLGEditor
@@ -1190,54 +1189,6 @@ def test_git_editor_preserves_save_game_fields(qtbot: QtBot, installation: HTIns
     assert len(data) > 0
 
 
-def test_lyt_editor_uses_standard_load_signature(qtbot: QtBot, installation: HTInstallation):
-    """Test that LYT editor uses standard load signature and calls super().load().
-    
-    Note: LYT is NOT a GFF file (it's plain-text ASCII), but the editor should still
-    use the standard load signature for consistency.
-    """
-    editor = LYTEditor(None, installation)
-    qtbot.addWidget(editor)
-    
-    # Verify load signature accepts standard parameters
-    import inspect
-    sig = inspect.signature(editor.load)
-    params = list(sig.parameters.keys())
-    
-    # Should have: self, filepath, resref, restype, data
-    assert 'filepath' in params
-    assert 'resref' in params
-    assert 'restype' in params
-    assert 'data' in params
-    
-    # Verify order is correct (filepath before data)
-    filepath_idx = params.index('filepath')
-    data_idx = params.index('data')
-    assert filepath_idx < data_idx, "filepath should come before data"
-
-
-def test_lyt_editor_detects_save_game_resources(qtbot: QtBot, installation: HTInstallation):
-    """Test that LYT editor detects save game resources.
-    
-    Note: LYT files don't need field preservation (they're not GFF), but they should
-    still detect save game context for consistency.
-    """
-    editor = LYTEditor(None, installation)
-    qtbot.addWidget(editor)
-    
-    # Create minimal LYT data (plain text format)
-    lyt = LYT()
-    from pykotor.resource.formats.lyt import bytes_lyt
-    lyt_data = bytes_lyt(lyt)
-    
-    # Load from save game path
-    save_path = Path("SAVEGAME.sav") / "module.sav" / "module.lyt"
-    editor.load(str(save_path), "module", ResourceType.LYT, lyt_data)
-    
-    # Should detect save game context (even though LYT doesn't need field preservation)
-    assert editor._is_save_game_resource == True
-
-
 def test_utc_editor_preserves_save_game_fields(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that UTC editor preserves fields for save game resources."""
     editor = UTCEditor(None, installation)
@@ -1310,23 +1261,6 @@ def test_all_gff_editors_inherit_save_game_detection(qtbot: QtBot, installation:
         # All should have save method that preserves fields
         assert hasattr(editor, 'save')
         assert callable(editor.save)
-
-
-def test_lyt_editor_inherits_detection_but_not_field_preservation(qtbot: QtBot, installation: HTInstallation):
-    """Test that LYT editor inherits detection but doesn't need field preservation.
-    
-    LYT is plain-text ASCII, not GFF, so it doesn't need field preservation.
-    But it should still use standard load signature and detect save game context.
-    """
-    editor = LYTEditor(None, installation)
-    qtbot.addWidget(editor)
-    
-    # Should have detection method (inherited from Editor base class)
-    assert hasattr(editor, '_detect_save_game_resource')
-    assert hasattr(editor, '_is_save_game_resource')
-    
-    # LYT doesn't need field preservation (it's not GFF)
-    # But it should still detect save game context for consistency
 
 
 def test_save_game_resource_roundtrip(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):

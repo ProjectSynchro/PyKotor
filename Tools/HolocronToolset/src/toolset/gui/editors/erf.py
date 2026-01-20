@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, Callable
 
 import qtpy
 
-from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy import QtGui
 from qtpy.QtCore import (
     QMimeData,
@@ -26,11 +25,13 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from pykotor.common.misc import ResRef
 from pykotor.extract.file import ResourceIdentifier
-from pykotor.resource.formats.bif import BIFType, read_bif, write_bif
+from pykotor.resource.bioware_archive import ArchiveResource
+from pykotor.resource.formats.bif import BIF, BIFResource, BIFType, read_bif, write_bif
 from pykotor.resource.formats.erf import ERF, ERFResource, ERFType, read_erf, write_erf
-from pykotor.resource.formats.rim import RIM, read_rim, write_rim
+from pykotor.resource.formats.rim import RIM, RIMResource, read_rim, write_rim
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_capsule_file
 from toolset.gui.common.filters import RobustSortFilterProxyModel
@@ -54,8 +55,6 @@ if TYPE_CHECKING:
     from qtpy.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent
     from qtpy.QtWidgets import QAbstractButton, QHeaderView, QWidget
 
-    from pykotor.extract.keyfile import BIFResource
-    from pykotor.resource.formats.bif import BIF
     from pykotor.resource.formats.rim import RIMResource
     from toolset.data.installation import HTInstallation
 
@@ -119,9 +118,13 @@ class ERFEditor(Editor):
         self.ui.tableView.setModel(self._proxy_model)
 
         self.ui.tableView.setSortingEnabled(False)
-        
+        # Enable multiple row selection
+        self.ui.tableView.setSelectionMode(self.ui.tableView.SelectionMode.ExtendedSelection)
+        self.ui.tableView.setSelectionBehavior(self.ui.tableView.SelectionBehavior.SelectRows)
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
         header: QHeaderView | None = self.ui.tableView.horizontalHeader()
@@ -249,58 +252,77 @@ class ERFEditor(Editor):
                 tr("Unable to load file"),
                 tr("The file specified is not a MOD/ERF type file."),
                 parent=self,
-                flags=(
-                    Qt.WindowType.Dialog
-                    | Qt.WindowType.Window
-                    | Qt.WindowType.WindowStaysOnTopHint
-                    | Qt.WindowType.WindowSystemMenuHint
-                ),
+                flags=(Qt.WindowType.Dialog | Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowSystemMenuHint),
             ).show()
+
+    def _build_archive(
+        self,
+        archive: RIM | ERF | BIF,
+        resource_type: type[RIMResource | ERFResource | BIFResource],
+        set_data_func: Callable[[RIM | ERF | BIF, ArchiveResource], None],
+        write_func: Callable[[RIM | ERF | BIF, bytearray], None],
+        data: bytearray,
+    ) -> None:
+        """Helper method to build archive by iterating through resources without duplication."""
+        for i in range(self._proxy_model.rowCount()):
+            source_index: QModelIndex = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
+            item: QStandardItem | None = self.source_model.itemFromIndex(source_index)
+            if item is None:
+                RobustLogger().warning(trf("ERFEditor: item was None in build() at index {source_index}", source_index=source_index))
+                continue
+            resource: ArchiveResource = item.data()
+            assert isinstance(resource, resource_type), f"ERFEditor: Resource '{resource.resref}' is not a valid {resource_type.__name__}: {resource.__class__.__name__}"
+            set_data_func(archive, resource)
+        write_func(archive, data)
 
     def build(self) -> tuple[bytes, bytes]:
         data = bytearray()
-        resource: ERFResource | RIMResource | BIFResource
+
+        def set_archive_data(arch: RIM | ERF | BIF, res: ArchiveResource):
+            if isinstance(arch, BIF):
+                arch.set_data(res.resref, res.restype, res.data, res.resname_key_index)
+            else:
+                arch.set_data(res.resref, res.restype, res.data)
+        def write_archive_data(arch: RIM | ERF | BIF, data_buf: bytearray):
+            writer_mapping = {
+                RIM: write_rim,
+                ERF: write_erf,
+                BIF: write_bif,
+            }
+            write_func = writer_mapping[arch.__class__]
+            write_func(arch, data_buf)
 
         if self._restype is ResourceType.RIM:
             rim = RIM()
-            for i in range(self._proxy_model.rowCount()):
-                source_index: QModelIndex = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
-                item: QStandardItem | None = self.source_model.itemFromIndex(source_index)
-                if item is None:
-                    RobustLogger().warning(trf("ERFEditor: item was None in build() at index {source_index}", source_index=source_index))
-                    continue
-                resource = item.data()
-                assert isinstance(resource, RIMResource), "Resource '{resource.resref}' is not a valid RIM resource type"
-                rim.set_data(str(resource.resref), resource.restype, resource.data)
-            write_rim(rim, data)
+            self._build_archive(
+                rim,
+                RIMResource,
+                set_archive_data,
+                write_archive_data,
+                data,
+            )
 
         elif self._restype in (ResourceType.ERF, ResourceType.MOD, ResourceType.SAV):  # sourcery skip: split-or-ifs
             erf = ERF(ERFType.from_extension(self._restype.extension))
             if self._restype is ResourceType.SAV:
                 erf.is_save = True
-            for i in range(self._proxy_model.rowCount()):
-                source_index: QModelIndex = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
-                item = self.source_model.itemFromIndex(source_index)
-                if item is None:
-                    RobustLogger().warning(trf("ERFEditor: item was None in build() at index {source_index}", source_index=source_index))
-                    continue
-                resource = item.data()
-                assert isinstance(resource, ERFResource), "Resource '{resource.resref}' is not a valid ERF resource type"
-                erf.set_data(str(resource.resref), resource.restype, resource.data)
-            write_erf(erf, data)
+            self._build_archive(
+                erf,
+                ERFResource,
+                set_archive_data,
+                write_archive_data,
+                data,
+            )
 
         elif self._restype == ResourceType.BIF:
-            bif = BIF(BIFType.from_extension(self._restype.extension))
-            for i in range(self._proxy_model.rowCount()):
-                source_index = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
-                item = self.source_model.itemFromIndex(source_index)
-                if item is None:
-                    RobustLogger().warning(trf("ERFEditor: item was None in build() at index {source_index}", source_index=source_index))
-                    continue
-                resource = item.data()
-                assert isinstance(resource, BIFResource), "Resource '{resource.resref}' is not a valid BIF resource type"
-                bif.set_data(ResRef(resource.name), resource.type, bytes(resource.bif_index), int(resource.res_index))
-            write_bif(bif, data)
+            bif = BIF(BIFType.from_extension(f".{self._restype.extension}"))
+            self._build_archive(
+                bif,
+                BIFResource,
+                set_archive_data,
+                write_archive_data,
+                data,
+            )
         else:
             raise ValueError(trf("Invalid restype for ERFEditor: {restype}", restype=self._restype))
 
@@ -334,10 +356,13 @@ class ERFEditor(Editor):
                 msg: str = str(e)
                 if msg.startswith("You must save the ERFEditor"):  # HACK(th3w1zard1): fix later.
                     from toolset.gui.common.localization import translate as tr
+
                     QMessageBox(
                         QMessageBox.Icon.Information,
                         tr("New resource added to parent ERF/RIM"),
-                        tr("You've added a new ERF/RIM and tried to save inside that new ERF/RIM's editor. You must save the ERFEditor you added the nested to first. Do so and try again."),  # noqa: E501
+                        tr(
+                            "You've added a new ERF/RIM and tried to save inside that new ERF/RIM's editor. You must save the ERFEditor you added the nested to first. Do so and try again."
+                        ),  # noqa: E501
                     ).exec()
                 else:
                     raise
@@ -369,13 +394,21 @@ class ERFEditor(Editor):
         if self._filepath is not None:
             main_menu.addSeparator()
             if all(resource.restype.target_type().contents == "gff" for resource in sel_resources):
-                main_menu.addAction(tr("Open with GFF Editor")).triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=False))  # noqa: E501
+                main_menu.addAction(tr("Open with GFF Editor")).triggered.connect(
+                    lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=False)
+                )  # noqa: E501
                 if self._installation is not None:
-                    main_menu.addAction(tr("Open with Specialized Editor")).triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=True))  # noqa: E501
-                    main_menu.addAction(tr("Open with Default Editor")).triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=None))  # noqa: E501
+                    main_menu.addAction(tr("Open with Specialized Editor")).triggered.connect(
+                        lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=True)
+                    )  # noqa: E501
+                    main_menu.addAction(tr("Open with Default Editor")).triggered.connect(
+                        lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=None)
+                    )  # noqa: E501
 
             elif self._installation is not None:
-                main_menu.addAction(tr("Open with Editor")).triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=True))  # noqa: E501
+                main_menu.addAction(tr("Open with Editor")).triggered.connect(
+                    lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=True)
+                )  # noqa: E501
 
         viewport: QWidget | None = self.ui.tableView.viewport()
         if viewport is None:
@@ -402,6 +435,7 @@ class ERFEditor(Editor):
 
         # Show extraction feedback dialog
         from toolset.gui.common.extraction_feedback import show_extraction_results
+
         show_extraction_results(self, successful_paths, folder_path=None)
 
     def rename_selected(self):
@@ -419,9 +453,7 @@ class ERFEditor(Editor):
         resource: ERFResource = item.data()
 
         erfrim_name: str = (
-            tr("ERF/RIM/BIF")
-            if self._resname is None or self._restype is None
-            else trf("{resname}.{extension}", resname=self._resname, extension=self._restype.extension)
+            tr("ERF/RIM/BIF") if self._resname is None or self._restype is None else trf("{resname}.{extension}", resname=self._resname, extension=self._restype.extension)
         )
         new_resname, ok = self.get_validated_resref(erfrim_name, resource)
         if not ok:
@@ -461,19 +493,19 @@ class ERFEditor(Editor):
 
     def remove_selected(self):
         self._has_changes = True
-        for index in reversed(
-            [
-                index
-                for index in self.ui.tableView.selectedIndexes()
-                if not index.column()
-            ]
-        ):
+        sel_model: QItemSelectionModel | None = self.ui.tableView.selectionModel()
+        if sel_model is None:
+            RobustLogger().warning("ERFEditor: selectionModel was None in remove_selected()")
+            return
+        # Get unique selected rows and map to source indexes, then remove in reverse order
+        selected_rows: list[QModelIndex] = sel_model.selectedRows()
+        source_rows: list[int] = []
+        for index in selected_rows:
             source_index: QModelIndex = self._proxy_model.mapToSource(index)
-            item: QStandardItem | None = self.source_model.itemFromIndex(source_index)
-            if item is None:
-                RobustLogger().warning("item was None in ERFEditor.remove_selected() at index %s", index)
-                continue
-            self.source_model.removeRow(item.row())
+            source_rows.append(source_index.row())
+        # Remove in reverse order to avoid index shifting issues
+        for row in reversed(sorted(set(source_rows))):
+            self.source_model.removeRow(row)
 
     def add_resources(
         self,
@@ -500,12 +532,7 @@ class ERFEditor(Editor):
                     QMessageBox.Icon.Critical,
                     tr("Failed to add resource"),
                     tr(f"Could not add resource at '{r_filepath.absolute()}'<br><br>{error_msg}"),
-                    flags=(
-                        Qt.WindowType.Dialog
-                        | Qt.WindowType.Window
-                        | Qt.WindowType.WindowStaysOnTopHint
-                        | Qt.WindowType.WindowSystemMenuHint
-                    ),
+                    flags=(Qt.WindowType.Dialog | Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowSystemMenuHint),
                 ).exec()
 
     def select_files_to_add(self):
@@ -525,10 +552,7 @@ class ERFEditor(Editor):
         if not selected_rows:
             RobustLogger().warning("ERFEditor: no selected rows in open_selected()")
             return
-        erf_resources: list[ERFResource] = [
-            self.source_model.itemFromIndex(self._proxy_model.mapToSource(index)).data()
-            for index in selected_rows
-        ]
+        erf_resources: list[ERFResource] = [self.source_model.itemFromIndex(self._proxy_model.mapToSource(index)).data() for index in selected_rows]
         if not erf_resources:
             RobustLogger().warning("ERFEditor: no erf_resources in open_selected()")
             return
@@ -539,12 +563,7 @@ class ERFEditor(Editor):
                 tr("This ERF/RIM must be saved to disk first, do so and try again."),
                 QMessageBox.StandardButton.Ok,
                 self,
-                flags=(
-                    Qt.WindowType.Dialog
-                    | Qt.WindowType.Window
-                    | Qt.WindowType.WindowStaysOnTopHint
-                    | Qt.WindowType.WindowSystemMenuHint
-                ),
+                flags=(Qt.WindowType.Dialog | Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowSystemMenuHint),
             ).exec()
             return
 
@@ -606,12 +625,7 @@ class ERFEditor(Editor):
                 tr("This ERFEditor was never loaded from a file, so there's nothing to refresh."),
                 QMessageBox.StandardButton.Ok,
                 self,
-                flags=(
-                    Qt.WindowType.Dialog
-                    | Qt.WindowType.Window
-                    | Qt.WindowType.WindowStaysOnTopHint
-                    | Qt.WindowType.WindowSystemMenuHint
-                ),
+                flags=(Qt.WindowType.Dialog | Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowSystemMenuHint),
             ).exec()
             return
         self._has_changes = False
@@ -728,10 +742,7 @@ class ERFEditorTable(RobustTableView):
             event.accept()
             filter_model: ERFSortFilterProxyModel = cast(ERFSortFilterProxyModel, self.model())
             source_model: QStandardItemModel = cast(QStandardItemModel, filter_model.sourceModel())
-            existing_items: set[str] = {
-                f"{source_model.index(row, 0).data()}.{source_model.index(row, 1).data()}".strip().lower()
-                for row in range(source_model.rowCount())
-            }
+            existing_items: set[str] = {f"{source_model.index(row, 0).data()}.{source_model.index(row, 1).data()}".strip().lower() for row in range(source_model.rowCount())}
             always: bool = False
             never: bool = False
             to_skip: list[str] = []
@@ -841,10 +852,7 @@ class ERFEditorTable(RobustTableView):
         filter_model: ERFSortFilterProxyModel = cast(ERFSortFilterProxyModel, self.model())
         source_model: QStandardItemModel = cast(QStandardItemModel, filter_model.sourceModel())
         for index in (index for index in self.selectedIndexes() if not index.column()):
-            resource: ERFResource = source_model.data(
-                filter_model.mapToSource(index),
-                Qt.ItemDataRole.UserRole + 1
-            )
+            resource: ERFResource = source_model.data(filter_model.mapToSource(index), Qt.ItemDataRole.UserRole + 1)
             file_stem, file_ext = str(resource.resref), resource.restype.extension
             filepath: Path = Path(temp_dir, f"{file_stem}.{file_ext}")
             filepath.write_bytes(resource.data)

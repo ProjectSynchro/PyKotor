@@ -641,6 +641,12 @@ class TextureList(MainWindowList):
         self._poll_timer.timeout.connect(self._poll_result_queue)
         # Map of (section_name, row) -> FileResource for pending process loads
         self._pending_process_loads: dict[tuple[str, int], FileResource] = {}
+        
+        # Throttle timer for scroll events to prevent rapid queue operations
+        self._scroll_throttle_timer: QTimer = QTimer(self)
+        self._scroll_throttle_timer.setSingleShot(True)
+        self._scroll_throttle_timer.timeout.connect(self._throttled_queue_load_visible_icons)
+        self._pending_scroll_load: bool = False
 
     def __del__(self):
         """Shutdown the executor when the texture list is deleted."""
@@ -681,7 +687,8 @@ class TextureList(MainWindowList):
         if vert_scroll_bar is None:
             RobustLogger().warning("Could not find vertical scroll bar for resource list")
         else:
-            vert_scroll_bar.valueChanged.connect(self.queue_load_visible_icons)
+            # Use throttled handler to prevent rapid queue operations on Windows
+            vert_scroll_bar.valueChanged.connect(self._throttled_scroll_handler)
         self.sig_icon_loaded.connect(self.on_icon_loaded)
 
     def set_installation(self, installation: HTInstallation):
@@ -941,6 +948,25 @@ class TextureList(MainWindowList):
                 RobustLogger().warning(f"Expected ResourceStandardItem, got {type(item).__name__}")
                 continue
             self.offload_texture_load(item, reload=reload)
+
+    def _throttled_scroll_handler(self, value: int):
+        """Handle scroll events with throttling to prevent rapid queue operations.
+        
+        Args:
+        ----
+            value: The scroll value from the valueChanged signal (ignored).
+        """
+        # Mark that we have a pending scroll load
+        self._pending_scroll_load = True
+        # Restart the throttle timer (single-shot, so it will fire after the timeout)
+        # This ensures we only call queue_load_visible_icons after scrolling stops
+        self._scroll_throttle_timer.start(150)  # 150ms throttle delay
+    
+    def _throttled_queue_load_visible_icons(self):
+        """Called by the throttle timer to load visible icons after scrolling stops."""
+        if self._pending_scroll_load:
+            self._pending_scroll_load = False
+            self.queue_load_visible_icons(0)
 
     @Slot(int)
     def queue_load_visible_icons(

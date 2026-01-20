@@ -551,63 +551,68 @@ class ToolWindow(QMainWindow):
         self.ui.openSaveEditorButton.clicked.connect(self.on_open_save_editor)
 
         # Enable/disable Open Save Editor button based on selection
-        selection_model = self.ui.savesWidget.ui.resourceTree.selectionModel()
-        assert selection_model is not None, "Selection model not found in saves widget"
-        selection_model.selectionChanged.connect(self.on_save_selection_changed)
+        selectionModel = self.ui.savesWidget.ui.resourceTree.selectionModel()
+        assert selectionModel is not None, "Selection model not found in saves widget"
+        selectionModel.selectionChanged.connect(self.on_save_selection_changed)
 
         # Tab change signal
         self.ui.resourceTabs.currentChanged.connect(self.on_tab_changed)
 
-        # Action button signals
-        self.ui.specialActionButton.clicked.connect(self._open_module_designer_action)
-        self.ui.levelBuilderButton.clicked.connect(self._open_indoor_map_builder_action)
+        def open_module_designer(*args) -> ModuleDesigner | None:
+            """Open the module designer."""
+            assert self.active is not None
+            module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
+            module_path: Path | None = None
+            if module_data:
+                module_path = self.active.module_path() / Path(str(module_data))
+            try:
+                designer_window = ModuleDesigner(  # pyright: ignore[call-arg]
+                    None,
+                    self.active,
+                    mod_filepath=module_path,
+                )
+            except TypeError as exc:
+                RobustLogger().warning(f"ModuleDesigner signature mismatch: {exc}. Falling back without module path.")
+                designer_window = ModuleDesigner(None, self.active)
+                if module_path is not None:
+                    QTimer.singleShot(33, lambda: designer_window.open_module(module_path))
 
-    def _open_module_designer_action(self):
-        """Open the module designer for the currently selected module."""
-        assert self.active is not None
-        module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
-        module_path: Path | None = None
-        if module_data:
-            module_path = self.active.module_path() / Path(str(module_data))
+            designer_window.setWindowIcon(cast("QApplication", QApplication.instance()).windowIcon())
+            add_window(designer_window)
 
-        try:
-            designer_window = ModuleDesigner(  # pyright: ignore[call-arg]
-                None,
-                self.active,
-                mod_filepath=module_path,
-            )
-        except TypeError as exc:
-            RobustLogger().warning(f"ModuleDesigner signature mismatch: {exc}. Falling back without module path.")
-            designer_window = ModuleDesigner(None, self.active)
-            if module_path is not None:
-                QTimer.singleShot(33, lambda: designer_window.open_module(module_path))
+        self.ui.specialActionButton.clicked.connect(open_module_designer)
 
-        designer_window.setWindowIcon(cast("QApplication", QApplication.instance()).windowIcon())
-        add_window(designer_window)
+        def open_indoor_map_builder_with_module(*args) -> IndoorMapBuilder | None:
+            """Open the Indoor Map Builder with the selected module."""
+            assert self.active is not None
+            module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
+            if not module_data:
+                from qtpy.QtWidgets import QMessageBox
 
-    def _open_indoor_map_builder_action(self):
-        """Open the Indoor Map Builder with the currently selected module."""
-        assert self.active is not None
-        module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
-        if not module_data:
-            QMessageBox.warning(
-                self,
-                tr("No Module Selected"),
-                tr("Please select a module from the Modules tab before opening the Level Builder."),
-            )
-            return
+                from toolset.gui.common.localization import translate as tr
 
-        # Use the selected module file name and strip extension robustly.
-        module_name = PurePath(str(module_data)).stem
+                QMessageBox.warning(
+                    self,
+                    tr("No Module Selected"),
+                    tr("Please select a module from the Modules tab before opening the Level Builder."),
+                )
+                return None
 
-        builder = IndoorMapBuilder(None, self.active)
-        builder.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        builder.show()
-        builder.activateWindow()
-        add_window(builder)
+            # Use the selected module file name and strip extension robustly.
+            module_name = PurePath(str(module_data)).stem
 
-        # Load the selected module (use QTimer to ensure window is fully initialized)
-        QTimer.singleShot(33, lambda: builder.load_module_from_name(module_name))
+            builder = IndoorMapBuilder(None, self.active)
+            builder.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            builder.show()
+            builder.activateWindow()  # Bring the window to the front
+            add_window(builder)
+
+            # Load the selected module (use QTimer to ensure window is fully initialized)
+            QTimer.singleShot(33, lambda: builder.load_module_from_name(module_name))  # Load the module after the window is fully initialized
+
+            return builder
+
+        self.ui.levelBuilderButton.clicked.connect(open_indoor_map_builder_with_module)
 
         self.ui.overrideWidget.sig_section_changed.connect(self.on_override_changed)
         self.ui.overrideWidget.sig_request_reload.connect(self.on_override_reload)
@@ -682,15 +687,15 @@ class ToolWindow(QMainWindow):
         self._setup_language_menu()
 
         # Setup View menu - Legacy Layout toggle
-        self._use_legacy_layout: bool = self.settings.value("useLegacyLayout", False, type=bool)
-        self.ui.actionLegacyLayout.setChecked(self._use_legacy_layout)
-        self.ui.actionLegacyLayout.triggered.connect(self._on_legacy_layout_toggled)
+        #self._use_legacy_layout: bool = self.settings.value("useLegacyLayout", False, type=bool)
+        #self.ui.actionLegacyLayout.setChecked(self._use_legacy_layout)
+        #self.ui.actionLegacyLayout.triggered.connect(self._on_legacy_layout_toggled)
 
         # Initialize view switching (will be set up after UI is ready)
-        self._fs_core_widget: ResourceFileSystemWidget | None = None
-        self._fs_modules_widget: ResourceFileSystemWidget | None = None
-        self._fs_override_widget: ResourceFileSystemWidget | None = None
-        self._fs_saves_widget: ResourceFileSystemWidget | None = None
+        #self._fs_core_widget: ResourceFileSystemWidget | None = None
+        #self._fs_modules_widget: ResourceFileSystemWidget | None = None
+        #self._fs_override_widget: ResourceFileSystemWidget | None = None
+        #self._fs_saves_widget: ResourceFileSystemWidget | None = None
 
     @Slot(bool)
     def _open_theme_dialog(
@@ -792,150 +797,6 @@ class ToolWindow(QMainWindow):
         # Apply translations after setting up menu
         self.apply_translations()
 
-    def _setup_view_switching(self):
-        """Set up view switching between filesystem view and legacy layout."""
-        # Apply initial view mode
-        if self.active is not None:
-            self._apply_view_mode()
-
-    @Slot(bool)
-    def _on_legacy_layout_toggled(self, checked: bool):
-        """Handle Legacy Layout menu action toggle.
-
-        Args:
-        ----
-            checked: Whether legacy layout is enabled
-        """
-        self._use_legacy_layout = checked
-        self.settings.setValue("useLegacyLayout", checked)
-        self._apply_view_mode()
-
-    def _apply_view_mode(self):
-        """Apply the current view mode (filesystem or legacy)."""
-        if self._use_legacy_layout:
-            self._switch_to_legacy_view()
-        else:
-            self._switch_to_filesystem_view()
-
-    def _switch_to_legacy_view(self):
-        """Switch to legacy ResourceList view."""
-        # Hide filesystem widgets and show legacy widgets
-        if self._fs_core_widget is not None:
-            self._fs_core_widget.hide()
-        self.ui.coreWidget.show()
-
-        if self._fs_modules_widget is not None:
-            self._fs_modules_widget.hide()
-        self.ui.modulesWidget.show()
-
-        if self._fs_override_widget is not None:
-            self._fs_override_widget.hide()
-        self.ui.overrideWidget.show()
-
-        if self._fs_saves_widget is not None:
-            self._fs_saves_widget.hide()
-        self.ui.savesWidget.show()
-
-    def _switch_to_filesystem_view(self):
-        """Switch to filesystem view with archive-as-folder support."""
-        if self.active is None:
-            return
-
-        # Store references to legacy widgets
-        legacy_core = self.ui.coreWidget
-        legacy_modules = self.ui.modulesWidget
-        legacy_override = self.ui.overrideWidget
-        legacy_saves = self.ui.savesWidget
-
-        # Create filesystem widgets if they don't exist
-        if self._fs_core_widget is None:
-            # Get the parent widget (the tab container)
-            core_parent = legacy_core.parent()
-            if core_parent is not None and isinstance(core_parent, QWidget):
-                self._fs_core_widget = ResourceFileSystemWidget(core_parent)
-                # Insert into the same layout position as legacy widget
-                layout = core_parent.layout()
-                if layout is not None and isinstance(layout, (QBoxLayout, QStackedLayout)):
-                    # Find the index of the legacy widget
-                    for i in range(layout.count()):
-                        item = layout.itemAt(i)
-                        if item and item.widget() == legacy_core:
-                            layout.insertWidget(i, self._fs_core_widget)
-                            break
-                # Set root path to installation path
-                install_path = self.active.path()
-                if install_path.exists():
-                    self._fs_core_widget.setRootPath(install_path)
-
-        if self._fs_modules_widget is None:
-            modules_parent = legacy_modules.parent()
-            if modules_parent is not None:
-                self._fs_modules_widget = ResourceFileSystemWidget(modules_parent)
-                layout = modules_parent.layout()
-                if layout is not None:
-                    for i in range(layout.count()):
-                        item = layout.itemAt(i)
-                        if item and item.widget() == legacy_modules:
-                            layout.insertWidget(i, self._fs_modules_widget)
-                            break
-                # Set root path to modules directory
-                module_path = self.active.module_path()
-                if module_path.exists():
-                    self._fs_modules_widget.setRootPath(module_path)
-
-        if self._fs_override_widget is None:
-            override_parent = legacy_override.parent()
-            if override_parent is not None:
-                self._fs_override_widget = ResourceFileSystemWidget(override_parent)
-                layout = override_parent.layout()
-                if layout is not None:
-                    for i in range(layout.count()):
-                        item = layout.itemAt(i)
-                        if item and item.widget() == legacy_override:
-                            layout.insertWidget(i, self._fs_override_widget)
-                            break
-                # Set root path to override directory
-                override_path = self.active.override_path()
-                if override_path.exists():
-                    self._fs_override_widget.setRootPath(override_path)
-
-        if self._fs_saves_widget is None:
-            saves_parent = legacy_saves.parent()
-            if saves_parent is not None:
-                self._fs_saves_widget = ResourceFileSystemWidget(saves_parent)
-                layout = saves_parent.layout()
-                if layout is not None:
-                    for i in range(layout.count()):
-                        item = layout.itemAt(i)
-                        if item and item.widget() == legacy_saves:
-                            layout.insertWidget(i, self._fs_saves_widget)
-                            break
-                # Set root path to first save location, or installation path if no saves
-                save_locations = self.active.save_locations()
-                if save_locations and len(save_locations) > 0 and save_locations[0].exists() and save_locations[0].is_dir():
-                    self._fs_saves_widget.setRootPath(save_locations[0])
-                else:
-                    install_path = self.active.path()
-                    if install_path.exists():
-                        self._fs_saves_widget.setRootPath(install_path)
-
-        # Show filesystem widgets and hide legacy widgets
-        if self._fs_core_widget is not None:
-            self._fs_core_widget.show()
-        legacy_core.hide()
-
-        if self._fs_modules_widget is not None:
-            self._fs_modules_widget.show()
-        legacy_modules.hide()
-
-        if self._fs_override_widget is not None:
-            self._fs_override_widget.show()
-        legacy_override.hide()
-
-        if self._fs_saves_widget is not None:
-            self._fs_saves_widget.show()
-        legacy_saves.hide()
-
     def _update_language_menu_checkmarks(
         self,
         language: ToolsetLanguage,
@@ -977,7 +838,7 @@ class ToolWindow(QMainWindow):
         self.ui.actionTSLPatchDataEditor.setText(tr("TSLPatchData Editor"))
         self.ui.actionFileSearch.setText(tr("File Search"))
         self.ui.actionCloneModule.setText(tr("Clone Module"))
-        self.ui.actionLegacyLayout.setText(tr("Legacy Layout"))
+        #self.ui.actionLegacyLayout.setText(tr("Legacy Layout"))
         self.ui.actionDiscordHolocronToolset.setText(tr("Holocron Toolset"))
         self.ui.actionDiscordKotOR.setText(tr("KOTOR Community Portal"))
         self.ui.actionDiscordDeadlyStream.setText(tr("Deadly Stream"))
@@ -1334,13 +1195,11 @@ class ToolWindow(QMainWindow):
         self.ui.texturesWidget.set_resources(self.active.texturepack_resources(texturepackName))
 
     @Slot(int)
-    def change_active_installation(self, index: int):
-        """Change the active game installation based on combo box selection.
-
-        Args:
-        ----
-            index: The index of the selected installation in the combo box
-        """
+    def change_active_installation(
+        self,
+        index: int,  # noqa: PLR0915, C901, PLR0912
+    ):
+        RobustLogger().debug(f"TRACE: change_active_installation({index}) called")
         if index < 0:  # self.ui.gameCombo.clear() will call this function with -1
             return
 
@@ -1541,7 +1400,7 @@ class ToolWindow(QMainWindow):
         self._setup_file_watcher()
 
         # Apply current view mode
-        self._apply_view_mode()
+        #self._apply_view_mode()
 
     # FileSearcher/FileResults
     @Slot(list, HTInstallation)

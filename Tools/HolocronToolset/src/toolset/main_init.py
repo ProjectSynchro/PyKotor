@@ -269,9 +269,13 @@ def main_init():
             on_app_crash(args.exc_type, args.exc_value, args.exc_traceback)
 
     threading.excepthook = _thread_excepthook
-    is_main_process: bool = multiprocessing.current_process() == "MainProcess"
+    is_main_process: bool = multiprocessing.current_process().name == "MainProcess"
     if is_main_process:
-        multiprocessing.set_start_method("spawn")  # 'spawn' is default on windows, linux/mac defaults to most likely 'fork' which breaks the built-in updater.
+        try:
+            multiprocessing.set_start_method("spawn", force=False)  # 'spawn' is default on windows, linux/mac defaults to most likely 'fork' which breaks the built-in updater.
+        except RuntimeError:
+            # Start method already set, ignore
+            pass
         
         # Fix for PyInstaller: Hide console windows for multiprocessing child processes on Windows
         #if sys.platform == "win32" and is_frozen():

@@ -85,12 +85,10 @@ class GITEditor(Editor, BlenderEditorMixin):
         self._setup_hotkeys()
 
         self._git: GIT = GIT()
+        self._layout: LYT | None = None  # Store the LYT layout for room boundary rendering
         self._mode: _Mode = _InstanceMode(self, installation, self._git)
         self._controls: GITControlScheme = GITControlScheme(self)
         self._geom_instance: GITInstance | None = None  # Used to track which trigger/encounter you are editing
-
-        self.ui.actionUndo.triggered.connect(self._controls.undo_stack.undo)
-        self.ui.actionRedo.triggered.connect(self._controls.undo_stack.redo)
 
         self.settings = GITSettings()
 
@@ -172,10 +170,8 @@ class GITEditor(Editor, BlenderEditorMixin):
         self.ui.viewStoreCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewStoreCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue]
 
         # Undo/Redo
-        # Uncomment to debug undo/redo signals
-        # DO NOT remove.
-        # self.ui.actionUndo.triggered.connect(lambda: print("Undo signal") or self._controls.undo_stack.undo())
-        # self.ui.actionUndo.triggered.connect(lambda: print("Redo signal") or self._controls.undo_stack.redo())
+        self.ui.actionUndo.triggered.connect(lambda: self._controls.undo_stack.undo())
+        self.ui.actionRedo.triggered.connect(lambda: self._controls.undo_stack.redo())
 
         # View
         self.ui.actionZoomIn.triggered.connect(lambda: self.ui.renderArea.camera.nudge_zoom(1))
@@ -350,7 +346,9 @@ class GITEditor(Editor, BlenderEditorMixin):
             else:
                 self._logger.warning("Missing walkmesh '%s.wok'", room.model)
 
+        self._layout = layout
         self.ui.renderArea.set_walkmeshes(walkmeshes)
+        self.ui.renderArea.set_layout(layout)
 
     def git(self) -> GIT:
         return self._git
@@ -442,7 +440,8 @@ class GITEditor(Editor, BlenderEditorMixin):
         self.ui.renderArea.camera.set_position(instance.position.x, instance.position.y)
 
     # region Mode Calls
-    def open_list_context_menu(self, item: QListWidgetItem, point: QPoint): ...
+    def open_list_context_menu(self, item: QListWidgetItem, point: QPoint):
+        ...
 
     def update_visibility(self):
         self._mode.update_visibility()

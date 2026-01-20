@@ -113,8 +113,8 @@ if __name__ == "__main__":
         model.remove_last_row()
         table_view.update_columns_after_text_size_change()
 
-    add_button.clicked.connect(add_row)
-    remove_button.clicked.connect(remove_row)
+    add_button.clicked.connect(lambda: add_row())
+    remove_button.clicked.connect(lambda: remove_row())
 
     # Show the main window
     main_window.resize(400, 300)

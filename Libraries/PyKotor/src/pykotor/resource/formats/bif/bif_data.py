@@ -136,7 +136,7 @@ class BIFResource(ArchiveResource):
         resref: ResRef,
         restype: ResourceType,
         data: bytes,
-        resname_key_index: int = 0,
+        resname_key_index: int | None = None,
         size: int | None = None,
     ):
         super().__init__(resref=resref, restype=restype, data=data, size=size)
@@ -145,7 +145,7 @@ class BIFResource(ArchiveResource):
         # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorBIF/BIFBinaryStructure.cs:53
         # https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File Formats/BIF.cs:203
         # Resource ID (matches KEY file, unique within BIF)
-        self.resname_key_index: int = resname_key_index
+        self.resname_key_index: int = 0 if resname_key_index is None else resname_key_index
         
         
         # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorBIF/BIFBinaryStructure.cs:54
@@ -327,9 +327,7 @@ class BIF(BiowareArchive):
         res_id: int | None = None,
     ) -> BIFResource:
         """Create and add a new resource."""
-        resource = BIFResource(resref, restype, data)
-        if res_id is not None:
-            resource.resname_key_index = res_id
+        resource = BIFResource(ResRef(resref), restype, data, res_id)
         self._resources.append(resource)
         self._resource_dict[ResourceIdentifier(str(resref), restype)] = resource
         self._id_lookup[resource.resname_key_index] = resource

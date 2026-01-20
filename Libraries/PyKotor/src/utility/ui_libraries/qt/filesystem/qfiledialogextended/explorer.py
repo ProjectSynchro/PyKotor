@@ -120,7 +120,7 @@ class FileSystemExplorerWidget(QMainWindow):
         for i in range(1, self.fs_model.columnCount()):  # Show only the Name column in the tree view
             self.ui.fileSystemTreeView.hideColumn(i)
         self.ui.fileSystemTreeView.clicked.connect(self.on_navigation_pane_clicked)
-        self.ui.addressBar.refreshButton.clicked.connect(self.refresh)
+        self.ui.addressBar.refreshButton.clicked.connect(lambda: self.refresh())
         self.ui.addressBar.pathChanged.connect(self.on_address_bar_path_changed)
         self.ui.addressBar.returnPressed.connect(self.on_address_bar_return)
 
@@ -900,5 +900,5 @@ class PropertiesDialog(QDialog):
             layout.addWidget(label)
 
         close_button = QPushButton("Close")
-        close_button.clicked.connect(self.accept)
+        close_button.clicked.connect(lambda: self.accept())
         layout.addWidget(close_button)

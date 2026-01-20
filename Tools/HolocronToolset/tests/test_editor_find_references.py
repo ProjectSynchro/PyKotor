@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 import pytest
 from pathlib import Path
 from qtpy.QtCore import Qt
+from qtpy.QtGui import QTextCursor
 
 from toolset.data.installation import HTInstallation
 from toolset.gui.editors.nss import NSSEditor
@@ -42,7 +43,11 @@ void main() {
         editor.ui.codeEdit.setPlainText(code)
 
         # Move cursor to "x"
-        editor.ui.codeEdit.setCursorPosition(2, 8)  # Line 2, column 8 (after "int ")
+        cursor = editor.ui.codeEdit.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
+        cursor.movePosition(QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.MoveAnchor, 2)  # Line 2 (0-indexed)
+        cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.MoveAnchor, 8)  # Column 8
+        editor.ui.codeEdit.setTextCursor(cursor)
 
         # Trigger Find All References
         editor._find_all_references_at_cursor()
@@ -77,7 +82,10 @@ void main() {
         editor.ui.codeEdit.setPlainText(code)
 
         # Move cursor to a word
-        editor.ui.codeEdit.setCursorPosition(0, 10)  # On "main"
+        cursor = editor.ui.codeEdit.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
+        cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.MoveAnchor, 10)  # Column 10 (on "main")
+        editor.ui.codeEdit.setTextCursor(cursor)
 
         # The context menu should be available
         # We can verify the code editor has context menu support
@@ -137,13 +145,27 @@ class TestComboBox2DAFindReferences:
 
     def test_combobox2da_context_menu_setup(self, qtbot: QtBot, installation: HTInstallation):
         """Test ComboBox2DA context menu is set up for reference search."""
-        # Create a ComboBox2DA
-        combo = ComboBox2DA(installation)
+        from qtpy.QtWidgets import QWidget
+        from pykotor.resource.type import ResourceType
+        from pykotor.extract.installation import SearchLocation
+        
+        # Create a ComboBox2DA with a parent widget
+        parent = QWidget()
+        qtbot.addWidget(parent)
+        combo = ComboBox2DA(parent)
         qtbot.addWidget(combo)
 
-        # Set a 2DA file
+        # Set a 2DA file - load it from installation and use set_context
         try:
-            combo.set_2da("classes")
+            from toolset.data.installation import HTInstallation
+            resname = "classes"
+            order = [SearchLocation.OVERRIDE, SearchLocation.MODULES, SearchLocation.CHITIN]
+            result = installation.resource(resname, ResourceType.TwoDA, order)
+            if result:
+                from pykotor.resource.formats.twoda.twoda_auto import read_2da
+                twoda_data = read_2da(result.data)
+                combo.set_context(twoda_data, installation, resname)
+                combo.set_items(twoda_data.get_column("label"))
         except Exception:
             # If classes.2da doesn't exist, that's okay
             pass
@@ -153,26 +175,37 @@ class TestComboBox2DAFindReferences:
 
     def test_combobox2da_find_references_action(self, qtbot: QtBot, installation: HTInstallation):
         """Test ComboBox2DA has Find References action in context menu."""
-        from qtpy.QtWidgets import QMenu
         from qtpy.QtCore import QPoint
+        from qtpy.QtWidgets import QWidget
+        from pykotor.resource.type import ResourceType
+        from pykotor.extract.installation import SearchLocation
 
-        combo = ComboBox2DA(installation)
+        # Create a ComboBox2DA with a parent widget
+        parent = QWidget()
+        qtbot.addWidget(parent)
+        combo = ComboBox2DA(parent)
         qtbot.addWidget(combo)
 
         # Try to set a 2DA
         try:
-            combo.set_2da("classes")
-            combo.setCurrentIndex(0)  # Select first row
+            resname = "classes"
+            order = [SearchLocation.OVERRIDE, SearchLocation.MODULES, SearchLocation.CHITIN]
+            result = installation.resource(resname, ResourceType.TwoDA, order)
+            if result:
+                from pykotor.resource.formats.twoda.twoda_auto import read_2da
+                twoda_data = read_2da(result.data)
+                combo.set_context(twoda_data, installation, resname)
+                combo.set_items(twoda_data.get_column("label"))
+                combo.setCurrentIndex(0)  # Select first row
 
-            # Create a context menu
-            menu = QMenu(combo)
-            combo._build_context_menu(menu, QPoint(0, 0))
+                # Call the context menu handler directly
+                # The on_context_menu method creates the menu internally
+                combo.on_context_menu(QPoint(0, 0))
 
-            # Check if menu has actions
-            # The actual implementation may vary, but we can verify
-            # the context menu can be built
-            assert menu is not None
-
+                # Verify the context menu policy is set correctly
+                assert combo.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
+            else:
+                pytest.skip("2DA file not available")
         except Exception:
             # If 2DA doesn't exist or other error, skip
             pytest.skip("2DA file not available or error setting up ComboBox2DA")
@@ -227,7 +260,7 @@ class TestReferenceSearchIntegration:
         editor = AREEditor(None, installation)
         qtbot.addWidget(editor)
 
-        script_field = editor.ui.onEnterEdit
+        script_field = editor.ui.onEnterSelect
 
         # Check tooltip
         tooltip = script_field.toolTip()

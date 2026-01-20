@@ -38,8 +38,8 @@ class FontDialog(QDialog):
         ok_button = QPushButton("OK")
         cancel_button = QPushButton("Cancel")
 
-        ok_button.clicked.connect(self.accept)
-        cancel_button.clicked.connect(self.close)
+        ok_button.clicked.connect(lambda: self.accept())
+        cancel_button.clicked.connect(lambda: self.close())
 
         lay = QHBoxLayout()
         lay.setAlignment(Qt.AlignmentFlag.AlignRight)

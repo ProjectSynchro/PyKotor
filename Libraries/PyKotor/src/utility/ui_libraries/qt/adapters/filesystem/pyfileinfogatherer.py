@@ -6,7 +6,10 @@ This class matches qfileinfogatherer_p.h and qfileinfogatherer.cpp.
 from __future__ import annotations
 
 import os
+
 from typing import TYPE_CHECKING
+
+import qtpy  # noqa: E402
 
 from qtpy.QtCore import (  # noqa: E402
     QCoreApplication,
@@ -23,11 +26,21 @@ from qtpy.QtCore import (  # noqa: E402
     QWaitCondition,
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
-from qtpy.QtGui import QAbstractFileIconProvider  # noqa: E402
 from qtpy.QtWidgets import QFileIconProvider  # noqa: E402
 
-if TYPE_CHECKING:
-    pass
+# QAbstractFileIconProvider is not exposed by qtpy, import directly
+try:
+    if qtpy.API_NAME == "PyQt6":
+        from PyQt6.QtGui import QAbstractFileIconProvider  # type: ignore[import-untyped]  # noqa: E402
+    elif qtpy.API_NAME == "PySide6":
+        from PySide6.QtGui import QAbstractFileIconProvider  # type: ignore[import-untyped]  # noqa: E402
+    elif not TYPE_CHECKING:
+        # PyQt5/PySide2 - QAbstractFileIconProvider might not exist
+        QAbstractFileIconProvider = QFileIconProvider  # type: ignore[assignment, misc]
+except ImportError:
+    # Fallback - use QFileIconProvider as base
+    if not TYPE_CHECKING:
+        QAbstractFileIconProvider = QFileIconProvider  # type: ignore[assignment, misc]
 
 from utility.ui_libraries.qt.adapters.filesystem.pyextendedinformation import PyQExtendedInformation  # noqa: E402
 
@@ -83,13 +96,13 @@ class PyFileInfoGatherer(QThread):
         super().__init__(parent)
         # Matches C++ line 192: QAbstractFileIconProvider *m_iconProvider;
         # Matches C++ line 192: QAbstractFileIconProvider defaultProvider;
-        self.defaultProvider = QFileIconProvider()
+        self.defaultProvider: QFileIconProvider = QFileIconProvider()
         self.m_iconProvider: QAbstractFileIconProvider = self.defaultProvider
         
         # Matches C++ line 181: mutable QMutex mutex;
-        self.mutex = QMutex()
+        self.mutex: QMutex = QMutex()
         # Matches C++ line 183: QWaitCondition condition;
-        self.condition = QWaitCondition()
+        self.condition: QWaitCondition = QWaitCondition()
         # Matches C++ line 184: QStack<QString> path;
         # Python: use list as stack (append/pop)
         self.path: list[str] = []

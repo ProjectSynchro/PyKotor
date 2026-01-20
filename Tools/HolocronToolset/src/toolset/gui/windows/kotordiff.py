@@ -31,7 +31,7 @@ from qtpy.QtWidgets import (
 )
 
 from pykotor.extract.installation import Installation
-from pykotor.tslpatcher.diff import DiffConfig, run_application
+from pykotor.diff_tool.app import DiffConfig, run_application
 
 if TYPE_CHECKING:
     from toolset.data.installation import HTInstallation

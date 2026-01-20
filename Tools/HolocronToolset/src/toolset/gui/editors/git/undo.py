@@ -194,6 +194,7 @@ class InsertCommand(QUndoCommand):
 
     def rebuild_instance_list(self):
         from toolset.gui.editors.git.mode import _GeometryMode, _InstanceMode
+        from toolset.gui.editors.git.git import GITEditor
 
         if isinstance(self.editor, GITEditor):
             old_mode = self.editor._mode  # noqa: SLF001

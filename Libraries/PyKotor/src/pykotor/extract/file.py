@@ -710,15 +710,18 @@ class ResourceIdentifier:
     _cached_filename_str: str = field(default=None, init=False, repr=False)  # pyright: ignore[reportArgumentType]  # type: ignore[assignment]
     _lower_resname_str: str = field(default=None, init=False, repr=False)  # pyright: ignore[reportArgumentType]  # type: ignore[assignment]
     _cached_hash: int = field(default=None, init=False, repr=False)  # pyright: ignore[reportArgumentType]  # type: ignore[assignment]
+    _resref: ResRef = field(default=None, init=False, repr=False)  # pyright: ignore[reportArgumentType]  # type: ignore[assignment]
 
     def __post_init__(self):
         # Workaround to initialize a field in a frozen dataclass
+        from pykotor.common.misc import ResRef
         ext: str = self.restype.extension
         suffix: str = f".{ext}" if ext else ""
         lower_filename_str: str = f"{self.resname}{suffix}".lower()
         object.__setattr__(self, "resname", str(self.resname))
         object.__setattr__(self, "_cached_filename_str", lower_filename_str)
         object.__setattr__(self, "_lower_resname_str", self.resname.lower())
+        object.__setattr__(self, "_resref", ResRef(self.resname))
         # Pre-compute and cache hash for performance
         object.__setattr__(self, "_cached_hash", hash(lower_filename_str))
 
@@ -753,7 +756,11 @@ class ResourceIdentifier:
 
     @property
     def lower_resname(self) -> str:
-        return self.resname.lower()
+        return self._lower_resname_str
+
+    @property
+    def resref(self) -> ResRef:
+        return self._resref
 
     def unpack(self) -> tuple[str, ResourceType]:
         return self.resname, self.restype

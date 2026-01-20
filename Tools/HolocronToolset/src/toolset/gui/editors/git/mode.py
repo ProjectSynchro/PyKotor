@@ -43,12 +43,15 @@ from utility.common.geometry import Vector2, Vector3
 if TYPE_CHECKING:
     from qtpy.QtCore import QPoint
     from qtpy.QtWidgets import QListWidget, QWidget
+    from qtpy.QtGui import QUndoStack
 
     from pykotor.extract.file import LocationResult, ResourceIdentifier
     from pykotor.resource.generics.git import GITInstance
     from toolset.data.installation import HTInstallation
     from toolset.gui.editors.git.git import GITEditor
     from toolset.gui.windows.module_designer import ModuleDesigner
+    from toolset.uic.qtpy.editors.git import Ui_MainWindow as Ui_GITEditor_MainWindow
+    from toolset.uic.qtpy.windows.module_designer import Ui_MainWindow as Ui_ModuleDesigner_MainWindow
 
 
 def open_instance_dialog(
@@ -87,58 +90,51 @@ class _Mode(ABC):
         installation: HTInstallation | None,
         git: GIT,
     ):
+        from toolset.gui.editors.git.git import GITEditor
+
         self._editor: GITEditor | ModuleDesigner = editor
         self._installation: HTInstallation | None = installation
         self._git: GIT = git
 
-        self._ui = editor.ui
+        self._ui: Ui_GITEditor_MainWindow | Ui_ModuleDesigner_MainWindow = editor.ui
         self.renderer2d = editor.ui.renderArea if isinstance(editor, GITEditor) else editor.ui.flatRenderer
 
     def list_widget(self) -> QListWidget:
+        from toolset.gui.editors.git.git import GITEditor
+
         return self._ui.listWidget if isinstance(self._editor, GITEditor) else self._ui.instanceList  # pyright: ignore[reportAttributeAccessIssue]
-
-    @abstractmethod
-    def on_item_selection_changed(self, item: QListWidgetItem): ...
-
-    @abstractmethod
-    def on_filter_edited(self, text: str): ...
-
-    @abstractmethod
-    def on_render_context_menu(self, world: Vector2, screen: QPoint): ...
-
-    @abstractmethod
-    def open_list_context_menu(self, item: QListWidgetItem, screen: QPoint): ...
-
-    @abstractmethod
-    def update_visibility(self): ...
-
-    @abstractmethod
-    def select_underneath(self): ...
-
-    @abstractmethod
-    def delete_selected(self, *, no_undo_stack: bool = False): ...
-
-    @abstractmethod
-    def duplicate_selected(self, position: Vector3): ...
-
-    @abstractmethod
-    def move_selected(self, x: float, y: float): ...
-
-    @abstractmethod
-    def rotate_selected(self, angle: float): ...
-
-    @abstractmethod
-    def rotate_selected_to_point(self, x: float, y: float): ...
 
     def move_camera(self, x: float, y: float):
         self.renderer2d.camera.nudge_position(x, y)
 
-    def zoom_camera(self, amount: float):
-        self.renderer2d.camera.nudge_zoom(amount)
-
     def rotate_camera(self, angle: float):
         self.renderer2d.camera.nudge_rotation(angle)
 
+    def zoom_camera(self, amount: float):
+        self.renderer2d.camera.nudge_zoom(amount)
+
+    @abstractmethod
+    def on_item_selection_changed(self, item: QListWidgetItem): ...
+    @abstractmethod
+    def on_filter_edited(self, text: str): ...
+    @abstractmethod
+    def on_render_context_menu(self, world: Vector2, screen: QPoint): ...
+    @abstractmethod
+    def open_list_context_menu(self, item: QListWidgetItem, screen: QPoint): ...
+    @abstractmethod
+    def update_visibility(self): ...
+    @abstractmethod
+    def select_underneath(self): ...
+    @abstractmethod
+    def delete_selected(self, *, no_undo_stack: bool = False): ...
+    @abstractmethod
+    def duplicate_selected(self, position: Vector3): ...
+    @abstractmethod
+    def move_selected(self, x: float, y: float): ...
+    @abstractmethod
+    def rotate_selected(self, angle: float): ...
+    @abstractmethod
+    def rotate_selected_to_point(self, x: float, y: float): ...
     @abstractmethod
     def update_status_bar(self, world: Vector2): ...
 
@@ -221,6 +217,8 @@ class _InstanceMode(_Mode):
         assert self._installation is not None, "Installation is required to edit selected instance resource"
         search: list[LocationResult] = self._installation.location(resname, restype, order)
 
+        from toolset.gui.editors.git.git import GITEditor
+
         if isinstance(self._editor, GITEditor):
             assert self._editor._filepath is not None, "filepath cannot be None in edit_selected_instance_resource({instance!r})"  # noqa: SLF001
             module_root: str = self._installation.get_module_root(self._editor._filepath.name).lower()  # noqa: SLF001
@@ -263,6 +261,8 @@ class _InstanceMode(_Mode):
         from toolset.gui.editors.git.undo import InsertCommand
 
         assert self._installation is not None, "Installation is required to add instance"
+        from toolset.gui.editors.git.git import GITEditor
+
         if open_instance_dialog(self._editor, instance, self._installation):
             self._git.add(instance)
             undo_stack = self._editor._controls.undo_stack if isinstance(self._editor, GITEditor) else self._editor.undo_stack  # noqa: SLF001
@@ -278,6 +278,8 @@ class _InstanceMode(_Mode):
             menu: {The QMenu to add actions to}.
         """
         menu.addAction("Remove").triggered.connect(self.delete_selected)  # pyright: ignore[reportOptionalMemberAccess]
+        from toolset.gui.editors.git.git import GITEditor
+
         if isinstance(self._editor, GITEditor):
             menu.addAction("Edit Instance").triggered.connect(self.edit_selected_instance)  # pyright: ignore[reportOptionalMemberAccess]
 
@@ -304,6 +306,8 @@ class _InstanceMode(_Mode):
         # Create the main context menu
         file_menu = menu.addMenu("File Actions")
         assert file_menu is not None
+
+        from toolset.gui.editors.git.git import GITEditor
 
         if isinstance(self._editor, GITEditor):
             valid_filepaths = [self._editor._filepath]  # noqa: SLF001
@@ -341,6 +345,8 @@ class _InstanceMode(_Mode):
         item.setToolTip(self.get_instance_tooltip(instance))
 
         name: str | None = None
+
+        from toolset.gui.editors.git.git import GITEditor
 
         assert isinstance(self._editor, GITEditor)
         if isinstance(instance, GITCamera):
@@ -429,6 +435,26 @@ class _InstanceMode(_Mode):
 
         menu.popup(point)
 
+    def _get_render_context_menu(self, world: Vector2, menu: QMenu):
+        under_mouse: list[GITInstance] = self.renderer2d.instances_under_mouse()
+        if not self.renderer2d.instance_selection.isEmpty():
+            last = self.renderer2d.instance_selection.last()
+            assert last is not None, f"last cannot be None in _get_render_context_menu({world!r}, {under_mouse!r})"
+            self.add_instance_actions_to_menu(last, menu)
+        else:
+            self.add_insert_actions_to_menu(menu, world)
+        if under_mouse:
+            menu.addSeparator()
+            for instance in under_mouse:
+                icon = QIcon(self.renderer2d.instance_pixmap(instance))
+                reference = "" if instance.identifier() is None else instance.identifier().resname  # pyright: ignore[reportOptionalMemberAccess]
+                index = self._editor.git().index(instance)
+
+                instance_action = menu.addAction(icon, f"[{index}] {reference}")
+                instance_action.triggered.connect(lambda _=None, inst=instance: self.set_selection([inst]))  # pyright: ignore[reportOptionalMemberAccess]
+                instance_action.setEnabled(instance not in self.renderer2d.instance_selection.all())  # pyright: ignore[reportOptionalMemberAccess]
+                menu.addAction(instance_action)
+
     def on_render_context_menu(self, world: Vector2, point: QPoint):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Renders context menu on right click.
 
@@ -446,26 +472,6 @@ class _InstanceMode(_Mode):
         menu = QMenu(self.list_widget())
         self._get_render_context_menu(world, menu)
         menu.popup(point)
-
-    def _get_render_context_menu(self, world: Vector2, menu: QMenu):
-        under_mouse: list[GITInstance] = self.renderer2d.instances_under_mouse()
-        if not self.renderer2d.instance_selection.isEmpty():
-            last = self.renderer2d.instance_selection.last()
-            assert last is not None
-            self.add_instance_actions_to_menu(last, menu)
-        else:
-            self.add_insert_actions_to_menu(menu, world)
-        if under_mouse:
-            menu.addSeparator()
-            for instance in under_mouse:
-                icon = QIcon(self.renderer2d.instance_pixmap(instance))
-                reference = "" if instance.identifier() is None else instance.identifier().resname  # pyright: ignore[reportOptionalMemberAccess]
-                index = self._editor.git().index(instance)
-
-                instance_action = menu.addAction(icon, f"[{index}] {reference}")
-                instance_action.triggered.connect(lambda _=None, inst=instance: self.set_selection([inst]))  # pyright: ignore[reportOptionalMemberAccess]
-                instance_action.setEnabled(instance not in self.renderer2d.instance_selection.all())  # pyright: ignore[reportOptionalMemberAccess]
-                menu.addAction(instance_action)
 
     def add_insert_actions_to_menu(self, menu: QMenu, world: Vector2):
         menu.addAction("Insert Creature").triggered.connect(lambda: self.add_instance(GITCreature(world.x, world.y)))  # pyright: ignore[reportOptionalMemberAccess]
@@ -492,16 +498,17 @@ class _InstanceMode(_Mode):
         self.list_widget().clear()
 
         def instance_sort(inst: GITInstance) -> str:
+            # Cameras don't have resource identifiers, use camera_id for sorting
+            if isinstance(inst, GITCamera):
+                return str(inst.camera_id).rjust(9, "0")
             resident: ResourceIdentifier | None = inst.identifier()
-            assert resident is not None, "resident cannot be None in instance_sort({inst!r})"
-            text_to_sort: str = str(inst.camera_id) if isinstance(inst, GITCamera) else resident.resname
-            return text_to_sort.rjust(9, "0") if isinstance(inst, GITCamera) else resident.restype.extension + text_to_sort
+            text_to_sort: str = resident.resname if not isinstance(inst, GITCamera) and resident is not None else str(inst.camera_id)
+            return resident.restype.extension + text_to_sort if isinstance(inst, GITCamera) and resident is not None else text_to_sort.rjust(9, "0")
 
         instances: list[GITInstance] = sorted(self._git.instances(), key=instance_sort)
         for instance in instances:
             resident: ResourceIdentifier | None = instance.identifier()
-            assert resident is not None, "resident cannot be None in build_list({instance!r})"
-            filter_source: str = str(instance.camera_id) if isinstance(instance, GITCamera) else resident.resname
+            filter_source: str = resident.resname if not isinstance(instance, GITCamera) and resident is not None else str(instance.camera_id)
             is_visible: bool | None = self.renderer2d.is_instance_visible(instance)
             is_filtered: bool = self._ui.filterEdit.text().lower() in filter_source.lower()  # pyright: ignore[reportAttributeAccessIssue]
 
@@ -537,6 +544,15 @@ class _InstanceMode(_Mode):
         else:
             self.set_selection([])
 
+    def _get_undo_stack(self) -> QUndoStack:
+        from toolset.gui.editors.git.git import GITEditor
+        undo_stack = (
+            self._editor._controls.undo_stack  # noqa: SLF001
+            if isinstance(self._editor, GITEditor)  # noqa: SLF001
+            else self._editor.undo_stack  # noqa: SLF01
+        )
+        return undo_stack
+
     def delete_selected(
         self,
         *,
@@ -546,13 +562,14 @@ class _InstanceMode(_Mode):
 
         selection = self.renderer2d.instance_selection.all()
         if no_undo_stack:
+            RobustLogger().info(f"Deleting selected instances without undo stack: {selection!r}")
             for instance in selection:
                 self._git.remove(instance)
                 self.renderer2d.instance_selection.remove(instance)
         else:
-            (self._editor._controls.undo_stack if isinstance(self._editor, GITEditor) else self._editor.undo_stack).push(
-                DeleteCommand(self._git, selection.copy(), self._editor)
-            )  # noqa: SLF001
+            undo_stack = self._get_undo_stack()
+            RobustLogger().info(f"Pushing delete command to undo stack: {selection!r}")
+            undo_stack.push(DeleteCommand(self._git, selection.copy(), self._editor))  # noqa: SLF001
         self.build_list()
 
     def duplicate_selected(
@@ -570,15 +587,13 @@ class _InstanceMode(_Mode):
                 instance.camera_id = self._editor.git().next_camera_id()
             instance.position = position
             if no_undo_stack:
+                RobustLogger().info(f"Adding instance to git without undo stack: {instance!r}")
                 self._git.add(instance)
                 self.build_list()
                 self.set_selection([instance])
             else:
-                undo_stack = (
-                    self._editor._controls.undo_stack  # noqa: SLF001
-                    if isinstance(self._editor, GITEditor)
-                    else self._editor.undo_stack
-                )
+                undo_stack = self._get_undo_stack()
+                RobustLogger().info(f"Pushing duplicate command to undo stack: {instance!r}")
                 undo_stack.push(DuplicateCommand(self._git, [instance], self._editor))
 
     def move_selected(
@@ -588,6 +603,7 @@ class _InstanceMode(_Mode):
         *,
         no_undo_stack: bool = False,
     ):
+        RobustLogger().info(f"Moving selected instances by ({x}, {y})")
         if self._ui.lockInstancesCheck.isChecked():
             RobustLogger().info("Ignoring move_selected for instancemode, lockInstancesCheck is checked.")
             return
@@ -596,11 +612,13 @@ class _InstanceMode(_Mode):
             instance.move(x, y, 0)
 
     def rotate_selected(self, angle: float):
+        RobustLogger().info(f"Rotating selected instances by {angle} degrees")
         for instance in self.renderer2d.instance_selection.all():
             if isinstance(instance, (GITCamera, GITCreature, GITDoor, GITPlaceable, GITStore, GITWaypoint)):
                 instance.rotate(angle, 0, 0)
 
     def rotate_selected_to_point(self, x: float, y: float):
+        RobustLogger().info(f"Rotating selected instances to point ({x}, {y})")
         rotation_threshold = 0.05  # Threshold for rotation changes, adjust as needed
         for instance in self.renderer2d.instance_selection.all():
             current_angle = -math.atan2(x - instance.position.x, y - instance.position.y)
@@ -685,11 +703,9 @@ class _GeometryMode(_Mode):
         menu.addSeparator()
         menu.addAction("Finish Editing").triggered.connect(self._editor.enter_instance_mode)  # pyright: ignore[reportOptionalMemberAccess]
 
-    def open_list_context_menu(self, item: QListWidgetItem, screen: QPoint):
-        ...
+    def open_list_context_menu(self, item: QListWidgetItem, screen: QPoint): ...
 
-    def update_visibility(self):
-        ...
+    def update_visibility(self): ...
 
     def select_underneath(self):
         under_mouse: list[GeomPoint] = self.renderer2d.geom_points_under_mouse()
@@ -767,6 +783,8 @@ class _SpawnMode(_Mode):
 
     def _undo_stack(self):
         # GITEditor uses the controls' undo stack; ModuleDesigner uses its own undo_stack.
+        from toolset.gui.editors.git.git import GITEditor
+
         return self._editor._controls.undo_stack if isinstance(self._editor, GITEditor) else self._editor.undo_stack  # noqa: SLF001
 
     def _refresh(self):
@@ -814,7 +832,9 @@ class _SpawnMode(_Mode):
     ):
         if not self.renderer2d.spawn_selection.isEmpty():
             menu.addAction("Remove Spawn Point").triggered.connect(self.delete_selected)  # pyright: ignore[reportOptionalMemberAccess]
-            menu.addAction("Duplicate Spawn Point Here").triggered.connect(lambda: self.duplicate_selected(Vector3(world.x, world.y, self.renderer2d.get_z_coord(world.x, world.y))))  # pyright: ignore[reportOptionalMemberAccess]
+            menu.addAction("Duplicate Spawn Point Here").triggered.connect(  # pyright: ignore[reportOptionalMemberAccess]
+                lambda: self.duplicate_selected(Vector3(world.x, world.y, self.renderer2d.get_z_coord(world.x, world.y)))
+            )
         else:
             menu.addAction("Insert Spawn Point").triggered.connect(self.insert_spawn_point_at_mouse)  # pyright: ignore[reportOptionalMemberAccess]
 
@@ -901,4 +921,3 @@ class _SpawnMode(_Mode):
         self._refresh()
 
     # endregion
-

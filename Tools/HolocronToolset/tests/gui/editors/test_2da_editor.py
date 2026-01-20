@@ -2,15 +2,22 @@ from __future__ import annotations
 
 import os
 import pathlib
+import pytest
 import sys
 import unittest
+from typing import TYPE_CHECKING
 from unittest import TestCase
 
 try:
     from qtpy.QtTest import QTest
     from qtpy.QtWidgets import QApplication
 except (ImportError, ModuleNotFoundError):
-    QTest, QApplication = None, None  # type: ignore[misc, assignment]
+    if not TYPE_CHECKING:
+        QTest, QApplication = None, None  # type: ignore[misc, assignment]
+
+if TYPE_CHECKING:
+    from pytestqt.qtbot import QtBot
+    from toolset.data.installation import HTInstallation
 
 absolute_file_path = pathlib.Path(__file__).resolve()
 TESTS_FILES_PATH = next(f for f in absolute_file_path.parents if f.name == "tests") / "test_files"
@@ -19,7 +26,7 @@ if (
     __name__ == "__main__"
     and getattr(sys, "frozen", False) is False
 ):
-    def add_sys_path(p):
+    def add_sys_path(p: pathlib.Path):
         working_dir = str(p)
         if working_dir in sys.path:
             sys.path.remove(working_dir)
@@ -42,16 +49,14 @@ if (
 K1_PATH = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
 K2_PATH = os.environ.get("K2_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II")
 
-from pykotor.common.stream import BinaryReader
 from pykotor.extract.installation import Installation
 from pykotor.resource.formats.twoda.twoda_auto import read_2da
 from pykotor.resource.type import ResourceType
 
+from toolset.gui.editors.twoda import TwoDAEditor
+from toolset.data.installation import HTInstallation
 
-@unittest.skipIf(
-    not K2_PATH or not pathlib.Path(K2_PATH).joinpath("chitin.key").exists(),
-    "K2_PATH environment variable is not set or not found on disk.",
-)
+
 @unittest.skipIf(
     QTest is None or not QApplication,
     "qtpy is required, please run pip install -r requirements.txt before running this test.",
@@ -67,8 +72,8 @@ class TwoDAEditorTest(TestCase):
     def setUp(self):
         from toolset.gui.editors.twoda import TwoDAEditor
 
-        self.app = QApplication([])
-        self.editor = TwoDAEditor(None, self.INSTALLATION)
+        self.app: QApplication = QApplication([])
+        self.editor: TwoDAEditor = TwoDAEditor(None, self.INSTALLATION)
         self.log_messages: list[str] = [os.linesep]
 
     def tearDown(self):
@@ -142,7 +147,8 @@ class TwoDAEditorTest(TestCase):
         else:
             assert obj1 == obj2, context
 
-    def test_placeholder(self): ...
+    def test_basic_syntax(self):
+        ...
 
 
 if __name__ == "__main__":
@@ -153,31 +159,41 @@ if __name__ == "__main__":
 # Additional UI tests (merged from test_ui_other_editors.py)
 # ============================================================================
 
-import pytest
-from toolset.gui.editors.twoda import TwoDAEditor
-from toolset.data.installation import HTInstallation
-from pykotor.resource.type import ResourceType
 
-
-@pytest.mark.skip("Crashes with Windows access violation in pytest-qt wait() - diagnostic test")
 @pytest.mark.comprehensive
-def test_twodaeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+def test_twodaeditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation):
     """Test that TwoDAEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
-    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog, get_wiki_path
+    
+    # Check if wiki file exists - fail test if it doesn't (test environment issue)
+    toolset_wiki_path, root_wiki_path = get_wiki_path()
+    assert toolset_wiki_path.exists(), f"Toolset wiki path: {toolset_wiki_path} does not exist"
+    assert root_wiki_path is None or root_wiki_path.exists(), f"Root wiki path: {root_wiki_path} does not exist"
+    wiki_file = toolset_wiki_path / "2DA-File-Format.md"
+    if not wiki_file.exists():
+        assert root_wiki_path is not None
+        wiki_file = root_wiki_path / "2DA-File-Format.md"
+        assert wiki_file.exists(), f"Wiki file '2DA-File-Format.md' not found at {wiki_file}"
     
     editor = TwoDAEditor(None, installation)
     qtbot.addWidget(editor)
     
     # Trigger help dialog with the correct file for TwoDAEditor
     editor._show_help_dialog("2DA-File-Format.md")
-    qtbot.wait(200)  # Wait for dialog to be created
+    
+    # Process events to allow dialog to be created
+    qtbot.waitUntil(lambda: len(editor.findChildren(EditorHelpDialog)) > 0, timeout=2000)
     
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
     assert len(dialogs) > 0, "Help dialog should be opened"
     
     dialog = dialogs[0]
-    qtbot.waitExposed(dialog)
+    qtbot.addWidget(dialog)  # Add to qtbot for proper lifecycle management
+    qtbot.waitExposed(dialog, timeout=2000)
+    
+    # Wait for content to load by checking if HTML is populated
+    qtbot.waitUntil(lambda: dialog.text_browser.toHtml().strip() != "", timeout=2000)
     
     # Get the HTML content
     html = dialog.text_browser.toHtml()
@@ -197,10 +213,12 @@ def test_twodaeditor_editor_help_dialog_opens_correct_file(qtbot, installation: 
     assert editor.isVisible()
     
     # Load 2DA
-    twoda_file = test_files_dir / "appearance.2da"
+    twoda_file = TESTS_FILES_PATH / "appearance.2da"
     if twoda_file.exists():
         editor.load(twoda_file, "appearance", ResourceType.TwoDA, twoda_file.read_bytes())
-        assert editor.ui.table.rowCount() > 0
+        twodaTableModel = editor.ui.twodaTable.model()
+        assert twodaTableModel is not None
+        assert twodaTableModel.rowCount() > 0
         
         # Build and verify it works
         data, _ = editor.build()
@@ -208,4 +226,4 @@ def test_twodaeditor_editor_help_dialog_opens_correct_file(qtbot, installation: 
         
         # Interact
         editor.ui.filterEdit.setText("test")
-        # Check filter logic if immediate
+        # TODO: Add test to check filter logic if immediate

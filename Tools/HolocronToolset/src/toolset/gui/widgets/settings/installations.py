@@ -328,6 +328,10 @@ class GlobalSettings(Settings):
         "disableRIMSaving",
         True,
     )
+    useLegacyLayout: SettingsProperty[bool] = Settings.addSetting(
+        "useLegacyLayout",
+        False,
+    )
     attemptKeepOldGFFFields: SettingsProperty[bool] = Settings.addSetting(
         "attemptKeepOldGFFFields",
         False,

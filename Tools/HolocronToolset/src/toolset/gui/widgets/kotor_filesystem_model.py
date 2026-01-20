@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, Protocol, TypeVar, Union, cast
 import qtpy
 
 from loggerplus import RobustLogger
-from typing_extensions import Literal
 
 from pykotor.extract.capsule import LazyCapsule
 from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
@@ -83,6 +82,7 @@ if TYPE_CHECKING:
     from qtpy.QtCore import QPoint, QRect
     from qtpy.QtGui import QDragEnterEvent, QDragMoveEvent, _QAction
     from qtpy.QtWidgets import _QMenu
+    from typing_extensions import Literal
 
     from toolset.data.installation import HTInstallation
     from toolset.gui.windows.main import ToolWindow

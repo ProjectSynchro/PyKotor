@@ -5,6 +5,7 @@ import platform
 import sys
 
 from concurrent.futures import ProcessPoolExecutor
+import multiprocessing
 from multiprocessing import Process, Queue
 from typing import TYPE_CHECKING, Any
 
@@ -37,6 +38,8 @@ class UpdateManager:
         self.silent: bool = silent
         self.master_info: dict[str, Any] | Exception | None = None
         self.edge_info: dict[str, Any] | Exception | None = None
+        self._executor: ProcessPoolExecutor | None = None
+        self._futures_complete: dict[str, bool] = {"master": False, "edge": False}
 
     def check_for_updates(
         self,
@@ -45,35 +48,132 @@ class UpdateManager:
     ):
         RobustLogger().debug("TRACE: check_for_updates called")
         print("Checking for updates")
-        RobustLogger().debug("TRACE: About to enter ProcessPoolExecutor context")
-        with ProcessPoolExecutor() as executor:
-            RobustLogger().debug("TRACE: Inside ProcessPoolExecutor context")
+        RobustLogger().debug("TRACE: About to create ProcessPoolExecutor")
+        
+        # Ensure we're in the main process and start method is set correctly
+        try:
+            # Only set start method if we're in the main process and it hasn't been set
+            if multiprocessing.current_process().name == "MainProcess":
+                try:
+                    multiprocessing.set_start_method("spawn", force=False)
+                except RuntimeError:
+                    # Start method already set, which is fine
+                    pass
+        except Exception as e:  # noqa: BLE001
+            RobustLogger().debug(f"Could not set multiprocessing start method: {e}")
+        
+        edge_future: Future[dict[str, Any] | Exception] | None = None
+        master_future: Future[dict[str, Any] | Exception] | None = None
+        executor: ProcessPoolExecutor | None = None
+        
+        try:
+            # Create executor with proper initialization
+            # max_workers=1 helps avoid handle duplication issues on Windows
+            executor = ProcessPoolExecutor(max_workers=2)
+            RobustLogger().debug("TRACE: ProcessPoolExecutor created")
+            
             if self.settings.useBetaChannel:
                 print("Using beta channel")
                 RobustLogger().debug("TRACE: Beta channel enabled, submitting edge_future")
-                edge_future: Future[dict[str, Any] | Exception] = executor.submit(fetch_update_info, True, silent)
-                print("Edge future submitted")
-                RobustLogger().debug("TRACE: edge_future submitted")
+                try:
+                    edge_future = executor.submit(fetch_update_info, True, silent)
+                    print("Edge future submitted")
+                    RobustLogger().debug("TRACE: edge_future submitted")
+                except Exception as e:  # noqa: BLE001
+                    RobustLogger().exception(f"Failed to submit edge_future: {e}")
+                    edge_future = None
             else:
                 RobustLogger().debug("TRACE: Beta channel disabled, edge_future will be None")
                 edge_future = None
+                
             print("Using release channel")
             RobustLogger().debug("TRACE: Submitting master_future")
-            master_future: Future[dict[str, Any] | Exception] = executor.submit(fetch_update_info, False, silent)
-            print("Master future submitted")
-            RobustLogger().debug("TRACE: master_future submitted")
-            RobustLogger().debug("TRACE: About to exit ProcessPoolExecutor context (will wait for tasks)")
-
-        RobustLogger().debug("TRACE: Exited ProcessPoolExecutor context")
-        RobustLogger().debug("TRACE: Adding done callbacks to futures")
-        master_future.add_done_callback(self.on_master_future_fetched)
-        RobustLogger().debug("TRACE: master_future callback added")
-        if edge_future is not None:
-            edge_future.add_done_callback(self.on_edge_future_fetched)
-            RobustLogger().debug("TRACE: edge_future callback added")
-        else:
-            RobustLogger().debug("TRACE: edge_future is None, skipping callback")
+            try:
+                master_future = executor.submit(fetch_update_info, False, silent)
+                print("Master future submitted")
+                RobustLogger().debug("TRACE: master_future submitted")
+            except Exception as e:  # noqa: BLE001
+                RobustLogger().exception(f"Failed to submit master_future: {e}")
+                master_future = None
+            
+            # Don't shutdown executor yet - let futures complete
+            # Store executor reference to keep it alive
+            self._executor = executor
+            RobustLogger().debug("TRACE: Executor stored, futures will complete asynchronously")
+            
+            # Add callbacks before shutting down
+            if master_future is not None:
+                RobustLogger().debug("TRACE: Adding done callbacks to futures")
+                master_future.add_done_callback(self.on_master_future_fetched)
+                RobustLogger().debug("TRACE: master_future callback added")
+            else:
+                RobustLogger().warning("TRACE: master_future is None, cannot add callback")
+                
+            if edge_future is not None:
+                edge_future.add_done_callback(self.on_edge_future_fetched)
+                RobustLogger().debug("TRACE: edge_future callback added")
+                # Also add cleanup callback to shutdown executor when both futures complete
+                edge_future.add_done_callback(lambda _: self._mark_future_complete("edge"))
+                if master_future is not None:
+                    master_future.add_done_callback(lambda _: self._mark_future_complete("master"))
+            else:
+                RobustLogger().debug("TRACE: edge_future is None, skipping callback")
+                # If no edge future, shutdown executor when master completes
+                if master_future is not None:
+                    master_future.add_done_callback(lambda _: self._mark_future_complete("master"))
+                    
+        except (PermissionError, OSError) as e:
+            # Windows permission error during process spawn
+            RobustLogger().exception(f"Windows permission error during multiprocessing spawn: {e}")
+            if not silent:
+                QMessageBox(
+                    QMessageBox.Icon.Warning,
+                    "Update Check Failed",
+                    f"Unable to start update check due to Windows permission restrictions.\n\nError: {e}\n\nTry running as administrator or check Windows security settings.",
+                    QMessageBox.StandardButton.Ok,
+                ).exec()
+            if executor is not None:
+                try:
+                    executor.shutdown(wait=False)
+                except Exception:  # noqa: BLE001
+                    pass
+            self._executor = None
+        except Exception as e:  # noqa: BLE001
+            RobustLogger().exception(f"Failed to check for updates: {e}")
+            if not silent:
+                QMessageBox(
+                    QMessageBox.Icon.Warning,
+                    "Update Check Failed",
+                    f"Unable to check for updates.\nError: {e}",
+                    QMessageBox.StandardButton.Ok,
+                ).exec()
+            if executor is not None:
+                try:
+                    executor.shutdown(wait=False)
+                except Exception:  # noqa: BLE001
+                    pass
+            self._executor = None
+            
         RobustLogger().debug("TRACE: check_for_updates returning")
+    
+    def _mark_future_complete(self, future_type: str):
+        """Mark a future as complete and shutdown executor if all are done."""
+        self._futures_complete[future_type] = True
+        # Check if all expected futures are complete
+        if self._futures_complete["master"] and (not self.settings.useBetaChannel or self._futures_complete["edge"]):
+            self._shutdown_executor()
+    
+    def _shutdown_executor(self):
+        """Safely shutdown the executor."""
+        if self._executor is not None:
+            try:
+                RobustLogger().debug("TRACE: Shutting down ProcessPoolExecutor")
+                self._executor.shutdown(wait=True, cancel_futures=False)
+                RobustLogger().debug("TRACE: ProcessPoolExecutor shut down")
+            except Exception as e:  # noqa: BLE001
+                RobustLogger().exception(f"Error shutting down executor: {e}")
+            finally:
+                self._executor = None
 
     def on_master_future_fetched(
         self,

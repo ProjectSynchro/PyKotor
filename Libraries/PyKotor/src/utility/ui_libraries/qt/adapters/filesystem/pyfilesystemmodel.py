@@ -30,6 +30,15 @@ from qtpy.QtCore import (
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
 from qtpy.QtGui import QIcon  # noqa: E402
+from qtpy.QtWidgets import (
+    QApplication,
+    QFileIconProvider,
+    QFileSystemModel,  # pyright: ignore[reportPrivateImportUsage]
+    QMainWindow,
+    QVBoxLayout,
+    QWidget,
+)
+
 # QAbstractFileIconProvider is not exposed by qtpy, import directly
 try:
     if qtpy.API_NAME == "PyQt6":
@@ -42,14 +51,6 @@ try:
 except ImportError:
     # Fallback - use QFileIconProvider as base
     QAbstractFileIconProvider = QFileIconProvider  # type: ignore[assignment, misc]
-from qtpy.QtWidgets import (
-    QApplication,
-    QFileIconProvider,
-    QFileSystemModel,  # pyright: ignore[reportPrivateImportUsage]
-    QMainWindow,
-    QVBoxLayout,
-    QWidget,
-)
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView  # noqa: E402

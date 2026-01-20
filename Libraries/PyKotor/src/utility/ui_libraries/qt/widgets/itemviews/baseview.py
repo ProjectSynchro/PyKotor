@@ -676,9 +676,9 @@ class RobustBaseWidget(QWidget if TYPE_CHECKING else object):
 
             button_layout = QHBoxLayout()
             apply_button = QPushButton("Apply")
-            apply_button.clicked.connect(self._apply_stylesheet)
+            apply_button.clicked.connect(lambda: self._apply_stylesheet())
             reset_button = QPushButton("Reset")
-            reset_button.clicked.connect(self._reset_stylesheet)
+            reset_button.clicked.connect(lambda: self._reset_stylesheet())
             button_layout.addWidget(apply_button)
             button_layout.addWidget(reset_button)
 
@@ -742,7 +742,7 @@ class RobustBaseWidget(QWidget if TYPE_CHECKING else object):
             reset_button.clicked.connect(lambda: self._reset_stylesheet(get_func))
             color_picker_button: QPushButton | None = QPushButton("Color Picker")
             assert color_picker_button is not None
-            color_picker_button.clicked.connect(self._show_color_picker)
+            color_picker_button.clicked.connect(lambda: self._show_color_picker())
 
             button_layout.addWidget(apply_button)
             button_layout.addWidget(reset_button)
@@ -827,9 +827,9 @@ if __name__ == "__main__":
             layout.addLayout(action_layout)
 
             # Connect buttons to test methods
-            self.button.clicked.connect(self.on_button_click)
-            self.test_color_action.clicked.connect(self.test_color_action_method)
-            self.test_generic_action.clicked.connect(self.test_generic_action_method)
+            self.button.clicked.connect(lambda: self.on_button_click())
+            self.test_color_action.clicked.connect(lambda: self.test_color_action_method())
+            self.test_generic_action.clicked.connect(lambda: self.test_generic_action_method())
 
         def on_button_click(self):
             self.build_context_menu().exec()

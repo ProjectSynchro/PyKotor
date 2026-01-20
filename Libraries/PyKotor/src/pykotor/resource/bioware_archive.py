@@ -222,8 +222,6 @@ class BiowareArchive(ComparableMixin, ABC):
         - CExoKeyTable::LocateBifFile @ 0x0040d200 - Locates BIF file for resource lookup
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         BioWare archive format specification
-
-
     """
 
     BINARY_TYPE: ClassVar[ResourceType]
@@ -255,7 +253,7 @@ class BiowareArchive(ComparableMixin, ABC):
         if isinstance(item, str):
             item = ResourceIdentifier.from_path(item)
         if not isinstance(item, ResourceIdentifier):
-            raise TypeError(f"Expected ResourceIdentifier, got {type(item)}")
+            raise TypeError(f"Expected ResourceIdentifier, got {item.__class__.__name__}")
         return copy(self._resource_dict[item])
 
     def __contains__(
@@ -271,6 +269,8 @@ class BiowareArchive(ComparableMixin, ABC):
     ):
         if isinstance(key, str):
             key = ResourceIdentifier(key, value.restype)
+        if not isinstance(key, ResourceIdentifier):
+            raise TypeError(f"Expected ResourceIdentifier, got {key.__class__.__name__}")
         self._resource_dict[key] = value
         if value not in self._resources:
             self._resources.append(value)
@@ -281,6 +281,8 @@ class BiowareArchive(ComparableMixin, ABC):
     ):
         if isinstance(key, str):
             key = ResourceIdentifier.from_path(key)
+        if not isinstance(key, ResourceIdentifier):
+            raise TypeError(f"Expected ResourceIdentifier, got {key.__class__.__name__}")
         self._resources.remove(cast(dict[ResourceIdentifier, ArchiveResource], self._resource_dict).pop(key))
 
     def __add__(
@@ -293,9 +295,9 @@ class BiowareArchive(ComparableMixin, ABC):
         combined_archive: Self = self.__class__()
         resource: ArchiveResource
         for resource in self:
-            combined_archive.set_data(str(resource.resref), resource.restype, resource.data)
+            combined_archive.set_data(ResRef(resource.resref), resource.restype, resource.data)
         for resource in other:
-            combined_archive.set_data(str(resource.resref), resource.restype, resource.data)
+            combined_archive.set_data(ResRef(resource.resref), resource.restype, resource.data)
 
         return combined_archive
 
@@ -313,24 +315,24 @@ class BiowareArchive(ComparableMixin, ABC):
 
     def set_resource(
         self,
-        resname: str,
+        resref: ResRef | str,
         restype: ResourceType,
         data: bytes,
     ):
-        self.set_data(resname, restype, data)
+        self.set_data(ResRef(resref), restype, data)
 
     def set_data(
         self,
-        resname: str,
+        resref: ResRef | str,
         restype: ResourceType,
         data: bytes,
     ) -> None:
         resource: ArchiveResource | None = next(
-            (resource for resource in cast(list[ArchiveResource], self._resources) if resource.resref == resname and resource.restype == restype),
+            (resource for resource in cast(list[ArchiveResource], self._resources) if resource.resref == resref and resource.restype == restype),
             None,
         )
         if resource is None:
-            resource = self.ARCHIVE_TYPE(ResRef(resname), restype, data)
+            resource = self.ARCHIVE_TYPE(ResRef(resref), restype, data)
             self._resources.append(resource)
             self._resource_dict[resource.identifier()] = resource
         else:
@@ -338,33 +340,34 @@ class BiowareArchive(ComparableMixin, ABC):
 
     def get(
         self,
-        resname: str,
+        resref: ResRef | str,
         restype: ResourceType,
     ) -> bytes | None:
         resource_dict: dict[ResourceIdentifier, ArchiveResource] = cast(dict[ResourceIdentifier, ArchiveResource], self._resource_dict)
-        resource: ArchiveResource | None = resource_dict.get(ResourceIdentifier(resname, restype), None)
+        key = ResourceIdentifier(resref, restype)
+        resource: ArchiveResource | None = resource_dict.get(key, None)
         return None if resource is None else resource.data
 
     def get_data(
         self,
-        resname: str,
+        resref: ResRef | str,
         restype: ResourceType,
     ) -> bytes | None:
-        return self.get(resname, restype)
+        return self.get(resref, restype)
 
     def has(
         self,
-        resname: str,
+        resref: ResRef | str,
         restype: ResourceType,
     ) -> bool:
-        return ResourceIdentifier(resname, restype) in self._resource_dict
+        return ResourceIdentifier(ResRef(resref), restype) in self._resource_dict
 
     def remove(
         self,
-        resname: str,
+        resref: ResRef | str,
         restype: ResourceType,
     ):
-        key = ResourceIdentifier(resname, restype)
+        key = ResourceIdentifier(ResRef(resref), restype)
         popped_resource: ArchiveResource | None = self._resource_dict.pop(key, None)
         assert popped_resource is not None, f"Resource '{key.resref}' not found in archive"
         self._resources.remove(popped_resource)
@@ -379,7 +382,7 @@ class BiowareArchive(ComparableMixin, ABC):
         )
 
     def to_bif(self) -> BIF:
-        from pykotor.resource.formats.bif.bif_data import BIF  # Prevent circular imports
+        from pykotor.resource.formats.bif import BIF  # Prevent circular imports
 
         bif = BIF()
         for resource in cast(list[ArchiveResource], self._resources):
@@ -387,7 +390,7 @@ class BiowareArchive(ComparableMixin, ABC):
         return bif
 
     def to_erf(self) -> ERF:
-        from pykotor.resource.formats.erf.erf_data import ERF  # Prevent circular imports
+        from pykotor.resource.formats.erf import ERF  # Prevent circular imports
 
         erf = ERF()
         for resource in cast(list[ArchiveResource], self._resources):
@@ -395,7 +398,7 @@ class BiowareArchive(ComparableMixin, ABC):
         return erf
 
     def to_rim(self) -> RIM:
-        from pykotor.resource.formats.rim.rim_data import RIM  # Prevent circular imports
+        from pykotor.resource.formats.rim import RIM  # Prevent circular imports
 
         rim = RIM()
         for resource in cast(list[ArchiveResource], self._resources):
