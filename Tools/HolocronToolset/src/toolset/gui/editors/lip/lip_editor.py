@@ -402,84 +402,33 @@ class LIPEditor(Editor):
 
     def setup_ui(self):
         """Set up the UI elements."""
-        layout = QVBoxLayout(self.central_widget)
+        from toolset.uic.qtpy.editors.lip_editor import Ui_Form
 
-        # Audio file selection
-        audio_layout = QHBoxLayout()
-        self.audio_path: QLineEdit = QLineEdit()
-        self.audio_path.setReadOnly(True)
-        self.audio_path.setToolTip("Path to the WAV audio file")
-        audio_layout.addWidget(QLabel("Audio File:"))
-        audio_layout.addWidget(self.audio_path)
-        load_audio_btn = QPushButton("Load Audio")
-        load_audio_btn.setToolTip("Load a WAV audio file (Ctrl+O)")
-        load_audio_btn.clicked.connect(self.load_audio)
-        audio_layout.addWidget(load_audio_btn)
-        layout.addLayout(audio_layout)
+        self.ui = Ui_Form()
+        self.ui.setupUi(self.central_widget)
 
-        # Duration display
-        duration_layout = QHBoxLayout()
+        # Store references for easier access
+        self.audio_path = self.ui.audioPath
+        self.duration_label = self.ui.durationValueLabel
+        self.preview_list = self.ui.previewList
+        self.time_input = self.ui.timeInput
+        self.shape_select = self.ui.shapeSelect
+        self.preview_label = self.ui.previewLabel
+
+        # Connect signals
         from toolset.gui.common.localization import translate as tr
-        duration_layout.addWidget(QLabel(tr("Duration:")))
-        self.duration_label: QLabel = QLabel("0.000s")
-        self.duration_label.setToolTip(tr("Duration of the loaded audio file"))
-        duration_layout.addWidget(self.duration_label)
-        layout.addLayout(duration_layout)
-
-        # Preview list
-        self.preview_list: QListWidget = QListWidget()
-        self.preview_list.setToolTip(tr("List of keyframes (right-click for options)"))
+        self.ui.loadAudioButton.clicked.connect(self.load_audio)
         self.preview_list.itemSelectionChanged.connect(self.on_keyframe_selected)
-        self.preview_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.preview_list.customContextMenuRequested.connect(self.show_preview_context_menu)
-        layout.addWidget(self.preview_list)
+        self.ui.addKeyframeButton.clicked.connect(self.add_keyframe)
+        self.ui.updateKeyframeButton.clicked.connect(self.update_keyframe)
+        self.ui.deleteKeyframeButton.clicked.connect(self.delete_keyframe)
+        self.ui.playButton.clicked.connect(self.play_preview)
+        self.ui.stopButton.clicked.connect(self.stop_preview)
 
-        # Keyframe editing
-        keyframe_layout = QHBoxLayout()
-
-        # Time input
-        keyframe_layout.addWidget(QLabel("Time:"))
-        self.time_input: QDoubleSpinBox = QDoubleSpinBox()
-        self.time_input.setToolTip("Time in seconds for the keyframe")
-        self.time_input.setDecimals(3)
-        self.time_input.setRange(0.0, 999.999)
-        self.time_input.setSingleStep(0.1)
-        keyframe_layout.addWidget(self.time_input)
-
-        # Shape selection
-        keyframe_layout.addWidget(QLabel("Shape:"))
-        self.shape_select: QComboBox = QComboBox()
-        self.shape_select.setToolTip("Lip shape/viseme for the keyframe")
+        # Populate shape combo box
         for shape in LIPShape:
             self.shape_select.addItem(shape.name)
-        keyframe_layout.addWidget(self.shape_select)
-
-        layout.addLayout(keyframe_layout)
-
-        # Keyframe buttons
-        button_layout = QHBoxLayout()
-
-        add_keyframe_btn = QPushButton("Add Keyframe")
-        add_keyframe_btn.setToolTip("Add a new keyframe (Insert)")
-        add_keyframe_btn.clicked.connect(self.add_keyframe)
-        button_layout.addWidget(add_keyframe_btn)
-
-        update_keyframe_btn = QPushButton("Update Keyframe")
-        update_keyframe_btn.setToolTip("Update selected keyframe (Enter)")
-        update_keyframe_btn.clicked.connect(self.update_keyframe)
-        button_layout.addWidget(update_keyframe_btn)
-
-        delete_keyframe_btn = QPushButton("Delete Keyframe")
-        delete_keyframe_btn.setToolTip("Delete selected keyframe (Delete)")
-        delete_keyframe_btn.clicked.connect(self.delete_keyframe)
-        button_layout.addWidget(delete_keyframe_btn)
-
-        layout.addLayout(button_layout)
-
-        # Preview display
-        preview_layout = QHBoxLayout()
-        preview_layout.addWidget(QLabel("Current Shape:"))
-        self.preview_label = QLabel("None")
 
         # Use application palette for colors, no hardcoded color values
         app = QApplication.instance()
@@ -500,23 +449,6 @@ class LIPEditor(Editor):
                 color: {text_color.name()};
             }}
         """)
-        preview_layout.addWidget(self.preview_label)
-        layout.addLayout(preview_layout)
-
-        # Playback controls
-        playback_layout = QHBoxLayout()
-
-        play_btn = QPushButton("Play")
-        play_btn.setToolTip("Play preview (Space)")
-        play_btn.clicked.connect(self.play_preview)
-        playback_layout.addWidget(play_btn)
-
-        stop_btn = QPushButton("Stop")
-        stop_btn.setToolTip("Stop preview (Esc)")
-        stop_btn.clicked.connect(self.stop_preview)
-        playback_layout.addWidget(stop_btn)
-
-        layout.addLayout(playback_layout)
 
     def setup_shortcuts(self):
         """Set up keyboard shortcuts."""

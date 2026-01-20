@@ -186,51 +186,23 @@ class LYTEditor(QWidget):
 
     def init_ui(self):
         """Initialize the UI layout."""
-        layout = QVBoxLayout()
+        from toolset.uic.qtpy.widgets.lyt_editor_controls import Ui_Form
 
-        # Add toolbar
-        toolbar = QToolBar()
-        layout.addWidget(toolbar)
+        self.ui_controls = Ui_Form()
+        self.ui_controls.setupUi(self)
 
-        # Add buttons
-        button_layout = QHBoxLayout()
+        # Store references for easier access
+        self.toolbar = self.ui_controls.toolbar
+        self.zoom_slider = self.ui_controls.zoomSlider
+        self.texture_list = self.ui_controls.textureList
 
-        add_room_btn = QPushButton("Add Room")
-        add_room_btn.clicked.connect(self.add_room)
-        button_layout.addWidget(add_room_btn)
-
-        add_track_btn = QPushButton("Add Track")
-        add_track_btn.clicked.connect(self.add_track)
-        button_layout.addWidget(add_track_btn)
-
-        add_obstacle_btn = QPushButton("Add Obstacle")
-        add_obstacle_btn.clicked.connect(self.add_obstacle)
-        button_layout.addWidget(add_obstacle_btn)
-
-        add_doorhook_btn = QPushButton("Add Door Hook")
-        add_doorhook_btn.clicked.connect(self.add_door_hook)
-        button_layout.addWidget(add_doorhook_btn)
-
-        layout.addLayout(button_layout)
-
-        # Add zoom controls
-        zoom_layout = QHBoxLayout()
-        zoom_layout.addWidget(QLabel("Zoom:"))
-
-        self.zoom_slider: QSlider = QSlider(Qt.Orientation.Horizontal)
-        self.zoom_slider.setRange(10, 200)
-        self.zoom_slider.setValue(100)
+        # Connect signals
+        self.ui_controls.addRoomButton.clicked.connect(self.add_room)
+        self.ui_controls.addTrackButton.clicked.connect(self.add_track)
+        self.ui_controls.addObstacleButton.clicked.connect(self.add_obstacle)
+        self.ui_controls.addDoorhookButton.clicked.connect(self.add_door_hook)
         self.zoom_slider.valueChanged.connect(self.update_zoom)
-        zoom_layout.addWidget(self.zoom_slider)
-
-        layout.addLayout(zoom_layout)
-
-        # Add texture list
-        self.texture_list = QListWidget()
         self.texture_list.itemClicked.connect(self.on_texture_selected)
-        layout.addWidget(self.texture_list)
-
-        self.setLayout(layout)
 
     def setup_connections(self):
         """Set up signal/slot connections."""
@@ -1588,103 +1560,33 @@ class LYTEditor(QWidget):
         """Initialize the UI layout."""
         self.setAcceptDrops(True)
 
-        layout = QVBoxLayout()
+        from toolset.uic.qtpy.widgets.lyt_editor_panel import Ui_Form
 
-        # Add grid controls
-        grid_controls = QHBoxLayout()
+        self.ui_panel = Ui_Form()
+        self.ui_panel.setupUi(self)
 
-        self.show_grid_cb = QCheckBox("Show Grid")
+        # Store references for easier access
+        self.show_grid_cb = self.ui_panel.showGridCheckbox
+        self.snap_grid_cb = self.ui_panel.snapGridCheckbox
+        self.grid_size_spin = self.ui_panel.gridSizeSpinBox
+        self.zoom_slider = self.ui_panel.zoomSlider
+        self.texturelist = self.ui_panel.textureList
+
+        # Set initial values
         self.show_grid_cb.setChecked(self._show_grid)
-        self.show_grid_cb.stateChanged.connect(self.toggle_grid)
-        grid_controls.addWidget(self.show_grid_cb)
-
-        self.snap_grid_cb = QCheckBox("Snap to Grid")
         self.snap_grid_cb.setChecked(self._snap_to_grid)
-        self.snap_grid_cb.stateChanged.connect(self.toggle_snap)
-        grid_controls.addWidget(self.snap_grid_cb)
-
-        self.grid_size_spin = QSpinBox()
-        self.grid_size_spin.setRange(10, 1000)
         self.grid_size_spin.setValue(int(self._grid_size))
+
+        # Connect signals
+        self.show_grid_cb.stateChanged.connect(self.toggle_grid)
+        self.snap_grid_cb.stateChanged.connect(self.toggle_snap)
         self.grid_size_spin.valueChanged.connect(self.set_grid_size)
-        grid_controls.addWidget(QLabel("Grid Size:"))
-        grid_controls.addWidget(self.grid_size_spin)
-
-        layout.addLayout(grid_controls)
-
-        # Add buttons for LYT editing operations
-        button_layout: QHBoxLayout = QHBoxLayout()
-        add_room_button: QPushButton = QPushButton("Add Room")
-        add_room_button.clicked.connect(self.add_room)
-        button_layout.addWidget(add_room_button)
-
-        add_track_button: QPushButton = QPushButton("Add Track")
-        add_track_button.clicked.connect(self.add_track)
-        button_layout.addWidget(add_track_button)
-
-        add_obstacle_button: QPushButton = QPushButton("Add Obstacle")
-        add_obstacle_button.clicked.connect(self.add_obstacle)
-        button_layout.addWidget(add_obstacle_button)
-
-        place_door_hook_button: QPushButton = QPushButton("Place Door Hook")
-        place_door_hook_button.clicked.connect(self.place_door_hook)
-        button_layout.addWidget(place_door_hook_button)
-        layout.addLayout(button_layout)
-
-        # Add zoom slider
-        zoom_layout: QHBoxLayout = QHBoxLayout()
-        zoom_layout.addWidget(QLabel("Zoom:"))
-        self.zoom_slider: QSlider = QSlider(Qt.Orientation.Horizontal)
-        self.zoom_slider.setRange(10, 200)
-        self.zoom_slider.setValue(100)
+        self.ui_panel.addRoomButton.clicked.connect(self.add_room)
+        self.ui_panel.addTrackButton.clicked.connect(self.add_track)
+        self.ui_panel.addObstacleButton.clicked.connect(self.add_obstacle)
+        self.ui_panel.placeDoorHookButton.clicked.connect(self.place_door_hook)
         self.zoom_slider.valueChanged.connect(self.update_zoom)
-        zoom_layout.addWidget(self.zoom_slider)
-        layout.addLayout(zoom_layout)
-
-        # Add texture browser
-        self.texturelist: QListWidget = QListWidget()
         self.texturelist.itemClicked.connect(self.on_texture_selected)
-        layout.addWidget(self.texturelist)
-
-        self.setLayout(layout)
-
-        layout: QVBoxLayout = QVBoxLayout()
-
-        # Add buttons for LYT editing operations
-        button_layout: QHBoxLayout = QHBoxLayout()
-        add_room_button: QPushButton = QPushButton("Add Room")
-        add_room_button.clicked.connect(self.add_room)
-        button_layout.addWidget(add_room_button)
-
-        add_track_button: QPushButton = QPushButton("Add Track")
-        add_track_button.clicked.connect(self.add_track)
-        button_layout.addWidget(add_track_button)
-
-        add_obstacle_button: QPushButton = QPushButton("Add Obstacle")
-        add_obstacle_button.clicked.connect(self.add_obstacle)
-        button_layout.addWidget(add_obstacle_button)
-
-        place_door_hook_button: QPushButton = QPushButton("Place Door Hook")
-        place_door_hook_button.clicked.connect(self.place_door_hook)
-        button_layout.addWidget(place_door_hook_button)
-        layout.addLayout(button_layout)
-
-        # Add zoom slider
-        zoom_layout: QHBoxLayout = QHBoxLayout()
-        zoom_layout.addWidget(QLabel("Zoom:"))
-        self.zoom_slider: QSlider = QSlider(Qt.Orientation.Horizontal)
-        self.zoom_slider.setRange(10, 200)
-        self.zoom_slider.setValue(100)
-        self.zoom_slider.valueChanged.connect(self.update_zoom)
-        zoom_layout.addWidget(self.zoom_slider)
-        layout.addLayout(zoom_layout)
-
-        # Add texture browser
-        self.texturelist: QListWidget = QListWidget()
-        self.texturelist.itemClicked.connect(self.on_texture_selected)
-        layout.addWidget(self.texturelist)
-
-        self.setLayout(layout)
 
     def set_current_tool(self, tool: str):
         """Set the current editing tool."""

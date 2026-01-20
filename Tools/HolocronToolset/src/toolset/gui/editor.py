@@ -90,38 +90,37 @@ class MediaPlayerWidget(QWidget):
         self.hideWidget()
 
     def setupMediaPlayer(self):
+        from toolset.uic.qtpy.widgets.media_player_controls import Ui_Form
+
+        self.ui = Ui_Form()
+        self.ui.setupUi(self)
+
         self.speed_levels: list[float] = [1, 1.25, 1.5, 2, 5, 10]
         self.current_speed_index: int = 0
 
-        self.playPauseButton: QPushButton = QPushButton()
+        # Store references for easier access
+        self.playPauseButton = self.ui.playPauseButton
+        self.stopButton = self.ui.stopButton
+        self.muteButton = self.ui.muteButton
+        self.timeLabel = self.ui.timeLabel
+        self.timeSlider = self.ui.timeSlider
+
+        # Set button icons
         self.playPauseButton.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))  # pyright: ignore[reportOptionalMemberAccess]
-        self.playPauseButton.setFixedSize(24, 24)
-
-        self.stopButton: QPushButton = QPushButton()
         self.stopButton.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaStop))  # pyright: ignore[reportOptionalMemberAccess]
-        self.stopButton.setFixedSize(24, 24)
-
-        self.muteButton: QPushButton = QPushButton()
         self.muteButton.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))  # pyright: ignore[reportOptionalMemberAccess]
-        self.muteButton.setFixedSize(24, 24)
 
-        buttonLayout: QHBoxLayout = QHBoxLayout()
+        # Set button alignment
         for button in [self.playPauseButton, self.stopButton, self.muteButton]:
-            buttonLayout.addWidget(button)
-            buttonLayout.setAlignment(button, Qt.AlignmentFlag.AlignBottom)
-        self.timeLabel: QLabel = QLabel("00:00 / 00:00")
+            self.ui.buttonLayout.setAlignment(button, Qt.AlignmentFlag.AlignBottom)
+
+        # Setup time slider
         self.setupTimeSlider()
 
-        buttonLayout.addWidget(self.timeLabel)
-        buttonLayout.addWidget(self.timeSlider, 1)
-
-        buttonLayout.setContentsMargins(0, 0, 0, 0)
-        buttonLayout.setSpacing(0)
-        self.setLayout(buttonLayout)
         self.hideWidget()
 
     def setupTimeSlider(self):
-        self.timeSlider: QSlider = QSlider(Qt.Orientation.Horizontal)
+        # timeSlider is already created in the .ui file, just configure it
         self.timeSlider.setMouseTracking(True)
         self.dragPosition = QPoint()
 
