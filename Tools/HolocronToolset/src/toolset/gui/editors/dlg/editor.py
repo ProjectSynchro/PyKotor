@@ -241,29 +241,20 @@ class DLGEditor(Editor):
         self,
         checked: bool = False,  # noqa: FBT001, FBT002
     ):
-        dialog: QDialog = QDialog(self)
         from toolset.gui.common.localization import translate as tr
+        from toolset.uic.qtpy.dialogs.all_tips import Ui_Dialog
+
+        dialog: QDialog = QDialog(self)
+        ui = Ui_Dialog()
+        ui.setupUi(dialog)
+        
         dialog.setWindowTitle(tr("All Tips"))
-        layout: QVBoxLayout = QVBoxLayout(dialog)
-
-        text_edit: QTextEdit = QTextEdit(dialog)
-        text_edit.setReadOnly(True)
-        text_edit.setFont(QFont("Arial", 10))
-        text_edit.setHtml("<ul>" + "".join(f"<li>{tip}</li>" for tip in self.tips) + "</ul>")
-        layout.addWidget(text_edit)
-
-        close_button: QPushButton = QPushButton("Close", dialog)
-        close_button.clicked.connect(lambda: dialog.accept())
-        close_button.setFont(QFont("Arial", 10))
-        button_layout: QHBoxLayout = QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(close_button)
-
-        layout.addLayout(button_layout)
-        dialog.setLayout(layout)
         fixed_width: int = 800  # Adjust this value as needed
         dialog.setFixedWidth(fixed_width)
-        dialog.setSizeGripEnabled(True)
+        
+        ui.textEdit.setHtml("<ul>" + "".join(f"<li>{tip}</li>" for tip in self.tips) + "</ul>")
+        ui.closeButton.clicked.connect(dialog.accept)
+        
         dialog.exec()
 
     def setup_dlg_tree_mvc(self):
@@ -436,31 +427,29 @@ Should return 1 or 0, representing a boolean.
         self.setup_menu_extras()
 
         # Go-to bar
+        from toolset.uic.qtpy.widgets.go_to_bar import Ui_Widget as Ui_GoToBar
         self.go_to_bar: QWidget = QWidget(self)
+        self.go_to_bar_ui = Ui_GoToBar()
+        self.go_to_bar_ui.setupUi(self.go_to_bar)
         self.go_to_bar.setVisible(False)
-        self.go_to_layout: QHBoxLayout = QHBoxLayout(self.go_to_bar)
-        self.go_to_input: QLineEdit = QLineEdit(self.go_to_bar)
-        self.go_to_button: QPushButton = QPushButton("Go", self.go_to_bar)
-        self.go_to_layout.addWidget(self.go_to_input)
-        self.go_to_layout.addWidget(self.go_to_button)
+        self.go_to_input = self.go_to_bar_ui.goToInput
+        self.go_to_button = self.go_to_bar_ui.goToButton
         self.ui.verticalLayout_main.insertWidget(0, self.go_to_bar)  # type: ignore[arg-type]
 
         # Find bar
+        from toolset.uic.qtpy.widgets.find_bar import Ui_Widget as Ui_FindBar
         self.find_bar: QWidget = QWidget(self)
+        self.find_bar_ui = Ui_FindBar()
+        self.find_bar_ui.setupUi(self.find_bar)
         self.find_bar.setVisible(False)
-        self.find_layout: QHBoxLayout = QHBoxLayout(self.find_bar)
-        self.find_input: QLineEdit = QLineEdit(self.find_bar)
-        self.find_button: QPushButton = QPushButton("", self.find_bar)
+        self.find_input = self.find_bar_ui.findInput
+        self.find_button = self.find_bar_ui.findButton
+        self.back_button = self.find_bar_ui.backButton
+        self.results_label = self.find_bar_ui.resultsLabel
         q_style: QStyle | None = self.style()
         assert q_style is not None
         self.find_button.setIcon(q_style.standardIcon(QStyle.StandardPixmap.SP_ArrowForward))
-        self.back_button: QPushButton = QPushButton("", self.find_bar)
         self.back_button.setIcon(q_style.standardIcon(QStyle.StandardPixmap.SP_ArrowBack))
-        self.results_label: QLabel = QLabel(self.find_bar)
-        self.find_layout.addWidget(self.find_input)
-        self.find_layout.addWidget(self.back_button)
-        self.find_layout.addWidget(self.find_button)
-        self.find_layout.addWidget(self.results_label)
         self.ui.verticalLayout_main.insertWidget(0, self.find_bar)  # type: ignore[arg-type]
         self.setup_completer()
 
@@ -690,11 +679,21 @@ Should return 1 or 0, representing a boolean.
         """
 
     def setup_left_dock_widget(self):  # noqa: PLR0915
+        from toolset.uic.qtpy.widgets.left_dock_widget import Ui_Widget
+
         self.left_dock_widget: QDockWidget = QDockWidget("Orphaned Nodes and Pinned Items", self)
         self.left_dock_widget_container: QWidget = QWidget()
-        self.left_dock_layout: QVBoxLayout = QVBoxLayout(self.left_dock_widget_container)
+        self.left_dock_ui = Ui_Widget()
+        self.left_dock_ui.setupUi(self.left_dock_widget_container)
 
-        # Orphaned Nodes List
+        # Replace QListWidget with DLGListWidget for Orphaned Nodes
+        orphaned_placeholder = self.left_dock_ui.orphanedNodesList
+        orphaned_parent = orphaned_placeholder.parent()
+        orphaned_layout = self.left_dock_ui.verticalLayout
+        orphaned_index = orphaned_layout.indexOf(orphaned_placeholder)
+        orphaned_placeholder.setParent(None)
+        orphaned_placeholder.deleteLater()
+        
         self.orphaned_nodes_list: DLGListWidget = DLGListWidget(self)
         self.orphaned_nodes_list.use_hover_text = False
         self.orphaned_nodes_list.setWordWrap(True)
@@ -706,8 +705,16 @@ Should return 1 or 0, representing a boolean.
         orphan_viewport.setAcceptDrops(False)
         self.orphaned_nodes_list.setDropIndicatorShown(False)
         self.orphaned_nodes_list.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
+        orphaned_layout.insertWidget(orphaned_index, self.orphaned_nodes_list)
 
-        # Pinned Items List
+        # Replace QListWidget with DLGListWidget for Pinned Items
+        pinned_placeholder = self.left_dock_ui.pinnedItemsList
+        pinned_parent = pinned_placeholder.parent()
+        pinned_layout = self.left_dock_ui.verticalLayout
+        pinned_index = pinned_layout.indexOf(pinned_placeholder)
+        pinned_placeholder.setParent(None)
+        pinned_placeholder.deleteLater()
+        
         self.pinned_items_list: DLGListWidget = DLGListWidget(self)
         self.pinned_items_list.setWordWrap(True)
         self.pinned_items_list.setItemDelegate(HTMLDelegate(self.pinned_items_list))
@@ -719,12 +726,7 @@ Should return 1 or 0, representing a boolean.
         self.pinned_items_list.setDragEnabled(True)
         self.pinned_items_list.setDropIndicatorShown(True)
         self.pinned_items_list.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
-
-        # Add both lists to the layout
-        self.left_dock_layout.addWidget(QLabel("Orphaned Nodes"))
-        self.left_dock_layout.addWidget(self.orphaned_nodes_list)
-        self.left_dock_layout.addWidget(QLabel("Pinned Items"))
-        self.left_dock_layout.addWidget(self.pinned_items_list)
+        pinned_layout.insertWidget(pinned_index, self.pinned_items_list)
 
         # Set the container as the widget for the dock
         self.left_dock_widget.setWidget(self.left_dock_widget_container)
