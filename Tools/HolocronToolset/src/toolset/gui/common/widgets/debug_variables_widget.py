@@ -6,9 +6,7 @@ from typing import Any
 
 from qtpy.QtWidgets import (
     QHeaderView,
-    QTableWidget,
     QTableWidgetItem,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -22,21 +20,18 @@ class DebugVariablesWidget(QWidget):
     
     def setup_ui(self):
         """Set up the UI components."""
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        from toolset.uic.qtpy.widgets.debug_variables_widget import Ui_DebugVariablesWidget
         
-        # Create table for variables
-        self.table = QTableWidget(self)
-        self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["Name", "Type", "Value"])
+        self.ui = Ui_DebugVariablesWidget()
+        self.ui.setupUi(self)
+        
+        # Get reference to table
+        self.table = self.ui.table
+        
+        # Configure table header
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.setAlternatingRowColors(True)
-        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        
-        layout.addWidget(self.table)
     
     def update_variables(self, variables: dict[str, dict[str, Any]]):
         """Update the variables display.
