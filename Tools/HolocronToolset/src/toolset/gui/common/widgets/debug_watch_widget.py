@@ -5,11 +5,7 @@ from __future__ import annotations
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QHeaderView,
-    QLineEdit,
-    QPushButton,
-    QTableWidget,
     QTableWidgetItem,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -25,40 +21,30 @@ class DebugWatchWidget(QWidget):
     
     def setup_ui(self):
         """Set up the UI components."""
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        from toolset.uic.qtpy.widgets.debug_watch_widget import Ui_DebugWatchWidget
         
-        # Add watch expression input
-        input_layout = QVBoxLayout()
-        input_layout.setContentsMargins(4, 4, 4, 4)
+        self.ui = Ui_DebugWatchWidget()
+        self.ui.setupUi(self)
         
-        self.expression_input = QLineEdit(self)
-        from toolset.gui.common.localization import translate as tr
-        self.expression_input.setPlaceholderText(tr("Enter expression to watch..."))
-        self.expression_input.returnPressed.connect(self._add_watch)
+        # Get references to UI elements
+        self.expression_input = self.ui.expressionInput
+        self.add_button = self.ui.addButton
+        self.table = self.ui.table
         
-        add_button = QPushButton(tr("Add Watch"), self)
-        add_button.clicked.connect(self._add_watch)
-        
-        input_layout.addWidget(self.expression_input)
-        input_layout.addWidget(add_button)
-        
-        # Create table for watch expressions
-        self.table = QTableWidget(self)
-        self.table.setColumnCount(2)
+        # Configure table
         self.table.setHorizontalHeaderLabels(["Expression", "Value"])
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        self.table.setAlternatingRowColors(True)
-        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         
-        # Context menu for removing watches
-        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        # Localization
+        from toolset.gui.common.localization import translate as tr
+        self.expression_input.setPlaceholderText(tr("Enter expression to watch..."))
+        self.add_button.setText(tr("Add Watch"))
+        
+        # Connect signals
+        self.expression_input.returnPressed.connect(self._add_watch)
+        self.add_button.clicked.connect(self._add_watch)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
-        
-        layout.addLayout(input_layout)
-        layout.addWidget(self.table)
     
     def _add_watch(self):
         """Add a watch expression."""
@@ -79,7 +65,7 @@ class DebugWatchWidget(QWidget):
     
     def _show_context_menu(self, position):
         """Show context menu for watch table."""
-        item = self.table.itemAt(position)
+        item = self.ui.table.itemAt(position)
         if item is None:
             return
         
@@ -88,32 +74,33 @@ class DebugWatchWidget(QWidget):
             expression = self._watch_expressions[row]
             
             from qtpy.QtWidgets import QMenu
+            from toolset.gui.common.localization import translate as tr
             
             menu = QMenu(self)
-            remove_action = menu.addAction("Remove Watch")
+            remove_action = menu.addAction(tr("Remove Watch"))
             if remove_action:
                 remove_action.triggered.connect(lambda: self._remove_watch(expression))
-                menu.exec(self.table.mapToGlobal(position))
+                menu.exec(self.ui.table.mapToGlobal(position))
     
     def _update_table(self):
         """Update the watch expressions table."""
-        self.table.setRowCount(0)
+        self.ui.table.setRowCount(0)
         
         for expression in self._watch_expressions:
-            row = self.table.rowCount()
-            self.table.insertRow(row)
+            row = self.ui.table.rowCount()
+            self.ui.table.insertRow(row)
             
             # Expression
             expr_item = QTableWidgetItem(expression)
-            self.table.setItem(row, 0, expr_item)
+            self.ui.table.setItem(row, 0, expr_item)
             
             # Value
             value = self._watch_values.get(expression, "Not evaluated")
             value_item = QTableWidgetItem(str(value))
-            self.table.setItem(row, 1, value_item)
+            self.ui.table.setItem(row, 1, value_item)
         
         # Resize columns to fit content
-        self.table.resizeColumnsToContents()
+        self.ui.table.resizeColumnsToContents()
     
     def update_watch_values(self, watch_values: dict[str, str]):
         """Update watch expression values.
@@ -133,5 +120,5 @@ class DebugWatchWidget(QWidget):
         """Clear all watch expressions."""
         self._watch_expressions.clear()
         self._watch_values.clear()
-        self.table.setRowCount(0)
+        self.ui.table.setRowCount(0)
 
