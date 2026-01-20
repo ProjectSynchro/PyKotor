@@ -4,17 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
-    QComboBox,
     QDialog,
-    QDialogButtonBox,
-    QFormLayout,
-    QGroupBox,
-    QLabel,
-    QLineEdit,
-    QSpinBox,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -33,88 +24,49 @@ class TestConfigWidget(QWidget):
     
     def setup_ui(self):
         """Set up the UI components."""
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
+        from toolset.uic.qtpy.widgets.test_config_widget import Ui_TestConfigWidget
         
-        # Entry point info
-        self.entry_point_label = QLabel("Entry Point: main()", self)
-        layout.addWidget(self.entry_point_label)
+        self.ui: Ui_TestConfigWidget = Ui_TestConfigWidget()
+        self.ui.setupUi(self)
         
-        # Event configuration group
-        event_group = QGroupBox("Event Configuration", self)
-        event_layout = QFormLayout(event_group)
+        # Populate event combo box
+        self.ui.eventCombo.addItem("HEARTBEAT (1001)", 1001)
+        self.ui.eventCombo.addItem("PERCEIVE (1002)", 1002)
+        self.ui.eventCombo.addItem("END OF COMBAT (1003)", 1003)
+        self.ui.eventCombo.addItem("ON DIALOGUE (1004)", 1004)
+        self.ui.eventCombo.addItem("ATTACKED (1005)", 1005)
+        self.ui.eventCombo.addItem("DAMAGED (1006)", 1006)
+        self.ui.eventCombo.addItem("DEATH (1007)", 1007)
+        self.ui.eventCombo.addItem("DISTURBED (1008)", 1008)
+        self.ui.eventCombo.addItem("BLOCKED (1009)", 1009)
+        self.ui.eventCombo.addItem("SPELL CAST AT (1010)", 1010)
+        self.ui.eventCombo.addItem("DIALOGUE END (1011)", 1011)
+        self.ui.eventCombo.addItem("Custom...", -1)
         
-        # Event number selector (for main() scripts)
-        self.event_combo = QComboBox(self)
-        self.event_combo.addItem("HEARTBEAT (1001)", 1001)
-        self.event_combo.addItem("PERCEIVE (1002)", 1002)
-        self.event_combo.addItem("END OF COMBAT (1003)", 1003)
-        self.event_combo.addItem("ON DIALOGUE (1004)", 1004)
-        self.event_combo.addItem("ATTACKED (1005)", 1005)
-        self.event_combo.addItem("DAMAGED (1006)", 1006)
-        self.event_combo.addItem("DEATH (1007)", 1007)
-        self.event_combo.addItem("DISTURBED (1008)", 1008)
-        self.event_combo.addItem("BLOCKED (1009)", 1009)
-        self.event_combo.addItem("SPELL CAST AT (1010)", 1010)
-        self.event_combo.addItem("DIALOGUE END (1011)", 1011)
-        self.event_combo.addItem("Custom...", -1)
-        self.event_combo.currentIndexChanged.connect(self._on_event_changed)
-        event_layout.addRow("Event Type:", self.event_combo)
+        # Set placeholder texts with localization
+        self.ui.lastAttackerEdit.setPlaceholderText(tr("OBJECT_INVALID (default: 0)"))
+        self.ui.lastPerceivedEdit.setPlaceholderText(tr("OBJECT_INVALID (default: 0)"))
+        self.ui.eventCreatorEdit.setPlaceholderText(tr("OBJECT_SELF (default: 1)"))
+        self.ui.eventTargetEdit.setPlaceholderText(tr("OBJECT_SELF (default: 1)"))
         
-        # Custom event number (shown when "Custom..." is selected)
-        self.custom_event_spin = QSpinBox(self)
-        self.custom_event_spin.setRange(1001, 9999)
-        self.custom_event_spin.setValue(1001)
-        self.custom_event_spin.setEnabled(False)
-        self.custom_event_spin.valueChanged.connect(self._update_event_number)
-        event_layout.addRow("Custom Event Number:", self.custom_event_spin)
-        
-        layout.addWidget(event_group)
-        
-        # Mock values group
-        mock_group = QGroupBox("Mock Engine Function Values", self)
-        mock_layout = QFormLayout(mock_group)
-        
-        # GetLastAttacker() mock
-        self.last_attacker_edit = QLineEdit(self)
-        self.last_attacker_edit.setPlaceholderText(tr("OBJECT_INVALID (default: 0)"))
-        self.last_attacker_edit.setText("0")
-        mock_layout.addRow(tr("GetLastAttacker():"), self.last_attacker_edit)
-
-        # GetLastPerceived() mock
-        self.last_perceived_edit = QLineEdit(self)
-        self.last_perceived_edit.setPlaceholderText(tr("OBJECT_INVALID (default: 0)"))
-        self.last_perceived_edit.setText("0")
-        mock_layout.addRow(tr("GetLastPerceived():"), self.last_perceived_edit)
-
-        # GetEventCreator() mock
-        self.event_creator_edit = QLineEdit(self)
-        self.event_creator_edit.setPlaceholderText(tr("OBJECT_SELF (default: 1)"))
-        self.event_creator_edit.setText("1")
-        mock_layout.addRow(tr("GetEventCreator():"), self.event_creator_edit)
-
-        # GetEventTarget() mock
-        self.event_target_edit = QLineEdit(self)
-        self.event_target_edit.setPlaceholderText(tr("OBJECT_SELF (default: 1)"))
-        self.event_target_edit.setText("1")
-        mock_layout.addRow(tr("GetEventTarget():"), self.event_target_edit)
-        
-        layout.addWidget(mock_group)
-        
-        layout.addStretch()
+        # Connect signals
+        self.ui.eventCombo.currentIndexChanged.connect(self._on_event_changed)
+        self.ui.customEventSpin.valueChanged.connect(self._update_event_number)
     
     def _on_event_changed(self, index: int):
         """Handle event combo box change."""
-        custom_enabled = self.event_combo.itemData(index) == -1
-        self.custom_event_spin.setEnabled(custom_enabled)
+        custom_enabled = self.ui.eventCombo.itemData(index) == -1
+        self.ui.customEventSpin.setEnabled(custom_enabled)
         if not custom_enabled:
-            self._event_number = self.event_combo.itemData(index)
+            event_data = self.ui.eventCombo.itemData(index)
+            if event_data is not None:
+                self._event_number = int(event_data)
         else:
-            self._event_number = self.custom_event_spin.value()
+            self._event_number = self.ui.customEventSpin.value()
     
     def _update_event_number(self, value: int):
         """Update event number from custom spinbox."""
-        if self.event_combo.currentData() == -1:
+        if self.ui.eventCombo.currentData() == -1:
             self._event_number = value
     
     def set_entry_point(self, entry_point: str):
@@ -126,13 +78,13 @@ class TestConfigWidget(QWidget):
         """
         self._entry_point = entry_point
         if entry_point == "StartingConditional":
-            self.entry_point_label.setText(tr("Entry Point: StartingConditional()"))
+            self.ui.entryPointLabel.setText(tr("Entry Point: StartingConditional()"))
             # Hide event configuration for StartingConditional
-            self.event_combo.setEnabled(False)
-            self.custom_event_spin.setEnabled(False)
+            self.ui.eventCombo.setEnabled(False)
+            self.ui.customEventSpin.setEnabled(False)
         else:
-            self.entry_point_label.setText(tr("Entry Point: main()"))
-            self.event_combo.setEnabled(True)
+            self.ui.entryPointLabel.setText(tr("Entry Point: main()"))
+            self.ui.eventCombo.setEnabled(True)
     
     def get_test_config(self) -> dict[str, Any]:
         """Get the test configuration.
@@ -150,28 +102,28 @@ class TestConfigWidget(QWidget):
         # Parse mock values - create proper mock functions
         # NOTE: Lambdas need to capture values, so we use default args to avoid closure issues
         try:
-            attacker_val = int(self.last_attacker_edit.text() or "0")
+            attacker_val = int(self.ui.lastAttackerEdit.text() or "0")
             config["mocks"]["GetLastAttacker"] = lambda o=1, val=attacker_val: val
         except ValueError:
             # Default to OBJECT_INVALID
             config["mocks"]["GetLastAttacker"] = lambda o=1: 0
         
         try:
-            perceived_val = int(self.last_perceived_edit.text() or "0")
+            perceived_val = int(self.ui.lastPerceivedEdit.text() or "0")
             config["mocks"]["GetLastPerceived"] = lambda val=perceived_val: val
         except ValueError:
             # Default to OBJECT_INVALID
             config["mocks"]["GetLastPerceived"] = lambda: 0
         
         try:
-            creator_val = int(self.event_creator_edit.text() or "1")
+            creator_val = int(self.ui.eventCreatorEdit.text() or "1")
             config["mocks"]["GetEventCreator"] = lambda val=creator_val: val
         except ValueError:
             # Default to OBJECT_SELF
             config["mocks"]["GetEventCreator"] = lambda: 1
         
         try:
-            target_val = int(self.event_target_edit.text() or "1")
+            target_val = int(self.ui.eventTargetEdit.text() or "1")
             config["mocks"]["GetEventTarget"] = lambda val=target_val: val
         except ValueError:
             # Default to OBJECT_SELF
