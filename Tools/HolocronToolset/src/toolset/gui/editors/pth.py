@@ -189,29 +189,17 @@ class PTHEditor(Editor):
         self.new()
 
     def setup_status_bar(self):
-        # Create labels for the different parts of the status message
-        self.leftLabel = QLabel("Left Status")
-        self.centerLabel = QLabel("Center Status")
-        self.rightLabel = QLabel("Right Status")
-
-        # Ensure the center label's text is centered
-        self.centerLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # Create a horizontal layout
-        layout = QHBoxLayout()
-        layout.addWidget(self.leftLabel)
-
-        # Add a spacer item to push the center and right labels to the edge
-        layout.addStretch()
-        layout.addWidget(self.centerLabel)
-        layout.addStretch()
-
-        # Add the right label last
-        layout.addWidget(self.rightLabel)
+        from toolset.uic.qtpy.widgets.pth_status_bar import Ui_Form
 
         # Create a widget to set as the status bar's widget
         statusWidget = QWidget()
-        statusWidget.setLayout(layout)
+        self.status_bar_ui = Ui_Form()
+        self.status_bar_ui.setupUi(statusWidget)
+
+        # Store references for easier access
+        self.leftLabel = self.status_bar_ui.leftLabel
+        self.centerLabel = self.status_bar_ui.centerLabel
+        self.rightLabel = self.status_bar_ui.rightLabel
 
         # Set the widget to the status bar
         sbar = self.statusBar()
