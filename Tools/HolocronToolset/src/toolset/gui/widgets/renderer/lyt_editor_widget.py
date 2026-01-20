@@ -138,66 +138,35 @@ class LYTEditorWidget(QWidget):
 
     def _init_ui(self):
         """Initialize the UI layout and controls."""
-        layout = QVBoxLayout(self)
+        from toolset.uic.qtpy.widgets.renderer.lyt_editor_widget import Ui_LYTEditorWidget
 
-        # Room controls
-        room_group = QGroupBox("Room Properties")
-        room_layout = QGridLayout()
+        self.ui = Ui_LYTEditorWidget()
+        self.ui.setupUi(self)
 
-        # Position controls
-        pos_layout = QHBoxLayout()
-        pos_layout.addWidget(QLabel(tr("Position:")))
-        self.pos_x = QDoubleSpinBox()
-        self.pos_y = QDoubleSpinBox()
-        self.pos_z = QDoubleSpinBox()
-        for spin in (self.pos_x, self.pos_y, self.pos_z):
-            spin.setRange(-99999, 99999)
-            pos_layout.addWidget(spin)
-        room_layout.addLayout(pos_layout, 0, 0, 1, 2)
+        # Get references to UI widgets
+        self.pos_x = self.ui.posX
+        self.pos_y = self.ui.posY
+        self.pos_z = self.ui.posZ
+        self.model_name = self.ui.modelName
+        self.door_pos_x = self.ui.doorPosX
+        self.door_pos_y = self.ui.doorPosY
+        self.door_pos_z = self.ui.doorPosZ
+        self.room_id = self.ui.roomId
+        self.add_room_btn = self.ui.addRoomBtn
+        self.add_door_btn = self.ui.addDoorBtn
+        self.delete_btn = self.ui.deleteBtn
 
-        # Model name
-        room_layout.addWidget(QLabel(tr("Model:")), 1, 0)
-        self.model_name = QLabel()
-        room_layout.addWidget(self.model_name, 1, 1)
-
-        room_group.setLayout(room_layout)
-        layout.addWidget(room_group)
-
-        # Door hook controls
-        door_group = QGroupBox("Door Hook Properties")
-        door_layout = QGridLayout()
-
-        # Door position
-        door_pos_layout = QHBoxLayout()
-        door_pos_layout.addWidget(QLabel(tr("Position:")))
-        self.door_pos_x = QDoubleSpinBox()
-        self.door_pos_y = QDoubleSpinBox()
-        self.door_pos_z = QDoubleSpinBox()
-        for spin in (self.door_pos_x, self.door_pos_y, self.door_pos_z):
-            spin.setRange(-99999, 99999)
-            door_pos_layout.addWidget(spin)
-        door_layout.addLayout(door_pos_layout, 0, 0, 1, 2)
-
-        # Room ID
-        door_layout.addWidget(QLabel(tr("Room:")), 1, 0)
-        self.room_id = QSpinBox()
-        self.room_id.setRange(0, 999)
-        door_layout.addWidget(self.room_id, 1, 1)
-
-        door_group.setLayout(door_layout)
-        layout.addWidget(door_group)
-
-        # Action buttons
-        button_layout = QHBoxLayout()
-        self.add_room_btn = QPushButton(tr("Add Room"))
-        self.add_door_btn = QPushButton(tr("Add Door Hook"))
-        self.delete_btn = QPushButton(tr("Delete Selected"))
-        button_layout.addWidget(self.add_room_btn)
-        button_layout.addWidget(self.add_door_btn)
-        button_layout.addWidget(self.delete_btn)
-        layout.addLayout(button_layout)
-
-        layout.addStretch()
+        # Apply localization
+        from toolset.gui.common.localization import translate as tr
+        self.ui.roomGroup.setTitle(tr("Room Properties"))
+        self.ui.positionLabel.setText(tr("Position:"))
+        self.ui.modelLabel.setText(tr("Model:"))
+        self.ui.doorGroup.setTitle(tr("Door Hook Properties"))
+        self.ui.doorPositionLabel.setText(tr("Position:"))
+        self.ui.roomLabel.setText(tr("Room:"))
+        self.ui.addRoomBtn.setText(tr("Add Room"))
+        self.ui.addDoorBtn.setText(tr("Add Door Hook"))
+        self.ui.deleteBtn.setText(tr("Delete Selected"))
 
     def _setup_signals(self):
         """Connect widget signals."""
