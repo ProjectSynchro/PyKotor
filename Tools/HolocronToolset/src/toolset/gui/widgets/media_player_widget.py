@@ -8,13 +8,11 @@ from qtpy.QtCore import QBuffer, QPoint, QTimer, Qt, Signal
 from qtpy.QtGui import QKeyEvent, QKeySequence, QWheelEvent
 from qtpy.QtMultimedia import QMediaPlayer
 from qtpy.QtWidgets import (
-    QHBoxLayout,
     QLabel,
     QPushButton,
     QSlider,
     QStyle,
     QToolButton,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -93,83 +91,43 @@ class MediaPlayerWidget(QWidget):
 
     def _setup_media_player(self) -> None:
         """Set up the media player UI components."""
-        # Main layout
-        main_layout: QVBoxLayout = QVBoxLayout()
-        main_layout.setContentsMargins(4, 4, 4, 4)
-        main_layout.setSpacing(4)
+        # Load UI from .ui file
+        from toolset.uic.qtpy.widgets.media_player_widget import Ui_MediaPlayerWidget
         
-        # Control buttons layout
-        controls_layout: QHBoxLayout = QHBoxLayout()
-        controls_layout.setContentsMargins(0, 0, 0, 0)
-        controls_layout.setSpacing(4)
+        self.ui = Ui_MediaPlayerWidget()
+        self.ui.setupUi(self)
         
-        # Play/Pause button
-        self.play_pause_button: QPushButton = QPushButton()
+        # Get references to UI widgets
+        self.play_pause_button = self.ui.playPauseButton
+        self.stop_button = self.ui.stopButton
+        self.time_slider = self.ui.timeSlider
+        self.time_label = self.ui.timeLabel
+        self.mute_button = self.ui.muteButton
+        self.volume_slider = self.ui.volumeSlider
+        self.speed_button = self.ui.speedButton
+        
+        # Set up icons for buttons
         q_style: QStyle | None = self.style()
         assert q_style is not None, "q_style is somehow None"
         self.play_pause_button.setIcon(q_style.standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
-        self.play_pause_button.setFixedSize(32, 32)
-        self.play_pause_button.setToolTip("Play/Pause (Space)")
-        self.play_pause_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        
-        # Stop button
-        self.stop_button: QPushButton = QPushButton()
         self.stop_button.setIcon(q_style.standardIcon(QStyle.StandardPixmap.SP_MediaStop))
-        self.stop_button.setFixedSize(32, 32)
-        self.stop_button.setToolTip("Stop (S)")
-        self.stop_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.mute_button.setIcon(q_style.standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
         
-        # Time slider (progress bar)
+        # Set up time slider behavior
         self._setup_time_slider()
         
-        # Time label
-        self.time_label: QLabel = QLabel("00:00 / 00:00")
-        self.time_label.setMinimumWidth(120)
-        self.time_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.time_label.setToolTip("Current time / Total duration")
-        
-        # Volume controls
+        # Set up volume controls
         self._setup_volume_controls()
         
-        # Playback speed control
+        # Set up speed controls
         self._setup_speed_controls()
         
-        # Build layout
-        controls_layout.addWidget(self.play_pause_button)
-        controls_layout.addWidget(self.stop_button)
-        controls_layout.addWidget(self.time_slider, 1)  # Stretchable
-        controls_layout.addWidget(self.time_label)
-        
-        # Volume controls container
-        volume_container: QWidget = QWidget()
-        volume_layout: QHBoxLayout = QHBoxLayout()
-        volume_layout.setContentsMargins(0, 0, 0, 0)
-        volume_layout.setSpacing(4)
-        volume_layout.addWidget(self.mute_button)
-        volume_layout.addWidget(self.volume_slider)
-        volume_container.setLayout(volume_layout)
-        controls_layout.addWidget(volume_container)
-        
-        # Speed controls
-        controls_layout.addWidget(self.speed_button)
-        
-        main_layout.addLayout(controls_layout)
-        self.setLayout(main_layout)
-        
-        # Set minimum height for better visibility
-        self.setMinimumHeight(40)
+        # Set stretch factor for time slider (make it expandable)
+        self.ui.controlsLayout.setStretch(2, 1)  # timeSlider is at index 2
 
     def _setup_time_slider(self) -> None:
         """Set up the time/position slider with enhanced seeking."""
-        self.time_slider: QSlider = QSlider(Qt.Orientation.Horizontal)
-        self.time_slider.setMinimum(0)
-        self.time_slider.setMaximum(0)
-        self.time_slider.setSingleStep(1000)  # 1 second steps
-        self.time_slider.setPageStep(10000)  # 10 second steps
-        self.time_slider.setMouseTracking(True)
-        self.time_slider.setToolTip("Drag to seek, click to jump (Left/Right: ±5s, Shift+Left/Right: ±1s)")
-        self.time_slider.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        
+        # Time slider is already created from .ui file, just configure behavior
         # Custom slider behavior for better seeking
         self._setup_custom_slider_behavior()
 
@@ -244,37 +202,14 @@ class MediaPlayerWidget(QWidget):
 
     def _setup_volume_controls(self) -> None:
         """Set up volume control with slider and mute button."""
-        # Mute button
-        q_style: QStyle | None = self.style()
-        assert q_style is not None, "q_style is somehow None"
-        
-        self.mute_button: QPushButton = QPushButton()
-        self.mute_button.setIcon(q_style.standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
-        self.mute_button.setFixedSize(28, 28)
-        self.mute_button.setToolTip("Mute/Unmute (M)")
-        self.mute_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        
-        # Volume slider
-        self.volume_slider: QSlider = QSlider(Qt.Orientation.Horizontal)
-        self.volume_slider.setMinimum(0)
-        self.volume_slider.setMaximum(100)
+        # Volume controls are already created from .ui file, just configure
         self.volume_slider.setValue(int(self._previous_volume * 100))
-        self.volume_slider.setFixedWidth(80)
         self.volume_slider.setToolTip(f"Volume: {int(self._previous_volume * 100)}% (Up/Down arrows)")
-        self.volume_slider.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.volume_slider.valueChanged.connect(self._on_volume_slider_changed)
 
     def _setup_speed_controls(self) -> None:
         """Set up playback speed control."""
-        self.speed_button: QToolButton = QToolButton()
-        self.speed_button.setText("1.0x")
-        self.speed_button.setFixedSize(50, 28)
-        self.speed_button.setToolTip("Playback Speed (Click to cycle, [ to slow, ] to fast)")
-        self.speed_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.speed_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        
-        # Create menu for speed selection (optional, for future enhancement)
-        # For now, clicking cycles through speeds
+        # Speed button is already created from .ui file, just connect signal
         self.speed_button.clicked.connect(self._cycle_playback_speed)
 
     def _setup_signals(self) -> None:
