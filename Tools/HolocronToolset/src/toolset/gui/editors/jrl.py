@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
-from qtpy.QtGui import QColor, QStandardItem, QStandardItemModel
+from qtpy.QtGui import QColor, QPalette, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
     QMenu,
     QMessageBox,
@@ -78,7 +78,10 @@ class JRLEditor(Editor):
         self.new()
 
     def _setup_signals(self):
-        self.ui.journalTree.selectionChanged = self.on_selection_changed  # type: ignore[assignment]
+        # Connect selection changed signal using selection model (more reliable than property assignment)
+        sel_model = self.ui.journalTree.selectionModel()
+        if sel_model is not None:
+            sel_model.selectionChanged.connect(self.on_selection_changed)
         self.ui.journalTree.customContextMenuRequested.connect(self.on_context_menu_requested)
 
         self.ui.entryTextEdit.sig_double_clicked.connect(self.change_entry_text)
@@ -193,7 +196,26 @@ class JRLEditor(Editor):
             text: str = f"[{entryItem.data().entry_id}] {entryItem.data().text}"
         else:
             text: str = f"[{entryItem.data().entry_id}] {self._installation.string(entryItem.data().text)}"
-        entryItem.setForeground(QColor(0x880000 if entryItem.data().end else 0x000000))
+        
+        # Use QPalette for text colors instead of hardcoded values
+        palette: QPalette = self.palette()
+        if entryItem.data().end:
+            # For end entries, use a distinct but palette-based color
+            # Use Link color or adjust WindowText to indicate it's an end entry
+            end_color = palette.color(QPalette.ColorRole.Link)
+            if not end_color.isValid() or end_color == QColor(0, 0, 0):
+                # Fallback: use a slightly adjusted WindowText color
+                base_color = palette.color(QPalette.ColorRole.WindowText)
+                end_color = QColor(
+                    min(255, base_color.red() + 50),
+                    max(0, base_color.green() - 30),
+                    max(0, base_color.blue() - 30)
+                )
+            entryItem.setForeground(end_color)
+        else:
+            # Normal entries use standard WindowText color from palette
+            entryItem.setForeground(palette.color(QPalette.ColorRole.WindowText))
+        
         entryItem.setText(text)
 
     def refresh_quest_item(self, questItem: QStandardItem):
@@ -315,7 +337,7 @@ class JRLEditor(Editor):
             data.plot_index = self.ui.categoryPlotSelect.currentIndex()
             data.planet_id = self.ui.categoryPlanetSelect.currentIndex() - 1
             data.priority = JRLQuestPriority(self.ui.categoryPrioritySelect.currentIndex())
-            # data.comment = self.ui.categoryCommentEdit.toPlainText()
+            data.comment = self.ui.categoryCommentEdit.toPlainText()
         elif isinstance(data, JRLEntry):
             if self.ui.entryTextEdit.locstring is not None:
                 data.text = self.ui.entryTextEdit.locstring
@@ -344,7 +366,7 @@ class JRLEditor(Editor):
         QTreeView.selectionChanged(self.ui.journalTree, selection, deselected)
 
         # Block signals to prevent recursive updates
-        widgets_to_block = [
+        widgets_to_block: list[QWidget] = [
             self.ui.categoryCommentEdit,
             self.ui.entryTextEdit,
             self.ui.categoryNameEdit,
@@ -371,14 +393,16 @@ class JRLEditor(Editor):
                     self.ui.questPages.setCurrentIndex(0)
                     if self._installation is not None:
                         self.ui.categoryNameEdit.set_locstring(data.name)
+                    self.ui.categoryTag.setText(data.tag)
                     self.ui.categoryPlotSelect.setCurrentIndex(data.plot_index)
                     self.ui.categoryPlanetSelect.setCurrentIndex(data.planet_id + 1)
                     self.ui.categoryPrioritySelect.setCurrentIndex(data.priority.value)
+                    self.ui.categoryCommentEdit.setPlainText(data.comment)
 
                 elif isinstance(data, JRLEntry):
                     self.ui.questPages.setCurrentIndex(1)
-                    if self._installation is not None:
-                        self._load_locstring(self.ui.entryTextEdit, data.text)
+                    # Load entry text - works with or without installation
+                    self._load_locstring(self.ui.entryTextEdit, data.text)
                     self.ui.entryEndCheck.setChecked(data.end)
                     self.ui.entryXpSpin.setValue(data.xp_percentage)
                     self.ui.entryIdSpin.setValue(data.entry_id)
