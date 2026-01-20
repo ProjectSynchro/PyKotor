@@ -1131,16 +1131,25 @@ class LYTEditorWidget(QWidget):
                 RobustLogger().error(f"Error saving LYT: {e!s}")
 
     def show_search_results(self, results: list[tuple[str, str]]):
+        from toolset.uic.qtpy.dialogs.search_results_dialog import Ui_Dialog
+        
         result_dialog = QDialog(self)
+        ui = Ui_Dialog()
+        ui.setupUi(result_dialog)
+        
         result_dialog.setWindowTitle(tr("Search Results"))
-        layout = QVBoxLayout(result_dialog)
+        
+        # Add result labels to the scroll area layout
         for result_type, result_name in results:
             result_label = QLabel(f"{result_type}: {result_name}")
             result_label.mousePressEvent = functools.partial(self.goto_search_result, result_type, result_name)
             result_label.setCursor(Qt.CursorShape.PointingHandCursor)
             result_label.setToolTip("Click to go to this item")
-            layout.addWidget(result_label)
-        layout.addWidget(QPushButton(tr("Close"), clicked=result_dialog.accept))  # pyright: ignore[reportCallIssue]
+            ui.resultsLayout.addWidget(result_label)
+        
+        # Connect close button
+        ui.closeButton.clicked.connect(result_dialog.accept)
+        
         result_dialog.setModal(False)
         result_dialog.exec()
 
@@ -1279,16 +1288,25 @@ class LYTEditorWidget(QWidget):
             self.show_info_message("No results found")
 
     def show_quick_search_results(self, results: list[tuple[str, str]]):
+        from toolset.uic.qtpy.dialogs.search_results_dialog import Ui_Dialog
+        
         result_dialog = QDialog(self)
+        ui = Ui_Dialog()
+        ui.setupUi(result_dialog)
+        
         result_dialog.setWindowTitle(tr("Quick Search Results"))
-        layout = QVBoxLayout(result_dialog)
+        
+        # Add result labels to the scroll area layout
         for result_type, result_name in results:
             result_label = QLabel(f"{result_type}: {result_name}")
             result_label.mousePressEvent = functools.partial(self.goto_search_result, result_type, result_name)
             result_label.setCursor(Qt.CursorShape.PointingHandCursor)
             result_label.setToolTip("Click to go to this item")
-            layout.addWidget(result_label)
-        layout.addWidget(QPushButton(tr("Close"), clicked=result_dialog.accept))
+            ui.resultsLayout.addWidget(result_label)
+        
+        # Connect close button
+        ui.closeButton.clicked.connect(result_dialog.accept)
+        
         result_dialog.setModal(False)
         result_dialog.exec()
 
