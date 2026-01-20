@@ -251,6 +251,8 @@ class UTCEditor(Editor):
         # Load required 2da files if they have not been loaded already
         required: list[str] = [
             HTInstallation.TwoDA_APPEARANCES,
+            HTInstallation.TwoDA_BASEITEMS,
+            "heads",
             HTInstallation.TwoDA_SOUNDSETS,
             HTInstallation.TwoDA_PORTRAITS,
             HTInstallation.TwoDA_SUBRACES,
@@ -527,6 +529,28 @@ class UTCEditor(Editor):
         # Setup reference search for TemplateResRef field
         self._installation.setup_file_context_menu(self.ui.resrefEdit, [], enable_reference_search=True, reference_search_type="template_resref")
         self.ui.resrefEdit.setToolTip(tr("Right-click to find references to this template resref in the installation."))
+
+        # Set maxLength for FilterComboBox script fields (ResRefs are max 16 characters)
+        script_combo_boxes = [
+            self.ui.onBlockedEdit,
+            self.ui.onAttackedEdit,
+            self.ui.onNoticeEdit,
+            self.ui.onConversationEdit,
+            self.ui.onDamagedEdit,
+            self.ui.onDeathEdit,
+            self.ui.onEndRoundEdit,
+            self.ui.onEndConversationEdit,
+            self.ui.onDisturbedEdit,
+            self.ui.onHeartbeatSelect,
+            self.ui.onSpawnEdit,
+            self.ui.onSpellCastEdit,
+            self.ui.onUserDefinedSelect,
+            self.ui.conversationEdit,
+        ]
+        for combo_box in script_combo_boxes:
+            line_edit = combo_box.lineEdit()
+            if line_edit is not None:
+                line_edit.setMaxLength(16)
 
         self.ui.onBlockedEdit.populate_combo_box(self.relevant_script_resnames)
         self.ui.onAttackedEdit.populate_combo_box(self.relevant_script_resnames)
@@ -999,7 +1023,16 @@ class UTCEditor(Editor):
                     info_lines.append(f"{indent}  └─ Searched: {search_str}")
 
             # Get body model and texture
-            body_model, body_texture = creature.get_body_model(utc, self._installation)
+            appearance_2da: TwoDA | None = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_APPEARANCES)
+            baseitems_2da: TwoDA | None = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_BASEITEMS)
+            heads_2da: TwoDA | None = self._installation.ht_get_cache_2da("heads")
+
+            body_model, body_texture = creature.get_body_model(
+                utc,
+                self._installation,
+                appearance=appearance_2da,
+                baseitems=baseitems_2da,
+            )
             if body_model:
                 info_lines.append(f"Body Model: '{body_model}'")
                 body_mdl: ResourceResult | None = self._installation.resource(body_model, ResourceType.MDL)
@@ -1020,7 +1053,12 @@ class UTCEditor(Editor):
                     _append_renderer_texture_details(body_texture, indent="    ")
 
             # Get head model and texture
-            head_model, head_texture = creature.get_head_model(utc, self._installation)
+            head_model, head_texture = creature.get_head_model(
+                utc,
+                self._installation,
+                appearance=appearance_2da,
+                heads=heads_2da,
+            )
             if head_model:
                 info_lines.append(f"Head Model: '{head_model}'")
                 head_mdl: ResourceResult | None = self._installation.resource(head_model, ResourceType.MDL)
@@ -1036,7 +1074,12 @@ class UTCEditor(Editor):
                     _append_renderer_texture_details(head_texture, indent="    ")
 
             # Get weapon models
-            right_weapon, left_weapon = creature.get_weapon_models(utc, self._installation)
+            right_weapon, left_weapon = creature.get_weapon_models(
+                utc,
+                self._installation,
+                appearance=appearance_2da,
+                baseitems=baseitems_2da,
+            )
             if right_weapon:
                 info_lines.append(f"Right Weapon: '{right_weapon}'")
                 weapon_mdl = self._installation.resource(right_weapon, ResourceType.MDL)
