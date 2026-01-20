@@ -47,7 +47,7 @@ def _diff_archives_or_directories(
                 if (path / "chitin.key").exists():
                     installation = Installation(path)
                     # Load all resources from the installation
-                    for resource in installation:
+                    for resource in installation.iter_all_resources():
                         try:
                             data = resource.data()
                             if data:
@@ -75,14 +75,14 @@ def _diff_archives_or_directories(
                         except Exception:
                             continue
                 except Exception:
-                    # Fallback: treat as single file
+                    Logger().exception("Error loading resources from capsule")
                     raw_resource_data[path.name.lower()] = path.read_bytes()
 
             return raw_resource_data
 
         # Load resources from both paths
-        resources1 = load_resource_container(path1)
-        resources2 = load_resource_container(path2)
+        resources1: dict[str, bytes] = load_resource_container(path1)
+        resources2: dict[str, bytes] = load_resource_container(path2)
 
         # Find common and unique resources
         common_keys = set(resources1.keys()) & set(resources2.keys())
@@ -151,7 +151,7 @@ def _diff_archives_or_directories(
             diff_logger.info(f"'{args.path1}' DOES NOT MATCH '{args.path2}'")
             return 1
 
-    except Exception as e:
+    except Exception:
         Logger().exception("Error comparing archives/directories")
         return 1
 
@@ -247,17 +247,6 @@ def cmd_diff(
     Returns:
     -------
         Exit code (0 for success, non-zero for error)
-
-    References:
-    ----------
-        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
-            - GFF structures are loaded via CResGFF class throughout the engine
-            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
-            - 2DA structures loaded via C2DA class (see 2da/io_2da.py for references)
-            - TLK structures loaded via CTlkTable class (see tlk/io_tlk.py for references)
-        Libraries/PyKotor/src/pykotor/tslpatcher/diff/engine.py
-        Libraries/PyKotor/src/pykotor/tslpatcher/diff/application.py
-
     """
     # Determine verbosity from args
     verbose = getattr(args, "verbose", False) or getattr(args, "debug", False)
@@ -373,8 +362,8 @@ def cmd_diff(
         from pykotor.cli.diff_tool.app import DiffConfig, handle_diff, run_application  # noqa: PLC0415
 
         # Convert Path objects to the format expected by TSLPatcher
-        paths_for_tslpatcher = []
-        for path in [path1, path2]:
+        paths_for_tslpatcher: list[Path | Installation] = []
+        for path in (path1, path2):
             if _detect_path_type(path) == "installation":
                 try:
                     paths_for_tslpatcher.append(Installation(path))
@@ -504,22 +493,11 @@ def cmd_stats(
     args: Namespace,
     logger: Logger,
 ) -> int:
-    """Show statistics about a file.
-
-    References:
-    ----------
-        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
-            - GFF structures are loaded via CResGFF class throughout the engine
-            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
-            - 2DA structures loaded via C2DA class (see 2da/io_2da.py for references)
-            - TLK structures loaded via CTlkTable class (see tlk/io_tlk.py for references)
-
-
-    """
+    """Show statistics about a file."""
     file_path = pathlib.Path(args.file)
 
     try:
-        stats = get_file_stats(file_path)
+        stats: dict[str, int | str] = get_file_stats(file_path)
 
         logger.info(f"File: {stats.get('path', file_path)}")  # noqa: G004
         logger.info(f"Size: {stats.get('size', 0)} bytes")  # noqa: G004
@@ -538,7 +516,7 @@ def cmd_stats(
 
         return 0
     except Exception as e:
-        logger.exception(f"Failed to get stats for {file_path}: {e.__class__.__name__}: {e}s", exc_info=True)  # noqa: G004
+        logger.exception(f"Failed to get stats for {file_path}: {e.__class__.__name__}: {e}")  # noqa: G004
         return 1
 
 

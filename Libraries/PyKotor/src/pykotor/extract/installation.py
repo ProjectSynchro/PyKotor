@@ -925,26 +925,57 @@ class Installation:
     # region Get FileResources
 
     def __iter__(self) -> Generator[FileResource, Any, None]:
-        # Properties will handle lazy loading
+        """Iterate resources in the installation.
+
+        Important:
+        - This iterator is intentionally *lazy* and must not accidentally trigger the most expensive
+          scans (stream audio and texturepacks) unless the caller explicitly requested them.
+        - Callers that require a complete enumeration including stream audio and texturepacks should
+          use `iter_all_resources()` instead.
+        """
+        # Properties will handle lazy loading (except for very expensive sources; see below).
         yield from self._chitin
-        yield from self._streammusic
-        yield from self._streamsounds
+
+        # Stream audio is extremely expensive to scan on real installations and is rarely needed for
+        # generic iteration (e.g., reference finding across GFF/NCS). Keep it truly lazy.
+        if self._streammusic_loaded:
+            yield from self._streammusic_data
+        if self._streamsounds_loaded:
+            yield from self._streamsounds_data
         # Only yield from streamwaves if they're already loaded (lazy loading)
         if self._streamwaves_loaded:
             yield from self._streamwaves_data
+
         for resources in self._override.values():
             yield from resources
         for resources in self._modules.values():
             yield from resources
         for resources in self._lips.values():
             yield from resources
-        for resources in self._texturepacks.values():
-            yield from resources
+
+        # Texturepacks can be very large; keep them truly lazy as well.
+        if self._texturepacks_loaded:
+            for resources in self._texturepacks_data.values():
+                yield from resources
+
         tlk_path = self._path / "dialog.tlk"
         yield FileResource("dialog", ResourceType.TLK, tlk_path.stat().st_size, 0, tlk_path)
         female_tlk_path = self._path / "dialogf.tlk"
         if female_tlk_path.is_file():
             yield FileResource("dialogf", ResourceType.TLK, female_tlk_path.stat().st_size, 0, female_tlk_path)
+
+    def iter_all_resources(self) -> Generator[FileResource, Any, None]:
+        """Iterate *all* resources, forcing expensive sources to load first.
+
+        This preserves the historical "enumerate absolutely everything" behavior without making
+        `__iter__` unexpectedly trigger expensive scans in the common case.
+        """
+        # Force-load expensive sources explicitly (idempotent).
+        _ = self._streammusic
+        _ = self._streamsounds
+        _ = self._streamwaves
+        _ = self._texturepacks
+        yield from self
 
     def chitin_resources(self) -> list[FileResource]:
         """Returns a shallow copy of the list of FileResources stored in the Chitin linked to the Installation.
