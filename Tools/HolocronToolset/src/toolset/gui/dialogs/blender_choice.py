@@ -424,26 +424,22 @@ class BlenderConnectionWidget(QFrame):
 
     def _setup_ui(self):
         """Setup the widget UI."""
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(4, 2, 4, 2)
-        layout.setSpacing(4)
+        from toolset.uic.qtpy.widgets.blender_connection_widget import Ui_Form
 
-        # Status indicator
+        self.ui = Ui_Form()
+        self.ui.setupUi(self)
+
+        # Connect signals
+        self.ui.connectButton.clicked.connect(self._on_connect_clicked)
+
+        # Store references for easier access
+        self._indicator = self.ui.indicatorLabel
+        self._status_label = self.ui.statusLabel
+        self._connect_button = self.ui.connectButton
+
+        # Set initial indicator color
         colors = _get_semantic_colors()
-        self._indicator: QLabel = QLabel("●")
         self._indicator.setStyleSheet(f"color: {colors['error']};")  # Error color by default
-        layout.addWidget(self._indicator)
-
-        # Status text
-        self._status_label: QLabel = QLabel("Disconnected")
-        self._status_label.setStyleSheet("font-size: 11px;")
-        layout.addWidget(self._status_label)
-
-        # Connect button
-        self._connect_button: QPushButton = QPushButton("Connect")
-        self._connect_button.setMaximumHeight(22)
-        self._connect_button.clicked.connect(self._on_connect_clicked)
-        layout.addWidget(self._connect_button)
 
     def set_connected(self, connected: bool):
         """Update connection status display."""
@@ -494,65 +490,24 @@ class BlenderSettingsWidget(QFrame):
 
     def _setup_ui(self):
         """Setup the widget UI."""
-        from qtpy.QtWidgets import QLineEdit, QSpinBox
+        from toolset.uic.qtpy.widgets.settings.blender_settings import Ui_Form
 
-        layout = QVBoxLayout(self)
-        layout.setSpacing(8)
+        self.ui = Ui_Form()
+        self.ui.setupUi(self)
 
-        # Title
-        title = QLabel("<b>Blender Integration</b>")
-        layout.addWidget(title)
+        # Connect signals
+        self.ui.pathEdit.textChanged.connect(self._on_path_changed)
+        self.ui.browseButton.clicked.connect(self._browse_blender)
+        self.ui.detectButton.clicked.connect(self._detect_blender)
+        self.ui.installKotorblenderButton.clicked.connect(self._install_kotorblender)
 
-        # Blender path
-        path_layout = QHBoxLayout()
-        path_layout.addWidget(QLabel("Blender Path:"))
-
-        self._path_edit: QLineEdit = QLineEdit()
-        self._path_edit.setPlaceholderText("Auto-detect")
-        self._path_edit.textChanged.connect(self._on_path_changed)
-        path_layout.addWidget(self._path_edit)
-
-        browse_btn = QPushButton("Browse...")
-        browse_btn.clicked.connect(self._browse_blender)
-        path_layout.addWidget(browse_btn)
-
-        detect_btn = QPushButton("Detect")
-        detect_btn.clicked.connect(self._detect_blender)
-        path_layout.addWidget(detect_btn)
-
-        layout.addLayout(path_layout)
-
-        # Status display
-        self._status_label: QLabel = QLabel()
-        self._status_label.setWordWrap(True)
-        layout.addWidget(self._status_label)
-
-        # kotorblender install button (shown only when Blender found but kotorblender missing)
-        self._install_kotorblender_btn: QPushButton = QPushButton("Install kotorblender")
-        self._install_kotorblender_btn.clicked.connect(self._install_kotorblender)
-        self._install_kotorblender_btn.setVisible(False)
-        layout.addWidget(self._install_kotorblender_btn)
-
-        # Options
-        self._prefer_blender_cb: QCheckBox = QCheckBox("Prefer Blender when available")
-        self._prefer_blender_cb.setToolTip("Automatically use Blender for Module Designer, GIT Editor, etc.")
-        layout.addWidget(self._prefer_blender_cb)
-
-        self._remember_cb: QCheckBox = QCheckBox("Remember editor choice")
-        self._remember_cb.setToolTip("Don't ask which editor to use each time")
-        layout.addWidget(self._remember_cb)
-
-        # Port setting
-        port_layout = QHBoxLayout()
-        port_layout.addWidget(QLabel("IPC Port:"))
-
-        self._port_spin: QSpinBox = QSpinBox()
-        self._port_spin.setRange(1024, 65535)
-        self._port_spin.setValue(7531)
-        port_layout.addWidget(self._port_spin)
-        port_layout.addStretch()
-
-        layout.addLayout(port_layout)
+        # Store references for easier access
+        self._path_edit = self.ui.pathEdit
+        self._status_label = self.ui.statusLabel
+        self._install_kotorblender_btn = self.ui.installKotorblenderButton
+        self._prefer_blender_cb = self.ui.preferBlenderCheckbox
+        self._remember_cb = self.ui.rememberCheckbox
+        self._port_spin = self.ui.portSpinBox
 
         # Update status
         self._update_status()

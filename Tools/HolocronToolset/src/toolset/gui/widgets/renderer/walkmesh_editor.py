@@ -506,29 +506,21 @@ class RoomPropertiesDialog(QDialog):
     ):
         super().__init__(parent)
         from toolset.gui.common.localization import translate as tr
+        from toolset.uic.qtpy.dialogs.walkmesh_room_properties import Ui_Dialog
+
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        
         self.setWindowTitle(tr("Room Properties"))
         self.room: LYTRoom | None = room
 
-        layout = QFormLayout()
-
-        self.model_edit: QLineEdit = QLineEdit(self)
-        layout.addRow("Model:", self.model_edit)
-
-        self.pos_x: QDoubleSpinBox = QDoubleSpinBox(self)
-        self.pos_y: QDoubleSpinBox = QDoubleSpinBox(self)
-        self.pos_z: QDoubleSpinBox = QDoubleSpinBox(self)
-        pos_layout: QHBoxLayout = QHBoxLayout()
-        pos_layout.addWidget(self.pos_x)
-        pos_layout.addWidget(self.pos_y)
-        pos_layout.addWidget(self.pos_z)
-        layout.addRow("Position (X, Y, Z):", pos_layout)
-
-        self.size_x: QDoubleSpinBox = QDoubleSpinBox(self)
-        self.size_y: QDoubleSpinBox = QDoubleSpinBox(self)
-        size_layout: QHBoxLayout = QHBoxLayout()
-        size_layout.addWidget(self.size_x)
-        size_layout.addWidget(self.size_y)
-        layout.addRow("Size (Width, Height):", size_layout)
+        # Store references for easier access
+        self.model_edit = self.ui.modelEdit
+        self.pos_x = self.ui.posX
+        self.pos_y = self.ui.posY
+        self.pos_z = self.ui.posZ
+        self.size_x = self.ui.sizeX
+        self.size_y = self.ui.sizeY
 
         if room:
             self.model_edit.setText(room.model)
@@ -538,20 +530,9 @@ class RoomPropertiesDialog(QDialog):
             self.size_x.setValue(room.size.x)
             self.size_y.setValue(room.size.y)
 
-        buttons = QHBoxLayout()
-        ok_button: QPushButton = QPushButton("OK")
-        cancel_button: QPushButton = QPushButton("Cancel")
-        buttons.addWidget(ok_button)
-        buttons.addWidget(cancel_button)
-
-        ok_button.clicked.connect(self.accept)
-        cancel_button.clicked.connect(self.reject)
-
-        main_layout: QVBoxLayout = QVBoxLayout()
-        main_layout.addLayout(layout)
-        main_layout.addLayout(buttons)
-
-        self.setLayout(main_layout)
+        # Connect buttons (connections are already set up in .ui file, but we can also do it here for clarity)
+        self.ui.okButton.clicked.connect(self.accept)
+        self.ui.cancelButton.clicked.connect(self.reject)
         
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
@@ -572,20 +553,22 @@ class TrackPropertiesDialog(QDialog):
         track: LYTTrack | None = None,
     ):
         super().__init__(parent)
+        from toolset.uic.qtpy.dialogs.walkmesh_track_properties import Ui_Dialog
+
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        
         self.setWindowTitle("Track Properties")
         self.rooms: list[LYTRoom] = rooms or []
         self.track: LYTTrack | None = track
 
-        layout = QFormLayout()
+        # Store references for easier access
+        self.start_room_combo = self.ui.startRoomCombo
+        self.end_room_combo = self.ui.endRoomCombo
 
-        self.start_room_combo = QComboBox(self)
-        self.end_room_combo = QComboBox(self)
         for room in self.rooms:
             self.start_room_combo.addItem(room.model, room)
             self.end_room_combo.addItem(room.model, room)
-
-        layout.addRow("Start Room:", self.start_room_combo)
-        layout.addRow("End Room:", self.end_room_combo)
 
         if track:
             start_index: int = self.rooms.index(track.start_room)
@@ -593,20 +576,9 @@ class TrackPropertiesDialog(QDialog):
             self.start_room_combo.setCurrentIndex(start_index)
             self.end_room_combo.setCurrentIndex(end_index)
 
-        buttons = QHBoxLayout()
-        ok_button = QPushButton("OK")
-        cancel_button = QPushButton("Cancel")
-        buttons.addWidget(ok_button)
-        buttons.addWidget(cancel_button)
-
-        ok_button.clicked.connect(self.accept)
-        cancel_button.clicked.connect(self.reject)
-
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(layout)
-        main_layout.addLayout(buttons)
-
-        self.setLayout(main_layout)
+        # Connect buttons (connections are already set up in .ui file, but we can also do it here for clarity)
+        self.ui.okButton.clicked.connect(self.accept)
+        self.ui.cancelButton.clicked.connect(self.reject)
         
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
@@ -625,22 +597,19 @@ class ObstaclePropertiesDialog(QDialog):
         obstacle: LYTObstacle | None = None,
     ):
         super().__init__(parent)
+        from toolset.uic.qtpy.dialogs.walkmesh_obstacle_properties import Ui_Dialog
+
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        
         self.setWindowTitle("Obstacle Properties")
         self.obstacle: LYTObstacle | None = obstacle
 
-        layout = QFormLayout()
-
-        self.pos_x: QDoubleSpinBox = QDoubleSpinBox(self)
-        self.pos_y: QDoubleSpinBox = QDoubleSpinBox(self)
-        self.pos_z: QDoubleSpinBox = QDoubleSpinBox(self)
-        pos_layout: QHBoxLayout = QHBoxLayout()
-        pos_layout.addWidget(self.pos_x)
-        pos_layout.addWidget(self.pos_y)
-        pos_layout.addWidget(self.pos_z)
-        layout.addRow("Position (X, Y, Z):", pos_layout)
-
-        self.radius: QDoubleSpinBox = QDoubleSpinBox(self)
-        layout.addRow("Radius:", self.radius)
+        # Store references for easier access
+        self.pos_x = self.ui.posX
+        self.pos_y = self.ui.posY
+        self.pos_z = self.ui.posZ
+        self.radius = self.ui.radiusSpinBox
 
         if obstacle:
             self.pos_x.setValue(obstacle.position.x)
@@ -648,20 +617,9 @@ class ObstaclePropertiesDialog(QDialog):
             self.pos_z.setValue(obstacle.position.z)
             self.radius.setValue(obstacle.radius)
 
-        buttons = QHBoxLayout()
-        ok_button = QPushButton("OK")
-        cancel_button = QPushButton("Cancel")
-        buttons.addWidget(ok_button)
-        buttons.addWidget(cancel_button)
-
-        ok_button.clicked.connect(self.accept)
-        cancel_button.clicked.connect(self.reject)
-
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(layout)
-        main_layout.addLayout(buttons)
-
-        self.setLayout(main_layout)
+        # Connect buttons (connections are already set up in .ui file, but we can also do it here for clarity)
+        self.ui.okButton.clicked.connect(self.accept)
+        self.ui.cancelButton.clicked.connect(self.reject)
         
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
@@ -681,31 +639,24 @@ class DoorHookPropertiesDialog(QDialog):
         doorhook: LYTDoorHook | None = None,
     ):
         super().__init__(parent)
+        from toolset.uic.qtpy.dialogs.walkmesh_doorhook_properties import Ui_Dialog
+
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        
         self.setWindowTitle("Door Hook Properties")
         self.rooms: list[LYTRoom] = rooms or []
         self.doorhook: LYTDoorHook | None = doorhook
 
-        layout = QFormLayout()
+        # Store references for easier access
+        self.room_combo = self.ui.roomCombo
+        self.pos_x = self.ui.posX
+        self.pos_y = self.ui.posY
+        self.pos_z = self.ui.posZ
+        self.orientation = self.ui.orientationSpinBox
 
-        self.room_combo = QComboBox(self)
         for room in self.rooms:
             self.room_combo.addItem(room.model, room)
-
-        layout.addRow("Room:", self.room_combo)
-
-        self.pos_x: QDoubleSpinBox = QDoubleSpinBox(self)
-        self.pos_y: QDoubleSpinBox = QDoubleSpinBox(self)
-        self.pos_z: QDoubleSpinBox = QDoubleSpinBox(self)
-        pos_layout: QHBoxLayout = QHBoxLayout()
-        pos_layout.addWidget(self.pos_x)
-        pos_layout.addWidget(self.pos_y)
-        pos_layout.addWidget(self.pos_z)
-        layout.addRow("Position (X, Y, Z):", pos_layout)
-
-        self.orientation: QDoubleSpinBox = QDoubleSpinBox(self)
-        self.orientation.setMinimum(0)
-        self.orientation.setMaximum(359.99)
-        layout.addRow("Orientation (degrees):", self.orientation)
 
         if doorhook is not None:
             room_index: int = self.rooms.index(doorhook.room)
@@ -715,20 +666,9 @@ class DoorHookPropertiesDialog(QDialog):
             self.pos_z.setValue(doorhook.position.z)
             self.orientation.setValue(math.degrees(doorhook.orientation))
 
-        buttons = QHBoxLayout()
-        ok_button = QPushButton("OK")
-        cancel_button = QPushButton("Cancel")
-        buttons.addWidget(ok_button)
-        buttons.addWidget(cancel_button)
-
-        ok_button.clicked.connect(self.accept)
-        cancel_button.clicked.connect(self.reject)
-
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(layout)
-        main_layout.addLayout(buttons)
-
-        self.setLayout(main_layout)
+        # Connect buttons (connections are already set up in .ui file, but we can also do it here for clarity)
+        self.ui.okButton.clicked.connect(self.accept)
+        self.ui.cancelButton.clicked.connect(self.reject)
         
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
