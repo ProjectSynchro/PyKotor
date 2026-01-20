@@ -24,6 +24,7 @@ except ImportError:
     # this error will happen when running from src without the pip package installed.
     import os
     import sys
+
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa: PTH120, PTH100
     from utility.error_handling import format_exception_with_variables
 
@@ -161,7 +162,8 @@ class SafeEncodingLogger(logging.Logger):
                 return
             except Exception:
                 pass
-        logging.Logger._log(self, level, safe_msg, args, **kwargs)
+        with suppress(PermissionError):  # in use by another process (windows)
+            logging.Logger._log(self, level, safe_msg, args, **kwargs)
 
     def debug(self, msg: object, *args, **kwargs):
         if self.isEnabledFor(logging.DEBUG):
@@ -204,6 +206,7 @@ def _ensure_async_worker(logger: logging.Logger) -> bool:
         return False
 
     if _worker_task is None or _worker_task.done():
+
         async def _worker() -> None:
             while True:
                 level, msg, args, kwargs = await _queue.get()
@@ -234,7 +237,7 @@ class CustomExceptionFormatter(logging.Formatter):
         record: logging.LogRecord,
     ) -> str:
         result = super().format(record)
-        #if record.exc_info:
+        # if record.exc_info:
         #    result += f"{os.linesep}{self.formatException(record.exc_info)}"
         return result
 
@@ -242,6 +245,7 @@ class CustomExceptionFormatter(logging.Formatter):
 class ColoredConsoleHandler(logging.StreamHandler):
     try:
         import colorama  # type: ignore[import-untyped, reportMissingModuleSource]
+
         colorama.init()
         USING_COLORAMA = True
     except ImportError:
@@ -326,10 +330,7 @@ def _dir_requires_admin(
 
 
 def _delete_any_file_or_folder(  # noqa: C901
-    path: os.PathLike | str,
-    *,
-    ignore_errors: bool = True,
-    missing_ok: bool = True
+    path: os.PathLike | str, *, ignore_errors: bool = True, missing_ok: bool = True
 ):
     path_obj = Path(path)
     isdir_func = _safe_isdir if ignore_errors else Path.is_dir
@@ -338,6 +339,7 @@ def _delete_any_file_or_folder(  # noqa: C901
         if missing_ok:
             return
         import errno
+
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), str(path_obj))
 
     def _remove_any(x: Path):
@@ -366,6 +368,7 @@ def _delete_any_file_or_folder(  # noqa: C901
 
 def get_log_directory(subdir: os.PathLike | str | None = None) -> Path:
     """Determine the best directory for logs based on availability and permissions."""
+
     def check(path: Path) -> Path:
         if not path.exists() or not path.is_dir():
             path.unlink(missing_ok=True)
@@ -458,6 +461,7 @@ class MetaLogger(type):
         object.__getattribute__(instance, "__init__")()
         type.__setattr__(cls, "_singleton_instance", instance)
         return instance
+
     def __getattribute__(cls: type[RobustLogger], attr_name: str):  # type: ignore[misc]
         if attr_name.startswith("__") and attr_name.endswith("__"):
             return super().__getattribute__(attr_name)  # type: ignore[misc]
@@ -475,8 +479,11 @@ class MetaLogger(type):
             instance.info(*args, **kwargs)
         return instance
 
+
 def _safe_print(*args, file=sys.__stderr__, **kwargs):
     print(*args, **kwargs, file=file)
+
+
 class RobustLogger(logging.Logger, metaclass=MetaLogger):  # noqa: N801
     """Setup a logger with some standard features.
 
@@ -490,6 +497,7 @@ class RobustLogger(logging.Logger, metaclass=MetaLogger):  # noqa: N801
     -------
         logging.Logger: The root logger with the specified handlers and formatters.
     """
+
     _singleton_instance: Self | None = None
     _wrapped_logger: logging.Logger = None  # type: ignore[assignment]
 
@@ -504,21 +512,19 @@ class RobustLogger(logging.Logger, metaclass=MetaLogger):  # noqa: N801
                 return attr_value
             if object.__getattribute__(self, "_robust_root_lock"):  # noqa: FBT003
                 return attr_value
-            if (
-                attr_value is not our_type
-                and not isinstance(attr_value, our_type)
-                and callable(attr_value)
-            ):
+            if attr_value is not our_type and not isinstance(attr_value, our_type) and callable(attr_value):
+
                 def wrapped(*args, **kwargs):
                     try:
                         object.__setattr__(self, "_robust_root_lock", True)
                     except Exception as e:  # noqa: BLE001
                         _safe_print(f"Exception when accessing attribute '{attr_name}': {e} ({e.__class__.__name__})")
-                        #print(traceback.format_exc(), file=sys.__stderr__)  # too verbose for normal use, uncomment for debugging.
+                        # print(traceback.format_exc(), file=sys.__stderr__)  # too verbose for normal use, uncomment for debugging.
                     else:
                         return attr_value(*args, **kwargs)
                     finally:
                         object.__setattr__(self, "_robust_root_lock", False)
+
                 return wrapped
         except AttributeError:
             raise
@@ -540,11 +546,13 @@ class RobustLogger(logging.Logger, metaclass=MetaLogger):  # noqa: N801
 
     def __new__(cls) -> Self:
         """Responsible for handling the singleton instance."""
+
         def get_instance():
             try:
                 return type.__getattribute__(cls, "_singleton_instance")
             except AttributeError:
                 return None
+
         if get_instance() is None:  # pyright: ignore[reportCallIssue]
             type.__setattr__(cls, "_singleton_instance", super().__new__(cls))
         return get_instance()  # pyright: ignore[reportReturnType]
@@ -587,7 +595,6 @@ class RobustLogger(logging.Logger, metaclass=MetaLogger):  # noqa: N801
             object.__setattr__(self, "_orig_log_func", logger._log)  # noqa: SLF001
             logger._log = object.__getattribute__(self, "_log")  # type: ignore[method-assign]  # noqa: SLF001
 
-
         return logger
 
     @staticmethod
@@ -600,6 +607,7 @@ class RobustLogger(logging.Logger, metaclass=MetaLogger):  # noqa: N801
         logger: logging.Logger = logging.getLogger(name_or_logger) if isinstance(name_or_logger, (str, None.__class__)) else name_or_logger
         if not logger.handlers:
             from utility.misc import is_debug_mode
+
             use_level = logging.DEBUG if is_debug_mode() else logging.INFO
             logger.setLevel(use_level)
 
@@ -635,27 +643,27 @@ class RobustLogger(logging.Logger, metaclass=MetaLogger):  # noqa: N801
 
             # Handler for everything (DEBUG and above)
             if use_level == logging.DEBUG:
-                everything_handler = RotatingFileHandler(str(log_dir / everything_log_file), maxBytes=20*1024*1024, backupCount=5, encoding="utf8")
+                everything_handler = RotatingFileHandler(str(log_dir / everything_log_file), maxBytes=20 * 1024 * 1024, backupCount=5, encoding="utf8")
                 everything_handler.setLevel(logging.DEBUG)
                 everything_handler.setFormatter(default_formatter)
                 logger.addHandler(everything_handler)
 
             # Handler for INFO and WARNING
-            info_warning_handler = RotatingFileHandler(str(log_dir / info_warning_log_file), maxBytes=20*1024*1024, backupCount=5, encoding="utf8")
+            info_warning_handler = RotatingFileHandler(str(log_dir / info_warning_log_file), maxBytes=20 * 1024 * 1024, backupCount=5, encoding="utf8")
             info_warning_handler.setLevel(logging.INFO)
             info_warning_handler.setFormatter(default_formatter)
             info_warning_handler.addFilter(LogLevelFilter(logging.ERROR, reject=True))
             logger.addHandler(info_warning_handler)
 
             # Handler for ERROR and CRITICAL
-            error_critical_handler = RotatingFileHandler(str(log_dir / error_critical_log_file), maxBytes=20*1024*1024, backupCount=5, encoding="utf8")
+            error_critical_handler = RotatingFileHandler(str(log_dir / error_critical_log_file), maxBytes=20 * 1024 * 1024, backupCount=5, encoding="utf8")
             error_critical_handler.setLevel(logging.ERROR)
             error_critical_handler.addFilter(LogLevelFilter(logging.ERROR))
             error_critical_handler.setFormatter(default_formatter)
             logger.addHandler(error_critical_handler)
 
             # Handler for EXCEPTIONS (using CustomExceptionFormatter)
-            exception_handler = RotatingFileHandler(str(log_dir / exception_log_file), maxBytes=20*1024*1024, backupCount=5, encoding="utf8")
+            exception_handler = RotatingFileHandler(str(log_dir / exception_log_file), maxBytes=20 * 1024 * 1024, backupCount=5, encoding="utf8")
             exception_handler.setLevel(logging.ERROR)
             exception_handler.addFilter(LogLevelFilter(logging.ERROR))
             exception_handler.setFormatter(exception_formatter)
@@ -665,8 +673,8 @@ class RobustLogger(logging.Logger, metaclass=MetaLogger):  # noqa: N801
     @staticmethod
     def __call__(*args, **kwargs):
         # optional
-        #_actual_logger: logging.Logger | None = object.__getattribute__(self, "_wrapped_logger")
-        #if _actual_logger is None:
+        # _actual_logger: logging.Logger | None = object.__getattribute__(self, "_wrapped_logger")
+        # if _actual_logger is None:
         #    object.__getattribute__(self, "__class__")()
         # return RobustLogger()
         return _safe_print(*args, **kwargs)
@@ -678,6 +686,7 @@ get_root_logger = RobustLogger  # deprecated, provided for backwards compatibili
 # Example usage
 if __name__ == "__main__":
     import sys
+
     sys.setrecursionlimit(50)
     logger = RobustLogger()
     logger.debug("This is a debug message")
@@ -694,4 +703,4 @@ if __name__ == "__main__":
         raise RuntimeError("Test caught exception")  # noqa: TRY301
     except RuntimeError:
         RobustLogger().exception("Message for a caught exception")
-    #raise RuntimeError("Test uncaught exception")  # TODO: sys.excepthook support maybe?
+    # raise RuntimeError("Test uncaught exception")  # TODO: sys.excepthook support maybe?

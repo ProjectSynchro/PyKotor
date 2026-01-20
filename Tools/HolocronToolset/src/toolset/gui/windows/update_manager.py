@@ -10,7 +10,7 @@ from multiprocessing import Process, Queue
 from typing import TYPE_CHECKING, Any
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QApplication, QMessageBox
 
 from toolset.config import CURRENT_VERSION, get_remote_toolset_update_info, is_remote_version_newer
@@ -161,19 +161,20 @@ class UpdateManager:
         self._futures_complete[future_type] = True
         # Check if all expected futures are complete
         if self._futures_complete["master"] and (not self.settings.useBetaChannel or self._futures_complete["edge"]):
-            self._shutdown_executor()
+            # Schedule shutdown on main thread to avoid deadlock when called from executor callback
+            QTimer.singleShot(0, self._shutdown_executor)
     
     def _shutdown_executor(self):
-        """Safely shutdown the executor."""
+        """Safely shutdown the executor. Must be called from the main thread."""
         if self._executor is not None:
+            executor = self._executor
+            self._executor = None  # Clear reference first to prevent re-entry
             try:
                 RobustLogger().debug("TRACE: Shutting down ProcessPoolExecutor")
-                self._executor.shutdown(wait=True, cancel_futures=False)
+                executor.shutdown(wait=True, cancel_futures=False)
                 RobustLogger().debug("TRACE: ProcessPoolExecutor shut down")
-            except Exception as e:  # noqa: BLE001
-                RobustLogger().exception(f"Error shutting down executor: {e}")
-            finally:
-                self._executor = None
+            except Exception:  # noqa: BLE001
+                RobustLogger().exception("Error shutting down executor")
 
     def on_master_future_fetched(
         self,

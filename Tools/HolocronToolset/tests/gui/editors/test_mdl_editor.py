@@ -387,7 +387,7 @@ def test_mdleditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
 
     # Trigger help dialog with the correct file for MDLEditor
     editor._show_help_dialog("MDL-MDX-File-Format.md")
-    qtbot.wait(200)  # Wait for dialog to be created
+    QApplication.processEvents()  # Wait for dialog to be created
 
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]

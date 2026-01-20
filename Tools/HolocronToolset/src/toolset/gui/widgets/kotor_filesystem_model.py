@@ -61,7 +61,7 @@ if toolset_path.exists():
 from pathlib import Path  # noqa: E402
 
 from qtpy.QtCore import QAbstractItemModel, QDir, QModelIndex, QObject, Qt  # noqa: E402, F401
-from qtpy.QtGui import QColor, QDrag, QIcon, QImage, QPixmap  # noqa: E402
+from qtpy.QtGui import QColor, QDrag, QIcon, QImage, QPalette, QPixmap  # noqa: E402
 from qtpy.QtWidgets import (  # noqa: E402
     QFileSystemModel,  # pyright: ignore[reportPrivateImportUsage]
     QHBoxLayout,
@@ -758,7 +758,11 @@ class ResourceFileSystemModel(QAbstractItemModel):
                     display_data = self.get_detailed_data(index)
                 else:
                     display_data = self.get_default_data(index)
-                return f'<span style="color:{QColor(0, 0, 0).name()}; font-size:{self.get_tree_view().get_text_size()}pt;">{display_data}</span>'
+                # Use palette color for text instead of hardcoded black
+                tree_view = self.get_tree_view()
+                palette = tree_view.palette()
+                text_color = palette.color(QPalette.ColorRole.WindowText)
+                return f'<span style="color:{text_color.name()}; font-size:{tree_view.get_text_size()}pt;">{display_data}</span>'
             if role == Qt.ItemDataRole.DecorationRole and index.column() == 0:
                 return item.iconData()
         if role == Qt.ItemDataRole.DisplayRole:

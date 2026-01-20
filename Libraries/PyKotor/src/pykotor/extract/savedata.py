@@ -348,6 +348,12 @@ class SaveInfo:
                                 # Example: "Meetra", "The Exile"
                                 # K2 Engine: Displayed in save menu for quick identification
                                 # K1: Field doesn't exist (will be ignored)
+        
+        # All other fields preserved verbatim for full fidelity editing
+        # Stored as mapping of label -> (field_type, deep-copied value)
+        # Allows Save Editor to surface and modify any additional data
+        self.additional_fields: dict[str, tuple[GFFFieldType, Any]] = {}
+        self._existing_fields: set[str] = set()
 
     def load(self):
         """Load SAVENFO.res data from the save folder.
@@ -371,39 +377,53 @@ class SaveInfo:
         3. Use acquire() for safe field access (returns default if missing)
         4. Handle optional fields (TIMESTAMP, PCNAME)
         """
-        from pykotor.resource.formats.gff import read_gff
+        from copy import deepcopy
+        from pykotor.resource.formats.gff import read_gff, GFFFieldType
         
         gff = read_gff(self.save_info_path)
         root = gff.root
+        processed_fields: set[str] = set()
+        
+        def _acquire(label: str, default: Any) -> Any:
+            if root.exists(label):
+                processed_fields.add(label)
+            return root.acquire(label, default)
         
         # Core information
-        self.area_name = root.acquire("AREANAME", "")
-        self.last_module = root.acquire("LASTMODULE", "")
-        self.savegame_name = root.acquire("SAVEGAMENAME", "")
-        self.time_played = root.acquire("TIMEPLAYED", 0)
-        self.timestamp = root.acquire("TIMESTAMP", None)
+        self.area_name = _acquire("AREANAME", "")
+        self.last_module = _acquire("LASTMODULE", "")
+        self.savegame_name = _acquire("SAVEGAMENAME", "")
+        self.time_played = _acquire("TIMEPLAYED", 0)
+        self.timestamp = _acquire("TIMESTAMP", None)
         
         # Cheats and hints
-        self.cheat_used = bool(root.acquire("CHEATUSED", 0))
-        self.gameplay_hint = root.acquire("GAMEPLAYHINT", 0)
-        self.story_hint = root.acquire("STORYHINT", 0)
+        self.cheat_used = bool(_acquire("CHEATUSED", 0))
+        self.gameplay_hint = _acquire("GAMEPLAYHINT", 0)
+        self.story_hint = _acquire("STORYHINT", 0)
         
         # Portraits
-        self.portrait0 = root.acquire("PORTRAIT0", ResRef.from_blank())
-        self.portrait1 = root.acquire("PORTRAIT1", ResRef.from_blank())
-        self.portrait2 = root.acquire("PORTRAIT2", ResRef.from_blank())
+        self.portrait0 = _acquire("PORTRAIT0", ResRef.from_blank())
+        self.portrait1 = _acquire("PORTRAIT1", ResRef.from_blank())
+        self.portrait2 = _acquire("PORTRAIT2", ResRef.from_blank())
         
         # Xbox Live
-        self.live1 = root.acquire("LIVE1", "")
-        self.live2 = root.acquire("LIVE2", "")
-        self.live3 = root.acquire("LIVE3", "")
-        self.live4 = root.acquire("LIVE4", "")
-        self.live5 = root.acquire("LIVE5", "")
-        self.live6 = root.acquire("LIVE6", "")
-        self.livecontent = root.acquire("LIVECONTENT", 0)
+        self.live1 = _acquire("LIVE1", "")
+        self.live2 = _acquire("LIVE2", "")
+        self.live3 = _acquire("LIVE3", "")
+        self.live4 = _acquire("LIVE4", "")
+        self.live5 = _acquire("LIVE5", "")
+        self.live6 = _acquire("LIVE6", "")
+        self.livecontent = _acquire("LIVECONTENT", 0)
         
         # K2-specific
-        self.pc_name = root.acquire("PCNAME", "")
+        self.pc_name = _acquire("PCNAME", "")
+        
+        # Capture any additional/unknown fields for full fidelity editing
+        self._existing_fields = set(processed_fields)
+        self.additional_fields = {}
+        for label, field_type, value in root:
+            if label not in processed_fields:
+                self.additional_fields[label] = (field_type, deepcopy(value))
     
     def save(self):
         """Save SAVENFO.res data to the save folder.
@@ -470,6 +490,45 @@ class SaveInfo:
         # K2-specific
         if self.pc_name:
             root.set_string("PCNAME", self.pc_name)
+        
+        # Additional fields - ensure nothing is lost
+        def _set_additional_field(label: str, field_type: GFFFieldType, value: Any):
+            """Helper to set additional fields based on type."""
+            from pykotor.resource.formats.gff import GFFFieldType
+            if field_type == GFFFieldType.UInt8:
+                root.set_uint8(label, value)
+            elif field_type == GFFFieldType.UInt16:
+                root.set_uint16(label, value)
+            elif field_type == GFFFieldType.UInt32:
+                root.set_uint32(label, value)
+            elif field_type == GFFFieldType.UInt64:
+                root.set_uint64(label, value)
+            elif field_type == GFFFieldType.Int8:
+                root.set_int8(label, value)
+            elif field_type == GFFFieldType.Int16:
+                root.set_int16(label, value)
+            elif field_type == GFFFieldType.Int32:
+                root.set_int32(label, value)
+            elif field_type == GFFFieldType.Int64:
+                root.set_int64(label, value)
+            elif field_type == GFFFieldType.Single:
+                root.set_single(label, value)
+            elif field_type == GFFFieldType.Double:
+                root.set_double(label, value)
+            elif field_type == GFFFieldType.String:
+                root.set_string(label, value)
+            elif field_type == GFFFieldType.ResRef:
+                root.set_resref(label, value)
+            elif field_type == GFFFieldType.Binary:
+                root.set_binary(label, value)
+            elif field_type == GFFFieldType.List:
+                root.set_list(label, value)
+            elif field_type == GFFFieldType.Struct:
+                root.set_struct(label, value)
+            # Note: LocalizedString, Orientation, Vector are handled as their base types
+        
+        for extra_label, (extra_type, extra_value) in self.additional_fields.items():
+            _set_additional_field(extra_label, extra_type, extra_value)
         
         write_gff(gff, self.save_info_path)
 

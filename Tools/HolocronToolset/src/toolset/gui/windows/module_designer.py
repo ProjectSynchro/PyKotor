@@ -614,16 +614,79 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         if self._blender_log_view:
             self._blender_log_view.appendPlainText(line)
 
+    def _get_semantic_colors(self) -> dict[str, str]:
+        """Get semantic colors from the application palette.
+        
+        Returns:
+            Dictionary with keys: 'info', 'ok', 'warn', 'error', 'muted', 'accent1', 'accent2', 'accent3'
+        """
+        from qtpy.QtGui import QPalette
+        
+        app = QApplication.instance()
+        if app is None or not isinstance(app, QApplication):
+            # Use default palette for fallback
+            palette = QPalette()
+        else:
+            palette = app.palette()
+        
+        # Get base palette colors
+        link_color = palette.color(QPalette.ColorRole.Link)
+        mid_color = palette.color(QPalette.ColorRole.Mid)
+        shadow_color = palette.color(QPalette.ColorRole.Shadow)
+        
+        # Create semantic colors from palette
+        # Info: Use link color (usually blue)
+        info_color = link_color
+        
+        # OK/Success: Create a green-ish color from highlight or link
+        ok_color = QColor(link_color)
+        if ok_color.lightness() < 128:  # Dark theme
+            ok_color = QColor(0, min(255, ok_color.green() + 100), 0)
+        else:  # Light theme
+            ok_color = QColor(0, min(200, ok_color.green() + 50), 0)
+        
+        # Warning: Use mid color with adjustment
+        warn_color = QColor(mid_color)
+        if warn_color.lightness() < 128:  # Dark theme
+            warn_color = warn_color.lighter(150)
+        else:  # Light theme
+            warn_color = warn_color.darker(120)
+        
+        # Error: Use shadow or create red variant
+        error_color = QColor(shadow_color)
+        if error_color.lightness() < 128:  # Dark theme
+            error_color = QColor(min(255, error_color.red() + 100), 0, 0)
+        else:  # Light theme
+            error_color = QColor(min(200, error_color.red() + 50), 0, 0)
+        
+        # Muted: Use mid color
+        muted_color = mid_color
+        
+        # Accent colors for UI elements
+        accent1 = link_color  # Blue for coordinates/info
+        accent2 = ok_color    # Green for success
+        accent3 = QColor(link_color)  # Purple variant for keys
+        if accent3.lightness() < 128:
+            accent3 = QColor(min(255, accent3.red() + 50), min(255, accent3.green() + 20), min(255, accent3.blue() + 100))
+        else:
+            accent3 = QColor(min(200, accent3.red() + 30), min(200, accent3.green() + 10), min(200, accent3.blue() + 50))
+        
+        return {
+            "info": info_color.name(),
+            "ok": ok_color.name(),
+            "warn": warn_color.name(),
+            "error": error_color.name(),
+            "muted": muted_color.name(),
+            "accent1": accent1.name(),
+            "accent2": accent2.name(),
+            "accent3": accent3.name(),
+        }
+
     def _update_blender_status_chip(self, message: str, *, severity: str = "info"):
         if not hasattr(self, "blender_status_chip"):
             return
-        palette = {
-            "info": "#0055B0",
-            "ok": "#228800",
-            "warn": "#c46811",
-            "error": "#b00020",
-        }
-        color = palette.get(severity, "#0055B0")
+        colors = self._get_semantic_colors()
+        color = colors.get(severity, colors["info"])
         self.blender_status_chip.setText(f"<b><span style='{self._emoji_style}'>🧠</span>&nbsp;Blender:</b> <span style='color:{color}'>{message}</span>")
 
     def _show_blender_progress_dialog(self, message: str):
@@ -909,17 +972,20 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         else:
             norm_mouse_pos = mouse_pos
 
+        # Get semantic colors from palette
+        colors = self._get_semantic_colors()
+        
         # Mouse and camera info
         if isinstance(renderer, ModuleRenderer):
             # Check if scene is initialized before accessing it
             if renderer._scene is None:
                 self.mouse_pos_label.setText(
                     f"<b><span style='{self._emoji_style}'>🖱</span>&nbsp;Coords:</b> "
-                    f"<span style='font-style:italic; color:#888'>— not available —</span>"
+                    f"<span style='font-style:italic; color:{colors['muted']}'>— not available —</span>"
                 )
                 self.view_camera_label.setText(
                     f"<b><span style='{self._emoji_style}'>🎥</span>&nbsp;View:</b> "
-                    f"<span style='font-style:italic; color:#888'>— not available —</span>"
+                    f"<span style='font-style:italic; color:{colors['muted']}'>— not available —</span>"
                 )
             else:
                 pos = renderer.scene.cursor.position()
@@ -927,18 +993,18 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
                 world_pos = world_pos_3d
                 self.mouse_pos_label.setText(
                     f"<b><span style='{self._emoji_style}'>🖱</span>&nbsp;Coords:</b> "
-                    f"<span style='color:#0055B0'>{world_pos_3d.y:.2f}</span>, "
-                    f"<span style='color:#228800'>{world_pos_3d.z:.2f}</span>"
+                    f"<span style='color:{colors['accent1']}'>{world_pos_3d.y:.2f}</span>, "
+                    f"<span style='color:{colors['accent2']}'>{world_pos_3d.z:.2f}</span>"
                 )
 
                 camera = renderer.scene.camera
                 cam_text = (
                     f"<b><span style='{self._emoji_style}'>🎥</span>&nbsp;View:</b> "
-                    f"<span style='color:#c46811'>Pos ("
+                    f"<span style='color:{colors['warn']}'>Pos ("
                     f"{camera.x:.2f}, {camera.y:.2f}, {camera.z:.2f}</span>), "
-                    f"Pitch: <span style='color:#a13ac8'>{camera.pitch:.2f}</span>, "
-                    f"Yaw: <span style='color:#a13ac8'>{camera.yaw:.2f}</span>, "
-                    f"FOV: <span style='color:#0b7d96'>{camera.fov:.2f}</span>"
+                    f"Pitch: <span style='color:{colors['accent3']}'>{camera.pitch:.2f}</span>, "
+                    f"Yaw: <span style='color:{colors['accent3']}'>{camera.yaw:.2f}</span>, "
+                    f"FOV: <span style='color:{colors['info']}'>{camera.fov:.2f}</span>"
                 )
                 self.view_camera_label.setText(cam_text)
         else:
@@ -947,9 +1013,9 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             else:
                 norm_mouse_pos = Vector2(float(norm_mouse_pos.x()), float(norm_mouse_pos.y()))
             world_pos = renderer.to_world_coords(norm_mouse_pos.x, norm_mouse_pos.y)
-            self.mouse_pos_label.setText(f"<b><span style='{self._emoji_style}'>🖱</span>&nbsp;Coords:</b> <span style='color:#0055B0'>{world_pos.y:.2f}</span>")
+            self.mouse_pos_label.setText(f"<b><span style='{self._emoji_style}'>🖱</span>&nbsp;Coords:</b> <span style='color:{colors['accent1']}'>{world_pos.y:.2f}</span>")
             self.view_camera_label.setText(
-                f"<b><span style='{self._emoji_style}'>🎥</span>&nbsp;View:</b> <span style='font-style:italic; color:#888'>— not available —</span>"
+                f"<b><span style='{self._emoji_style}'>🎥</span>&nbsp;View:</b> <span style='font-style:italic; color:{colors['muted']}'>— not available —</span>"
             )
 
         # Sort keys and buttons with modifiers at the beginning
@@ -974,14 +1040,14 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             if not keys_seq:
                 return ""
             formatted_items = [get_qt_key_string(key) for key in keys_seq]
-            colored_items = [f"<span style='color: #a13ac8'>{item}</span>" for item in formatted_items]
+            colored_items = [f"<span style='color: {colors['accent3']}'>{item}</span>" for item in formatted_items]
             return "&nbsp;+&nbsp;".join(colored_items)
 
         def fmt_buttons_str(btn_seq):
             if not btn_seq:
                 return ""
             formatted_items = [get_qt_button_string(button) for button in btn_seq]
-            colored_items = [f"<span style='color: #228800'>{item}</span>" for item in formatted_items]
+            colored_items = [f"<span style='color: {colors['accent2']}'>{item}</span>" for item in formatted_items]
             return "&nbsp;+&nbsp;".join(colored_items)
 
         keys_str = fmt_keys_str(sorted_keys)
@@ -995,12 +1061,12 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         if self.selected_instances:
             instance = self.selected_instances[0]
             if isinstance(instance, GITCamera):
-                instance_name = f"<span style='color:#B05500'>[Camera]</span> <code>{repr(instance)}</code>"
+                instance_name = f"<span style='color:{colors['warn']}'>[Camera]</span> <code>{repr(instance)}</code>"
             else:
-                instance_name = f"<span style='color:#0055B0'>{instance.identifier()}</span>"
+                instance_name = f"<span style='color:{colors['accent1']}'>{instance.identifier()}</span>"
             self.selected_instance_label.setText(f"<b><span style='{self._emoji_style}'>🟦</span>&nbsp;Selected Instance:</b> {instance_name}")
         else:
-            self.selected_instance_label.setText(f"<b><span style='{self._emoji_style}'>🟦</span>&nbsp;Selected Instance:</b> <span style='color:#a6a6a6'><i>None</i></span>")
+            self.selected_instance_label.setText(f"<b><span style='{self._emoji_style}'>🟦</span>&nbsp;Selected Instance:</b> <span style='color:{colors['muted']}'><i>None</i></span>")
 
     def _refresh_window_title(self):
         if self._module is None:

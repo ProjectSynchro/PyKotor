@@ -59,14 +59,23 @@ class JRLQuest:
         comment: "Comment" field. Used in toolset only.
     """
 
-    def __init__(self):
-        self.comment: str = ""
-        self.name: LocalizedString = LocalizedString.from_invalid()
-        self.planet_id: int = 0
+    def __init__(
+        self,
+        name: LocalizedString | None = None,
+        planet_id: int | None = None,
+        plot_index: int | None = None,
+        priority: JRLQuestPriority | None = None,
+        tag: str | None = None,
+        entries: list[JRLEntry] | None = None,
+        comment: str | None = None,
+    ):
+        self.comment: str = "" if comment is None else comment
+        self.name: LocalizedString = LocalizedString.from_invalid() if name is None else name
+        self.planet_id: int = 0 if planet_id is None else planet_id
         self.plot_index: int = 0  # plot.2da
-        self.priority: JRLQuestPriority = JRLQuestPriority.LOWEST
-        self.tag: str = ""
-        self.entries: list[JRLEntry] = []
+        self.priority: JRLQuestPriority = JRLQuestPriority.LOWEST if priority is None else priority
+        self.tag: str = "" if tag is None else tag
+        self.entries: list[JRLEntry] = [] if entries is None else entries
 
 
 class JRLEntry:
@@ -80,11 +89,17 @@ class JRLEntry:
         xp_percentage: "XP_Percentage" field.
     """
 
-    def __init__(self):
-        self.end: bool = False
-        self.entry_id: int = 0
-        self.text: LocalizedString = LocalizedString.from_invalid()
-        self.xp_percentage: float = 0.0
+    def __init__(
+        self,
+        end: bool | None = None,
+        entry_id: int | None = None,
+        text: LocalizedString | None = None,
+        xp_percentage: float | None = None,
+    ):
+        self.end: bool = False if end is None else end
+        self.entry_id: int = 0 if entry_id is None else entry_id
+        self.text: LocalizedString = LocalizedString.from_invalid() if text is None else text
+        self.xp_percentage: float = 0.0 if xp_percentage is None else xp_percentage
 
 
 class JRLQuestPriority(IntEnum):

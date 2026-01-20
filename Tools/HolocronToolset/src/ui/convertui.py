@@ -274,6 +274,6 @@ def compile_qrc(
 
 if __name__ == "__main__":
     qt_version = get_available_qt_version()
-    compile_ui(qt_version, ignore_timestamp=True, debug=False)
+    compile_ui(qt_version, ignore_timestamp=False, debug=False)
     compile_qrc(qt_version, ignore_timestamp=False)
     print("All ui compilations completed in", TOOLSET_DIR)

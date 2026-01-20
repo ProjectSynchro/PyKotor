@@ -320,16 +320,59 @@ def get_documentation_tooltip_html(
     bg = QColor(bg_color)
     is_dark_theme = _get_luminance(bg) < 0.5
     
+    # Get palette colors for syntax highlighting
+    link_color = palette.color(QPalette.ColorRole.Link)
+    highlight = palette.color(QPalette.ColorRole.Highlight)
+    
     if is_dark_theme:
-        # Dark theme colors (VS Code Dark+)
-        keyword_color = "#569CD6"  # Blue for keywords
-        type_color = "#4EC9B0"     # Cyan for types
-        comment_color = "#6A9955"  # Green for descriptions
+        # Dark theme colors - derive from palette with adjustments for readability
+        # Keyword: Use link color (blue-like) or create blue variant
+        keyword_color_obj = QColor(link_color)
+        if keyword_color_obj.lightness() < 128:
+            # Instead of hardcoded blue, brighten the link color to ensure visibility
+            keyword_color_obj = QColor(link_color)
+            # Brighten it while maintaining the hue
+            keyword_color_obj = keyword_color_obj.lighter(150)
+            # If still too dark, use highlight color as fallback
+            if keyword_color_obj.lightness() < 100:
+                keyword_color_obj = QColor(highlight)
+                keyword_color_obj = keyword_color_obj.lighter(120)
+        keyword_color = keyword_color_obj.name()
+        
+        # Type: Cyan-like from highlight or link
+        type_color_obj = QColor(link_color)
+        type_color_obj.setGreen(min(255, type_color_obj.green() + 50))
+        type_color_obj.setBlue(min(255, type_color_obj.blue() + 30))
+        type_color = type_color_obj.name()
+        
+        # Comment: Green-like from link
+        comment_color_obj = QColor(link_color)
+        comment_color_obj.setRed(int(comment_color_obj.red() * 0.4))
+        comment_color_obj.setGreen(min(255, int(comment_color_obj.green() * 1.2)))
+        comment_color_obj.setBlue(int(comment_color_obj.blue() * 0.6))
+        comment_color = comment_color_obj.name()
     else:
-        # Light theme colors (VS Code Light+)
-        keyword_color = "#0000FF"  # Blue for keywords
-        type_color = "#267F99"     # Teal for types
-        comment_color = "#008000"  # Green for descriptions
+        # Light theme colors - darker variants for contrast
+        # Keyword: Blue from link
+        keyword_color_obj = QColor(link_color)
+        if keyword_color_obj.lightness() > 200:
+            keyword_color_obj = keyword_color_obj.darker(200)
+        keyword_color = keyword_color_obj.name()
+        
+        # Type: Teal from link
+        type_color_obj = QColor(link_color)
+        type_color_obj.setGreen(min(255, type_color_obj.green() + 30))
+        if type_color_obj.lightness() > 200:
+            type_color_obj = type_color_obj.darker(150)
+        type_color = type_color_obj.name()
+        
+        # Comment: Green from link
+        comment_color_obj = QColor(link_color)
+        comment_color_obj.setRed(int(comment_color_obj.red() * 0.3))
+        comment_color_obj.setGreen(min(255, int(comment_color_obj.green() * 1.1)))
+        if comment_color_obj.lightness() > 200:
+            comment_color_obj = comment_color_obj.darker(150)
+        comment_color = comment_color_obj.name()
     
     # Build HTML content with explicit wrapping + compact spacing.
     parts: list[str] = []

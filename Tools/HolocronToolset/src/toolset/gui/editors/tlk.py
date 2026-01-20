@@ -150,6 +150,8 @@ class TLKEditor(Editor):
         self.ui.actionFind.triggered.connect(self.toggle_filter_box)
         self.ui.actionFind.setShortcut("Ctrl+F")
         self.ui.searchButton.clicked.connect(_on_search_button_clicked)
+        # Also connect the search widget's built-in search button
+        self.ui.searchEdit.searchRequested.connect(_on_search_button_clicked)
         self.ui.actionInsert.triggered.connect(self.insert)
         self.ui.actionInsert.setShortcut("Ctrl+I")
         # self.ui.actionDelete.triggered.connect(self.delete)

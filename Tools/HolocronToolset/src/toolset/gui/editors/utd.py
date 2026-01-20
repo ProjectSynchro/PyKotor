@@ -169,8 +169,16 @@ class UTDEditor(Editor):
         for field in script_fields:
             installation.setup_file_context_menu(field, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
             field.setToolTip(tr("Right-click to find references to this script in the installation."))
+            # Set maxLength for FilterComboBox script fields (ResRefs are max 16 characters)
+            line_edit = field.lineEdit() if hasattr(field, "lineEdit") else None
+            if line_edit is not None:
+                line_edit.setMaxLength(16)
         installation.setup_file_context_menu(self.ui.conversationEdit, [ResourceType.DLG], enable_reference_search=True, reference_search_type="conversation")
         self.ui.conversationEdit.setToolTip(tr("Right-click to find references to this conversation in the installation."))
+        # Set maxLength for conversation FilterComboBox (ResRefs are max 16 characters)
+        line_edit = self.ui.conversationEdit.lineEdit()
+        if line_edit is not None:
+            line_edit.setMaxLength(16)
         
         # Setup reference search for Tag field
         installation.setup_file_context_menu(self.ui.tagEdit, [], enable_reference_search=True, reference_search_type="tag")
@@ -236,7 +244,7 @@ class UTDEditor(Editor):
         self.ui.notBlastableCheckbox.setChecked(utd.not_blastable)
         self.ui.factionSelect.setCurrentIndex(utd.faction_id)
         self.ui.animationState.setValue(utd.animation_state)
-        self.ui.currenHpSpin.setValue(utd.current_hp)
+        self.ui.currentHpSpin.setValue(utd.current_hp)
         self.ui.maxHpSpin.setValue(utd.maximum_hp)
         self.ui.hardnessSpin.setValue(utd.hardness)
         self.ui.fortitudeSpin.setValue(utd.fortitude)
@@ -313,7 +321,7 @@ class UTDEditor(Editor):
         utd.not_blastable = self.ui.notBlastableCheckbox.isChecked()
         utd.faction_id = self.ui.factionSelect.currentIndex()
         utd.animation_state = self.ui.animationState.value()
-        utd.current_hp = self.ui.currenHpSpin.value()
+        utd.current_hp = self.ui.currentHpSpin.value()
         utd.maximum_hp = self.ui.maxHpSpin.value()
         utd.hardness = self.ui.hardnessSpin.value()
         utd.fortitude = self.ui.fortitudeSpin.value()

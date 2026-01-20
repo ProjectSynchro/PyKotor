@@ -196,22 +196,12 @@ class ResRef(str):
     def set_data(
         self,
         text: str,
-        *,
-        truncate: bool = False,
     ):
         """Sets the ResRef.
 
         Args:
         ----
             text - str: The reference string.
-            truncate - bool: Whether to truncate the text to 16 characters. Default is False.
-
-        Raises:
-        ------
-            InvalidEncodingError - text was not in ascii format
-            ExceedsMaxLengthError - text exceeded 16 characters
-            InvalidFormatError - text starts/ends with a space or contains windows invalid filename characters.
-            All of the above exceptions inherit ValueError.
         """
         # Strip whitespace and warn if original had leading/trailing whitespace
         raw_text = str(text)
@@ -228,9 +218,7 @@ class ResRef(str):
         if len(parsed_text) > self.MAX_LENGTH:
             #if not truncate:
             #    raise self.ExceedsMaxLengthError(parsed_text)
-            warnings.warn(
-                f"String '{raw_text}' exceeds the maximum allowed length ({self.MAX_LENGTH}) and will be truncated to '{parsed_text[: self.MAX_LENGTH]}'", stacklevel=2
-            )
+            #warnings.warn(f"String '{raw_text}' exceeds the maximum allowed length ({self.MAX_LENGTH}) and will be truncated to '{parsed_text[: self.MAX_LENGTH]}'", stacklevel=2)
             parsed_text = parsed_text[: self.MAX_LENGTH]
 
         # Check for invalid characters (Windows filename restrictions)

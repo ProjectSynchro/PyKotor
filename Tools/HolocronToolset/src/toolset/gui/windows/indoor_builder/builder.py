@@ -245,6 +245,74 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 
+    def _get_semantic_colors(self) -> dict[str, str]:
+        """Get semantic colors from the application palette.
+        
+        Returns:
+            Dictionary with keys: 'info', 'ok', 'warn', 'error', 'muted', 'accent1', 'accent2', 'accent3'
+        """
+        from qtpy.QtGui import QPalette
+        
+        app = QApplication.instance()
+        if app is None or not isinstance(app, QApplication):
+            # Use default palette for fallback
+            palette = QPalette()
+        else:
+            palette = app.palette()
+        
+        # Get base palette colors
+        link_color = palette.color(QPalette.ColorRole.Link)
+        mid_color = palette.color(QPalette.ColorRole.Mid)
+        shadow_color = palette.color(QPalette.ColorRole.Shadow)
+        
+        # Create semantic colors from palette
+        # Info: Use link color (usually blue)
+        info_color = link_color
+        
+        # OK/Success: Create a green-ish color from highlight or link
+        ok_color = QColor(link_color)
+        if ok_color.lightness() < 128:  # Dark theme
+            ok_color = QColor(0, min(255, ok_color.green() + 100), 0)
+        else:  # Light theme
+            ok_color = QColor(0, min(200, ok_color.green() + 50), 0)
+        
+        # Warning: Use mid color with adjustment
+        warn_color = QColor(mid_color)
+        if warn_color.lightness() < 128:  # Dark theme
+            warn_color = warn_color.lighter(150)
+        else:  # Light theme
+            warn_color = warn_color.darker(120)
+        
+        # Error: Use shadow or create red variant
+        error_color = QColor(shadow_color)
+        if error_color.lightness() < 128:  # Dark theme
+            error_color = QColor(min(255, error_color.red() + 100), 0, 0)
+        else:  # Light theme
+            error_color = QColor(min(200, error_color.red() + 50), 0, 0)
+        
+        # Muted: Use mid color
+        muted_color = mid_color
+        
+        # Accent colors for UI elements
+        accent1 = link_color  # Blue for coordinates/info
+        accent2 = ok_color    # Green for success
+        accent3 = QColor(link_color)  # Purple variant for keys
+        if accent3.lightness() < 128:
+            accent3 = QColor(min(255, accent3.red() + 50), min(255, accent3.green() + 20), min(255, accent3.blue() + 100))
+        else:
+            accent3 = QColor(min(200, accent3.red() + 30), min(200, accent3.green() + 10), min(200, accent3.blue() + 50))
+        
+        return {
+            "info": info_color.name(),
+            "ok": ok_color.name(),
+            "warn": warn_color.name(),
+            "error": error_color.name(),
+            "muted": muted_color.name(),
+            "accent1": accent1.name(),
+            "accent2": accent2.name(),
+            "accent3": accent3.name(),
+        }
+
     def _setup_signals(self):
         """Connect signals to slots."""
         # Kit/component selection
@@ -1068,27 +1136,30 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         sel_hook = renderer.selected_hook()
 
         # Mouse/hover
+        # Get semantic colors from palette
+        colors = self._get_semantic_colors()
+        
         hover_text = (
-            f"<b><span style=\"{self._emoji_style}\">🧩</span>&nbsp;Hover:</b> <span style='color:#0055B0'>{hover_room.component.name}</span>"
+            f"<b><span style=\"{self._emoji_style}\">🧩</span>&nbsp;Hover:</b> <span style='color:{colors['accent1']}'>{hover_room.component.name}</span>"
             if hover_room
-            else f"<b><span style=\"{self._emoji_style}\">🧩</span>&nbsp;Hover:</b> <span style='color:#a6a6a6'><i>None</i></span>"
+            else f"<b><span style=\"{self._emoji_style}\">🧩</span>&nbsp;Hover:</b> <span style='color:{colors['muted']}'><i>None</i></span>"
         )
         self._hover_label.setText(hover_text)
 
         self._mouse_label.setText(
             f'<b><span style="{self._emoji_style}">🖱</span>&nbsp;Coords:</b> '
-            f"<span style='color:#0055B0'>{world.x:.2f}</span>, "
-            f"<span style='color:#228800'>{world.y:.2f}</span>"
+            f"<span style='color:{colors['accent1']}'>{world.x:.2f}</span>, "
+            f"<span style='color:{colors['accent2']}'>{world.y:.2f}</span>"
         )
 
         # Selection
         if sel_hook is not None:
             hook_room, hook_idx = sel_hook
-            sel_text = f"<b><span style=\"{self._emoji_style}\">🎯</span>&nbsp;Selected Hook:</b> <span style='color:#0055B0'>{hook_room.component.name}</span> (#{hook_idx})"
+            sel_text = f"<b><span style=\"{self._emoji_style}\">🎯</span>&nbsp;Selected Hook:</b> <span style='color:{colors['accent1']}'>{hook_room.component.name}</span> (#{hook_idx})"
         elif sel_rooms:
-            sel_text = f"<b><span style=\"{self._emoji_style}\">🟦</span>&nbsp;Selected Rooms:</b> <span style='color:#0055B0'>{len(sel_rooms)}</span>"
+            sel_text = f"<b><span style=\"{self._emoji_style}\">🟦</span>&nbsp;Selected Rooms:</b> <span style='color:{colors['accent1']}'>{len(sel_rooms)}</span>"
         else:
-            sel_text = f"<b><span style=\"{self._emoji_style}\">🟦</span>&nbsp;Selected:</b> <span style='color:#a6a6a6'><i>None</i></span>"
+            sel_text = f"<b><span style=\"{self._emoji_style}\">🟦</span>&nbsp;Selected:</b> <span style='color:{colors['muted']}'><i>None</i></span>"
         self._selection_label.setText(sel_text)
 
         # Update preview based on selection (only if not dragging a component)
@@ -1177,19 +1248,20 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             colored_items = [f"<span style='color: {color}'>{item}</span>" for item in formatted_items]
             return "&nbsp;+&nbsp;".join(colored_items)
 
-        keys_text = fmt(keys_sorted, get_qt_key_string_local, "#a13ac8")
-        buttons_text = fmt(buttons_sorted, get_qt_button_string_local, "#228800")
+        colors = self._get_semantic_colors()
+        keys_text = fmt(keys_sorted, get_qt_key_string_local, colors['accent3'])
+        buttons_text = fmt(buttons_sorted, get_qt_button_string_local, colors['accent2'])
         sep = " + " if keys_text and buttons_text else ""
         self._keys_label.setText(
             f'<b><span style="{self._emoji_style}">⌨</span>&nbsp;Keys/<span style="{self._emoji_style}">🖱</span>&nbsp;Buttons:</b> {keys_text}{sep}{buttons_text}'
         )
 
-        # Mode/status line
+        # Mode/status line (reuse colors from above)
         mode_parts: list[str] = []
         if self._painting_walkmesh:
             material = self._current_material()
             mat_text = material.name.title().replace("_", " ") if material else "Material"
-            mode_parts.append(f"<span style='color:#c46811'>Paint: {mat_text}</span>")
+            mode_parts.append(f"<span style='color:{colors['warn']}'>Paint: {mat_text}</span>")
         if self._colorize_materials:
             mode_parts.append("Colorized")
         if renderer.snap_to_grid:
@@ -1199,7 +1271,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._mode_label.setText(
             '<b><span style="{style}">ℹ</span>&nbsp;Status:</b> {body}'.format(
                 style=self._emoji_style,
-                body=" | ".join(mode_parts) if mode_parts else "<span style='color:#a6a6a6'><i>Idle</i></span>",
+                body=" | ".join(mode_parts) if mode_parts else f"<span style='color:{colors['muted']}'><i>Idle</i></span>",
             )
         )
 

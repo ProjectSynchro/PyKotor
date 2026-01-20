@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING, Any
 
 import markdown
 
-from loggerplus import RobustLogger
 from qtpy import QtCore
-from qtpy.QtGui import QFont
-from qtpy.QtWidgets import QCheckBox, QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
+from qtpy.QtGui import QColor, QPalette
+from qtpy.QtWidgets import QApplication, QDialog, QMessageBox
 
+from loggerplus import RobustLogger
 from toolset.config import LOCAL_PROGRAM_INFO, is_remote_version_newer, toolset_tag_to_version
 from toolset.gui.dialogs.update_github import fetch_and_cache_forks, fetch_fork_releases, filter_releases
 from toolset.gui.dialogs.update_process import start_update_process
@@ -18,16 +18,29 @@ from utility.misc import ProcessorArchitecture
 from utility.updater.github import GithubRelease
 
 if TYPE_CHECKING:
+    from qtpy.QtWidgets import QWidget
+
     from utility.updater.github import Asset, GithubRelease
 
 
-def convert_markdown_to_html(md_text: str) -> str:
-    """Convert Markdown text to HTML."""
-    return markdown.markdown(md_text)
+def convert_markdown_to_html(md_text: str, widget: QWidget | None = None) -> str:
+    """Convert Markdown text to HTML with theme-aware styling.
+    
+    Args:
+        md_text: Markdown text to convert
+        widget: Optional widget to get palette from (defaults to QApplication)
+        
+    Returns:
+        HTML string with embedded CSS styles using palette colors
+    """
+    from toolset.gui.common.palette_helpers import wrap_html_with_palette_styles
+    
+    html_body = markdown.markdown(md_text, extensions=["tables", "fenced_code", "codehilite"])
+    return wrap_html_with_palette_styles(html_body, widget)
 
 
 class UpdateDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self.setWindowFlags(
             QtCore.Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
@@ -38,100 +51,52 @@ class UpdateDialog(QDialog):
         self.remoteInfo: dict[str, Any] = {}
         self.releases: list[GithubRelease] = []
         self.forks_cache: dict[str, list[GithubRelease]] = {}
-        self.setWindowTitle("Update Application")
-        self.setGeometry(100, 100, 800, 600)
         self.setFixedSize(800, 600)
+
+        from toolset.uic.qtpy.dialogs.update_dialog import Ui_Dialog
+
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+
         self.init_ui()
         self.init_config()
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 
     def include_prerelease(self) -> bool:
-        return self.preReleaseCheckBox.isChecked()
+        return self.ui.preReleaseCheckBox.isChecked()
 
     def set_prerelease(self, value: bool) -> None:  # noqa: FBT001
-        return self.preReleaseCheckBox.setChecked(value)
+        return self.ui.preReleaseCheckBox.setChecked(value)
 
     def init_ui(self):
-        main_layout = QVBoxLayout(self)
-        main_layout.setSpacing(10)
-        main_layout.setContentsMargins(10, 10, 10, 10)
+        # Connect signals
+        self.ui.preReleaseCheckBox.stateChanged.connect(self.on_pre_release_changed)
+        self.ui.fetchReleasesButton.clicked.connect(self.init_config)
+        self.ui.forkComboBox.currentIndexChanged.connect(self.on_fork_changed)
+        self.ui.releaseComboBox.currentIndexChanged.connect(self.on_release_changed)
+        self.ui.installSelectedButton.clicked.connect(self.on_install_selected)
+        self.ui.updateLatestButton.clicked.connect(self.on_update_latest_clicked)
 
-        # Include Pre-releases Checkbox
-        self.preReleaseCheckBox = QCheckBox("Include Pre-releases")
-        self.preReleaseCheckBox.stateChanged.connect(self.on_pre_release_changed)
-
-        # Fetch Releases Button
-        fetch_releases_button = QPushButton("Fetch Releases")
-        fetch_releases_button.clicked.connect(self.init_config)
-        fetch_releases_button.setFixedSize(780, 50)
-        main_layout.addWidget(fetch_releases_button)
-
-        form_layout = QFormLayout()
-
-        # Fork Selection Layout
-        self.fork_combo_box: QComboBox = QComboBox()
-        self.fork_combo_box.setFixedWidth(300)
-        self.fork_combo_box.currentIndexChanged.connect(self.on_fork_changed)
-        form_layout.addRow("Select Fork:", self.fork_combo_box)
-
-        # Release Selection ComboBox
-        self.release_combo_box: QComboBox = QComboBox()
-        self.release_combo_box.setFixedWidth(300)
-        self.release_combo_box.currentIndexChanged.connect(self.on_release_changed)
-        form_layout.addRow("Select Release:", self.release_combo_box)
-
-        main_layout.addLayout(form_layout)
-        main_layout.addWidget(self.preReleaseCheckBox)
-
-        # Install Selected Button
-        update_button: QPushButton = QPushButton("Install Selected")
-        update_button.clicked.connect(self.on_install_selected)
-        update_button.setFixedSize(150, 30)
-        main_layout.addWidget(update_button)
-
-        # Changelog Display
-        self.changelog_edit: QTextEdit = QTextEdit()
-        self.changelog_edit.setReadOnly(True)
-        self.changelog_edit.setFont(QFont("Arial", 10))
-        main_layout.addWidget(self.changelog_edit)
-
-        # Update to Latest Button
-        update_latest_button: QPushButton = QPushButton("Update to Latest")
-        update_latest_button.clicked.connect(self.on_update_latest_clicked)
-        update_latest_button.setFixedSize(780, 50)
-        main_layout.addWidget(update_latest_button)
-
-        # Current Version Display
-        current_version_layout: QHBoxLayout = QHBoxLayout()
-        current_version_layout.addStretch(1)
-        current_version: str = LOCAL_PROGRAM_INFO["currentVersion"]
-        version_color: str = "#FFA500" if is_remote_version_newer(current_version, toolset_tag_to_version(self.get_selected_tag())) else "#00FF00"
-        version_text: str = f"<span style='font-size:16px; font-weight:bold; color:{version_color};'>{current_version}</span>"
-        from toolset.gui.common.localization import trf
-        current_version_label: QLabel = QLabel(trf("Holocron Toolset Current Version: {version}", version=version_text))
-        current_version_label.setFont(QFont("Arial", 12))
-        current_version_layout.addWidget(current_version_label)
-        current_version_layout.addStretch(1)
-        main_layout.addLayout(current_version_layout)
-
-        self.setLayout(main_layout)
+        # Update current version label (will be updated after releases are loaded)
+        self.update_version_label()
 
     def init_config(self):
         self.set_prerelease(False)
         self.forks_cache = fetch_and_cache_forks()
         self.forks_cache["th3w1zard1/PyKotor"] = fetch_fork_releases("th3w1zard1/PyKotor", include_all=True)
         self.populate_fork_combo_box()
-        self.on_fork_changed(self.fork_combo_box.currentIndex())
+        self.on_fork_changed(self.ui.forkComboBox.currentIndex())
 
     def populate_fork_combo_box(self):
-        self.fork_combo_box.clear()
-        self.fork_combo_box.addItem("th3w1zard1/PyKotor")
+        self.ui.forkComboBox.clear()
+        self.ui.forkComboBox.addItem("th3w1zard1/PyKotor")
         for fork in self.forks_cache:
-            self.fork_combo_box.addItem(fork)
+            self.ui.forkComboBox.addItem(fork)
 
     def on_pre_release_changed(
         self,
@@ -140,7 +105,7 @@ class UpdateDialog(QDialog):
         self.filter_releases_based_on_prerelease()
 
     def filter_releases_based_on_prerelease(self):
-        selected_fork: str = self.fork_combo_box.currentText()
+        selected_fork: str = self.ui.forkComboBox.currentText()
         if selected_fork in self.forks_cache:
             self.releases = filter_releases(self.forks_cache[selected_fork], include_prerelease=self.include_prerelease())
         else:
@@ -153,11 +118,11 @@ class UpdateDialog(QDialog):
         self.releases.sort(key=lambda x: bool(is_remote_version_newer("0.0.0", x.tag_name)))
 
         # Update Combo Box
-        self.release_combo_box.clear()
-        self.changelog_edit.clear()
+        self.ui.releaseComboBox.clear()
+        self.ui.changelogEdit.clear()
         for release in self.releases:
-            self.release_combo_box.addItem(release.tag_name, release)
-        self.on_release_changed(self.release_combo_box.currentIndex())
+            self.ui.releaseComboBox.addItem(release.tag_name, release)
+        self.on_release_changed(self.ui.releaseComboBox.currentIndex())
 
     def on_fork_changed(
         self,
@@ -168,8 +133,41 @@ class UpdateDialog(QDialog):
         self.filter_releases_based_on_prerelease()
 
     def get_selected_tag(self) -> str:
-        release: GithubRelease = self.release_combo_box.itemData(self.release_combo_box.currentIndex())
+        release: GithubRelease | None = self.ui.releaseComboBox.itemData(self.ui.releaseComboBox.currentIndex())
         return release.tag_name if release else ""
+
+    def update_version_label(self):
+        """Update the current version label with dynamic color based on selected release."""
+        # Get semantic colors from palette
+        app = QApplication.instance()
+        if app is None or not isinstance(app, QApplication):
+            palette = QPalette()
+        else:
+            palette = app.palette()
+        
+        link_color = palette.color(QPalette.ColorRole.Link)
+        mid_color = palette.color(QPalette.ColorRole.Mid)
+        
+        # Warning color (for outdated): Use mid color with adjustment
+        warning_color = QColor(mid_color)
+        if warning_color.lightness() < 128:  # Dark theme
+            warning_color = warning_color.lighter(130)
+        else:  # Light theme
+            warning_color = warning_color.darker(120)
+        
+        # Success color (for up-to-date): Use link color
+        success_color = link_color
+        
+        current_version: str = LOCAL_PROGRAM_INFO["currentVersion"]
+        selected_tag: str = self.get_selected_tag()
+        if selected_tag:
+            version_color: str = warning_color.name() if is_remote_version_newer(current_version, toolset_tag_to_version(selected_tag)) else success_color.name()
+        else:
+            version_color: str = success_color.name()
+        version_text: str = f"<span style='font-size:16px; font-weight:bold; color:{version_color};'>{current_version}</span>"
+        from toolset.gui.common.localization import trf
+
+        self.ui.currentVersionLabel.setText(trf("Holocron Toolset Current Version: {version}", version=version_text))
 
     def on_release_changed(
         self,
@@ -177,11 +175,12 @@ class UpdateDialog(QDialog):
     ):
         if index < 0 or index >= len(self.releases):
             return
-        release: GithubRelease = self.release_combo_box.itemData(index)
+        release: GithubRelease = self.ui.releaseComboBox.itemData(index)
         if not release:
             return
-        changelog_html: str = convert_markdown_to_html(release.body)
-        self.changelog_edit.setHtml(changelog_html)
+        changelog_html: str = convert_markdown_to_html(release.body, self)
+        self.ui.changelogEdit.setHtml(changelog_html)
+        self.update_version_label()
 
     def get_latest_release(self) -> GithubRelease | None:
         if self.releases:
@@ -197,9 +196,10 @@ class UpdateDialog(QDialog):
         self.start_update(latest_release)
 
     def on_install_selected(self):
-        release = self.release_combo_box.currentData()
+        release = self.ui.releaseComboBox.currentData()
         if not release:
             from toolset.gui.common.localization import translate as tr
+
             QMessageBox(QMessageBox.Icon.Information, tr("Select a release"), tr("No release selected, select one first.")).exec()
             return
         self.start_update(release)
@@ -210,6 +210,8 @@ class UpdateDialog(QDialog):
         asset: Asset | None = next((a for a in release.assets if proc_arch in a.name.lower() and os_name in a.name.lower()), None)
 
         if not asset:
+            from toolset.gui.common.localization import translate as tr, trf
+
             QMessageBox(
                 QMessageBox.Icon.Information,
                 tr("No asset found"),

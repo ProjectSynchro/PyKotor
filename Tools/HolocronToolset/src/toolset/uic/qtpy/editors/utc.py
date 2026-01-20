@@ -127,6 +127,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.tagEdit = QtWidgets.QLineEdit(self.groupBox)
+        self.tagEdit.setMaxLength(16)
         self.tagEdit.setObjectName("tagEdit")
         self.horizontalLayout_3.addWidget(self.tagEdit)
         self.tagGenerateButton = QtWidgets.QPushButton(self.groupBox)

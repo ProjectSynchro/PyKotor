@@ -46,7 +46,7 @@ def test_{editor_lower}_editor_help_dialog_opens_correct_file(qtbot, installatio
     
     # Trigger help dialog with the correct file for {editor_class}
     editor._show_help_dialog("{wiki_file}")
-    qtbot.wait(200)  # Wait for dialog to be created
+    QtBot.wait(200)  # Wait for dialog to be created
     
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]

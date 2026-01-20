@@ -119,6 +119,18 @@ class UTEEditor(Editor):
         self._installation.setup_file_context_menu(self.ui.onExhaustedEdit, [ResourceType.NSS, ResourceType.NCS])
         self._installation.setup_file_context_menu(self.ui.onHeartbeatSelect, [ResourceType.NSS, ResourceType.NCS])
         self._installation.setup_file_context_menu(self.ui.onUserDefinedSelect, [ResourceType.NSS, ResourceType.NCS])
+        # Set maxLength for FilterComboBox script fields (ResRefs are max 16 characters)
+        script_combo_boxes = [
+            self.ui.onEnterSelect,
+            self.ui.onExitSelect,
+            self.ui.onExhaustedEdit,
+            self.ui.onHeartbeatSelect,
+            self.ui.onUserDefinedSelect,
+        ]
+        for combo_box in script_combo_boxes:
+            line_edit = combo_box.lineEdit()
+            if line_edit is not None:
+                line_edit.setMaxLength(16)
         self.relevant_creature_resnames = sorted(
             iter(
                 {

@@ -18,7 +18,7 @@ def test_indoor_builder_action_exit_accepts_qaction_triggered_bool(qtbot, instal
     builder.ui.actionExit.trigger()
 
     # Process events; if the slot signature is wrong, this raises TypeError and the test fails.
-    qtbot.wait(10)
+    QtBot.wait(10)
 
 
 def test_about_dialog_close_button_accepts_clicked_bool(qtbot) -> None:
@@ -28,7 +28,7 @@ def test_about_dialog_close_button_accepts_clicked_bool(qtbot) -> None:
     dlg.show()
 
     dlg.ui.closeButton.click()
-    qtbot.wait(10)
+    QtBot.wait(10)
 
 
 def test_kotordiff_close_button_accepts_clicked_bool(qtbot) -> None:
@@ -38,5 +38,5 @@ def test_kotordiff_close_button_accepts_clicked_bool(qtbot) -> None:
     win.show()
 
     win.close_btn.click()
-    qtbot.wait(10)
+    QtBot.wait(10)
 

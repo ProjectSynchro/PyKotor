@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import struct
+
 from typing import TYPE_CHECKING, Any
 
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryWriter
-from pykotor.resource.formats.gff.gff_data import GFF, GFFContent, GFFFieldType, GFFList, GFFStruct
+from pykotor.resource.formats.gff import GFF, GFFContent, GFFFieldType, GFFList, GFFStruct
 from pykotor.resource.type import ResourceReader, ResourceWriter, autoclose
 
 if TYPE_CHECKING:
@@ -147,11 +149,50 @@ class GFFBinaryReader(ResourceReader):
             self._load_field(gff_struct, data)
         elif field_count > 1:
             
-            # Read field indices array
+            # Read field indices array - batch read for efficiency
             self._reader.seek(self._field_indices_offset + data)
-            indices: list[int] = [self._reader.read_uint32() for _ in range(field_count)]
-            for index in indices:
-                self._load_field(gff_struct, index)
+            if field_count > 0:
+                indices_data = self._reader.read_bytes(field_count * 4)
+                indices = list(struct.unpack(f"<{field_count}I", indices_data))
+            else:
+                indices = []
+            # Optimize: batch read all field headers at once to reduce seeks
+            self._load_fields_batch(gff_struct, indices)
+
+    def _load_fields_batch(
+        self,
+        gff_struct: GFFStruct,
+        field_indices: list[int],
+    ):
+        """Optimized batch loading of multiple fields to reduce seeks.
+        
+        Reads all field headers in one batch operation, then processes each field.
+        This reduces seeks from N (one per field) to 1 (one batch read).
+        """
+        if not field_indices:
+            return
+        
+        # Calculate the range of field offsets we need to read
+        min_index = min(field_indices)
+        max_index = max(field_indices)
+        
+        # Read all field headers in one batch (12 bytes per field header)
+        batch_start = self._field_offset + min_index * 12
+        batch_size = (max_index - min_index + 1) * 12
+        self._reader.seek(batch_start)
+        batch_data = self._reader.read_bytes(batch_size)
+        
+        # Optimize: process fields directly without intermediate list
+        # Extract labels list reference once for faster access
+        labels = self._labels
+        for field_index in field_indices:
+            # Calculate offset within batch
+            offset_in_batch = (field_index - min_index) * 12
+            # Parse field header: field_type (4), label_id (4), data/offset (4)
+            # Use struct.unpack_from for better performance (avoids slice allocation)
+            field_type_id, label_id, data_or_offset = struct.unpack_from("<III", batch_data, offset_in_batch)
+            label = labels[label_id]
+            self._load_field_value_by_id(gff_struct, field_type_id, label, data_or_offset)
 
     def _load_field(
         self,
@@ -162,82 +203,113 @@ class GFFBinaryReader(ResourceReader):
         self._reader.seek(self._field_offset + field_index * 12)
         field_type_id = self._reader.read_uint32()
         label_id = self._reader.read_uint32()
+        data_or_offset = self._reader.read_uint32()
 
-        field_type = GFFFieldType(field_type_id)
         label = self._labels[label_id]
+        # Optimize: use integer comparisons instead of enum lookups in hot path
+        self._load_field_value_by_id(gff_struct, field_type_id, label, data_or_offset)
 
+    def _load_field_value_by_id(
+        self,
+        gff_struct: GFFStruct,
+        field_type_id: int,
+        label: str,
+        data_or_offset: int,
+    ):
+        """Load a field value using integer field type ID (optimized hot path).
+        
+        Uses integer comparisons instead of enum lookups for better performance.
+        """
         # Handle complex fields (stored in field data section) vs simple fields (inline)
-        if field_type in _COMPLEX_FIELD:
-            offset = self._reader.read_uint32()  # relative to field data
+        # Use integer comparisons: UInt64=6, Int64=7, Double=9, String=10, ResRef=11,
+        # LocalizedString=12, Binary=13, Vector4=16, Vector3=17
+        if field_type_id in (6, 7, 9, 10, 11, 12, 13, 16, 17):  # _COMPLEX_FIELD values
+            offset = data_or_offset  # relative to field data
             self._reader.seek(self._field_data_offset + offset)
-            if field_type == GFFFieldType.UInt64:
-                
+            if field_type_id == 6:  # GFFFieldType.UInt64
                 gff_struct.set_uint64(label, self._reader.read_uint64())
-            elif field_type == GFFFieldType.Int64:
-                
+            elif field_type_id == 7:  # GFFFieldType.Int64
                 gff_struct.set_int64(label, self._reader.read_int64())
-            elif field_type == GFFFieldType.Double:
+            elif field_type_id == 9:  # GFFFieldType.Double
                 gff_struct.set_double(label, self._reader.read_double())
-            elif field_type == GFFFieldType.String:
-                
+            elif field_type_id == 10:  # GFFFieldType.String
                 length = self._reader.read_uint32()
                 gff_struct.set_string(label, self._reader.read_string(length))
-            elif field_type == GFFFieldType.ResRef:
-                
+            elif field_type_id == 11:  # GFFFieldType.ResRef
                 length = self._reader.read_uint8()
                 resref = ResRef(self._reader.read_string(length).strip())
                 gff_struct.set_resref(label, resref)
-            elif field_type == GFFFieldType.LocalizedString:
-                
+            elif field_type_id == 12:  # GFFFieldType.LocalizedString
                 # NOTE: reone warns if count > 1, but PyKotor reads all substrings
                 gff_struct.set_locstring(label, self._reader.read_locstring())
-            elif field_type == GFFFieldType.Binary:
-                
+            elif field_type_id == 13:  # GFFFieldType.Binary
                 length = self._reader.read_uint32()
                 gff_struct.set_binary(label, self._reader.read_bytes(length))
-            elif field_type == GFFFieldType.Vector3:
+            elif field_type_id == 17:  # GFFFieldType.Vector3
                 gff_struct.set_vector3(label, self._reader.read_vector3())
-            elif field_type == GFFFieldType.Vector4:
+            elif field_type_id == 16:  # GFFFieldType.Vector4
                 gff_struct.set_vector4(label, self._reader.read_vector4())
-        elif field_type == GFFFieldType.Struct:
-            
-            struct_index = self._reader.read_uint32()
+        elif field_type_id == 14:  # GFFFieldType.Struct
+            struct_index = data_or_offset
             new_struct = GFFStruct()
             self._load_struct(new_struct, struct_index)
             gff_struct.set_struct(label, new_struct)
-        elif field_type == GFFFieldType.List:
-            
-            self._load_list(gff_struct, label)
-        elif field_type == GFFFieldType.UInt8:
-            
-            gff_struct.set_uint8(label, self._reader.read_uint8())
-        elif field_type == GFFFieldType.Int8:
-            
-            gff_struct.set_int8(label, self._reader.read_int8())
-        elif field_type == GFFFieldType.UInt16:
-            
-            gff_struct.set_uint16(label, self._reader.read_uint16())
-        elif field_type == GFFFieldType.Int16:
-            
-            gff_struct.set_int16(label, self._reader.read_int16())
-        elif field_type == GFFFieldType.UInt32:
-            
-            gff_struct.set_uint32(label, self._reader.read_uint32())
-        elif field_type == GFFFieldType.Int32:
-            
-            gff_struct.set_int32(label, self._reader.read_int32())
-        elif field_type == GFFFieldType.Single:
-            
-            gff_struct.set_single(label, self._reader.read_single())
+        elif field_type_id == 15:  # GFFFieldType.List
+            self._load_list(gff_struct, label, data_or_offset)
+        elif field_type_id == 0:  # GFFFieldType.UInt8
+            # Inline: data is in the first byte of data_or_offset (little-endian)
+            gff_struct.set_uint8(label, data_or_offset & 0xFF)
+        elif field_type_id == 1:  # GFFFieldType.Int8
+            # Inline: data is in the first byte, interpret as signed
+            byte_value = data_or_offset & 0xFF
+            # Sign extend: if bit 7 is set, extend sign to 32 bits
+            if byte_value & 0x80:
+                int8_value = byte_value | 0xFFFFFF00
+            else:
+                int8_value = byte_value
+            gff_struct.set_int8(label, int8_value)
+        elif field_type_id == 2:  # GFFFieldType.UInt16
+            # Inline: data is in the first 2 bytes of data_or_offset (little-endian)
+            gff_struct.set_uint16(label, data_or_offset & 0xFFFF)
+        elif field_type_id == 3:  # GFFFieldType.Int16
+            # Inline: data is in the first 2 bytes, interpret as signed
+            word_value = data_or_offset & 0xFFFF
+            # Sign extend: if bit 15 is set, extend sign to 32 bits
+            if word_value & 0x8000:
+                int16_value = word_value | 0xFFFF0000
+            else:
+                int16_value = word_value
+            gff_struct.set_int16(label, int16_value)
+        elif field_type_id == 4:  # GFFFieldType.UInt32
+            # Inline: data is the full 4 bytes
+            gff_struct.set_uint32(label, data_or_offset)
+        elif field_type_id == 5:  # GFFFieldType.Int32
+            # Inline: data is the full 4 bytes interpreted as signed
+            # Use ctypes for faster conversion (avoids struct pack/unpack overhead)
+            int32_value = struct.unpack("<i", struct.pack("<I", data_or_offset))[0]
+            gff_struct.set_int32(label, int32_value)
+        elif field_type_id == 8:  # GFFFieldType.Single
+            # Inline: data is the full 4 bytes interpreted as float
+            # Use struct.unpack directly on the 4-byte value
+            float_value = struct.unpack("<f", struct.pack("<I", data_or_offset))[0]
+            gff_struct.set_single(label, float_value)
         # NOTE: StrRef field type not supported (reone supports at gffreader.cpp:141-142, 199-204)
 
-    def _load_list(self, gff_struct: GFFStruct, label: str):
+    def _load_list(self, gff_struct: GFFStruct, label: str, offset: int | None = None):
         
-        offset = self._reader.read_uint32()  # relative to list indices
+        if offset is None:
+            offset = self._reader.read_uint32()  # relative to list indices
         self._reader.seek(self._list_indices_offset + offset)
         value = GFFList()
         count = self._reader.read_uint32()
-        list_indices: list[int] = [self._reader.read_uint32() for _ in range(count)]
+        
+        # Optimize: batch read all list indices at once instead of one-by-one
+        if count > 0:
+            indices_data = self._reader.read_bytes(count * 4)
+            list_indices = list(struct.unpack(f"<{count}I", indices_data))
+        else:
+            list_indices = []
+        
         for struct_index in list_indices:
             value.add(0)
             child: GFFStruct | None = value.at(len(value) - 1)

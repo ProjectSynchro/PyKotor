@@ -459,10 +459,10 @@
               </size>
              </property>
              <property name="minimum">
-              <number>-2147483648</number>
+              <number>-32768</number>
              </property>
              <property name="maximum">
-              <number>2147483647</number>
+              <number>32767</number>
              </property>
             </widget>
            </item>
@@ -482,10 +482,10 @@
               </size>
              </property>
              <property name="minimum">
-              <number>-2147483648</number>
+              <number>-32768</number>
              </property>
              <property name="maximum">
-              <number>2147483647</number>
+              <number>32767</number>
              </property>
             </widget>
            </item>

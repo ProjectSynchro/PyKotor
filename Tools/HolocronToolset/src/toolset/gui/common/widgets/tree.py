@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING, Any, Callable
 import qtpy
 
 from qtpy.QtCore import QEvent, QModelIndex, QRect, QSettings, QTimer, Qt
-from qtpy.QtGui import QColor, QStandardItem
+from qtpy.QtGui import QColor, QPalette, QStandardItem
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QAction,  # pyright: ignore[reportPrivateImportUsage]
     QActionGroup,  # pyright: ignore[reportPrivateImportUsage]
+    QApplication,
     QColorDialog,
     QHeaderView,
     QInputDialog,
@@ -137,6 +138,21 @@ class RobustTreeView(QTreeView):
             if model is not None:
                 model.layoutAboutToBeChanged.emit()
         self.layoutChangedDebounceTimer.start(timeout)
+
+    def _get_default_text_color(self) -> QColor:
+        """Get the default text color from the application palette.
+        
+        Returns:
+            QColor from the palette's WindowText role, or black as fallback
+        """
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+            text_color = palette.color(QPalette.ColorRole.WindowText)
+            if text_color.isValid():
+                return text_color
+        # Fallback to black if no application or invalid color
+        return QColor(0, 0, 0)
 
     def draw_circle(
         self,
@@ -388,7 +404,7 @@ class RobustTreeView(QTreeView):
         self._add_color_menu_action(
             display_settings_menu,
             "Set Text Color",
-            lambda: QColor(self.settings.get("textColor", QColor(0, 0, 0))),
+            lambda: QColor(self.settings.get("textColor", self._get_default_text_color())),
             settings_key="textColor",
         )
 

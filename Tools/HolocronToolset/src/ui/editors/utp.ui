@@ -228,6 +228,9 @@
               <layout class="QHBoxLayout" name="horizontalLayout_16">
                <item>
                 <widget class="QLineEdit" name="tagEdit">
+                 <property name="maxLength">
+                  <number>16</number>
+                 </property>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                    <horstretch>0</horstretch>
@@ -473,7 +476,7 @@
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QSpinBox" name="currenHpSpin">
+            <widget class="QSpinBox" name="currentHpSpin">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                <horstretch>0</horstretch>
@@ -487,10 +490,10 @@
               </size>
              </property>
              <property name="minimum">
-              <number>-2147483648</number>
+              <number>-32768</number>
              </property>
              <property name="maximum">
-              <number>2147483647</number>
+              <number>32767</number>
              </property>
             </widget>
            </item>

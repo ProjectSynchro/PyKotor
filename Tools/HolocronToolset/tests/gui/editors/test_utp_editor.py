@@ -425,7 +425,7 @@ def test_utp_editor_manipulate_hp_spins(qtbot, installation: HTInstallation, tes
     # Test current HP
     test_current_hp = [1, 10, 50, 100, 500]
     for val in test_current_hp:
-        editor.ui.currenHpSpin.setValue(val)
+        editor.ui.currentHpSpin.setValue(val)
         data, _ = editor.build()
         modified_utp = read_utp(data)
         assert modified_utp.current_hp == val
@@ -883,7 +883,7 @@ def test_utp_editor_manipulate_all_advanced_fields_combination(qtbot, installati
     if editor.ui.factionSelect.count() > 0:
         editor.ui.factionSelect.setCurrentIndex(1)
     editor.ui.animationState.setValue(5)
-    editor.ui.currenHpSpin.setValue(50)
+    editor.ui.currentHpSpin.setValue(50)
     editor.ui.maxHpSpin.setValue(100)
     editor.ui.hardnessSpin.setValue(10)
     editor.ui.fortitudeSpin.setValue(15)
@@ -992,7 +992,7 @@ def test_utp_editor_save_load_roundtrip_with_modifications(qtbot, installation: 
     
     # Make modifications
     editor.ui.tagEdit.setText("modified_roundtrip")
-    editor.ui.currenHpSpin.setValue(75)
+    editor.ui.currentHpSpin.setValue(75)
     editor.ui.maxHpSpin.setValue(150)
     editor.ui.hasInventoryCheckbox.setChecked(True)
     editor.ui.lockedCheckbox.setChecked(True)
@@ -1007,7 +1007,7 @@ def test_utp_editor_save_load_roundtrip_with_modifications(qtbot, installation: 
     
     # Verify modifications preserved
     assert editor.ui.tagEdit.text() == "modified_roundtrip"
-    assert editor.ui.currenHpSpin.value() == 75
+    assert editor.ui.currentHpSpin.value() == 75
     assert editor.ui.maxHpSpin.value() == 150
     assert editor.ui.hasInventoryCheckbox.isChecked()
     assert editor.ui.lockedCheckbox.isChecked()
@@ -1041,7 +1041,7 @@ def test_utp_editor_multiple_save_load_cycles(qtbot, installation: HTInstallatio
     for cycle in range(5):
         # Modify
         editor.ui.tagEdit.setText(f"cycle_{cycle}")
-        editor.ui.currenHpSpin.setValue(10 + cycle * 10)
+        editor.ui.currentHpSpin.setValue(10 + cycle * 10)
         
         # Save
         data, _ = editor.build()
@@ -1056,7 +1056,7 @@ def test_utp_editor_multiple_save_load_cycles(qtbot, installation: HTInstallatio
         
         # Verify loaded
         assert editor.ui.tagEdit.text() == f"cycle_{cycle}"
-        assert editor.ui.currenHpSpin.value() == 10 + cycle * 10
+        assert editor.ui.currentHpSpin.value() == 10 + cycle * 10
 
 # ============================================================================
 # EDGE CASES AND BOUNDARY TESTS
@@ -1078,7 +1078,7 @@ def test_utp_editor_minimum_values(qtbot, installation: HTInstallation, test_fil
     editor.ui.tagEdit.setText("")
     editor.ui.resrefEdit.setText("")
     editor.ui.keyEdit.setText("")
-    editor.ui.currenHpSpin.setValue(0)
+    editor.ui.currentHpSpin.setValue(0)
     editor.ui.maxHpSpin.setValue(0)
     editor.ui.hardnessSpin.setValue(0)
     editor.ui.fortitudeSpin.setValue(0)
@@ -1112,7 +1112,7 @@ def test_utp_editor_maximum_values(qtbot, installation: HTInstallation, test_fil
     editor.ui.tagEdit.setText("x" * 32)  # Max tag length
     # CurrentHP and HP are stored as int16 in GFF, so max is 32767 (not QSpinBox max of 2147483647)
     max_int16 = 32767
-    editor.ui.currenHpSpin.setValue(max_int16)
+    editor.ui.currentHpSpin.setValue(max_int16)
     editor.ui.maxHpSpin.setValue(max_int16)
     editor.ui.hardnessSpin.setValue(editor.ui.hardnessSpin.maximum())
     editor.ui.fortitudeSpin.setValue(editor.ui.fortitudeSpin.maximum())
@@ -1277,7 +1277,7 @@ def test_utp_editor_gff_roundtrip_with_modifications(qtbot, installation: HTInst
     
     # Make modifications
     editor.ui.tagEdit.setText("modified_gff_test")
-    editor.ui.currenHpSpin.setValue(50)
+    editor.ui.currentHpSpin.setValue(50)
     editor.ui.hasInventoryCheckbox.setChecked(True)
     
     # Save
@@ -1311,7 +1311,7 @@ def test_utp_editor_new_file_creation(qtbot, installation: HTInstallation):
     editor.ui.resrefEdit.setText("new_placeable")
     if editor.ui.appearanceSelect.count() > 0:
         editor.ui.appearanceSelect.setCurrentIndex(0)
-    editor.ui.currenHpSpin.setValue(100)
+    editor.ui.currentHpSpin.setValue(100)
     editor.ui.maxHpSpin.setValue(100)
     editor.ui.hasInventoryCheckbox.setChecked(True)
     editor.ui.commentsEdit.setPlainText("New placeable comment")
@@ -1461,7 +1461,7 @@ def test_utpeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Trigger help dialog with the correct file for UTPEditor
     editor._show_help_dialog("GFF-UTP.md")
-    qtbot.wait(200)  # Wait for dialog to be created
+    QtBot.wait(200)  # Wait for dialog to be created
     
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]

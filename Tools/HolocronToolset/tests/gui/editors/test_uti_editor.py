@@ -123,7 +123,7 @@ class UTIEditorTest(TestCase):
             diff = old.compare(new, self.log_func, ignore_default_changes=True)
             assert diff, os.linesep.join(self.log_messages)
 
-    def test_basic_syntax(self):
+    def test_editor_init(self):
         self.UTIEditor(None, self.INSTALLATION)
 
 
@@ -308,22 +308,22 @@ def test_uti_editor_icon_updates(qtbot, installation: HTInstallation):
     if editor.ui.baseSelect.count() > 0:
         # Test icon updates when base changes
         editor.ui.baseSelect.setCurrentIndex(0)
-        qtbot.wait(100)  # Allow icon to load
+        QtBot.wait(100)  # Allow icon to load
         
         # Test icon updates when model variation changes
         for val in [0, 1, 2, 3]:
             editor.ui.modelVarSpin.setValue(val)
-            qtbot.wait(50)
+            QtBot.wait(50)
         
         # Test icon updates when body variation changes
         for val in [0, 1, 2]:
             editor.ui.bodyVarSpin.setValue(val)
-            qtbot.wait(50)
+            QtBot.wait(50)
         
         # Test icon updates when texture variation changes
         for val in [0, 1, 2]:
             editor.ui.textureVarSpin.setValue(val)
-            qtbot.wait(50)
+            QtBot.wait(50)
         
         # Verify icon label has tooltip
         assert editor.ui.iconLabel.toolTip()
@@ -435,7 +435,7 @@ def test_uti_editor_context_menu(qtbot, installation: HTInstallation):
     # Right-click icon label
     if editor.ui.baseSelect.count() > 0:
         editor.ui.baseSelect.setCurrentIndex(0)
-        qtbot.wait(100)
+        QtBot.wait(100)
         
         # Context menu should be available
         assert editor.ui.iconLabel.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
@@ -454,7 +454,7 @@ def test_utieditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Trigger help dialog with the correct file for UTIEditor
     editor._show_help_dialog("GFF-UTI.md")
-    qtbot.wait(200)  # Wait for dialog to be created
+    QtBot.wait(200)  # Wait for dialog to be created
     
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]

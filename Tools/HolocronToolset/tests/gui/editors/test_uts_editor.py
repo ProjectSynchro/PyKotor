@@ -168,7 +168,7 @@ def test_uts_editor_manipulate_play_random_radio(qtbot, installation: HTInstalla
     editor.ui.playRandomRadio.setChecked(True)
     editor.ui.northRandomSpin.setValue(5.0)
     editor.ui.eastRandomSpin.setValue(5.0)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Save and verify
     data, _ = editor.build()
@@ -189,7 +189,7 @@ def test_uts_editor_manipulate_play_specific_radio(qtbot, installation: HTInstal
     
     # Set play specific
     editor.ui.playSpecificRadio.setChecked(True)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Save and verify
     data, _ = editor.build()
@@ -212,7 +212,7 @@ def test_uts_editor_manipulate_play_everywhere_radio(qtbot, installation: HTInst
     editor.ui.playEverywhereRadio.setChecked(True)
     editor.ui.northRandomSpin.setValue(0)
     editor.ui.eastRandomSpin.setValue(0)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Save and verify
     data, _ = editor.build()
@@ -235,7 +235,7 @@ def test_uts_editor_manipulate_order_sequential_radio(qtbot, installation: HTIns
     
     # Set sequential order
     editor.ui.orderSequentialRadio.setChecked(True)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Save and verify
     data, _ = editor.build()
@@ -256,7 +256,7 @@ def test_uts_editor_manipulate_order_random_radio(qtbot, installation: HTInstall
     
     # Set random order
     editor.ui.orderRandomRadio.setChecked(True)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Save and verify
     data, _ = editor.build()
@@ -337,7 +337,7 @@ def test_uts_editor_add_sound(qtbot, installation: HTInstallation, test_files_di
     
     # Add a sound
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify sound was added
     assert editor.ui.soundList.count() == initial_count + 1
@@ -346,7 +346,7 @@ def test_uts_editor_add_sound(qtbot, installation: HTInstallation, test_files_di
     new_item = editor.ui.soundList.item(editor.ui.soundList.count() - 1)
     if new_item:
         new_item.setText("test_sound")
-        qtbot.wait(10)
+        QtBot.wait(10)
     
     # Save and verify
     data, _ = editor.build()
@@ -368,17 +368,17 @@ def test_uts_editor_remove_sound(qtbot, installation: HTInstallation, test_files
     
     # Add a sound first
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     initial_count = editor.ui.soundList.count()
     
     # Select last sound
     editor.ui.soundList.setCurrentRow(initial_count - 1)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Remove selected sound
     editor.remove_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify sound was removed
     assert editor.ui.soundList.count() == initial_count - 1
@@ -396,9 +396,9 @@ def test_uts_editor_move_sound_up(qtbot, installation: HTInstallation, test_file
     
     # Add multiple sounds
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     if editor.ui.soundList.count() >= 2:
         # Get second-to-last sound name
@@ -408,11 +408,11 @@ def test_uts_editor_move_sound_up(qtbot, installation: HTInstallation, test_file
             
             # Select last sound
             editor.ui.soundList.setCurrentRow(editor.ui.soundList.count() - 1)
-            qtbot.wait(10)
+            QtBot.wait(10)
             
             # Move up
             editor.move_sound_up()
-            qtbot.wait(10)
+            QtBot.wait(10)
             
             # Verify moved
             new_pos = editor.ui.soundList.currentRow()
@@ -433,9 +433,9 @@ def test_uts_editor_move_sound_down(qtbot, installation: HTInstallation, test_fi
     
     # Add multiple sounds
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     if editor.ui.soundList.count() >= 2:
         # Get second-to-last sound name
@@ -446,11 +446,11 @@ def test_uts_editor_move_sound_down(qtbot, installation: HTInstallation, test_fi
             
             # Select second-to-last
             editor.ui.soundList.setCurrentRow(editor.ui.soundList.count() - 2)
-            qtbot.wait(10)
+            QtBot.wait(10)
             
             # Move down
             editor.move_sound_down()
-            qtbot.wait(10)
+            QtBot.wait(10)
             
             # Verify moved
             new_pos = editor.ui.soundList.currentRow()
@@ -471,13 +471,13 @@ def test_uts_editor_edit_sound_item(qtbot, installation: HTInstallation, test_fi
     
     # Add a sound
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Edit the sound
     item = editor.ui.soundList.item(editor.ui.soundList.count() - 1)
     if item:
         item.setText("edited_sound")
-        qtbot.wait(10)
+        QtBot.wait(10)
         
         # Save and verify
         data, _ = editor.build()
@@ -499,11 +499,11 @@ def test_uts_editor_multiple_sounds(qtbot, installation: HTInstallation, test_fi
     # Add multiple sounds
     for i in range(5):
         editor.add_sound()
-        qtbot.wait(10)
+        QtBot.wait(10)
         item = editor.ui.soundList.item(editor.ui.soundList.count() - 1)
         if item:
             item.setText(f"sound_{i}")
-            qtbot.wait(10)
+            QtBot.wait(10)
     
     # Verify all were added
     assert editor.ui.soundList.count() >= 5
@@ -533,7 +533,7 @@ def test_uts_editor_manipulate_style_once_radio(qtbot, installation: HTInstallat
     editor.ui.styleOnceRadio.setChecked(True)
     # Manually trigger change_style to ensure UI is updated (signals may not fire reliably in headless mode)
     editor.change_style()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify interval group is disabled
     assert not editor.ui.intervalGroup.isEnabled()
@@ -558,7 +558,7 @@ def test_uts_editor_manipulate_style_repeat_radio(qtbot, installation: HTInstall
     
     # Set style repeat
     editor.ui.styleRepeatRadio.setChecked(True)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Save and verify
     data, _ = editor.build()
@@ -582,7 +582,7 @@ def test_uts_editor_manipulate_style_seamless_radio(qtbot, installation: HTInsta
     editor.ui.styleSeamlessRadio.setChecked(True)
     # Manually trigger change_style to ensure UI is updated (signals may not fire reliably in headless mode)
     editor.change_style()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify style groups are disabled
     assert not editor.ui.intervalGroup.isEnabled()
@@ -768,7 +768,7 @@ def test_uts_editor_manipulate_all_playback_fields_combination(qtbot, installati
     editor.ui.intervalVariationSpin.setValue(2)  # QSpinBox requires int
     editor.ui.volumeVariationSlider.setValue(25)
     editor.ui.pitchVariationSlider.setValue(50)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Save and verify all
     data, _ = editor.build()
@@ -799,7 +799,7 @@ def test_uts_editor_manipulate_all_positioning_fields_combination(qtbot, install
     editor.ui.cutoffSpin.setValue(50.0)
     editor.ui.maxVolumeDistanceSpin.setValue(25.0)
     editor.ui.heightSpin.setValue(10.0)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Save and verify all
     data, _ = editor.build()
@@ -866,11 +866,11 @@ def test_uts_editor_save_load_roundtrip_with_modifications(qtbot, installation: 
     
     # Add a sound
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     item = editor.ui.soundList.item(editor.ui.soundList.count() - 1)
     if item:
         item.setText("test_sound")
-        qtbot.wait(10)
+        QtBot.wait(10)
     
     # Save
     data1, _ = editor.build()
@@ -1130,11 +1130,11 @@ def test_uts_editor_new_file_creation(qtbot, installation: HTInstallation):
     
     # Add a sound
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     item = editor.ui.soundList.item(0)
     if item:
         item.setText("test_sound")
-        qtbot.wait(10)
+        QtBot.wait(10)
     
     # Build and verify
     data, _ = editor.build()
@@ -1228,7 +1228,7 @@ def test_uts_editor_add_sound_button(qtbot, installation: HTInstallation, test_f
     
     # Click add sound button
     qtbot.mouseClick(editor.ui.addSoundButton, Qt.MouseButton.LeftButton)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify sound was added
     assert editor.ui.soundList.count() == initial_count + 1
@@ -1246,17 +1246,17 @@ def test_uts_editor_remove_sound_button(qtbot, installation: HTInstallation, tes
     
     # Add a sound first
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     initial_count = editor.ui.soundList.count()
     
     # Select last sound
     editor.ui.soundList.setCurrentRow(initial_count - 1)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Click remove button
     qtbot.mouseClick(editor.ui.removeSoundButton, Qt.MouseButton.LeftButton)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify sound was removed
     assert editor.ui.soundList.count() == initial_count - 1
@@ -1274,18 +1274,18 @@ def test_uts_editor_move_up_button(qtbot, installation: HTInstallation, test_fil
     
     # Add multiple sounds
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     if editor.ui.soundList.count() >= 2:
         # Select last sound
         editor.ui.soundList.setCurrentRow(editor.ui.soundList.count() - 1)
-        qtbot.wait(10)
+        QtBot.wait(10)
         
         # Click move up button
         qtbot.mouseClick(editor.ui.moveUpButton, Qt.MouseButton.LeftButton)
-        qtbot.wait(10)
+        QtBot.wait(10)
         
         # Verify moved
         assert editor.ui.soundList.currentRow() >= 0
@@ -1303,18 +1303,18 @@ def test_uts_editor_move_down_button(qtbot, installation: HTInstallation, test_f
     
     # Add multiple sounds
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     editor.add_sound()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     if editor.ui.soundList.count() >= 2:
         # Select first added sound
         editor.ui.soundList.setCurrentRow(editor.ui.soundList.count() - 2)
-        qtbot.wait(10)
+        QtBot.wait(10)
         
         # Click move down button
         qtbot.mouseClick(editor.ui.moveDownButton, Qt.MouseButton.LeftButton)
-        qtbot.wait(10)
+        QtBot.wait(10)
         
         # Verify moved
         assert editor.ui.soundList.currentRow() >= 0
@@ -1360,7 +1360,7 @@ def test_uts_editor_style_once_disables_interval_group(qtbot, installation: HTIn
     editor.ui.styleOnceRadio.setChecked(True)
     # Manually trigger change_style to ensure UI is updated (signals may not fire reliably in headless mode)
     editor.change_style()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify interval group is disabled
     assert not editor.ui.intervalGroup.isEnabled()
@@ -1384,7 +1384,7 @@ def test_uts_editor_style_seamless_disables_all_groups(qtbot, installation: HTIn
     editor.ui.styleSeamlessRadio.setChecked(True)
     # Manually trigger change_style to ensure UI is updated (signals may not fire reliably in headless mode)
     editor.change_style()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify all style groups are disabled
     assert not editor.ui.intervalGroup.isEnabled()
@@ -1406,7 +1406,7 @@ def test_uts_editor_style_repeat_enables_all_groups(qtbot, installation: HTInsta
     editor.ui.styleRepeatRadio.setChecked(True)
     # Manually trigger change_style to ensure UI is updated (signals may not fire reliably in headless mode)
     editor.change_style()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify all style groups are enabled
     assert editor.ui.intervalGroup.isEnabled()
@@ -1430,7 +1430,7 @@ def test_uts_editor_play_random_enables_range_groups(qtbot, installation: HTInst
     
     # Set play random
     editor.ui.playRandomRadio.setChecked(True)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify range, height, and distance groups are enabled
     assert editor.ui.rangeGroup.isEnabled()
@@ -1450,7 +1450,7 @@ def test_uts_editor_play_specific_disables_range_group(qtbot, installation: HTIn
     
     # Set play specific
     editor.ui.playSpecificRadio.setChecked(True)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify range group is disabled
     assert not editor.ui.rangeGroup.isEnabled()
@@ -1473,7 +1473,7 @@ def test_utseditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Trigger help dialog with the correct file for UTSEditor
     editor._show_help_dialog("GFF-UTS.md")
-    qtbot.wait(200)  # Wait for dialog to be created
+    QtBot.wait(200)  # Wait for dialog to be created
     
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
@@ -1505,7 +1505,7 @@ def test_utseditor_play_everywhere_disables_all_position_groups(qtbot, installat
     
     # Set play everywhere
     editor.ui.playEverywhereRadio.setChecked(True)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify all position groups are disabled
     assert not editor.ui.rangeGroup.isEnabled()

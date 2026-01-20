@@ -138,7 +138,7 @@ class GITEditorTest(TestCase):
         diff = old.compare(new, self.log_func, ignore_default_changes=True)
         assert diff, os.linesep.join(self.log_messages)
 
-    def test_basic_syntax(self): ...
+    def test_editor_init(self): ...
 
 
 if __name__ == "__main__":
@@ -2891,7 +2891,7 @@ def test_git_editor_undo_redo_with_keyboard_shortcuts(
     editor._controls.undo_stack.push(InsertCommand(editor._git, creature, editor))
 
     # Process events to ensure command is pushed
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     assert QApplication is not None, "QApplication type not found? This is a bug in the test setup."
     for _ in range(5):
         QApplication.processEvents()
@@ -2910,13 +2910,13 @@ def test_git_editor_undo_redo_with_keyboard_shortcuts(
 
     # Focus the editor
     editor.setFocus()
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(3):
         QApplication.processEvents()
 
     # Test UNDO via keyboard shortcut (Ctrl+Z)
     qtbot.keyClick(editor, Qt.Key.Key_Z, modifier=Qt.KeyboardModifier.ControlModifier)
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(5):
         QApplication.processEvents()
 
@@ -2928,7 +2928,7 @@ def test_git_editor_undo_redo_with_keyboard_shortcuts(
 
     # Test REDO via keyboard shortcut (Ctrl+Shift+Z)
     qtbot.keyClick(editor, Qt.Key.Key_Z, modifier=Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(5):
         QApplication.processEvents()
 
@@ -2982,7 +2982,7 @@ def test_git_editor_undo_redo_with_menu_actions(qtbot: QtBot, installation: HTIn
     editor._controls.undo_stack.push(InsertCommand(editor._git, creature, editor))
 
     # Process events
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     assert QApplication is not None, "QApplication type not found? This is a bug in the test setup."
     for _ in range(5):
         QApplication.processEvents()
@@ -2994,7 +2994,7 @@ def test_git_editor_undo_redo_with_menu_actions(qtbot: QtBot, installation: HTIn
 
     # Test UNDO via menu action
     editor.ui.actionUndo.trigger()
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(5):
         QApplication.processEvents()
 
@@ -3006,7 +3006,7 @@ def test_git_editor_undo_redo_with_menu_actions(qtbot: QtBot, installation: HTIn
 
     # Test REDO via menu action
     editor.ui.actionRedo.trigger()
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(5):
         QApplication.processEvents()
 
@@ -3056,7 +3056,7 @@ def test_git_editor_undo_redo_multiple_operations(qtbot: QtBot, installation: HT
     creature1.resref = ResRef("creature_1")
     editor._git.add(creature1)
     editor._controls.undo_stack.push(InsertCommand(editor._git, creature1, editor))
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     assert QApplication is not None, "QApplication type not found? This is a bug in the test setup."
     for _ in range(3):
         QApplication.processEvents()
@@ -3066,7 +3066,7 @@ def test_git_editor_undo_redo_multiple_operations(qtbot: QtBot, installation: HT
     creature2.resref = ResRef("creature_2")
     editor._git.add(creature2)
     editor._controls.undo_stack.push(InsertCommand(editor._git, creature2, editor))
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(3):
         QApplication.processEvents()
 
@@ -3075,7 +3075,7 @@ def test_git_editor_undo_redo_multiple_operations(qtbot: QtBot, installation: HT
     waypoint.resref = ResRef("waypoint_1")
     editor._git.add(waypoint)
     editor._controls.undo_stack.push(InsertCommand(editor._git, waypoint, editor))
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(3):
         QApplication.processEvents()
 
@@ -3088,20 +3088,20 @@ def test_git_editor_undo_redo_multiple_operations(qtbot: QtBot, installation: HT
 
     editor.show()
     editor.setFocus()
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(3):
         QApplication.processEvents()
 
     # Undo waypoint (last operation)
     qtbot.keyClick(editor, Qt.Key.Key_Z, modifier=Qt.KeyboardModifier.ControlModifier)
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(3):
         QApplication.processEvents()
     assert len(editor.git().waypoints) == initial_waypoint_count
 
     # Undo creature2
     qtbot.keyClick(editor, Qt.Key.Key_Z, modifier=Qt.KeyboardModifier.ControlModifier)
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(3):
         QApplication.processEvents()
     assert len(editor.git().creatures) == initial_creature_count + 1
@@ -3109,7 +3109,7 @@ def test_git_editor_undo_redo_multiple_operations(qtbot: QtBot, installation: HT
 
     # Undo creature1
     qtbot.keyClick(editor, Qt.Key.Key_Z, modifier=Qt.KeyboardModifier.ControlModifier)
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(3):
         QApplication.processEvents()
     assert len(editor.git().creatures) == initial_creature_count
@@ -3117,7 +3117,7 @@ def test_git_editor_undo_redo_multiple_operations(qtbot: QtBot, installation: HT
 
     # Redo creature1
     qtbot.keyClick(editor, Qt.Key.Key_Z, modifier=Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(3):
         QApplication.processEvents()
     assert len(editor.git().creatures) == initial_creature_count + 1
@@ -3125,7 +3125,7 @@ def test_git_editor_undo_redo_multiple_operations(qtbot: QtBot, installation: HT
 
     # Redo creature2
     qtbot.keyClick(editor, Qt.Key.Key_Z, modifier=Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(3):
         QApplication.processEvents()
     assert len(editor.git().creatures) == initial_creature_count + 2
@@ -3133,7 +3133,7 @@ def test_git_editor_undo_redo_multiple_operations(qtbot: QtBot, installation: HT
 
     # Redo waypoint
     qtbot.keyClick(editor, Qt.Key.Key_Z, modifier=Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
-    # Use multiple processEvents calls instead of qtbot.wait() to avoid access violations
+    # Use multiple processEvents calls instead of QtBot.wait() to avoid access violations
     for _ in range(3):
         QApplication.processEvents()
     assert len(editor.git().waypoints) == initial_waypoint_count + 1

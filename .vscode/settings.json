@@ -90,8 +90,8 @@
     "search.exclude": {
       "**/.history/**": true
     },
-    "files.watcherExclude": {
-      "**/.history/**": true
-    },
-    "cmake.ignoreCMakeListsMissing": true
+    "cmake.ignoreCMakeListsMissing": true,
+    "files.associations": {
+        "*.ui": "xml"
+    }
 }

@@ -16,8 +16,8 @@ from qtpy.QtCore import (
     Qt,
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
-from qtpy.QtGui import QColor, QCursor, QImage, QPainter, QPainterPath, QPen, QPixmap, QTransform
-from qtpy.QtWidgets import QWidget
+from qtpy.QtGui import QColor, QCursor, QImage, QPainter, QPainterPath, QPalette, QPen, QPixmap, QTransform
+from qtpy.QtWidgets import QApplication, QWidget
 
 from pykotor.resource.formats.bwm import BWM
 from pykotor.resource.formats.lyt import LYT
@@ -701,11 +701,22 @@ class WalkmeshRenderer(QWidget):
             targetRect = QRectF(QPointF(min_x, min_y), QPointF(max_x, max_y))
             painter.drawImage(targetRect, image_to_draw)
 
+        # Get palette colors for edges
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+            edge_color = palette.color(QPalette.ColorRole.Mid)
+            if not edge_color.isValid():
+                edge_color = palette.color(QPalette.ColorRole.Shadow)
+            edge_color.setAlpha(120)
+        else:
+            edge_color = QColor(10, 10, 10, 120)
+        
         pen: QPen = (
             QPen(Qt.PenStyle.NoPen)
             if self.hide_walkmesh_edges
             else QPen(
-                QColor(10, 10, 10, 120),
+                edge_color,
                 1 / self.camera.zoom(),
                 Qt.PenStyle.SolidLine,
             )
@@ -715,10 +726,24 @@ class WalkmeshRenderer(QWidget):
             painter.setBrush(self.material_color(face.material))
             painter.drawPath(path)
 
+        # Get palette colors for highlights
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+            from toolset.gui.common.palette_helpers import get_semantic_colors
+            colors = get_semantic_colors()
+            highlight_color = QColor(colors.get('warning', '#ffc800'))
+            edge_highlight_color = QColor(colors.get('warning', '#ffff00'))
+            boundary_color = QColor(colors.get('error', '#ff0000'))
+        else:
+            highlight_color = QColor(255, 200, 0)
+            edge_highlight_color = QColor(255, 255, 0)
+            boundary_color = QColor(255, 0, 0)
+        
         # Highlight a specific face/edge if requested
         if self._highlighted_face is not None:
             painter.setBrush(Qt.BrushStyle.NoBrush)
-            painter.setPen(QPen(QColor(255, 200, 0), 2 / self.camera.zoom()))
+            painter.setPen(QPen(highlight_color, 2 / self.camera.zoom()))
             path = self._walkmesh_face_cache.get(self._highlighted_face)
             if path is not None:
                 painter.drawPath(path)
@@ -732,13 +757,13 @@ class WalkmeshRenderer(QWidget):
                     3: (v1, v3),
                 }
                 p1, p2 = edge_points[self._highlighted_edge]
-                painter.setPen(QPen(QColor(255, 255, 0), 3 / self.camera.zoom()))
+                painter.setPen(QPen(edge_highlight_color, 3 / self.camera.zoom()))
                 painter.drawLine(QPointF(p1.x, p1.y), QPointF(p2.x, p2.y))
 
         if self.highlight_boundaries:
             for walkmesh in self._walkmeshes:
                 for face in walkmesh.walkable_faces():
-                    painter.setPen(QPen(QColor(255, 0, 0), 3 / self.camera.zoom()))
+                    painter.setPen(QPen(boundary_color, 3 / self.camera.zoom()))
                     path = QPainterPath()
                     if face.trans1 is not None:
                         path.moveTo(face.v1.x, face.v1.y)
@@ -771,7 +796,14 @@ class WalkmeshRenderer(QWidget):
                 
                 # Draw room boundary - just draw the bounding rectangle for the room dimensions
                 # Walkmeshes are already in world space, no need to transform by room.position
-                painter.setPen(QPen(QColor(100, 150, 255, 200), 2 / self.camera.zoom(), Qt.PenStyle.SolidLine))
+                app = QApplication.instance()
+                if app is not None and isinstance(app, QApplication):
+                    palette = app.palette()
+                    room_boundary_color = palette.color(QPalette.ColorRole.Link)
+                    room_boundary_color.setAlpha(200)
+                else:
+                    room_boundary_color = QColor(100, 150, 255, 200)
+                painter.setPen(QPen(room_boundary_color, 2 / self.camera.zoom(), Qt.PenStyle.SolidLine))
                 painter.setBrush(Qt.BrushStyle.NoBrush)
                 
                 # Draw rectangle representing the room's dimensions
@@ -796,9 +828,18 @@ class WalkmeshRenderer(QWidget):
                 painter.save()
                 painter.resetTransform()
                 
-                # Set up text rendering
-                painter.setPen(QPen(QColor(255, 255, 255, 255), 1))
-                painter.setBrush(QColor(0, 0, 0, 180))  # Semi-transparent black background
+                # Set up text rendering with palette colors
+                app = QApplication.instance()
+                if app is not None and isinstance(app, QApplication):
+                    palette = app.palette()
+                    text_color = palette.color(QPalette.ColorRole.WindowText)
+                    bg_color = palette.color(QPalette.ColorRole.Window)
+                    bg_color.setAlpha(180)
+                else:
+                    text_color = QColor(255, 255, 255, 255)
+                    bg_color = QColor(0, 0, 0, 180)
+                painter.setPen(QPen(text_color, 1))
+                painter.setBrush(bg_color)
                 
                 # Get text metrics to position it properly (bottom right)
                 font = painter.font()
@@ -824,8 +865,24 @@ class WalkmeshRenderer(QWidget):
         # Draw the pathfinding nodes and edges
         painter.setOpacity(1.0)
         if self._pth is not None:
+            # Get palette colors for path rendering
+            app = QApplication.instance()
+            if app is not None and isinstance(app, QApplication):
+                palette = app.palette()
+                from toolset.gui.common.palette_helpers import get_semantic_colors
+                colors = get_semantic_colors()
+                path_edge_color = palette.color(QPalette.ColorRole.Mid)
+                path_node_color = palette.color(QPalette.ColorRole.Mid)
+                path_hover_color = palette.color(QPalette.ColorRole.Base)
+                path_selected_color = QColor(colors.get('success', '#00ff00'))
+            else:
+                path_edge_color = QColor(200, 200, 200, 255)
+                path_node_color = QColor(200, 200, 200, 255)
+                path_hover_color = QColor(255, 255, 255, 255)
+                path_selected_color = QColor(0, 255, 0, 255)
+            
             for i, source in enumerate(self._pth):
-                painter.setPen(QPen(QColor(200, 200, 200, 255), self._path_edge_width, Qt.PenStyle.SolidLine))
+                painter.setPen(QPen(path_edge_color, self._path_edge_width, Qt.PenStyle.SolidLine))
                 for j in self._pth.outgoing(i):
                     target: Vector2 | None = self._pth.get(j.target)
                     assert target is not None, assert_with_variable_trace(target is not None)
@@ -833,17 +890,17 @@ class WalkmeshRenderer(QWidget):
 
             for point_2d in self._pth:
                 painter.setPen(QColor(0, 0, 0, 0))
-                painter.setBrush(QColor(200, 200, 200, 255))
+                painter.setBrush(path_node_color)
                 painter.drawEllipse(QPointF(point_2d.x, point_2d.y), self._path_node_size, self._path_node_size)
 
             for point_2d in self._path_nodes_under_mouse:
                 painter.setPen(QColor(0, 0, 0, 0))
-                painter.setBrush(QColor(255, 255, 255, 255))
+                painter.setBrush(path_hover_color)
                 painter.drawEllipse(QPointF(point_2d.x, point_2d.y), self._path_node_size, self._path_node_size)
 
             for point_2d in self.path_selection.all():
                 painter.setPen(QColor(0, 0, 0, 0))
-                painter.setBrush(QColor(0, 255, 0, 255))
+                painter.setBrush(path_selected_color)
                 painter.drawEllipse(QPointF(point_2d.x, point_2d.y), self._path_node_size, self._path_node_size)
 
         # Draw the git instances (represented as icons)
@@ -896,32 +953,78 @@ class WalkmeshRenderer(QWidget):
 
             # Draw encounter spawn points (if enabled)
             if not self.hide_spawn_points:
+                app = QApplication.instance()
+                if app is not None and isinstance(app, QApplication):
+                    palette = app.palette()
+                    spawn_color = palette.color(QPalette.ColorRole.Link)
+                    spawn_color.setAlpha(180)
+                    spawn_arrow_color = QColor(spawn_color)
+                    spawn_arrow_color.setAlpha(200)
+                else:
+                    spawn_color = QColor(180, 200, 255, 180)
+                    spawn_arrow_color = QColor(180, 200, 255, 200)
+                
                 painter.setOpacity(0.8)
                 painter.setPen(Qt.PenStyle.NoPen)
                 for encounter in self._git.encounters:
                     for spawn in encounter.spawn_points:
-                        painter.setBrush(QColor(180, 200, 255, 180))
+                        painter.setBrush(spawn_color)
                         painter.drawEllipse(QPointF(spawn.x, spawn.y), 3 / self.camera.zoom(), 3 / self.camera.zoom())
                         # Orientation arrow
                         length = 1.0
                         dx = math.sin(spawn.orientation) * length
                         dy = math.cos(spawn.orientation) * length
                         painter.setBrush(Qt.BrushStyle.NoBrush)
-                        painter.setPen(QPen(QColor(180, 200, 255, 200), 0.12))
+                        painter.setPen(QPen(spawn_arrow_color, 0.12))
                         painter.drawLine(QPointF(spawn.x, spawn.y), QPointF(spawn.x + dx, spawn.y + dy))
                         painter.setPen(Qt.PenStyle.NoPen)
 
+        # Get palette colors for highlights
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+            from toolset.gui.common.palette_helpers import get_semantic_colors
+            colors = get_semantic_colors()
+            hover_bg = palette.color(QPalette.ColorRole.Base)
+            hover_bg.setAlpha(35)
+            hover_highlight = QColor(colors.get('success', '#00dc00'))
+            hover_highlight.setAlpha(50)
+            hover_highlight_pen = QColor(colors.get('success', '#00ff00'))
+            hover_highlight_pen.setAlpha(75)
+            selected_bg = palette.color(QPalette.ColorRole.Base)
+            selected_bg.setAlpha(70)
+            selected_pen = palette.color(QPalette.ColorRole.WindowText)
+            selected_highlight = QColor(colors.get('success', '#00dc00'))
+            selected_highlight.setAlpha(100)
+            selected_highlight_pen = QColor(colors.get('success', '#00ff00'))
+            selected_highlight_pen.setAlpha(150)
+            point_color = palette.color(QPalette.ColorRole.Base)
+            point_color.setAlpha(200)
+            point_selected = palette.color(QPalette.ColorRole.WindowText)
+            success_color = QColor(colors.get('success', '#00ff00'))
+        else:
+            hover_bg = QColor(255, 255, 255, 35)
+            hover_highlight = QColor(0, 220, 0, 50)
+            hover_highlight_pen = QColor(0, 255, 0, 75)
+            selected_bg = QColor(255, 255, 255, 70)
+            selected_pen = QColor(255, 255, 255, 255)
+            selected_highlight = QColor(0, 220, 0, 100)
+            selected_highlight_pen = QColor(0, 255, 0, 150)
+            point_color = QColor(255, 255, 255, 200)
+            point_selected = QColor(255, 255, 255, 255)
+            success_color = QColor(0, 255, 0, 255)
+        
         # Highlight the first instance that is underneath the mouse
         if self._instances_under_mouse:
             instance: GITInstance = self._instances_under_mouse[0]
 
-            painter.setBrush(QColor(255, 255, 255, 35))
+            painter.setBrush(hover_bg)
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawEllipse(QPointF(instance.position.x, instance.position.y), 1, 1)
 
             # If its a trigger or an encounter, this will draw the geometry stored inside it
-            painter.setBrush(QColor(0, 220, 0, 50))
-            painter.setPen(QPen(QColor(0, 255, 0, 75), 2 / self.camera.zoom()))
+            painter.setBrush(hover_highlight)
+            painter.setPen(QPen(hover_highlight_pen, 2 / self.camera.zoom()))
             painter.drawPath(self._build_instance_bounds(instance))
 
         # Highlight first geom point that is underneath the mouse
@@ -930,7 +1033,7 @@ class WalkmeshRenderer(QWidget):
             point = gpoint.instance.position + gpoint.point
 
             if not self.hide_geom_points:
-                painter.setBrush(QColor(255, 255, 255, 200))
+                painter.setBrush(point_color)
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawEllipse(QPointF(point.x, point.y), 4 / self.camera.zoom(), 4 / self.camera.zoom())
 
@@ -938,24 +1041,24 @@ class WalkmeshRenderer(QWidget):
         if self._spawn_points_under_mouse and not self.hide_spawn_points:
             sp_ref: EncounterSpawnPoint = self._spawn_points_under_mouse[0]
             sp = sp_ref.spawn
-            painter.setBrush(QColor(255, 255, 255, 200))
+            painter.setBrush(point_color)
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawEllipse(QPointF(sp.x, sp.y), 4 / self.camera.zoom(), 4 / self.camera.zoom())
 
         # Highlight selected instances
         for instance in self.instance_selection.all():
-            painter.setBrush(QColor(255, 255, 255, 70))
-            painter.setPen(QPen(QColor(255, 255, 255, 255), 1 / self.camera.zoom()))
+            painter.setBrush(selected_bg)
+            painter.setPen(QPen(selected_pen, 1 / self.camera.zoom()))
             painter.drawEllipse(QPointF(instance.position.x, instance.position.y), 1, 1)
 
             # If its a trigger or an encounter, this will draw the geometry stored inside it
-            painter.setBrush(QColor(0, 220, 0, 100))
-            painter.setPen(QPen(QColor(0, 255, 0, 150), 2 / self.camera.zoom()))
+            painter.setBrush(selected_highlight)
+            painter.setPen(QPen(selected_highlight_pen, 2 / self.camera.zoom()))
             painter.drawPath(self._build_instance_bounds(instance))
 
             # If its a trigger or an encounter, this will draw the circles at the points making up the geometry
             if not self.hide_geom_points:
-                painter.setBrush(QColor(0, 255, 0, 255))
+                painter.setBrush(success_color)
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawPath(self._build_instance_bounds_points(instance))
 
@@ -967,13 +1070,13 @@ class WalkmeshRenderer(QWidget):
                 l2px: float = instance.position.x + math.cos(instance_yaw_value + math.pi / 2) * 1.3
                 l2py: float = instance.position.y + math.sin(instance_yaw_value + math.pi / 2) * 1.3
                 painter.setBrush(Qt.BrushStyle.NoBrush)
-                painter.setPen(QPen(QColor(255, 255, 255, 255), 0.15))
+                painter.setPen(QPen(selected_pen, 0.15))
                 painter.drawLine(QPointF(l1px, l1py), QPointF(l2px, l2py))
 
         # Highlight selected geometry points
         for geom_point in self.geometry_selection.all():
             point: Vector3 = geom_point.point + geom_point.instance.position
-            painter.setBrush(QColor(255, 255, 255, 255))
+            painter.setBrush(point_selected)
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawEllipse(QPointF(point.x, point.y), 4 / self.camera.zoom(), 4 / self.camera.zoom())
 
@@ -983,7 +1086,7 @@ class WalkmeshRenderer(QWidget):
                 if sp_ref.spawn not in sp_ref.encounter.spawn_points:
                     continue
                 sp = sp_ref.spawn
-                painter.setBrush(QColor(255, 255, 255, 255))
+                painter.setBrush(point_selected)
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawEllipse(QPointF(sp.x, sp.y), 4 / self.camera.zoom(), 4 / self.camera.zoom())
                 # Orientation arrow

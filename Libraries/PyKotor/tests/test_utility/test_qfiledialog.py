@@ -1,23 +1,37 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 import os
 import sys
 import tempfile
 import unittest
 
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from qtpy.QtGui import QAction
-from qtpy.QtWidgets import QAbstractItemView
 import pytest
 
-from qtpy.QtCore import QAbstractItemModel, QDir, QEventLoop, QItemSelectionModel, QModelIndex, QObject, QSettings, QSortFilterProxyModel, QStandardPaths, QTemporaryDir, QTemporaryFile, QTime, QTimer, Qt, Slot
-
-from qtpy.QtGui import QCursor, QGuiApplication
+from qtpy.QtCore import (
+    QAbstractItemModel,
+    QDir,
+    QEventLoop,
+    QItemSelectionModel,
+    QModelIndex,
+    QObject,
+    QSettings,
+    QSortFilterProxyModel,
+    QStandardPaths,
+    QTemporaryDir,
+    QTemporaryFile,
+    QTime,
+    QTimer,
+    Qt,
+    Slot,
+)
+from qtpy.QtGui import QAction, QCursor, QGuiApplication
 from qtpy.QtTest import QSignalSpy, QTest
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QApplication,
     QComboBox,
     QDialog,
@@ -42,6 +56,14 @@ if TYPE_CHECKING:
     from qtpy.QtGui import QWindow
     from qtpy.QtWidgets import QCompleter
     from typing_extensions import Literal
+
+# Import qt_tildeExpansion function (matches C++ extern Q_GUI_EXPORT QString qt_tildeExpansion)
+# In C++ it's defined in qfilesystemmodel_p.h, but for Python we use a simple implementation
+def qt_tildeExpansion(path: str) -> str:
+    """Expand tilde in path. Matches C++ qt_tildeExpansion() implementation."""
+    if path.startswith("~"):
+        return os.path.expanduser(path)  # noqa: PTH111
+    return path
 
 class DialogRejecter(QObject):
     def __init__(self):
@@ -155,11 +177,8 @@ class TestQFileDialog(unittest.TestCase):
     def test_currentChangedSignal(self):
         fd = PythonQFileDialog()
         fd.setViewMode(RealQFileDialog.ViewMode.List)
-        file_dialog_ui = fd._private.qFileDialogUi
-        assert file_dialog_ui is not None, "File dialog UI was not found"
-        sel_model: QItemSelectionModel | None = file_dialog_ui.listView.selectionModel()
-        assert sel_model is not None, "Selection model was not found"
-        spy_current_changed = QSignalSpy(sel_model.currentChanged)
+        # Match C++: QSignalSpy spyCurrentChanged(&fd, SIGNAL(currentChanged(QString)));
+        spy_current_changed = QSignalSpy(fd.currentChanged)
 
         list_view: QListView | None = fd.findChild(QListView, "listView")
         assert list_view is not None, "QListView not found with name 'listView'"
@@ -1240,7 +1259,7 @@ class TestQFileDialog(unittest.TestCase):
         file, selected_filter = result2
         assert file == "", "File was not empty"
         assert selected_filter == "", "Selected filter is not an empty string"
-        assert file.endswith(".txt"), "File was not correct"
+        # Match C++: QVERIFY(file.isEmpty()); - just check it's empty, no .txt check
 
         file2: str = PythonQFileDialog.getExistingDirectory(None, "getExistingDirectory")
         assert file2 == "", "File was not empty"
@@ -1253,6 +1272,27 @@ class TestQFileDialog(unittest.TestCase):
         #    self.skipTest("This platform always uses widgets to realize its QFileDialog, instead of the native file dialog.")
         fd = PythonQFileDialog()
         fd.iconProvider()
+
+    def test_focusObjectDuringDestruction(self):
+        """Test that QFileDialog is never set as focus object after destruction begins.
+        
+        Matches C++ tst_QFiledialog::focusObjectDuringDestruction() implementation.
+        Tests QTBUG-57193 fix.
+        """
+        if QGuiApplication.platformName().startswith("wayland", Qt.CaseSensitivity.CaseInsensitive):
+            self.skipTest("Wayland: This freezes. Figure out why.")
+
+        # if sys.platform == "android":
+        #     self.skipTest("Rejecting dialog with escape or back button is not supported on Android tests.")
+
+        # Match C++: QTRY_VERIFY(QGuiApplication::topLevelWindows().isEmpty());
+        assert self.wait_for(lambda: len(QGuiApplication.topLevelWindows()) == 0, timeout=2000), "Top level windows were not empty"
+
+        # Match C++: qtbug57193DialogRejecter dialogRejecter;
+        dialog_rejecter = qtbug57193DialogRejecter()
+
+        # Match C++: QFileDialog::getOpenFileName(nullptr, QString(), QString(), QString(), nullptr);
+        PythonQFileDialog.getOpenFileName(None, "", "", "", None)
 
     def wait_for_window_exposed(self, window: QWidget) -> bool:
         # In offscreen mode, windowHandle().isExposed() may not work, so we just check visibility

@@ -6,13 +6,8 @@ from qtpy.QtCore import Qt, Signal  # pyright: ignore[reportPrivateImportUsage]
 from qtpy.QtWidgets import (
     QDialog,
     QDialogButtonBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QListWidget,
     QListWidgetItem,
     QPushButton,
-    QVBoxLayout,
 )
 
 from toolset.gui.common.localization import translate as tr
@@ -60,90 +55,30 @@ class ThemeSelectorDialog(QDialog):
         
     def _init_ui(self):
         """Set up the user interface."""
+        from toolset.uic.qtpy.dialogs.theme_selector import Ui_Dialog
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        
         self.setWindowTitle(tr("Theme Selection"))
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.WindowTitleHint)
-        self.resize(550, 650)
         
-        # Set minimum size for better usability
-        self.setMinimumSize(450, 500)
+        # Set stretch factor for current theme/style displays
+        self.ui.themesHeaderLayout.setStretchFactor(self.ui.currentThemeDisplay, 1)
+        self.ui.stylesHeaderLayout.setStretchFactor(self.ui.currentStyleDisplay, 1)
         
-        # Main layout
-        main_layout = QVBoxLayout(self)
-        main_layout.setSpacing(10)
-        main_layout.setContentsMargins(15, 15, 15, 15)
-        
-        # Search/filter box
-        search_label = QLabel(tr("Search:"))
-        self._search_edit = QLineEdit()
-        self._search_edit.setPlaceholderText(tr("Filter themes and styles..."))
-        self._search_edit.textChanged.connect(self._filter_items)
-        
-        search_layout = QVBoxLayout()
-        search_layout.addWidget(search_label)
-        search_layout.addWidget(self._search_edit)
-        main_layout.addLayout(search_layout)
-        
-        # Themes section
-        themes_header_layout = QHBoxLayout()
-        themes_label = QLabel(tr("Themes:"))
-        themes_label.setStyleSheet("font-weight: bold; font-size: 12pt; margin-top: 5px;")
-        self._current_theme_display = QLineEdit()
-        self._current_theme_display.setReadOnly(True)
-        self._current_theme_display.setPlaceholderText(tr("No theme selected"))
-        self._current_theme_display.setStyleSheet("background-color: palette(base); border: 1px solid palette(mid); padding: 2px;")
-        themes_header_layout.addWidget(themes_label)
-        themes_header_layout.addWidget(self._current_theme_display, 1)  # Stretch factor 1 to take remaining space
-        
-        self._themes_list = QListWidget()
-        self._themes_list.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
-        self._themes_list.itemClicked.connect(self._on_theme_selected)
-        self._themes_list.itemDoubleClicked.connect(self._on_theme_double_clicked)
-        self._themes_list.setMinimumHeight(200)
-        
-        themes_layout = QVBoxLayout()
-        themes_layout.setSpacing(5)
-        themes_layout.addLayout(themes_header_layout)
-        themes_layout.addWidget(self._themes_list)
-        main_layout.addLayout(themes_layout)
-        
-        # Styles section
-        styles_header_layout = QHBoxLayout()
-        styles_label = QLabel(tr("Application Styles:"))
-        styles_label.setStyleSheet("font-weight: bold; font-size: 12pt; margin-top: 5px;")
-        self._current_style_display = QLineEdit()
-        self._current_style_display.setReadOnly(True)
-        self._current_style_display.setPlaceholderText(tr("No style selected"))
-        self._current_style_display.setStyleSheet("background-color: palette(base); border: 1px solid palette(mid); padding: 2px;")
-        styles_header_layout.addWidget(styles_label)
-        styles_header_layout.addWidget(self._current_style_display, 1)  # Stretch factor 1 to take remaining space
-        
-        self._styles_list = QListWidget()
-        self._styles_list.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
-        self._styles_list.itemClicked.connect(self._on_style_selected)
-        self._styles_list.itemDoubleClicked.connect(self._on_style_double_clicked)
-        self._styles_list.setMaximumHeight(150)
-        
-        styles_layout = QVBoxLayout()
-        styles_layout.setSpacing(5)
-        styles_layout.addLayout(styles_header_layout)
-        styles_layout.addWidget(self._styles_list)
-        main_layout.addLayout(styles_layout)
-        
-        # Button box
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Close,
-            Qt.Orientation.Horizontal,
-            self,
-        )
-        button_box.rejected.connect(self.close)
+        # Connect signals
+        self.ui.searchEdit.textChanged.connect(self._filter_items)
+        self.ui.themesList.itemClicked.connect(self._on_theme_selected)
+        self.ui.themesList.itemDoubleClicked.connect(self._on_theme_double_clicked)
+        self.ui.stylesList.itemClicked.connect(self._on_style_selected)
+        self.ui.stylesList.itemDoubleClicked.connect(self._on_style_double_clicked)
+        self.ui.buttonBox.rejected.connect(self.close)
         
         # Apply button (for immediate application)
         apply_button = QPushButton(tr("Apply"))
         apply_button.setDefault(True)
         apply_button.clicked.connect(self._apply_selection)
-        button_box.addButton(apply_button, QDialogButtonBox.ButtonRole.AcceptRole)
-        
-        main_layout.addWidget(button_box)
+        self.ui.buttonBox.addButton(apply_button, QDialogButtonBox.ButtonRole.AcceptRole)
         
     def _populate_lists(self):
         """Populate the theme and style lists."""

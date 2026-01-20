@@ -92,6 +92,9 @@
             <layout class="QHBoxLayout" name="horizontalLayoutTag">
              <item>
               <widget class="QLineEdit" name="tagEdit">
+               <property name="maxLength">
+                <number>16</number>
+               </property>
                <property name="toolTip">
                 <string>Module tag identifier for script references. This is the script-accessible identifier used in GetModuleTag(), GetModule() functions. Defined by Mod_Tag field (CExoString) in the IFO GFF structure. Must be unique within the module.</string>
                </property>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1200</width>
-    <height>800</height>
+    <width>1400</width>
+    <height>900</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,150 +28,324 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayoutSaveInfo">
         <item>
-         <widget class="QGroupBox" name="groupBasicInfo">
-          <property name="title">
-           <string>Basic Information</string>
+         <widget class="QScrollArea" name="scrollAreaSaveInfo">
+          <property name="widgetResizable">
+           <bool>true</bool>
           </property>
-          <layout class="QFormLayout" name="formLayoutBasicInfo">
-           <item row="0" column="0">
-            <widget class="QLabel" name="labelSaveName">
-             <property name="text">
-              <string>Save Name:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="lineEditSaveName"/>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="labelAreaName">
-             <property name="text">
-              <string>Area Name:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLineEdit" name="lineEditAreaName"/>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="labelLastModule">
-             <property name="text">
-              <string>Last Module:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QLineEdit" name="lineEditLastModule"/>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="labelTimePlayed">
-             <property name="text">
-              <string>Time Played (seconds):</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QSpinBox" name="spinBoxTimePlayed">
-             <property name="maximum">
-              <number>2147483647</number>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="labelPCName">
-             <property name="text">
-              <string>PC Name (K2):</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QLineEdit" name="lineEditPCName"/>
-           </item>
-          </layout>
+          <widget class="QWidget" name="scrollAreaWidgetContentsSaveInfo">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>1356</width>
+             <height>850</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayoutSaveInfoContent">
+            <item>
+             <widget class="QGroupBox" name="groupBasicInfo">
+              <property name="title">
+               <string>Basic Information</string>
+              </property>
+              <layout class="QFormLayout" name="formLayoutBasicInfo">
+               <item row="0" column="0">
+                <widget class="QLabel" name="labelSaveName">
+                 <property name="text">
+                  <string>Save Name:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QLineEdit" name="lineEditSaveName"/>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="labelAreaName">
+                 <property name="text">
+                  <string>Area Name:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLineEdit" name="lineEditAreaName"/>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="labelLastModule">
+                 <property name="text">
+                  <string>Last Module:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QLineEdit" name="lineEditLastModule"/>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="labelTimePlayed">
+                 <property name="text">
+                  <string>Time Played (seconds):</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QSpinBox" name="spinBoxTimePlayed">
+                 <property name="maximum">
+                  <number>2147483647</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="0">
+                <widget class="QLabel" name="labelPCName">
+                 <property name="text">
+                  <string>PC Name (K2):</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="1">
+                <widget class="QLineEdit" name="lineEditPCName"/>
+               </item>
+               <item row="5" column="0">
+                <widget class="QLabel" name="labelTimestamp">
+                 <property name="text">
+                  <string>Timestamp (FILETIME):</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="1">
+                <widget class="QLineEdit" name="lineEditTimestamp">
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                 <property name="placeholderText">
+                  <string>Windows FILETIME (QWORD)</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="0">
+                <widget class="QLabel" name="labelCheatUsed">
+                 <property name="text">
+                  <string>Cheats Used:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="1">
+                <widget class="QCheckBox" name="checkBoxCheatUsed"/>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupHints">
+              <property name="title">
+               <string>Loading Screen Hints</string>
+              </property>
+              <layout class="QFormLayout" name="formLayoutHints">
+               <item row="0" column="0">
+                <widget class="QLabel" name="labelGameplayHint">
+                 <property name="text">
+                  <string>Gameplay Hint (StrRef):</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QSpinBox" name="spinBoxGameplayHint">
+                 <property name="maximum">
+                  <number>255</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="labelStoryHint">
+                 <property name="text">
+                  <string>Story Hint (StrRef):</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QSpinBox" name="spinBoxStoryHint">
+                 <property name="maximum">
+                  <number>255</number>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupPortraits">
+              <property name="title">
+               <string>Portraits</string>
+              </property>
+              <layout class="QFormLayout" name="formLayoutPortraits">
+               <item row="0" column="0">
+                <widget class="QLabel" name="labelPortrait0">
+                 <property name="text">
+                  <string>Portrait 0 (Leader):</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QLineEdit" name="lineEditPortrait0">
+                 <property name="placeholderText">
+                  <string>Portrait 0</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="labelPortrait1">
+                 <property name="text">
+                  <string>Portrait 1:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLineEdit" name="lineEditPortrait1">
+                 <property name="placeholderText">
+                  <string>Portrait 1</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="labelPortrait2">
+                 <property name="text">
+                  <string>Portrait 2:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QLineEdit" name="lineEditPortrait2">
+                 <property name="placeholderText">
+                  <string>Portrait 2</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupXboxLive">
+              <property name="title">
+               <string>Xbox Live Content (Xbox Version Only)</string>
+              </property>
+              <layout class="QFormLayout" name="formLayoutXboxLive">
+               <item row="0" column="0">
+                <widget class="QLabel" name="labelLive1">
+                 <property name="text">
+                  <string>LIVE1:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QLineEdit" name="lineEditLive1"/>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="labelLive2">
+                 <property name="text">
+                  <string>LIVE2:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLineEdit" name="lineEditLive2"/>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="labelLive3">
+                 <property name="text">
+                  <string>LIVE3:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QLineEdit" name="lineEditLive3"/>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="labelLive4">
+                 <property name="text">
+                  <string>LIVE4:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QLineEdit" name="lineEditLive4"/>
+               </item>
+               <item row="4" column="0">
+                <widget class="QLabel" name="labelLive5">
+                 <property name="text">
+                  <string>LIVE5:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="1">
+                <widget class="QLineEdit" name="lineEditLive5"/>
+               </item>
+               <item row="5" column="0">
+                <widget class="QLabel" name="labelLive6">
+                 <property name="text">
+                  <string>LIVE6:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="1">
+                <widget class="QLineEdit" name="lineEditLive6"/>
+               </item>
+               <item row="6" column="0">
+                <widget class="QLabel" name="labelLiveContent">
+                 <property name="text">
+                  <string>LIVECONTENT (Byte):</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="1">
+                <widget class="QSpinBox" name="spinBoxLiveContent">
+                 <property name="maximum">
+                  <number>255</number>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupScreenshot">
+              <property name="title">
+               <string>Screenshot Preview</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayoutScreenshot">
+               <item>
+                <widget class="QLabel" name="labelScreenshotPreview">
+                 <property name="minimumSize">
+                  <size>
+                   <width>400</width>
+                   <height>300</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>No screenshot available</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                 <property name="scaledContents">
+                  <bool>false</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
          </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="groupPortraits">
-          <property name="title">
-           <string>Portraits</string>
-          </property>
-          <layout class="QHBoxLayout" name="horizontalLayoutPortraits">
-           <item>
-            <widget class="QLineEdit" name="lineEditPortrait0">
-             <property name="placeholderText">
-              <string>Portrait 0</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="lineEditPortrait1">
-             <property name="placeholderText">
-              <string>Portrait 1</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="lineEditPortrait2">
-             <property name="placeholderText">
-              <string>Portrait 2</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="groupScreenshot">
-          <property name="title">
-           <string>Screenshot Preview</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayoutScreenshot">
-           <item>
-            <widget class="QLabel" name="labelScreenshotPreview">
-             <property name="minimumSize">
-              <size>
-               <width>400</width>
-               <height>300</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>No screenshot available</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-             <property name="scaledContents">
-              <bool>false</bool>
-             </property>
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <spacer name="verticalSpacerSaveInfo">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
         </item>
        </layout>
       </widget>
@@ -183,84 +357,416 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayoutPartyTable">
         <item>
-         <widget class="QGroupBox" name="groupResources">
-          <property name="title">
-           <string>Resources</string>
+         <widget class="QScrollArea" name="scrollAreaPartyTable">
+          <property name="widgetResizable">
+           <bool>true</bool>
           </property>
-          <layout class="QFormLayout" name="formLayoutResources">
-           <item row="0" column="0">
-            <widget class="QLabel" name="labelGold">
-             <property name="text">
-              <string>Credits/Gold:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QSpinBox" name="spinBoxGold">
-             <property name="maximum">
-              <number>2147483647</number>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="labelXPPool">
-             <property name="text">
-              <string>XP Pool:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QSpinBox" name="spinBoxXPPool">
-             <property name="maximum">
-              <number>2147483647</number>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="labelComponents">
-             <property name="text">
-              <string>Components (K2):</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QSpinBox" name="spinBoxComponents">
-             <property name="maximum">
-              <number>2147483647</number>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="labelChemicals">
-             <property name="text">
-              <string>Chemicals (K2):</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QSpinBox" name="spinBoxChemicals">
-             <property name="maximum">
-              <number>2147483647</number>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="groupPartyMembers">
-          <property name="title">
-           <string>Party Members</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayoutPartyMembers">
-           <item>
-            <widget class="QListWidget" name="listWidgetPartyMembers">
-             <property name="toolTip">
-              <string>Hover over a party member to see detailed information</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <widget class="QWidget" name="scrollAreaWidgetContentsPartyTable">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>1356</width>
+             <height>850</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayoutPartyTableContent">
+            <item>
+             <widget class="QGroupBox" name="groupResources">
+              <property name="title">
+               <string>Resources</string>
+              </property>
+              <layout class="QFormLayout" name="formLayoutResources">
+               <item row="0" column="0">
+                <widget class="QLabel" name="labelGold">
+                 <property name="text">
+                  <string>Credits/Gold:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QSpinBox" name="spinBoxGold">
+                 <property name="maximum">
+                  <number>2147483647</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="labelXPPool">
+                 <property name="text">
+                  <string>XP Pool:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QSpinBox" name="spinBoxXPPool">
+                 <property name="maximum">
+                  <number>2147483647</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="labelComponents">
+                 <property name="text">
+                  <string>Components (K2):</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QSpinBox" name="spinBoxComponents">
+                 <property name="maximum">
+                  <number>2147483647</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="labelChemicals">
+                 <property name="text">
+                  <string>Chemicals (K2):</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QSpinBox" name="spinBoxChemicals">
+                 <property name="maximum">
+                  <number>2147483647</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="0">
+                <widget class="QLabel" name="labelTimePlayedPT">
+                 <property name="text">
+                  <string>Time Played (PT_PLAYEDSECONDS):</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="1">
+                <widget class="QSpinBox" name="spinBoxTimePlayedPT">
+                 <property name="maximum">
+                  <number>2147483647</number>
+                 </property>
+                 <property name="minimum">
+                  <number>-1</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="0">
+                <widget class="QLabel" name="labelCheatUsedPT">
+                 <property name="text">
+                  <string>Cheats Used (PT_CHEAT_USED):</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="1">
+                <widget class="QCheckBox" name="checkBoxCheatUsedPT"/>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupPartyMembers">
+              <property name="title">
+               <string>Party Members</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayoutPartyMembers">
+               <item>
+                <widget class="QListWidget" name="listWidgetPartyMembers">
+                 <property name="toolTip">
+                  <string>Hover over a party member to see detailed information</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupAvailableNPCs">
+              <property name="title">
+               <string>Available NPCs</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayoutAvailableNPCs">
+               <item>
+                <widget class="QTableWidget" name="tableWidgetAvailableNPCs">
+                 <property name="columnCount">
+                  <number>3</number>
+                 </property>
+                 <column>
+                  <property name="text">
+                   <string>Index</string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Available</string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Selectable</string>
+                  </property>
+                 </column>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupInfluence">
+              <property name="title">
+               <string>Influence Values (K2 Only)</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayoutInfluence">
+               <item>
+                <widget class="QTableWidget" name="tableWidgetInfluence">
+                 <property name="columnCount">
+                  <number>2</number>
+                 </property>
+                 <column>
+                  <property name="text">
+                   <string>NPC Index</string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Influence</string>
+                  </property>
+                 </column>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupPartyState">
+              <property name="title">
+               <string>Party State</string>
+              </property>
+              <layout class="QFormLayout" name="formLayoutPartyState">
+               <item row="0" column="0">
+                <widget class="QLabel" name="labelControlledNPC">
+                 <property name="text">
+                  <string>Controlled NPC Index:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QSpinBox" name="spinBoxControlledNPC">
+                 <property name="maximum">
+                  <number>11</number>
+                 </property>
+                 <property name="minimum">
+                  <number>-1</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="labelAIState">
+                 <property name="text">
+                  <string>AI State:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QSpinBox" name="spinBoxAIState">
+                 <property name="maximum">
+                  <number>255</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="labelFollowState">
+                 <property name="text">
+                  <string>Follow State:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QSpinBox" name="spinBoxFollowState">
+                 <property name="maximum">
+                  <number>255</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="labelSoloMode">
+                 <property name="text">
+                  <string>Solo Mode:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QCheckBox" name="checkBoxSoloMode"/>
+               </item>
+               <item row="4" column="0">
+                <widget class="QLabel" name="labelLastGUIPanel">
+                 <property name="text">
+                  <string>Last GUI Panel:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="1">
+                <widget class="QSpinBox" name="spinBoxLastGUIPanel">
+                 <property name="maximum">
+                  <number>2147483647</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="0">
+                <widget class="QLabel" name="labelJournalSortOrder">
+                 <property name="text">
+                  <string>Journal Sort Order:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="1">
+                <widget class="QSpinBox" name="spinBoxJournalSortOrder">
+                 <property name="maximum">
+                  <number>2147483647</number>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupPazaak">
+              <property name="title">
+               <string>Pazaak Cards &amp; Decks</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayoutPazaak">
+               <item>
+                <widget class="QLabel" name="labelPazaakCards">
+                 <property name="text">
+                  <string>Pazaak Cards (PT_PAZAAKCARDS):</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QTextEdit" name="textEditPazaakCards">
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                 <property name="maximumHeight">
+                  <number>100</number>
+                 </property>
+                 <property name="placeholderText">
+                  <string>GFF List - Advanced editing in Raw tab</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="labelPazaakDecks">
+                 <property name="text">
+                  <string>Pazaak Decks (PT_PAZAAKDECKS):</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QTextEdit" name="textEditPazaakDecks">
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                 <property name="maximumHeight">
+                  <number>100</number>
+                 </property>
+                 <property name="placeholderText">
+                  <string>GFF List - Advanced editing in Raw tab</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupUIMessages">
+              <property name="title">
+               <string>UI Messages &amp; Tutorials</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayoutUIMessages">
+               <item>
+                <widget class="QLabel" name="labelFBMsgList">
+                 <property name="text">
+                  <string>Feedback Messages (PT_FB_MSG_LIST):</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QTextEdit" name="textEditFBMsgList">
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                 <property name="maximumHeight">
+                  <number>80</number>
+                 </property>
+                 <property name="placeholderText">
+                  <string>GFF List - Advanced editing in Raw tab</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="labelDlgMsgList">
+                 <property name="text">
+                  <string>Dialog Messages (PT_DLG_MSG_LIST):</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QTextEdit" name="textEditDlgMsgList">
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                 <property name="maximumHeight">
+                  <number>80</number>
+                 </property>
+                 <property name="placeholderText">
+                  <string>GFF List - Advanced editing in Raw tab</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="labelTutWndShown">
+                 <property name="text">
+                  <string>Tutorial Windows Shown (PT_TUT_WND_SHOWN):</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="lineEditTutWndShown">
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                 <property name="placeholderText">
+                  <string>Binary data - Advanced editing in Raw tab</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupCostMultipliers">
+              <property name="title">
+               <string>Cost Multipliers (PT_COST_MULT_LIS)</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayoutCostMultipliers">
+               <item>
+                <widget class="QTextEdit" name="textEditCostMultipliers">
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                 <property name="maximumHeight">
+                  <number>80</number>
+                 </property>
+                 <property name="placeholderText">
+                  <string>GFF List - Advanced editing in Raw tab</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
        </layout>
@@ -409,95 +915,323 @@
            <attribute name="title">
             <string>Stats</string>
            </attribute>
-           <layout class="QFormLayout" name="formLayoutCharStats">
-            <item row="0" column="0">
-             <widget class="QLabel" name="labelCharName">
-              <property name="text">
-               <string>Name:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLineEdit" name="lineEditCharName"/>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="labelCharHP">
-              <property name="text">
-               <string>HP / Max HP:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayoutHP">
+           <layout class="QScrollArea" name="scrollAreaCharStats">
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContentsCharStats">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>1088</width>
+               <height>800</height>
+              </rect>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayoutCharStatsContent">
               <item>
-               <widget class="QSpinBox" name="spinBoxCharHP">
-                <property name="maximum">
-                 <number>32767</number>
+               <layout class="QFormLayout" name="formLayoutCharStats">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="labelCharName">
+                  <property name="text">
+                   <string>Name:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLineEdit" name="lineEditCharName"/>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="labelCharTag">
+                  <property name="text">
+                   <string>Tag:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLineEdit" name="lineEditCharTag">
+                  <property name="readOnly">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="labelCharResRef">
+                  <property name="text">
+                   <string>ResRef:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QLineEdit" name="lineEditCharResRef">
+                  <property name="readOnly">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="labelCharHP">
+                  <property name="text">
+                   <string>HP / Max HP:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayoutHP">
+                  <item>
+                   <widget class="QSpinBox" name="spinBoxCharHP">
+                    <property name="maximum">
+                     <number>32767</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="labelHPSeparator">
+                    <property name="text">
+                     <string>/</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="spinBoxCharMaxHP">
+                    <property name="maximum">
+                     <number>32767</number>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QLabel" name="labelCharFP">
+                  <property name="text">
+                   <string>FP / Max FP:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayoutFP">
+                  <item>
+                   <widget class="QSpinBox" name="spinBoxCharFP">
+                    <property name="maximum">
+                     <number>32767</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="labelFPSeparator">
+                    <property name="text">
+                     <string>/</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="spinBoxCharMaxFP">
+                    <property name="maximum">
+                     <number>32767</number>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="5" column="0">
+                 <widget class="QLabel" name="labelCharXP">
+                  <property name="text">
+                   <string>Experience:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="1">
+                 <widget class="QSpinBox" name="spinBoxCharXP">
+                  <property name="maximum">
+                   <number>2147483647</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="6" column="0">
+                 <widget class="QLabel" name="labelCharMin1HP">
+                  <property name="text">
+                   <string>Min 1 HP:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="6" column="1">
+                 <widget class="QCheckBox" name="checkBoxCharMin1HP"/>
+                </item>
+                <item row="7" column="0">
+                 <widget class="QLabel" name="labelCharGoodEvil">
+                  <property name="text">
+                   <string>Good/Evil Alignment:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="7" column="1">
+                 <widget class="QSpinBox" name="spinBoxCharGoodEvil">
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                  <property name="minimum">
+                   <number>0</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupCharAttributes">
+                <property name="title">
+                 <string>Attributes</string>
                 </property>
+                <layout class="QFormLayout" name="formLayoutCharAttributes">
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="labelCharSTR">
+                   <property name="text">
+                    <string>Strength:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QSpinBox" name="spinBoxCharSTR">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="labelCharDEX">
+                   <property name="text">
+                    <string>Dexterity:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QSpinBox" name="spinBoxCharDEX">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="0">
+                  <widget class="QLabel" name="labelCharCON">
+                   <property name="text">
+                    <string>Constitution:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="1">
+                  <widget class="QSpinBox" name="spinBoxCharCON">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="0">
+                  <widget class="QLabel" name="labelCharINT">
+                   <property name="text">
+                    <string>Intelligence:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="1">
+                  <widget class="QSpinBox" name="spinBoxCharINT">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="0">
+                  <widget class="QLabel" name="labelCharWIS">
+                   <property name="text">
+                    <string>Wisdom:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="1">
+                  <widget class="QSpinBox" name="spinBoxCharWIS">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="5" column="0">
+                  <widget class="QLabel" name="labelCharCHA">
+                   <property name="text">
+                    <string>Charisma:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="5" column="1">
+                  <widget class="QSpinBox" name="spinBoxCharCHA">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="labelHPSeparator">
-                <property name="text">
-                 <string>/</string>
+               <widget class="QGroupBox" name="groupCharAppearance">
+                <property name="title">
+                 <string>Appearance</string>
                 </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="spinBoxCharMaxHP">
-                <property name="maximum">
-                 <number>32767</number>
-                </property>
+                <layout class="QFormLayout" name="formLayoutCharAppearance">
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="labelCharPortraitId">
+                   <property name="text">
+                    <string>Portrait ID:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QSpinBox" name="spinBoxCharPortraitId">
+                   <property name="maximum">
+                    <number>65535</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="labelCharAppearanceType">
+                   <property name="text">
+                    <string>Appearance Type:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QSpinBox" name="spinBoxCharAppearanceType">
+                   <property name="maximum">
+                    <number>65535</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="0">
+                  <widget class="QLabel" name="labelCharGender">
+                   <property name="text">
+                    <string>Gender:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="1">
+                  <widget class="QComboBox" name="comboBoxCharGender"/>
+                 </item>
+                 <item row="3" column="0">
+                  <widget class="QLabel" name="labelCharSoundset">
+                   <property name="text">
+                    <string>Soundset:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="1">
+                  <widget class="QSpinBox" name="spinBoxCharSoundset">
+                   <property name="maximum">
+                    <number>65535</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="labelCharFP">
-              <property name="text">
-               <string>FP / Max FP:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayoutFP">
-              <item>
-               <widget class="QSpinBox" name="spinBoxCharFP">
-                <property name="maximum">
-                 <number>32767</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="labelFPSeparator">
-                <property name="text">
-                 <string>/</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="spinBoxCharMaxFP">
-                <property name="maximum">
-                 <number>32767</number>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="labelCharXP">
-              <property name="text">
-               <string>Experience:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QSpinBox" name="spinBoxCharXP">
-              <property name="maximum">
-               <number>2147483647</number>
-              </property>
-             </widget>
-            </item>
+            </widget>
            </layout>
           </widget>
           <widget class="QWidget" name="tabCharEquipment">
@@ -551,6 +1285,45 @@
             </item>
            </layout>
           </widget>
+          <widget class="QWidget" name="tabCharClasses">
+           <attribute name="title">
+            <string>Classes</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayoutCharClasses">
+            <item>
+             <widget class="QTableWidget" name="tableWidgetCharClasses">
+              <property name="columnCount">
+               <number>3</number>
+              </property>
+              <column>
+               <property name="text">
+                <string>Class</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Level</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Powers</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tabCharFeats">
+           <attribute name="title">
+            <string>Feats</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayoutCharFeats">
+            <item>
+             <widget class="QListWidget" name="listWidgetCharFeats"/>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
        </layout>
@@ -565,7 +1338,7 @@
         <item>
          <widget class="QTableWidget" name="tableWidgetInventory">
           <property name="columnCount">
-           <number>3</number>
+           <number>5</number>
           </property>
           <column>
            <property name="text">
@@ -579,7 +1352,17 @@
           </column>
           <column>
            <property name="text">
+            <string>Charges</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
             <string>ResRef</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Upgrades</string>
            </property>
           </column>
          </widget>
@@ -623,6 +1406,147 @@
        </layout>
       </widget>
       
+      <!-- Cached Modules Tab -->
+      <widget class="QWidget" name="tabCachedModules">
+       <attribute name="title">
+        <string>Cached Modules</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayoutCachedModules">
+        <item>
+         <widget class="QTreeView" name="treeViewCachedModules">
+          <property name="headerHidden">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonOpenModuleResource">
+          <property name="text">
+           <string>Open Selected Resource in Editor</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      
+      <!-- Reputation Tab -->
+      <widget class="QWidget" name="tabReputation">
+       <attribute name="title">
+        <string>Reputation</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayoutReputation">
+        <item>
+         <widget class="QLabel" name="labelReputationInfo">
+          <property name="text">
+           <string>Faction Reputation Data (REPUTE.fac)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableWidget" name="tableWidgetReputation">
+          <property name="columnCount">
+           <number>2</number>
+          </property>
+          <column>
+           <property name="text">
+            <string>Faction</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Reputation</string>
+           </property>
+          </column>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      
+      <!-- Advanced/Raw Tab -->
+      <widget class="QWidget" name="tabAdvanced">
+       <attribute name="title">
+        <string>Advanced/Raw</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayoutAdvanced">
+        <item>
+         <widget class="QTabWidget" name="tabWidgetAdvanced">
+          <widget class="QWidget" name="tabAdvancedSaveInfo">
+           <attribute name="title">
+            <string>SaveInfo Additional Fields</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayoutAdvancedSaveInfo">
+            <item>
+             <widget class="QTableWidget" name="tableWidgetAdvancedSaveInfo">
+              <property name="columnCount">
+               <number>3</number>
+              </property>
+              <column>
+               <property name="text">
+                <string>Field Name</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Type</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Value</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tabAdvancedPartyTable">
+           <attribute name="title">
+            <string>PartyTable Additional Fields</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayoutAdvancedPartyTable">
+            <item>
+             <widget class="QTableWidget" name="tableWidgetAdvancedPartyTable">
+              <property name="columnCount">
+               <number>3</number>
+              </property>
+              <column>
+               <property name="text">
+                <string>Field Name</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Type</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Value</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tabAdvancedResources">
+           <attribute name="title">
+            <string>Other Resources</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayoutAdvancedResources">
+            <item>
+             <widget class="QListWidget" name="listWidgetAdvancedResources">
+              <property name="toolTip">
+               <string>Double-click to open in appropriate editor</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      
      </widget>
     </item>
    </layout>
@@ -633,7 +1557,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1200</width>
+     <width>1400</width>
      <height>21</height>
     </rect>
    </property>
@@ -708,4 +1632,3 @@
  <resources/>
  <connections/>
 </ui>
-

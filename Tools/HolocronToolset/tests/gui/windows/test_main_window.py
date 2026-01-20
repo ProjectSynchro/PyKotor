@@ -495,13 +495,13 @@ def test_main_window_file_watcher_integration_create_module_file(qtbot, installa
     test_file = module_path / "test_module.mod"
     
     # Wait for watcher to be ready
-    qtbot.wait(100)
+    QtBot.wait(100)
     
     # Create file (this should trigger watcher)
     test_file.touch()
     
     # Wait for debounce timer
-    qtbot.wait(600)
+    QtBot.wait(600)
     
     # Process events
     QApplication.processEvents()
@@ -522,14 +522,14 @@ def test_main_window_file_watcher_integration_delete_module_file(qtbot, installa
     test_file = module_path / "temp_test_module.mod"
     test_file.touch()
     
-    qtbot.wait(100)
+    QtBot.wait(100)
     
     # Delete file (this should trigger watcher)
     if test_file.exists():
         test_file.unlink()
     
     # Wait for debounce timer
-    qtbot.wait(600)
+    QtBot.wait(600)
     
     # Process events
     QApplication.processEvents()
@@ -1111,7 +1111,7 @@ def test_main_window_on_tab_changed(qtbot: QtBot):
     window.on_tab_changed()
     
     # Process events to ensure UI updates
-    qtbot.wait(100)
+    QtBot.wait(100)
     QApplication.processEvents()
     
     # ERF editor button should be visible when on modules tab
@@ -1122,7 +1122,7 @@ def test_main_window_on_tab_changed(qtbot: QtBot):
     window.on_tab_changed()
     
     # Process events to ensure UI updates
-    qtbot.wait(100)
+    QtBot.wait(100)
     QApplication.processEvents()
     
     # ERF editor button should be hidden when not on modules tab
@@ -1324,7 +1324,7 @@ def test_main_window_module_files_updated_signal(qtbot, installation: HTInstalla
     window.sig_module_files_updated.emit("test.mod", "modified")
     
     # Process events
-    qtbot.wait(10)
+    QtBot.wait(10)
     QApplication.processEvents()
     
     assert len(signal_received) > 0
@@ -1354,7 +1354,7 @@ def test_main_window_override_files_update_signal(qtbot, installation: HTInstall
     window.sig_override_files_update.emit("test.uti", "modified")
     
     # Process events
-    qtbot.wait(10)
+    QtBot.wait(10)
     QApplication.processEvents()
     
     assert len(signal_received) > 0

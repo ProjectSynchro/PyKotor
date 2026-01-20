@@ -9,7 +9,8 @@ from qtpy.QtCore import (
     Qt,
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
-from qtpy.QtWidgets import QDialog, QLabel, QMessageBox, QProgressBar, QSizePolicy, QVBoxLayout
+from qtpy.QtGui import QColor, QPalette
+from qtpy.QtWidgets import QApplication, QDialog, QLabel, QMessageBox, QProgressBar, QSizePolicy, QVBoxLayout
 
 from toolset.gui.common.widgets.progressbar import AnimatedProgressBar
 from utility.error_handling import format_exception_with_variables, universal_simplify_exception
@@ -47,22 +48,17 @@ class ProgressDialog(QDialog):
             | Qt.WindowType.WindowCloseButtonHint
             | Qt.WindowType.WindowStaysOnTopHint & ~Qt.WindowType.WindowContextHelpButtonHint & ~Qt.WindowType.WindowMinMaxButtonsHint
         )
+        
+        from toolset.uic.qtpy.dialogs.progress_dialog import Ui_Dialog
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        
         self.setWindowTitle(title)
-        main_layout = QVBoxLayout()
-        self.setLayout(main_layout)
-
+        
         from toolset.gui.common.localization import translate as tr
-        self.status_label: QLabel = QLabel(tr("Initializing..."), self)
-        self.bytes_label: QLabel = QLabel("")
-        self.time_label: QLabel = QLabel(tr("Time remaining: --/--"))
-        self.progress_bar: QProgressBar = QProgressBar(self)
-        self.progress_bar.setMaximum(100)
-
-        main_layout.addWidget(self.status_label)
-        main_layout.addWidget(self.bytes_label)
-        main_layout.addWidget(self.progress_bar)
-        main_layout.addWidget(self.time_label)
-
+        self.ui.statusLabel.setText(tr("Initializing..."))
+        self.ui.timeLabel.setText(tr("Time remaining: --/--"))
+        
         # Timer to poll the queue for new progress updates
         self.timer: QTimer = QTimer()
         self.timer.timeout.connect(self.check_queue)
@@ -78,16 +74,16 @@ class ProgressDialog(QDialog):
                 total: int = data["total"]
                 downloaded: int = data["downloaded"]
                 progress: int = int((downloaded / total) * 100) if total else 0
-                self.progress_bar.setValue(progress)
+                self.ui.progressBar.setValue(progress)
                 from toolset.gui.common.localization import translate as tr, trf
-                self.status_label.setText(trf("Downloading... {progress}%", progress=progress))
-                time_remaining: str = data.get("time", self.time_label.text().replace(tr("Time remaining: "), ""))
-                self.time_label.setText(trf("Time remaining: {time}", time=time_remaining))
-                self.bytes_label.setText(f"{human_readable_size(downloaded)} / {human_readable_size(total)}")
+                self.ui.statusLabel.setText(trf("Downloading... {progress}%", progress=progress))
+                time_remaining: str = data.get("time", self.ui.timeLabel.text().replace(tr("Time remaining: "), ""))
+                self.ui.timeLabel.setText(trf("Time remaining: {time}", time=time_remaining))
+                self.ui.bytesLabel.setText(f"{human_readable_size(downloaded)} / {human_readable_size(total)}")
             elif message["action"] == "update_status":
                 # Handle status text updates
                 text = message["text"]
-                self.status_label.setText(text)
+                self.ui.statusLabel.setText(text)
             elif message["action"] == "shutdown":
                 self.close()
 
@@ -95,7 +91,7 @@ class ProgressDialog(QDialog):
         self,
         text: str,
     ):
-        self.status_label.setText(text)
+        self.ui.statusLabel.setText(text)
 
     @staticmethod
     def monitor_and_terminate(
@@ -152,6 +148,16 @@ class AsyncLoader(QDialog, Generic[T]):
         )
         print("AsyncLoader.__init__: realtime_progress:", realtime_progress)
 
+        # Load UI from .ui file
+        from toolset.uic.qtpy.dialogs.async_loader import Ui_Dialog
+
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+
+        # Replace QProgressBar with AnimatedProgressBar
+        # Find the progress bar in the layout and replace it
+        main_layout = self.layout()
+        # Create AnimatedProgressBar and configure it
         self._progress_bar: AnimatedProgressBar = AnimatedProgressBar(self)
         self._progress_bar.setMinimum(0)
         if isinstance(task, list):
@@ -159,41 +165,74 @@ class AsyncLoader(QDialog, Generic[T]):
         else:
             self._progress_bar.setMaximum(1 if realtime_progress else 0)
         self._progress_bar.setTextVisible(realtime_progress or isinstance(task, list))
+        self._progress_bar.setFixedHeight(20)
 
-        self._main_task_text: QLabel = QLabel(self)
+        if main_layout is not None and isinstance(main_layout, QVBoxLayout):
+            # Find the index of the progress bar
+            progress_bar_index = -1
+            for i in range(main_layout.count()):
+                item = main_layout.itemAt(i)
+                if item is not None and item.widget() == self.ui.progressBar:
+                    progress_bar_index = i
+                    break
+
+            # Replace the QProgressBar with AnimatedProgressBar
+            if progress_bar_index >= 0:
+                # Remove old progress bar
+                old_item = main_layout.takeAt(progress_bar_index)
+                if old_item is not None:
+                    old_widget = old_item.widget()
+                    if old_widget is not None:
+                        old_widget.deleteLater()
+                # Insert new progress bar at the same position
+                main_layout.insertWidget(progress_bar_index, self._progress_bar)
+
+        # Get references to UI labels
+        self._main_task_text: QLabel = self.ui.mainTaskText
         self._main_task_text.setText("")
         self._main_task_text.setVisible(realtime_progress or isinstance(task, list))
 
-        self._sub_task_text: QLabel = QLabel(self)
+        self._sub_task_text: QLabel = self.ui.subTaskText
         self._sub_task_text.setText("")
         self._sub_task_text.setVisible(realtime_progress)
 
-        self._task_progress_text: QLabel = QLabel(self)
+        self._task_progress_text: QLabel = self.ui.taskProgressText
         self._task_progress_text.setText("")
         self._task_progress_text.setVisible(isinstance(task, list))
-
-        main_layout = QVBoxLayout()
-        self.setLayout(main_layout)
-        main_layout.addWidget(self._main_task_text)
-        main_layout.addWidget(self._progress_bar)
-        main_layout.addWidget(self._sub_task_text)
-        main_layout.addWidget(self._task_progress_text)
 
         self.setWindowTitle(title)
         self.setMinimumSize(260, 40)
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        self.setStyleSheet("""
-    QDialog {
+        
+        # Get palette colors for progress bar
+        app = QApplication.instance()
+        if app is None or not isinstance(app, QApplication):
+            palette = QPalette()
+        else:
+            palette = app.palette()
+        
+        # Use link color for progress bar chunk (usually indicates active/progress)
+        link_color = palette.color(QPalette.ColorRole.Link)
+        chunk_color1 = link_color.darker(120).name()  # Darker variant for gradient start/end
+        chunk_color2 = link_color.name()  # Base link color for gradient middle
+        
+        # Create border color with transparency
+        chunk_border = QColor(link_color)
+        chunk_border.setAlpha(128)  # 50% opacity
+        chunk_border_str = f"rgba({chunk_border.red()}, {chunk_border.green()}, {chunk_border.blue()}, {chunk_border.alpha() / 255.0:.2f})"
+        
+        self.setStyleSheet(f"""
+    QDialog {{
         border-radius: 10px;
         padding: 20px;
         font-size: 12pt;
-    }
-    QLabel {
+    }}
+    QLabel {{
         font-size: 12pt 'Arial';
         margin-top: 6px;
         margin-bottom: 6px;
-    }
-    QProgressBar {
+    }}
+    QProgressBar {{
         font-size: 12pt 'Arial';
         min-height: 20px;
         max-height: 20px;
@@ -201,18 +240,18 @@ class AsyncLoader(QDialog, Generic[T]):
         border-radius: 10px;
         background-color: palette(base);
         text-align: center;
-    }
-    QProgressBar::chunk {
+    }}
+    QProgressBar::chunk {{
         border-radius: 9px;
         background: qlineargradient(
             x1: 0, y1: 0, x2: 1, y2: 0,
-            stop: 0 #008800, stop: 0.5 #00ff00, stop: 1 #008800
+            stop: 0 {chunk_color1}, stop: 0.5 {chunk_color2}, stop: 1 {chunk_color1}
         );
-        border: 1px solid rgba(0, 255, 0, 0.5);
+        border: 1px solid {chunk_border_str};
         margin: 1px;
-    }
+    }}
 """)
-        self._progress_bar.setFixedHeight(20)  # Makes the progress bar taller
+        # Labels are already centered in the .ui file, but ensure alignment is set
         self._main_task_text.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Centers the main task text
         self._sub_task_text.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Centers the sub task text
         self._task_progress_text.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Centers the task progress text

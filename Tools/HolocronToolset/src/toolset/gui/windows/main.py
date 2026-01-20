@@ -231,6 +231,7 @@ class ToolWindow(QMainWindow):
         # UI state management
         self.previous_game_combo_index: int = 0
         self._mouse_move_pos: QPoint | None = None
+        self._preparing_resources: bool = False  # Guard to prevent multiple simultaneous preparations
 
         # Dialog management (lazy-loaded)
         self._theme_dialog: ThemeSelectorDialog | None = None
@@ -1207,7 +1208,10 @@ class ToolWindow(QMainWindow):
         # Only set index if it's different to avoid unnecessary signal emission
         current_index = self.ui.gameCombo.currentIndex()
         if current_index != index:
+            # Block signals to prevent recursive calls when setting index programmatically
+            self.ui.gameCombo.blockSignals(True)
             self.ui.gameCombo.setCurrentIndex(index)
+            self.ui.gameCombo.blockSignals(False)
 
         if index == 0:
             self.unset_installation()
@@ -1256,7 +1260,9 @@ class ToolWindow(QMainWindow):
 
         # Return to previous selection if no path provided
         if not path or not path.strip():
+            self.ui.gameCombo.blockSignals(True)
             self.ui.gameCombo.setCurrentIndex(prev_index)
+            self.ui.gameCombo.blockSignals(False)
             return ""
 
         return path
@@ -1304,7 +1310,9 @@ class ToolWindow(QMainWindow):
             )
             if not installation_loader.exec():
                 RobustLogger().error("Failed to create installation")
+                self.ui.gameCombo.blockSignals(True)
                 self.ui.gameCombo.setCurrentIndex(prev_index)
+                self.ui.gameCombo.blockSignals(False)
                 return
             self.active = installation_loader.value
             assert self.active is not None, "Active installation should not be None here after loading"
@@ -1320,59 +1328,69 @@ class ToolWindow(QMainWindow):
         prev_index: int,
     ) -> None:
         """Prepare and initialize all resource lists for the active installation."""
-
-        def prepare_task(loader: AsyncLoader | None = None) -> tuple[list[QStandardItem] | None, ...]:
-            """Prepare resource lists for modules, overrides, and textures."""
-            return (
-                self._get_modules_list(reload=False),
-                self._get_override_list(reload=False),
-                self._get_texture_pack_list(),
-            )
-
-        prepare_loader = AsyncLoader(
-            self,
-            "Preparing resources...",
-            prepare_task,
-            "Failed to prepare installation resources",
-            realtime_progress=True,
-        )
-        if not prepare_loader.exec():
-            RobustLogger().error("Failed to prepare installation resources")
-            self.ui.gameCombo.setCurrentIndex(prev_index)
+        # Prevent multiple simultaneous preparations
+        if self._preparing_resources:
+            RobustLogger().debug("Skipping duplicate preparation request - already in progress")
             return
 
-        assert prepare_loader.value is not None
-        assert self.active is not None
-
-        # Initialize UI with prepared resource lists
+        self._preparing_resources = True
         try:
-            module_items, override_items, texture_items = prepare_loader.value
-            assert module_items is not None, "Module items should not be None"
-            assert override_items is not None, "Override items should not be None"
-            assert texture_items is not None, "Texture items should not be None"
+            def prepare_task(loader: AsyncLoader | None = None) -> tuple[list[QStandardItem] | None, ...]:
+                """Prepare resource lists for modules, overrides, and textures."""
+                return (
+                    self._get_modules_list(reload=False),
+                    self._get_override_list(reload=False),
+                    self._get_texture_pack_list(),
+                )
 
-            self.ui.modulesWidget.set_sections(module_items)
-            self.ui.overrideWidget.set_sections(override_items)
-            self.ui.overrideWidget.ui.sectionCombo.setVisible(self.active.tsl)
-            self.ui.overrideWidget.ui.refreshButton.setVisible(self.active.tsl)
-            self.ui.texturesWidget.set_sections(texture_items)
+            prepare_loader = AsyncLoader(
+                self,
+                "Preparing resources...",
+                prepare_task,
+                "Failed to prepare installation resources",
+                realtime_progress=True,
+            )
+            if not prepare_loader.exec():
+                RobustLogger().error("Failed to prepare installation resources")
+                self.ui.gameCombo.blockSignals(True)
+                self.ui.gameCombo.setCurrentIndex(prev_index)
+                self.ui.gameCombo.blockSignals(False)
+                return
 
-            self.refresh_core_list(reload=False)
-            self.refresh_saves_list(reload=False)
+            assert prepare_loader.value is not None
+            assert self.active is not None
 
-        except Exception as e:  # noqa: BLE001
-            RobustLogger().exception("Failed to initialize the installation")
-            QMessageBox(
-                QMessageBox.Icon.Critical,
-                "An unexpected error occurred initializing the installation.",
-                f"Failed to initialize the installation {self.active.name}<br><br>{e}",
-            ).exec()
-            self.unset_installation()
-            self.previous_game_combo_index = 0
-            return
+            # Initialize UI with prepared resource lists
+            try:
+                module_items, override_items, texture_items = prepare_loader.value
+                assert module_items is not None, "Module items should not be None"
+                assert override_items is not None, "Override items should not be None"
+                assert texture_items is not None, "Texture items should not be None"
 
-        # Finalize installation setup
-        self._finalize_installation_setup()
+                self.ui.modulesWidget.set_sections(module_items)
+                self.ui.overrideWidget.set_sections(override_items)
+                self.ui.overrideWidget.ui.sectionCombo.setVisible(self.active.tsl)
+                self.ui.overrideWidget.ui.refreshButton.setVisible(self.active.tsl)
+                self.ui.texturesWidget.set_sections(texture_items)
+
+                self.refresh_core_list(reload=False)
+                self.refresh_saves_list(reload=False)
+
+            except Exception as e:  # noqa: BLE001
+                RobustLogger().exception("Failed to initialize the installation")
+                QMessageBox(
+                    QMessageBox.Icon.Critical,
+                    "An unexpected error occurred initializing the installation.",
+                    f"Failed to initialize the installation {self.active.name}<br><br>{e}",
+                ).exec()
+                self.unset_installation()
+                self.previous_game_combo_index = 0
+                return
+
+            # Finalize installation setup
+            self._finalize_installation_setup()
+        finally:
+            self._preparing_resources = False
 
     def _finalize_installation_setup(self):
         """Finalize the installation setup after successful loading."""

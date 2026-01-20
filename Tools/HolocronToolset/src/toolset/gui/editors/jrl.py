@@ -100,7 +100,9 @@ class JRLEditor(Editor):
         self.ui.entryXpSpin.setToolTip(tr("The game multiplies the value set here by 1000 to calculate actual XP to award."))
         self.ui.entryEndCheck.clicked.connect(self.on_value_updated)
 
+        # Register delete shortcut on both the editor and tree view to ensure it works
         QShortcut("Del", self).activated.connect(self.on_delete_shortcut)
+        QShortcut("Del", self.ui.journalTree).activated.connect(self.on_delete_shortcut)
 
     def _setup_installation(self, installation: HTInstallation):
         self._installation = installation
@@ -297,6 +299,10 @@ class JRLEditor(Editor):
         quest_item.appendRow(entry_item)
         quest: JRLQuest = quest_item.data()
         quest.entries.append(newEntry)
+        # Expand the quest item so entries are visible
+        quest_index = quest_item.index()
+        if quest_index.isValid():
+            self.ui.journalTree.expand(quest_index)
 
     def add_quest(self, newQuest: JRLQuest):
         """Adds a quest to the journal.
@@ -317,18 +323,10 @@ class JRLEditor(Editor):
         This method should be connected to all the widgets that store data related quest or entry text (besides the
         ones storing localized strings, those are updated elsewhere). This method will update either all the values
         for an entry or quest based off the aforementioned widgets.
-
-        Args:
-        ----
-            self: The class instance
-
-        Processing Logic:
-        ----------------
-            - Get the selected item from the journal tree
-            - Check if it is a quest or entry
-            - Update the appropriate fields on the item object
-            - Refresh the entry item to update the display.
         """
+        # Check if there's a selection before trying to get the item
+        if not self.ui.journalTree.selectedIndexes():
+            return
         item: QStandardItem = self._get_item()
         data = item.data()
         if isinstance(data, JRLQuest):  # sourcery skip: extract-method
@@ -357,11 +355,6 @@ class JRLEditor(Editor):
         ----
             selection: QItemSelection - Current selection
             deselected: QItemSelection - Previously selected
-
-        Updates UI elements based on selected item:
-            - Sets category/entry details from selected Quest/Entry data
-            - Blocks signals while updating to prevent duplicate calls
-            - Handles selection of Quest or Entry differently
         """
         QTreeView.selectionChanged(self.ui.journalTree, selection, deselected)
 
@@ -370,6 +363,7 @@ class JRLEditor(Editor):
             self.ui.categoryCommentEdit,
             self.ui.entryTextEdit,
             self.ui.categoryNameEdit,
+            self.ui.categoryTag,
             self.ui.categoryPlotSelect,
             self.ui.categoryPlanetSelect,
             self.ui.categoryPrioritySelect,
@@ -389,15 +383,30 @@ class JRLEditor(Editor):
                     return
 
                 data = item.data()
+                if data is None:
+                    return
                 if isinstance(data, JRLQuest):
                     self.ui.questPages.setCurrentIndex(0)
                     if self._installation is not None:
                         self.ui.categoryNameEdit.set_locstring(data.name)
-                    self.ui.categoryTag.setText(data.tag)
+                    # Set tag - handle None/empty string
+                    tag_text = data.tag if data.tag is not None else ""
+                    self.ui.categoryTag.setText(tag_text)
+                    # Set plot index - ComboBox2DA handles row indices
                     self.ui.categoryPlotSelect.setCurrentIndex(data.plot_index)
-                    self.ui.categoryPlanetSelect.setCurrentIndex(data.planet_id + 1)
+                    # Set planet ID - combobox index = planet_id + 1 (0 is [Unset])
+                    planet_combo_index = data.planet_id + 1
+                    if planet_combo_index < 0:
+                        planet_combo_index = 0
+                    if planet_combo_index < self.ui.categoryPlanetSelect.count():
+                        self.ui.categoryPlanetSelect.setCurrentIndex(planet_combo_index)
+                    else:
+                        self.ui.categoryPlanetSelect.setCurrentIndex(0)
+                    # Set priority
                     self.ui.categoryPrioritySelect.setCurrentIndex(data.priority.value)
-                    self.ui.categoryCommentEdit.setPlainText(data.comment)
+                    # Set comment - handle None/empty string
+                    comment_text = data.comment if data.comment is not None else ""
+                    self.ui.categoryCommentEdit.setPlainText(comment_text)
 
                 elif isinstance(data, JRLEntry):
                     self.ui.questPages.setCurrentIndex(1)
@@ -421,14 +430,6 @@ class JRLEditor(Editor):
         Args:
         ----
             point: QPoint: The position of the context menu request
-
-        Processing Logic:
-        ----------------
-            - Get the index and item at the point of the context menu request
-            - Create a QMenu object
-            - Check if an item was selected and get its data
-            - Add appropriate actions to the menu based on the data type
-            - Popup the menu at the global position of the context menu request.
         """
         index = self.ui.journalTree.indexAt(point)
         item = self._model.itemFromIndex(index)
@@ -463,13 +464,6 @@ class JRLEditor(Editor):
         Args:
         ----
             self: The class instance
-
-        Processing Logic:
-        ----------------
-            - Check if any items are selected in the journal tree
-            - Get the index and item for the selected item
-            - Check if the item is a root (quest) or child (entry) item
-            - Call the appropriate method to remove the quest or entry.
         """
         if self.ui.journalTree.selectedIndexes():
             item = self._get_item()

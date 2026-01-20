@@ -14,19 +14,9 @@ from qtpy.QtCore import QSettings, QThread
 from qtpy.QtGui import QTextCursor
 from qtpy.QtWidgets import (
     QButtonGroup,
-    QCheckBox,
-    QComboBox,
     QFileDialog,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
     QMainWindow,
     QMessageBox,
-    QPushButton,
-    QRadioButton,
-    QTextEdit,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -34,6 +24,8 @@ from pykotor.extract.installation import Installation
 from pykotor.diff_tool.app import DiffConfig, run_application
 
 if TYPE_CHECKING:
+    from qtpy.QtWidgets import QLineEdit
+
     from toolset.data.installation import HTInstallation
 
 
@@ -109,146 +101,53 @@ class KotorDiffWindow(QMainWindow):
 
     def _setup_ui(self):
         """Set up the user interface."""
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
+        from toolset.uic.qtpy.windows.kotordiff import Ui_MainWindow
 
-        # Path Selection Group
-        path_group = QGroupBox("Paths")
-        path_layout = QVBoxLayout()
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
 
-        # Path 1 (Mine)
-        self._setup_path_selector(
-            path_layout,
-            "Path 1 (Mine/Modified):",
-            is_first=True,
-            path_num=1,
-        )
+        # Set up path selectors
+        self._setup_path_selector(1, is_first=True)
+        self._setup_path_selector(2, is_first=False)
 
-        # Path 2 (Older)
-        self._setup_path_selector(
-            path_layout,
-            "Path 2 (Older/Vanilla):",
-            is_first=False,
-            path_num=2,
-        )
-
-        path_group.setLayout(path_layout)
-        main_layout.addWidget(path_group)
-
-        # Options Group
-        options_group = QGroupBox("Options")
-        options_layout = QVBoxLayout()
-
-        # Compare hashes
-        self.compare_hashes_check = QCheckBox("Compare hashes")
-        self.compare_hashes_check.setChecked(True)
-        options_layout.addWidget(self.compare_hashes_check)
-
-        # TSLPatchData options
-        tslpatch_layout = QHBoxLayout()
-        self.tslpatchdata_check = QCheckBox("Generate TSLPatchData")
-        tslpatch_layout.addWidget(self.tslpatchdata_check)
-        self.tslpatchdata_edit = QLineEdit()
+        # Set up TSLPatchData placeholder text
         from toolset.gui.common.localization import translate as tr
-        self.tslpatchdata_edit.setPlaceholderText(tr("Path to tslpatchdata folder"))
-        self.tslpatchdata_edit.setEnabled(False)
-        tslpatch_layout.addWidget(self.tslpatchdata_edit)
-        self.tslpatchdata_browse_btn = QPushButton("Browse...")
-        self.tslpatchdata_browse_btn.setEnabled(False)
-        self.tslpatchdata_browse_btn.clicked.connect(lambda: self._browse_directory(self.tslpatchdata_edit))
-        tslpatch_layout.addWidget(self.tslpatchdata_browse_btn)
-        options_layout.addLayout(tslpatch_layout)
+        self.ui.tslpatchdataEdit.setPlaceholderText(tr("Path to tslpatchdata folder"))
 
-        # INI filename
-        ini_layout = QHBoxLayout()
-        ini_layout.addWidget(QLabel("INI Filename:"))
-        self.ini_name_edit = QLineEdit("changes.ini")
-        self.ini_name_edit.setEnabled(False)
-        ini_layout.addWidget(self.ini_name_edit)
-        options_layout.addLayout(ini_layout)
+        # Connect TSLPatchData checkbox signals
+        self.ui.tslpatchdataCheck.toggled.connect(self.ui.tslpatchdataEdit.setEnabled)
+        self.ui.tslpatchdataCheck.toggled.connect(self.ui.tslpatchdataBrowseBtn.setEnabled)
+        self.ui.tslpatchdataCheck.toggled.connect(self.ui.iniNameEdit.setEnabled)
+        self.ui.tslpatchdataBrowseBtn.clicked.connect(lambda: self._browse_directory(self.ui.tslpatchdataEdit))
 
-        self.tslpatchdata_check.toggled.connect(self.tslpatchdata_edit.setEnabled)
-        self.tslpatchdata_check.toggled.connect(self.tslpatchdata_browse_btn.setEnabled)
-        self.tslpatchdata_check.toggled.connect(self.ini_name_edit.setEnabled)
-
-        # Log level
-        log_layout = QHBoxLayout()
-        log_layout.addWidget(QLabel("Log Level:"))
-        self.log_level_combo: QComboBox = QComboBox()
-        self.log_level_combo.addItems(["debug", "info", "warning", "error", "critical"])
-        self.log_level_combo.setCurrentText("info")
-        log_layout.addWidget(self.log_level_combo)
-        options_layout.addLayout(log_layout)
-
-        options_group.setLayout(options_layout)
-        main_layout.addWidget(options_group)
-
-        # Output area
-        output_group = QGroupBox("Output")
-        output_layout = QVBoxLayout()
-        self.output_text = QTextEdit()
-        self.output_text.setReadOnly(True)
-        self.output_text.setAcceptRichText(False)  # Use plain text mode to preserve newlines
-        output_layout.addWidget(self.output_text)
-        output_group.setLayout(output_layout)
-        main_layout.addWidget(output_group)
-
-        # Control buttons
-        button_layout = QHBoxLayout()
-        self.run_btn = QPushButton("Run Diff")
-        self.run_btn.clicked.connect(self._run_diff)
-        button_layout.addWidget(self.run_btn)
-
-        self.clear_btn = QPushButton("Clear Output")
-        self.clear_btn.clicked.connect(self.output_text.clear)
-        button_layout.addWidget(self.clear_btn)
-
-        self.close_btn = QPushButton("Close")
+        # Connect button signals
+        self.ui.runBtn.clicked.connect(self._run_diff)
+        self.ui.clearBtn.clicked.connect(self.ui.outputText.clear)
         # QPushButton.clicked emits a bool; QWidget.close takes no args.
         def _close_window(*_):
             self.close()
-        self.close_btn.clicked.connect(_close_window)
-        button_layout.addWidget(self.close_btn)
-
-        main_layout.addLayout(button_layout)
+        self.ui.closeBtn.clicked.connect(_close_window)
 
     def _setup_path_selector(
         self,
-        parent_layout: QVBoxLayout,
-        label_text: str,
-        is_first: bool,  # noqa: FBT001
         path_num: int,
+        is_first: bool,  # noqa: FBT001
     ):
         """Set up a path selector with installation combobox and custom path options."""
-        group_layout = QVBoxLayout()
-
-        # Label
-        group_layout.addWidget(QLabel(label_text))
-
-        # Radio buttons for selection mode
-        radio_layout = QHBoxLayout()
-        use_installation_radio = QRadioButton("Use Installation")
-        use_custom_path_radio = QRadioButton("Custom Path")
+        # Get UI widgets
+        installation_radio = getattr(self.ui, f"path{path_num}InstallationRadio")
+        custom_radio = getattr(self.ui, f"path{path_num}CustomRadio")
+        installation_combo = getattr(self.ui, f"path{path_num}Combo")
+        path_edit = getattr(self.ui, f"path{path_num}Edit")
+        browse_btn = getattr(self.ui, f"path{path_num}Browse")
 
         # Create a button group to ensure these radio buttons are mutually exclusive per path
         button_group = QButtonGroup(self)
-        button_group.addButton(use_installation_radio)
-        button_group.addButton(use_custom_path_radio)
+        button_group.addButton(installation_radio)
+        button_group.addButton(custom_radio)
 
-        # Create the combobox and line edit
-        installation_combo = QComboBox()
-        installation_combo.setEditable(True)
-        path_edit = QLineEdit()
-        browse_btn = QPushButton("Browse...")
-
-        # Store widgets for later access
+        # Store button group for later access
         setattr(self, f"_path{path_num}_button_group", button_group)
-        setattr(self, f"_path{path_num}_installation_radio", use_installation_radio)
-        setattr(self, f"_path{path_num}_custom_radio", use_custom_path_radio)
-        setattr(self, f"_path{path_num}_combo", installation_combo)
-        setattr(self, f"_path{path_num}_edit", path_edit)
-        setattr(self, f"_path{path_num}_browse", browse_btn)
 
         # Populate installation combobox
         for name, installation in self._installations.items():
@@ -262,40 +161,27 @@ class KotorDiffWindow(QMainWindow):
                     break
 
         # Connect radio buttons
-        use_installation_radio.toggled.connect(installation_combo.setEnabled)
-        use_installation_radio.toggled.connect(lambda checked: path_edit.setDisabled(checked))
-        use_installation_radio.toggled.connect(lambda checked: browse_btn.setDisabled(checked))
+        installation_radio.toggled.connect(installation_combo.setEnabled)
+        installation_radio.toggled.connect(lambda checked: path_edit.setDisabled(checked))
+        installation_radio.toggled.connect(lambda checked: browse_btn.setDisabled(checked))
 
         # Default to installation mode if we have installations
         if self._installations:
-            use_installation_radio.setChecked(True)
+            installation_radio.setChecked(True)
             path_edit.setEnabled(False)
             browse_btn.setEnabled(False)
         else:
-            use_custom_path_radio.setChecked(True)
+            custom_radio.setChecked(True)
             installation_combo.setEnabled(False)
 
-        radio_layout.addWidget(use_installation_radio)
-        radio_layout.addWidget(use_custom_path_radio)
-        group_layout.addLayout(radio_layout)
-
-        # Installation selector
-        group_layout.addWidget(installation_combo)
-
-        # Custom path selector
-        custom_layout = QHBoxLayout()
-        custom_layout.addWidget(path_edit)
+        # Connect browse button
         browse_btn.clicked.connect(lambda: self._browse_path(path_edit))
-        custom_layout.addWidget(browse_btn)
-        group_layout.addLayout(custom_layout)
-
-        parent_layout.addLayout(group_layout)
 
     def _get_path_value(self, path_num: int) -> str | None:
         """Get the path value for the given path number."""
-        installation_radio = getattr(self, f"_path{path_num}_installation_radio")
-        combo = getattr(self, f"_path{path_num}_combo")
-        edit = getattr(self, f"_path{path_num}_edit")
+        installation_radio = getattr(self.ui, f"path{path_num}InstallationRadio")
+        combo = getattr(self.ui, f"path{path_num}Combo")
+        edit = getattr(self.ui, f"path{path_num}Edit")
 
         if installation_radio.isChecked():
             # Check if it's a custom text entry or a real installation
@@ -310,7 +196,7 @@ class KotorDiffWindow(QMainWindow):
         text = edit.text().strip()
         return text if text else None
 
-    def _browse_path(self, line_edit: QLineEdit):
+    def _browse_path(self, line_edit: "QLineEdit"):
         """Browse for a file or directory."""
         path = QFileDialog.getExistingDirectory(self, "Select Directory")
         if not path:
@@ -318,8 +204,10 @@ class KotorDiffWindow(QMainWindow):
         if path:
             line_edit.setText(path)
 
-    def _browse_directory(self, line_edit: QLineEdit):
+    def _browse_directory(self, line_edit: "QLineEdit | None" = None):
         """Browse for a directory."""
+        if line_edit is None:
+            line_edit = self.ui.tslpatchdataEdit
         path = QFileDialog.getExistingDirectory(self, "Select Directory")
         if path:
             line_edit.setText(path)
@@ -332,10 +220,10 @@ class KotorDiffWindow(QMainWindow):
             installation_name = self._settings.value(f"path{path_num}_installation", "")
             custom_path = self._settings.value(f"path{path_num}_custom", "")
 
-            installation_radio = getattr(self, f"_path{path_num}_installation_radio")
-            custom_radio = getattr(self, f"_path{path_num}_custom_radio")
-            combo = getattr(self, f"_path{path_num}_combo")
-            edit = getattr(self, f"_path{path_num}_edit")
+            installation_radio = getattr(self.ui, f"path{path_num}InstallationRadio")
+            custom_radio = getattr(self.ui, f"path{path_num}CustomRadio")
+            combo = getattr(self.ui, f"path{path_num}Combo")
+            edit = getattr(self.ui, f"path{path_num}Edit")
 
             if use_installation:
                 installation_radio.setChecked(True)
@@ -353,30 +241,30 @@ class KotorDiffWindow(QMainWindow):
                 edit.setText(custom_path)
 
         # Load options
-        self.compare_hashes_check.setChecked(self._settings.value("compare_hashes", True, type=bool))
-        self.tslpatchdata_check.setChecked(self._settings.value("tslpatchdata_enabled", False, type=bool))
-        self.tslpatchdata_edit.setText(self._settings.value("tslpatchdata_path", ""))
-        self.ini_name_edit.setText(self._settings.value("ini_filename", "changes.ini"))
-        self.log_level_combo.setCurrentText(self._settings.value("log_level", "info"))
+        self.ui.compareHashesCheck.setChecked(self._settings.value("compare_hashes", True, type=bool))
+        self.ui.tslpatchdataCheck.setChecked(self._settings.value("tslpatchdata_enabled", False, type=bool))
+        self.ui.tslpatchdataEdit.setText(self._settings.value("tslpatchdata_path", ""))
+        self.ui.iniNameEdit.setText(self._settings.value("ini_filename", "changes.ini"))
+        self.ui.logLevelCombo.setCurrentText(self._settings.value("log_level", "info"))
 
     def _save_settings(self):
         """Save current settings to QSettings."""
         # Save path selections
         for path_num in [1, 2]:
-            installation_radio = getattr(self, f"_path{path_num}_installation_radio")
-            combo = getattr(self, f"_path{path_num}_combo")
-            edit = getattr(self, f"_path{path_num}_edit")
+            installation_radio = getattr(self.ui, f"path{path_num}InstallationRadio")
+            combo = getattr(self.ui, f"path{path_num}Combo")
+            edit = getattr(self.ui, f"path{path_num}Edit")
 
             self._settings.setValue(f"path{path_num}_use_installation", installation_radio.isChecked())
             self._settings.setValue(f"path{path_num}_installation", combo.currentText())
             self._settings.setValue(f"path{path_num}_custom", edit.text())
 
         # Save options
-        self._settings.setValue("compare_hashes", self.compare_hashes_check.isChecked())
-        self._settings.setValue("tslpatchdata_enabled", self.tslpatchdata_check.isChecked())
-        self._settings.setValue("tslpatchdata_path", self.tslpatchdata_edit.text())
-        self._settings.setValue("ini_filename", self.ini_name_edit.text())
-        self._settings.setValue("log_level", self.log_level_combo.currentText())
+        self._settings.setValue("compare_hashes", self.ui.compareHashesCheck.isChecked())
+        self._settings.setValue("tslpatchdata_enabled", self.ui.tslpatchdataCheck.isChecked())
+        self._settings.setValue("tslpatchdata_path", self.ui.tslpatchdataEdit.text())
+        self._settings.setValue("ini_filename", self.ui.iniNameEdit.text())
+        self._settings.setValue("log_level", self.ui.logLevelCombo.currentText())
 
     def closeEvent(self, event):  # noqa: N802
         """Handle window close event."""
@@ -397,9 +285,9 @@ class KotorDiffWindow(QMainWindow):
             return
 
         # Disable run button during execution
-        self.run_btn.setEnabled(False)
-        self.output_text.clear()
-        self.output_text.append("Starting KotorDiff...\n")
+        self.ui.runBtn.setEnabled(False)
+        self.ui.outputText.clear()
+        self.ui.outputText.append("Starting KotorDiff...\n")
 
         # Convert string paths to Path/Installation objects
         paths: list[Path | Installation] = []
@@ -417,20 +305,20 @@ class KotorDiffWindow(QMainWindow):
         config = DiffConfig(
             paths=paths,
             tslpatchdata_path=(
-                Path(self.tslpatchdata_edit.text().strip()) 
-                if self.tslpatchdata_check.isChecked() 
-                and self.tslpatchdata_edit.text().strip() 
+                Path(self.ui.tslpatchdataEdit.text().strip()) 
+                if self.ui.tslpatchdataCheck.isChecked() 
+                and self.ui.tslpatchdataEdit.text().strip() 
                 else None
             ),
             ini_filename=(
-                self.ini_name_edit.text().strip() 
+                self.ui.iniNameEdit.text().strip() 
                 or "changes.ini"
             ),
             output_log_path=None,
-            log_level=self.log_level_combo.currentText(),
+            log_level=self.ui.logLevelCombo.currentText(),
             output_mode="quiet",
             use_colors=False,
-            compare_hashes=self.compare_hashes_check.isChecked(),
+            compare_hashes=self.ui.compareHashesCheck.isChecked(),
             use_profiler=False,
             filters=None,
             logging_enabled=True,
@@ -444,20 +332,20 @@ class KotorDiffWindow(QMainWindow):
 
     def _append_output(self, text: str):
         """Append text to the output area."""
-        cursor = self.output_text.textCursor()
+        cursor = self.ui.outputText.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
         cursor.insertText(text)
-        self.output_text.setTextCursor(cursor)
+        self.ui.outputText.setTextCursor(cursor)
         # Ensure the view scrolls to the bottom
-        self.output_text.ensureCursorVisible()
+        self.ui.outputText.ensureCursorVisible()
 
     def _diff_finished(self, exit_code: int):
         """Handle diff completion."""
-        self.run_btn.setEnabled(True)
+        self.ui.runBtn.setEnabled(True)
 
         if exit_code == 0:
-            self.output_text.append("\n\nDiff completed successfully!")
+            self.ui.outputText.append("\n\nDiff completed successfully!")
             QMessageBox.information(self, "Success", "Diff completed successfully!")
         else:
-            self.output_text.append(f"\n\nDiff completed with exit code: {exit_code}")
+            self.ui.outputText.append(f"\n\nDiff completed with exit code: {exit_code}")
             QMessageBox.warning(self, "Completed", f"Diff completed with exit code: {exit_code}")

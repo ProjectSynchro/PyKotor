@@ -909,8 +909,12 @@ class CodeEditor(QPlainTextEdit):
         self.find_dialog = QDialog(self)
         self.find_dialog.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint)
         self.find_dialog.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        
+        from toolset.uic.qtpy.dialogs.find_replace import Ui_Dialog
+        self.find_dialog_ui = Ui_Dialog()
+        self.find_dialog_ui.setupUi(self.find_dialog)
+        
         self.find_dialog.setWindowTitle(tr("Find and Replace"))
-        layout = QVBoxLayout(self.find_dialog)
 
         self.find_dialog.setStyleSheet("""
             QDialog, QWidget {
@@ -942,41 +946,17 @@ class CodeEditor(QPlainTextEdit):
             }
         """)
 
-        find_layout = QHBoxLayout()
-        find_label = QLabel("Find:")
-        self.find_edit: QLineEdit = QLineEdit()
-        find_layout.addWidget(find_label)
-        find_layout.addWidget(self.find_edit)
-        layout.addLayout(find_layout)
+        # Store references to UI elements for easier access
+        self.find_edit = self.find_dialog_ui.findEdit
+        self.replace_edit = self.find_dialog_ui.replaceEdit
+        self.case_sensitive = self.find_dialog_ui.caseSensitive
+        self.whole_words = self.find_dialog_ui.wholeWords
+        self.regex = self.find_dialog_ui.regex
 
-        replace_layout = QHBoxLayout()
-        replace_label = QLabel("Replace:")
-        self.replace_edit: QLineEdit = QLineEdit()
-        replace_layout.addWidget(replace_label)
-        replace_layout.addWidget(self.replace_edit)
-        layout.addLayout(replace_layout)
-
-        options_layout = QHBoxLayout()
-        self.case_sensitive: QCheckBox = QCheckBox("Case sensitive")
-        self.whole_words: QCheckBox = QCheckBox("Whole words")
-        self.regex: QCheckBox = QCheckBox("Regular expression")
-        options_layout.addWidget(self.case_sensitive)
-        options_layout.addWidget(self.whole_words)
-        options_layout.addWidget(self.regex)
-        layout.addLayout(options_layout)
-
-        button_layout = QHBoxLayout()
-        find_button = QPushButton("Find")
-        replace_button = QPushButton("Replace")
-        replace_all_button = QPushButton("Replace All")
-        button_layout.addWidget(find_button)
-        button_layout.addWidget(replace_button)
-        button_layout.addWidget(replace_all_button)
-        layout.addLayout(button_layout)
-
-        find_button.clicked.connect(self.find_next)
-        replace_button.clicked.connect(self.replace_next)
-        replace_all_button.clicked.connect(self.replace_all)
+        # Connect button signals
+        self.find_dialog_ui.findButton.clicked.connect(self.find_next)
+        self.find_dialog_ui.replaceButton.clicked.connect(self.replace_next)
+        self.find_dialog_ui.replaceAllButton.clicked.connect(self.replace_all)
 
         self.find_dialog.setMinimumWidth(400)
         self.find_dialog.show()

@@ -56,15 +56,21 @@
             <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_4">
                     <item>
-                        <widget class="QLineEdit" name="searchEdit">
+                        <widget class="SearchFilterWidget" name="searchEdit">
                             <property name="sizePolicy">
                                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                                     <horstretch>1</horstretch>
                                     <verstretch>0</verstretch>
                                 </sizepolicy>
                             </property>
+                            <property name="text">
+                                <string />
+                            </property>
                             <property name="placeholderText">
-                                <string>search...</string>
+                                <string>filter...</string>
+                            </property>
+                            <property name="maxLength">
+                                <number>16</number>
                             </property>
                         </widget>
                     </item>
@@ -121,6 +127,11 @@
             <class>RobustTreeView</class>
             <extends>QTreeView</extends>
             <header location="global">utility.ui_libraries.qt.widgets.itemviews.treeview</header>
+        </customwidget>
+        <customwidget>
+            <class>SearchFilterWidget</class>
+            <extends>QWidget</extends>
+            <header location="global">utility.ui_libraries.qt.widgets.widgets.search_filter</header>
         </customwidget>
     </customwidgets>
     <resources />

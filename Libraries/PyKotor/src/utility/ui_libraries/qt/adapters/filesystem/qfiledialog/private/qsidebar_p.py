@@ -37,6 +37,7 @@ from qtpy.QtWidgets import (
 if TYPE_CHECKING:
     from qtpy.QtCore import (
         QAbstractItemModel,  # pyright: ignore[reportPrivateImportUsage]
+        QMetaObject,
         QModelIndex,
         QObject,
         QPoint,
@@ -88,7 +89,7 @@ class QUrlModel(QStandardItemModel):
         self.fileSystemModel: QFileSystemModel | None = None
         self.watching: list[QUrlModel.WatchItem] = []
         self.invalidUrls: list[QUrl] = []
-        self.modelConnections: list[QObject] = []  # Store connections for proper cleanup (matching C++)
+        self.modelConnections: list[QMetaObject.Connection] = []  # Store connections for proper cleanup (matching C++)
 
     def __del__(self):
         """Cleanup connections on destruction, matching C++ destructor behavior."""
@@ -205,10 +206,17 @@ class QUrlModel(QStandardItemModel):
         dirIndex: QModelIndex,  # noqa: N803
     ):
         """Set URL for the model index. Matches C++ QUrlModel::setUrl() implementation."""
+        # Ensure url is a QUrl object (handle cases where it might be a string)
+        if isinstance(url, str):
+            url = QUrl.fromLocalFile(url) if url else QUrl()
+        elif not isinstance(url, QUrl):
+            url = QUrl(url) if url else QUrl()
         # Match C++: setData(index, url, UrlRole);
         self.setData(index, url, self.UrlRole)
         # Match C++: if (url.path().isEmpty())
-        if url.path().isEmpty():
+        # In Python, path() returns a string, so we check for empty string directly
+        url_path = url.path()
+        if not url_path or url_path == "":
             assert self.fileSystemModel is not None, "fileSystemModel is None"
             # Match C++: setData(index, fileSystemModel->myComputer());
             self.setData(index, self.fileSystemModel.myComputer())
@@ -260,7 +268,7 @@ class QUrlModel(QStandardItemModel):
                     widget = cast("QWidget | None", self.parent())
                     # Match C++: const auto dpr = widget ? widget->devicePixelRatio() : qApp->devicePixelRatio();
                     app = QGuiApplication.instance()
-                    dpr = widget.devicePixelRatio() if isinstance(widget, QWidget) and widget else (app.devicePixelRatio() if app else 1.0)
+                    dpr = widget.devicePixelRatio() if isinstance(widget, QWidget) and widget else (app.devicePixelRatio() if isinstance(app, QGuiApplication) else 1.0)  # pyright: ignore[reportAttributeAccessIssue]
                     # Match C++: const auto smallPixmap = newIcon.pixmap(QSize(32, 32), dpr);
                     small_pixmap: QPixmap = newIcon.pixmap(QSize(32, 32), dpr)
                     # Match C++: const auto newPixmap = smallPixmap.scaledToWidth(32 * dpr, Qt::SmoothTransformation);
@@ -300,8 +308,7 @@ class QUrlModel(QStandardItemModel):
     def addUrls(
         self,
         list_: list[QUrl],
-        row: int,
-        *,
+        row: int = -1,
         move: bool = True,
     ):
         """Add URLs to the model at the specified row. Matches C++ QUrlModel::addUrls() implementation."""
@@ -313,7 +320,13 @@ class QUrlModel(QStandardItemModel):
         assert self.fileSystemModel is not None, "fileSystemModel is None"
         # Match C++: const auto rend = list.crend(); for (auto it = list.crbegin(); it != rend; ++it)
         for it in reversed(list_):
-            url: QUrl = it
+            # Ensure url is a QUrl object (handle cases where it might be a string)
+            if isinstance(it, str):
+                url = QUrl.fromLocalFile(it) if it else QUrl()
+            elif isinstance(it, QUrl):
+                url = it
+            else:
+                url = QUrl(it) if it else QUrl()
             # Match C++: if (!url.isValid() || url.scheme() != "file"_L1) continue;
             if not url.isValid() or url.scheme() != "file":
                 continue
@@ -395,11 +408,16 @@ class QUrlModel(QStandardItemModel):
         self.fileSystemModel = model
         if self.fileSystemModel is not None:
             # Store connections for proper cleanup (matching C++ modelConnections)
+            # Match C++: modelConnections = { connect(...), connect(...), connect(...) };
             self.modelConnections = [
                 self.fileSystemModel.dataChanged.connect(self.dataChanged),
                 self.fileSystemModel.layoutChanged.connect(self.layoutChanged),
                 self.fileSystemModel.rowsRemoved.connect(self.layoutChanged),
             ]
+        # Match C++: when fileSystemModel is nullptr, modelConnections array is NOT modified
+        # It keeps its previous value (which may contain disconnected/invalid connections)
+        # In Python, we preserve the existing modelConnections list (may be empty or contain stale connections)
+        # This matches C++ behavior where the array always exists but connections may be invalid
         self.clear()
         self.insertColumns(0, 1)
 
@@ -468,6 +486,10 @@ class QSidebar(QListView):
         super().__init__(parent)
         self.urlModel: QUrlModel | None = None
 
+    def __del__(self):
+        """Destructor matching C++ QSidebar::~QSidebar() implementation (empty)."""
+        pass
+
     def urls(self) -> list[QUrl]:
         assert self.urlModel is not None, f"{type(self).__name__}.urls: No URL model setup."
         return self.urlModel.urls()
@@ -519,7 +541,13 @@ class QSidebar(QListView):
         sel_model: QItemSelectionModel | None = self.selectionModel()
         if sel_model is None:
             return
-        sel_model.currentChanged.disconnect(self.clicked)
+        # Match C++: disconnect(selectionModel(), &QItemSelectionModel::currentChanged, this, &QSidebar::clicked);
+        # In Python, we need to check if the connection exists before disconnecting
+        try:
+            sel_model.currentChanged.disconnect(self.clicked)
+        except (TypeError, RuntimeError):
+            # Signal was not connected, which is fine
+            pass
         sel_model.clear()
         sidebar_model: QAbstractItemModel | None = self.model()
         if sidebar_model is None:
@@ -533,6 +561,7 @@ class QSidebar(QListView):
                     QItemSelectionModel.SelectionFlag.SelectCurrent
                 )
                 break
+        # Match C++: connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &QSidebar::clicked);
         sel_model.currentChanged.connect(self.clicked)
 
     def showContextMenu(self, position: QPoint) -> None:
@@ -548,7 +577,8 @@ class QSidebar(QListView):
             # Match C++: if (indexAt(position).data(QUrlModel::UrlRole).toUrl().path().isEmpty()) action->setEnabled(false);
             url_data = self.indexAt(position).data(QUrlModel.UrlRole)
             url = url_data if isinstance(url_data, QUrl) else QUrl()
-            if url.path().isEmpty():
+            url_path = url.path()
+            if not url_path or url_path == "":
                 action.setEnabled(False)
             # Match C++: connect(action, &QAction::triggered, this, &QSidebar::removeEntry);
             action.triggered.connect(self.removeEntry)
@@ -578,7 +608,8 @@ class QSidebar(QListView):
             # System entries like "Computer" have empty paths and should not be removed
             url_data = persistent.data(QUrlModel.UrlRole)
             url = url_data if isinstance(url_data, QUrl) else QUrl()
-            if not url.path().isEmpty():
+            url_path = url.path()
+            if url_path and url_path != "":
                 # Match C++: model()->removeRow(persistent.row());
                 sidebar_model.removeRow(persistent.row())
 

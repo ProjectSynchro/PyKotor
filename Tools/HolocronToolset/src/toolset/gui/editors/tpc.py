@@ -297,10 +297,37 @@ class TPCEditor(Editor):
         original_style: str = self.ui.textureLabel.styleSheet()
         
         # Flash effect
+        # Get palette color for success/confirmation indicator
+        from qtpy.QtGui import QPalette
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+        else:
+            # Use default palette for fallback
+            palette = QPalette()
+        
+        link_color = palette.color(QPalette.ColorRole.Link)
+        # Use link color for success (green-like), or create a green variant
+        success_color = QColor(link_color)
+        # Adjust to be more green-ish while maintaining theme awareness
+        if success_color.lightness() < 128:  # Dark theme
+            # Create green variant from link color for dark theme
+            success_color = QColor(link_color)
+            success_color.setRed(min(255, int(success_color.red() * 0.3)))
+            success_color.setGreen(min(255, int(success_color.green() * 1.2 + 50)))
+            success_color.setBlue(min(255, int(success_color.blue() * 0.3)))
+        else:  # Light theme
+            # Create darker green variant from link color for light theme
+            success_color = QColor(link_color)
+            success_color.setRed(min(255, int(success_color.red() * 0.2)))
+            success_color.setGreen(min(255, int(success_color.green() * 0.8 + 30)))
+            success_color.setBlue(min(255, int(success_color.blue() * 0.2)))
+        border_color = success_color.name()
+        
         animation = QPropertyAnimation(self.ui.textureLabel, b"styleSheet", self)
         animation.setDuration(200)
         animation.setStartValue(original_style)
-        animation.setEndValue(f"{original_style} border: 3px solid #4CAF50;")
+        animation.setEndValue(f"{original_style} border: 3px solid {border_color};")
         
         def restore_style():
             self.ui.textureLabel.setStyleSheet(original_style)
@@ -367,11 +394,22 @@ class TPCEditor(Editor):
         """Animate the texture label when pasting."""
         original_style = self.ui.textureLabel.styleSheet()
         
-        # Flash effect with different color
+        # Flash effect with different color - use palette link color for paste action
+        from qtpy.QtGui import QPalette
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+        else:
+            # Use default palette for fallback
+            palette = QPalette()
+        
+        link_color = palette.color(QPalette.ColorRole.Link)
+        border_color = link_color.name()
+        
         animation = QPropertyAnimation(self.ui.textureLabel, b"styleSheet", self)
         animation.setDuration(200)
         animation.setStartValue(original_style)
-        animation.setEndValue(f"{original_style} border: 3px solid #2196F3;")
+        animation.setEndValue(f"{original_style} border: 3px solid {border_color};")
         
         def restore_style():
             self.ui.textureLabel.setStyleSheet(original_style)

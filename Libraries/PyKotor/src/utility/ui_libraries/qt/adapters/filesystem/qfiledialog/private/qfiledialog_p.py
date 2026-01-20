@@ -6,7 +6,7 @@ import typing
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Callable, cast
 
 import qtpy
 
@@ -68,6 +68,7 @@ if TYPE_CHECKING:
         QObject,
         QPoint,
         QRect,
+        Signal,  # pyright: ignore[reportPrivateImportUsage]
     )
     from qtpy.QtGui import (
         QKeyEvent,
@@ -248,6 +249,13 @@ class QFileDialogPrivate:
 
         self.completer: QFSCompleter | None = None
         self.useDefaultCaption: bool = True
+
+        # Signal disconnection tracking for open() method (matches C++ QFileDialogPrivate)
+        # Note: QPointer is not available in qtpy, so we use a regular reference
+        # In Python, object lifetime is managed differently, so a regular reference is sufficient
+        self.receiverToDisconnectOnClose: QObject | Callable | Signal | None = None
+        self.memberToDisconnectOnClose: QByteArray = QByteArray()
+        self.signalToDisconnectOnClose: QByteArray = QByteArray()
 
         # Memory of what was read from QSettings in restoreState() in case widgets are not used
         self.splitterState: QByteArray = QByteArray()
@@ -556,22 +564,34 @@ class QFileDialogPrivate:
             return
 
         assert d.qFileDialogUi is not None, f"{type(self)}.retranslateStrings: No UI setup."
+        # Match C++: QList<QAction*> actions = qFileDialogUi->treeView->header()->actions();
         tree_header_view: QHeaderView | None = d.qFileDialogUi.treeView.header()
         assert tree_header_view is not None, "tree_header_view is None"
         actions = tree_header_view.actions()
+        # Match C++: QAbstractItemModel *abstractModel = model;
         abstractModel: QAbstractItemModel | QFileSystemModel | None = d.model
         assert abstractModel is not None
+        # Match C++: #if QT_CONFIG(proxymodel) if (proxyModel) abstractModel = proxyModel; #endif
         if d.proxyModel:
             abstractModel = d.proxyModel
+        # Match C++: const int total = qMin(abstractModel->columnCount(QModelIndex()), int(actions.size() + 1));
         total = min(abstractModel.columnCount(QModelIndex()), len(actions) + 1)
+        # Match C++: for (int i = 1; i < total; ++i)
         for i in range(1, total):
-            actions[i - 1].setText(app.tr("Show ") + abstractModel.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole))
+            # Match C++: actions.at(i - 1)->setText(QFileDialog::tr("Show ") + abstractModel->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString());
+            header_data = abstractModel.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
+            header_str = str(header_data) if header_data is not None else ""
+            actions[i - 1].setText(q.tr("Show ") + header_str)
 
-        # MENU ACTIONS
-        d.renameAction.setText(app.tr("&Rename"))
-        d.deleteAction.setText(app.tr("&Delete"))
-        d.showHiddenAction.setText(app.tr("Show &hidden files"))
-        d.newFolderAction.setText(app.tr("&New Folder"))
+        # Match C++: /* MENU ACTIONS */
+        # Match C++: renameAction->setText(QFileDialog::tr("&Rename"));
+        d.renameAction.setText(q.tr("&Rename"))
+        # Match C++: deleteAction->setText(QFileDialog::tr("&Delete"));
+        d.deleteAction.setText(q.tr("&Delete"))
+        # Match C++: showHiddenAction->setText(QFileDialog::tr("Show &hidden files"));
+        d.showHiddenAction.setText(q.tr("Show &hidden files"))
+        # Match C++: newFolderAction->setText(QFileDialog::tr("&New Folder"));
+        d.newFolderAction.setText(q.tr("&New Folder"))
         d.qFileDialogUi.retranslateUi(q)
         d.updateLookInLabel()
         d.updateFileNameLabel()
@@ -765,58 +785,85 @@ class QFileDialogPrivate:
 
         path2: str = path
         if not index.isValid():
-            index = self.mapFromSource(self.model.index(os.path.expandvars(path)))
+            index = self.mapFromSource(self.model.index(self.getEnvironmentVariable(path)))
         else:
             path2 = index.data(url_role).toLocalFile()
             index = self.mapFromSource(self.model.index(path2))
 
         _dir = QDir(path2)
         if not _dir.exists():
-            _dir.setPath(os.path.expandvars(path2))
+            _dir.setPath(self.getEnvironmentVariable(path2))
 
         if _dir.exists() or not path2 or path2 == self.model.myComputer().toString():
             self._q_enterDirectory(index)
         else:
+            # Directory not found - show warning (matching C++ implementation)
+            message = q.tr(f"{path2}\nDirectory not found.\nPlease verify the correct directory name was given.", "QFileDialog")
+            QMessageBox.warning(q, q.windowTitle(), message)
             message = q.tr(f"{path2}\nDirectory not found.\nPlease verify the correct directory name was given.")
             QMessageBox.warning(q, q.windowTitle(), message)
 
     def userSelectedFiles(self) -> list[QUrl]:
-        """Get the list of files selected by the user.
-
-        Retrieves the files selected by the user, either from the widget-based dialog or the system dialog.
-        Crucial for returning the correct selection to the user of the QFileDialog.
-
-        If this function is removed, the file dialog would not be able to return the user's file selection,
-        breaking a core functionality of the file dialog.
+        """Return selected files without defaulting to the root of the file system model.
+        
+        Used for initializing QFileDialogOptions for native dialogs. The default is
+        not suitable for native dialogs since it mostly equals directory().
+        
+        Matches C++ QFileDialogPrivate::userSelectedFiles() implementation.
         """
-        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}.userSelectedFiles: No UI setup."
+        # Match C++: QList<QUrl> files;
         files: list[QUrl] = []
+        # Match C++: if (!usingWidgets()) return addDefaultSuffixToUrls(selectedFiles_sys());
         if not self.usingWidgets():
             return self.addDefaultSuffixToUrls(self.selectedFiles_sys())
-        files = [QUrl.fromLocalFile(index.data(QFileSystemModel.Roles.FilePathRole)) for index in self.qFileDialogUi.listView.selectionModel().selectedRows()]
+        # Match C++: const QModelIndexList selectedRows = qFileDialogUi->listView->selectionModel()->selectedRows();
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}.userSelectedFiles: No UI setup."
+        selected_rows = self.qFileDialogUi.listView.selectionModel().selectedRows()
+        # Match C++: files.reserve(selectedRows.size());
+        # Match C++: for (const QModelIndex &index : selectedRows)
+        # Match C++:     files.append(QUrl::fromLocalFile(index.data(QFileSystemModel::FilePathRole).toString()));
+        for index in selected_rows:
+            file_path_data = index.data(QFileSystemModel.Roles.FilePathRole)
+            file_path_str = str(file_path_data) if file_path_data is not None else ""
+            files.append(QUrl.fromLocalFile(file_path_str))
+        # Match C++: if (files.isEmpty() && !lineEdit()->text().isEmpty())
         if not files and self.lineEdit().text():
-            files.extend([QUrl.fromLocalFile(path) for path in self.typedFiles()])
+            # Match C++: const QStringList typedFilesList = typedFiles();
+            typed_files_list = self.typedFiles()
+            # Match C++: files.reserve(typedFilesList.size());
+            # Match C++: for (const QString &path : typedFilesList)
+            # Match C++:     files.append(QUrl::fromLocalFile(path));
+            for path in typed_files_list:
+                files.append(QUrl.fromLocalFile(path))
         return files
 
     def addDefaultSuffixToFiles(
         self,
         filesToFix: list[str],  # noqa: N803
     ) -> list[str]:
-        """Add the default suffix to files if necessary.
-
-        Ensures that files without extensions get the default suffix added.
-        This is important for maintaining consistent file naming conventions.
-        """
+        """Add the default suffix to files if necessary. Matches C++ QFileDialogPrivate::addDefaultSuffixToFiles() implementation."""
         files: list[str] = []
+        # Match C++: for (int i=0; i<filesToFix.size(); ++i)
         for name in filesToFix:
+            # Match C++: QString name = toInternal(filesToFix.at(i));
             newName: str = self.toInternal(name)
+            # Match C++: QFileInfo info(name);
+            info = QFileInfo(newName)
+            # Match C++: const QString defaultSuffix = options->defaultSuffix();
             defaultSuffix: str = self.options.defaultSuffix()
-            if defaultSuffix.strip() and not os.path.isdir(newName) and "." not in os.path.basename(newName):  # noqa: PTH112, PTH119
-                newName = os.path.splitext(newName)[0] + "." + defaultSuffix  # noqa: PTH122
-            if os.path.isabs(newName):  # noqa: PTH117
+            # Match C++: if (!defaultSuffix.isEmpty() && !info.isDir() && !info.fileName().contains(u'.'))
+            if defaultSuffix and not info.isDir() and "." not in info.fileName():
+                # Match C++: name += u'.' + defaultSuffix;
+                newName = newName + "." + defaultSuffix
+            # Match C++: if (info.isAbsolute()) { files.append(name); } else { ... }
+            if info.isAbsolute():
                 files.append(newName)
             else:
-                path: str = os.path.join(self.rootPath(), newName)  # noqa: PTH118
+                # Match C++: QString path = rootPath(); if (!path.endsWith(u'/')) path += u'/'; path += name; files.append(path);
+                path: str = self.rootPath()
+                if not path.endswith("/"):
+                    path += "/"
+                path += newName
                 files.append(path)
         return files
 
@@ -830,23 +877,25 @@ class QFileDialogPrivate:
         This is important for maintaining consistent file naming conventions when working with URLs.
         """
         urls: list[QUrl] = []
+        # Match C++: urls.reserve(urlsToFix.size());
+        # Match C++: const QString defaultSuffix = options->defaultSuffix();
         defaultSuffix: str = self.options.defaultSuffix()
+        # Match C++: for (QUrl url : urlsToFix)
         for url in urlsToFix:
-            if not defaultSuffix:
-                urls.append(url)
-                continue
-
-            urlPath: str = url.path()
-            if os.path.splitext(urlPath)[1] or os.path.isdir(urlPath):  # noqa: PTH112, PTH122
-                urls.append(url)
-                continue
-
-            url.setPath(
-                os.path.join(  # noqa: PTH118
-                    os.path.dirname(urlPath),  # noqa: PTH120
-                    os.path.basename(urlPath) + "." + defaultSuffix,  # noqa: PTH119
-                )
-            )
+            # Match C++: if (!defaultSuffix.isEmpty())
+            if defaultSuffix:
+                # Match C++: const QString urlPath = url.path();
+                urlPath: str = url.path()
+                # Match C++: const auto idx = urlPath.lastIndexOf(u'/');
+                idx = urlPath.rfind("/")
+                # Match C++: if (idx != (urlPath.size() - 1) && !QStringView{urlPath}.mid(idx + 1).contains(u'.'))
+                # Check if the filename (after last '/') contains a '.'
+                if idx != (len(urlPath) - 1):
+                    filename = urlPath[idx + 1:]
+                    if "." not in filename:
+                        # Match C++: url.setPath(urlPath + u'.' + defaultSuffix);
+                        url.setPath(urlPath + "." + defaultSuffix)
+            # Match C++: urls.append(url);
             urls.append(url)
         return urls
 
@@ -1087,39 +1136,50 @@ class QFileDialogPrivate:
     ) -> None:
         """Restores the state of a previously visited directory, including selection.
 
-        Ensures consistent behavior when navigating through history.
+        Matches C++ navigate(HistoryItem &historyItem) implementation.
         """
         assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._navigateToHistoryItem: No UI setup."
         q = self._public
         self._ignoreHistoryChange = True
         try:
             q.setDirectory(item.path)
-            # Process events to ensure directory change completes
-            QApplication.processEvents()
         finally:
             self._ignoreHistoryChange = False
-        for i, persistent_index in enumerate(item.selection):
-            if not persistent_index.isValid():
-                RobustLogger().warning(f"{self.__class__.__name__}._navigateToHistoryItem: Invalid index: {persistent_index} at index {i} in the selection model's rows list.")
-                continue
-            # transform QPersistentModelIndex to QModelIndex
-            persistent_model_index: QAbstractItemModel | None = persistent_index.model()
-            assert persistent_model_index is not None, f"{self.__class__.__name__}._navigateToHistoryItem: persistent_model_index is None"
-            index: QModelIndex = persistent_model_index.index(
-                persistent_index.row(),
-                persistent_index.column(),
-                persistent_index.parent(),
+        
+        # Restore selection unless something has changed in the file system
+        if not item.selection:
+            return
+        
+        # Check if any persistent indexes are invalid (matching C++ std::any_of check)
+        if any(not idx.isValid() for idx in item.selection):
+            item.selection.clear()
+            return
+        
+        # Use the current view mode to determine which view to use
+        view: QAbstractItemView = (
+            self.qFileDialogUi.listView
+            if q.viewMode() == RealQFileDialog.ViewMode.List
+            else self.qFileDialogUi.treeView
+        )
+        selection_model: QItemSelectionModel | None = view.selectionModel()
+        if selection_model is None:
+            return
+        
+        flags = QItemSelectionModel.SelectionFlag.Select | QItemSelectionModel.SelectionFlag.Rows
+        
+        # Select first item with Clear and Current flags (matching C++ implementation)
+        if item.selection:
+            first_index = item.selection[0]
+            # QPersistentModelIndex can be used directly with select() in Qt
+            selection_model.select(
+                first_index,
+                flags | QItemSelectionModel.SelectionFlag.Clear | QItemSelectionModel.SelectionFlag.Current
             )
-            if index.isValid():
-                listview_sel_model: QItemSelectionModel | None = self.qFileDialogUi.listView.selectionModel()
-                assert listview_sel_model is not None, f"{self.__class__.__name__}._navigateToHistoryItem: listview_sel_model is None"
-                listview_sel_model.select(index, QItemSelectionModel.SelectionFlag.Select)
-            else:
-                RobustLogger().warning(f"{self.__class__.__name__}._navigateToHistoryItem: Failed to create valid QModelIndex from persistent index.")
-        # NOTE: _updateNavigationButtons() is already called in _q_pathChanged, but we ensure it's called here too
-        # after all state is restored, in case the directory change didn't trigger it properly
-        QApplication.processEvents()
-        self._updateNavigationButtons()
+            view.scrollTo(first_index)
+        
+        # Select remaining items
+        for persistent_index in item.selection[1:]:
+            selection_model.select(persistent_index, flags)
 
     def _q_navigateToParent(self) -> None:
         """Implements the functionality for the "Up" or "Parent Directory" button.
@@ -1244,7 +1304,7 @@ class QFileDialogPrivate:
 
     def _add_file_context_menu_actions(
         self,
-        menu,  # noqa: ANN001
+        menu: QMenu,  # noqa: ANN001
         index: QModelIndex,
     ) -> None:
         """Populates the context menu with actions specific to the selected file or directory.
@@ -1258,23 +1318,35 @@ class QFileDialogPrivate:
             RobustLogger().warning(f"{self.__class__.__name__}._add_file_context_menu_actions: No file system model setup.")
             return
 
-        # Check ReadOnly option from dialog, not just model
+        # Check ReadOnly option from dialog, not just model (matching C++ implementation)
         q = self._public
         read_only_option = sip_enum_to_int(RealQFileDialog.Option.ReadOnly)
-        ro: bool = bool(sip_enum_to_int(q.options()) & read_only_option)
-        p: int = self.model.fileInfo(index).permissions()  # pyright: ignore[reportAssignmentType]
+        ro: bool = bool(sip_enum_to_int(q.options()) & read_only_option) or (self.model and self.model.isReadOnly())
+        # C++ uses index.parent().data(QFileSystemModel::FilePermissions) to get directory permissions
+        # This checks if we can write to the parent directory (where the file is located)
+        parent_index = index.parent()
+        if parent_index.isValid():
+            permissions_data = parent_index.data(QFileSystemModel.Roles.FilePermissions)
+            if permissions_data is not None:
+                p: int = int(permissions_data) if isinstance(permissions_data, (int, QFile.Permission)) else 0
+            else:
+                # Fallback to fileInfo if parent data is not available
+                p = self.model.fileInfo(index).permissions()  # pyright: ignore[reportAssignmentType]
+        else:
+            # Fallback if no parent
+            p = self.model.fileInfo(index).permissions()  # pyright: ignore[reportAssignmentType]
 
         if self.renameAction is not None:
-            self.renameAction.setEnabled(not ro and bool(p & QFile.Permission.WriteUser))  # pyright: ignore[reportOperatorIssue]
+            self.renameAction.setEnabled(not ro and bool(p & sip_enum_to_int(QFile.Permission.WriteUser)))
             menu.addAction(self.renameAction)
         if self.deleteAction is not None:
-            self.deleteAction.setEnabled(not ro and bool(p & QFile.Permission.WriteUser))  # pyright: ignore[reportOperatorIssue]
+            self.deleteAction.setEnabled(not ro and bool(p & sip_enum_to_int(QFile.Permission.WriteUser)))
             menu.addAction(self.deleteAction)
         menu.addSeparator()
 
     def _add_context_menu_view_actions(
         self,
-        menu,  # noqa: ANN001
+        menu: QMenu,  # noqa: ANN001
     ) -> None:
         """Adds general view-related actions to the context menu.
 
@@ -1335,26 +1407,37 @@ class QFileDialogPrivate:
         sel_model: QItemSelectionModel | None = self.qFileDialogUi.listView.selectionModel()
         assert sel_model is not None, f"{self.__class__.__name__}._q_deleteCurrent: No selection model found."
         selectedRows: list[QModelIndex] = sel_model.selectedRows()
+        # Use QPersistentModelIndex like C++ (iterating in reverse order)
         for index in reversed(selectedRows):
-            self._delete_item(index)
+            persistent_index = QPersistentModelIndex(index)
+            self._delete_item(persistent_index)
 
     def _delete_item(
         self,
-        index: QModelIndex,
+        index: QModelIndex | QPersistentModelIndex,
     ) -> None:
         """Handles the actual deletion of a file or directory.
 
-        This function encapsulates the logic for safely removing an item from the file system.
+        Matches C++ deleteCurrent() implementation.
         """
         assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._delete_item: No UI setup."
 
-        if not index.isValid() or index.parent() is None or index == self.qFileDialogUi.listView.rootIndex():
-            RobustLogger().warning(f"{self.__class__.__name__}._delete_item: Invalid index: {index}.")
-            return
-
-        index = self.mapToSource(index.sibling(index.row(), 0))
+        # Convert QPersistentModelIndex to QModelIndex if needed, matching C++ behavior
+        if isinstance(index, QPersistentModelIndex):
+            if not index.isValid() or index == self.qFileDialogUi.listView.rootIndex():
+                return
+            # Get QModelIndex from QPersistentModelIndex
+            model = index.model()
+            if model is None:
+                return
+            temp_index = model.index(index.row(), index.column(), index.parent())
+            index = self.mapToSource(temp_index.sibling(temp_index.row(), 0))
+        else:
+            if not index.isValid() or index.parent() is None or index == self.qFileDialogUi.listView.rootIndex():
+                return
+            index = self.mapToSource(index.sibling(index.row(), 0))
+        
         if not index.isValid():
-            RobustLogger().warning(f"{self.__class__.__name__}._delete_item: Invalid index: {index}.")
             return
 
         assert self.model is not None, f"{self.__class__.__name__}._delete_item: No file system model setup."
@@ -1362,22 +1445,38 @@ class QFileDialogPrivate:
         fileName: str = index.data(QFileSystemModel.Roles.FileNameRole)
         filePath: str = index.data(QFileSystemModel.Roles.FilePathRole)
 
-        p: int | None = index.data(QFileSystemModel.Roles.FilePermissions)
-        if not isinstance(p, int):
-            raise TypeError(f"Invalid file permissions: {p!r}")
+        # C++ uses index.parent().data(QFileSystemModel::FilePermissions) to get directory permissions
+        parent_index = index.parent()
+        if parent_index.isValid():
+            permissions_data = parent_index.data(QFileSystemModel.Roles.FilePermissions)
+            if permissions_data is not None:
+                p = int(permissions_data) if isinstance(permissions_data, (int, QFile.Permission)) else 0
+            else:
+                p = 0
+        else:
+            p = 0
 
-        if not bool(p & sip_enum_to_int(QFile.Permission.WriteUser)) and self._write_protected_warning(fileName):
+        # Check write protection and confirm deletion (matching C++ logic)
+        if not bool(p & sip_enum_to_int(QFile.Permission.WriteUser)):
+            if not self._write_protected_warning(fileName):
+                return
+        elif not self._confirm_deletion(fileName):
             return
 
         # the event loop has run, we have to validate if the index is valid because the model might have removed it.
-        if not index.isValid() and self._confirm_deletion(fileName):
+        if not index.isValid():
             return
 
         if self.model.isDir(index) and not self.model.fileInfo(index).isSymLink():
             if not self.removeDirectory(filePath):
-                self._show_deletion_error()
-            return
-        self.model.remove(index)
+                q = self._public
+                QMessageBox.warning(
+                    q,
+                    q.windowTitle(),
+                    q.tr("Could not delete directory.", "QFileDialog"),
+                )
+        else:
+            self.model.remove(index)
 
     def _write_protected_warning(
         self,
@@ -1444,23 +1543,29 @@ class QFileDialogPrivate:
         multipleFiles: list[str] = self.typedFiles()
         if not multipleFiles:
             return
+        
         oldFiles: list[QModelIndex] = sel_listview_model.selectedRows()
         newFiles: list[QModelIndex] = []
         for file in multipleFiles:
             idx: QModelIndex = self.model.index(file)
-            if idx not in oldFiles:
-                newFiles.append(idx)
-            else:
+            # C++ uses removeAll() which removes all occurrences and returns count
+            # If count is 0, the item wasn't in the list, so it's new
+            removed_count = 0
+            while idx in oldFiles:
                 oldFiles.remove(idx)
+                removed_count += 1
+            if removed_count == 0:
+                newFiles.append(idx)
+        
         for new_file in newFiles:
             self.select(new_file)
-        if not self.lineEdit().hasFocus():
-            return
-        for oldFile in oldFiles:
-            sel_listview_model.select(
-                oldFile,
-                QItemSelectionModel.SelectionFlag.Toggle | QItemSelectionModel.SelectionFlag.Rows,
-            )
+        
+        if self.lineEdit().hasFocus():
+            for oldFile in oldFiles:
+                sel_listview_model.select(
+                    oldFile,
+                    QItemSelectionModel.SelectionFlag.Toggle | QItemSelectionModel.SelectionFlag.Rows,
+                )
 
     def typedFiles(self) -> list[str]:
         """Returns the text in the line edit which can be one or more file names.
@@ -1470,7 +1575,9 @@ class QFileDialogPrivate:
         """
         q = self._public
         files: list[str] = []
-        editText: str = self.lineEdit().text().strip()
+        # Match C++: QString editText = lineEdit()->text();
+        editText: str = self.lineEdit().text()
+        # Match C++: if (!editText.contains(u'"')) {
         if '"' not in editText:
             prefix = q.directory().absolutePath() + QDir.separator()
             if os.path.exists(os.path.join(prefix, editText)):  # noqa: PTH110, PTH118
@@ -1478,16 +1585,28 @@ class QFileDialogPrivate:
             else:
                 files.append(self.qt_tildeExpansion(editText))
         else:
-            # " is used to separate files like so: "file1" "file2" "file3" ...
-            # ### need escape character for filenames with quotes (")
+            # Match C++: // " is used to separate files like so: "file1" "file2" "file3" ...
+            # Match C++: // ### need escape character for filenames with quotes (")
+            # Match C++: QStringList tokens = editText.split(u'\"');
             tokens: list[str] = editText.split('"')
-            for i in range(1, len(tokens), 2):  # Every even token is a separator
-                token: str = tokens[i]
-                prefix: str = q.directory().absolutePath()
-                if os.path.exists(os.path.join(prefix, token)):  # noqa: PTH110, PTH118
-                    files.append(token)
+            # Match C++: for (int i=0; i<tokens.size(); ++i) { if ((i % 2) == 0) continue; // Every even token is a separator
+            for i in range(len(tokens)):
+                if (i % 2) == 0:
+                    continue  # Every even token is a separator
+                # Match C++: #ifdef Q_OS_UNIX ... #else ... #endif
+                if os.name == "posix":
+                    # Match C++: const QString token = tokens.at(i);
+                    token: str = tokens[i]
+                    # Match C++: const QString prefix = q->directory().absolutePath() + QDir::separator();
+                    prefix: str = q.directory().absolutePath() + QDir.separator()
+                    # Match C++: if (QFile::exists(prefix + token)) files << token; else files << qt_tildeExpansion(token);
+                    if os.path.exists(prefix + token):  # noqa: PTH110
+                        files.append(token)
+                    else:
+                        files.append(self.qt_tildeExpansion(token))
                 else:
-                    files.append(self.qt_tildeExpansion(token))
+                    # Match C++: #else files << toInternal(tokens.at(i)); #endif
+                    files.append(self.toInternal(tokens[i]))
         return self.addDefaultSuffixToFiles(files)
 
     def qt_tildeExpansion(
@@ -1495,13 +1614,53 @@ class QFileDialogPrivate:
         path: str,
     ) -> str:
         """Expand tilde in file paths.
-
-        Expands the tilde (~) in file paths to the user's home directory on Unix-like systems.
-        This allows users to use the tilde shorthand in file paths.
+        
+        Matches C++ qt_tildeExpansion() implementation exactly.
+        Handles ~, ~/, ~user, and ~user/path formats.
         """
+        if not path.startswith("~"):
+            return path
+        
+        if len(path) == 1:  # '~'
+            return QDir.homePath()
+        
+        # Find separator index
+        sep_index = path.find(QDir.separator())
+        if sep_index == 1:  # '~/' or '~/a/b/c'
+            return QDir.homePath() + path[1:]
+        
+        # Handle ~user format (Unix-like systems only)
         if os.name == "posix":
-            return os.path.expanduser(path)  # noqa: PTH111
-        return path
+            if sep_index == -1:
+                # '~user' - no separator found
+                user_name_len = len(path) - 1  # length of "~"
+                user_name = path[1:user_name_len + 1]
+            else:
+                # '~user/a/b'
+                user_name_len = sep_index - 1  # length of "~"
+                user_name = path[1:sep_index]
+            
+            # Try to get home directory for the user
+            try:
+                import pwd
+                try:
+                    pw = pwd.getpwnam(user_name)
+                    home_path = pw.pw_dir
+                except KeyError:
+                    # User not found, return original path
+                    return path
+            except ImportError:
+                # pwd module not available (Windows), use expanduser
+                home_path = os.path.expanduser(f"~{user_name}")  # noqa: PTH111
+                if home_path == f"~{user_name}":
+                    return path
+            
+            if sep_index == -1:
+                return home_path
+            return home_path + path[sep_index:]
+        
+        # Non-Unix systems: just use expanduser
+        return os.path.expanduser(path)  # noqa: PTH111
 
     def toInternal(
         self,
@@ -1515,6 +1674,41 @@ class QFileDialogPrivate:
         if os.name == "posix":
             return path.replace("\\", "/")
         return path
+
+    def basename(self, path: str) -> str:
+        """Extract the filename from a path.
+        
+        Returns the part of the path after the last separator.
+        This matches the C++ inline implementation.
+        """
+        native_path = QDir.toNativeSeparators(path)
+        separator_index = native_path.rfind(QDir.separator())
+        if separator_index != -1:
+            return path[separator_index + 1:]
+        return path
+
+    def getEnvironmentVariable(self, string: str) -> str:
+        """Expand environment variables in the given string.
+        
+        Matches C++ QFileDialogPrivate::getEnvironmentVariable() implementation exactly.
+        On Unix: expands $VAR format using qEnvironmentVariable
+        On Windows: expands %VAR% format using qEnvironmentVariable
+        Otherwise returns the string unchanged.
+        """
+        # Match C++: if (string.size() > 1 && string.startsWith(u'$'))
+        if len(string) > 1 and string.startswith("$"):
+            # Match C++: return qEnvironmentVariable(QStringView{string}.mid(1).toLatin1().constData());
+            var_name = string[1:]
+            # qEnvironmentVariable returns empty string if not found, but we return original string if not found
+            result = os.environ.get(var_name, "")
+            return result if result else string
+        # Match C++: if (string.size() > 2 && string.startsWith(u'%') && string.endsWith(u'%'))
+        elif len(string) > 2 and string.startswith("%") and string.endswith("%"):
+            # Match C++: return qEnvironmentVariable(QStringView{string}.mid(1, string.size() - 2).toLatin1().constData());
+            var_name = string[1:-1]
+            result = os.environ.get(var_name, "")
+            return result if result else string
+        return string
 
     def filterForMode(
         self,
@@ -1564,27 +1758,16 @@ class QFileDialogPrivate:
             isOpenDirectory = True
         elif fileMode == sip_enum_to_int(RealQFileDialog.FileMode.Directory):
             assert self.model is not None, f"{self.__class__.__name__}._q_updateOkButton: No file system model setup."
-            candidate: str = ""
-            if files and files[0]:
-                candidate = files[0]
-            if not candidate:
-                candidate = self.model.rootPath()
-            if not candidate:
-                candidate = q.directory().absolutePath()
-            if candidate:
-                idx: QModelIndex = self.model.index(candidate)
-                if not idx.isValid():
-                    idx = self.model.index(os.path.expandvars(candidate))
-                if (idx.isValid() and self.model.isDir(idx)) or os.path.isdir(candidate):  # noqa: PTH100
-                    enableButton = True
-                    isOpenDirectory = True
-                else:
-                    enableButton = False
-            else:
+            # C++ implementation: simpler - just check first file
+            fn = files[0] if files else ""
+            idx: QModelIndex = self.model.index(fn)
+            if not idx.isValid():
+                idx = self.model.index(self.getEnvironmentVariable(fn))
+            if not idx.isValid() or not self.model.isDir(idx):
                 enableButton = False
         elif fileMode == sip_enum_to_int(RealQFileDialog.FileMode.AnyFile):
             assert self.model is not None, f"{self.__class__.__name__}._q_updateOkButton: No file system model setup."
-            if not files or files[0] is None:
+            if not files:
                 enableButton = False
             else:
                 fn = files[0]
@@ -1595,9 +1778,11 @@ class QFileDialogPrivate:
                 if info.isDir():
                     fileDir = info.canonicalFilePath()
                 else:
-                    if "/" in fn:
-                        fileDir = fn[: fn.rfind("/")]
-                        fileName = fn[len(fileDir) + 1 :]
+                    # C++ uses fn.mid(0, fn.lastIndexOf(u'/')) and fn.mid(fileDir.size() + 1)
+                    last_slash = fn.rfind("/")
+                    if last_slash != -1:
+                        fileDir = fn[:last_slash]
+                        fileName = fn[last_slash + 1:]
                     else:
                         fileDir = ""
                         fileName = fn
@@ -1605,6 +1790,7 @@ class QFileDialogPrivate:
                     fileDir = info.canonicalFilePath()
                     fileName = info.fileName()
 
+                # C++ uses separate if statements with break, matching that logic
                 if fileDir == q.directory().canonicalPath() and not fileName:
                     enableButton = False
                 elif idx.isValid() and self.model.isDir(idx):
@@ -1618,7 +1804,7 @@ class QFileDialogPrivate:
             for file in files:
                 idx = self.model.index(file)
                 if not idx.isValid():
-                    idx = self.model.index(os.path.expandvars(file))
+                    idx = self.model.index(self.getEnvironmentVariable(file))
                 if not idx.isValid():
                     enableButton = False
                     break
@@ -1633,27 +1819,34 @@ class QFileDialogPrivate:
         self,
         save_as_on_folder: bool = False,  # noqa: FBT002, FBT001, N803
     ) -> None:
-        """Adjusts the text on the OK button based on the current dialog mode and selection.
-
-        This provides clear context to the user about what action the button will perform.
-        """
+        """Update OK button text. Matches C++ QFileDialogPrivate::updateOkButtonText() implementation."""
         q = self._public
-
+        # Match C++: // 'Save as' at a folder: Temporarily change to "Open".
         if save_as_on_folder:
-            self.setLabelTextControl(RealQFileDialog.DialogLabel.Accept, q.tr("&Open", "QFileDialog"))
+            # Match C++: setLabelTextControl(QFileDialog::Accept, QFileDialog::tr("&Open"));
+            self.setLabelTextControl(RealQFileDialog.DialogLabel.Accept, q.tr("&Open"))
+        # Match C++: else if (options->isLabelExplicitlySet(QFileDialogOptions::Accept))
         elif self.options.isLabelExplicitlySet(RealQFileDialog.DialogLabel.Accept):
+            # Match C++: setLabelTextControl(QFileDialog::Accept, options->labelText(QFileDialogOptions::Accept));
             self.setLabelTextControl(
                 RealQFileDialog.DialogLabel.Accept,
                 self.options.labelText(RealQFileDialog.DialogLabel.Accept),
             )
             return
-        elif sip_enum_to_int(q.fileMode()) == sip_enum_to_int(RealQFileDialog.FileMode.Directory):
-            self.setLabelTextControl(RealQFileDialog.DialogLabel.Accept, q.tr("&Choose", "QFileDialog"))
         else:
-            text: str = (
-                q.tr("&Open", "QFileDialog") if sip_enum_to_int(q.acceptMode()) == sip_enum_to_int(RealQFileDialog.AcceptMode.AcceptOpen) else q.tr("&Save", "QFileDialog")
-            )  # noqa: E501
-            self.setLabelTextControl(RealQFileDialog.DialogLabel.Accept, text)
+            # Match C++: switch (q->fileMode())
+            mode = q.fileMode()
+            # Match C++: case QFileDialog::Directory:
+            if sip_enum_to_int(mode) == sip_enum_to_int(RealQFileDialog.FileMode.Directory):
+                # Match C++: setLabelTextControl(QFileDialog::Accept, QFileDialog::tr("&Choose"));
+                self.setLabelTextControl(RealQFileDialog.DialogLabel.Accept, q.tr("&Choose"))
+            # Match C++: default:
+            else:
+                # Match C++: setLabelTextControl(QFileDialog::Accept, q->acceptMode() == QFileDialog::AcceptOpen ? QFileDialog::tr("&Open") : QFileDialog::tr("&Save"));
+                text: str = (
+                    q.tr("&Open") if sip_enum_to_int(q.acceptMode()) == sip_enum_to_int(RealQFileDialog.AcceptMode.AcceptOpen) else q.tr("&Save")
+                )
+                self.setLabelTextControl(RealQFileDialog.DialogLabel.Accept, text)
 
     def setLabelTextControl(
         self,
@@ -1838,8 +2031,9 @@ class QFileDialogPrivate:
         """
         q = self._public
         q.directoryUrlEntered.emit(directory)
-        if directory:  # Windows native dialogs occasionally emit signals with empty strings.
-            self.lastVisitedDir = directory
+        # Windows native dialogs occasionally emit signals with empty strings - check for that
+        if not directory.isEmpty():
+            self.setLastVisitedDirectory(directory)
             if directory.isLocalFile():
                 q.directoryEntered.emit(directory.toLocalFile())
 
@@ -1859,7 +2053,10 @@ class QFileDialogPrivate:
         Ensures that the dialog and the application stay in sync with the user's current selection.
         """
         self._q_updateOkButton()
-        self.q_func().currentChanged.emit(index.data(QFileSystemModel.Roles.FilePathRole))
+        # C++ emits with .toString() - ensure string type (matching C++ implementation)
+        path_data = index.data(QFileSystemModel.Roles.FilePathRole)
+        path_str = str(path_data) if path_data is not None else ""
+        self.q_func().currentChanged.emit(path_str)
 
     def _q_selectionChanged(self) -> None:
         """Handles the selection change event in the list view.
@@ -1898,25 +2095,41 @@ class QFileDialogPrivate:
     ) -> None:
         """Handles the action of entering a selected directory.
 
-        Crucial for navigating the file system hierarchy within the dialog.
-
-        If this function is removed, users would lose the ability to navigate into directories
-        by selecting them, significantly hampering the dialog's navigation capabilities.
+        Matches C++ enterDirectory() implementation including KDE single-click activation logic.
         """
         if not index.isValid() or self.model is None:
             return
 
         q = self._public
-        if self.model.isDir(index):
-            assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._q_enterDirectory: {type(self.qFileDialogUi).__name__} is None"
-            self.qFileDialogUi.treeView.setCurrentIndex(index)
-            filePath: str = self.model.filePath(index)
-            q.setDirectory(filePath)
-            if sip_enum_to_int(q.fileMode()) == sip_enum_to_int(RealQFileDialog.FileMode.Directory):
+        # My Computer or a directory - map to source if using proxy model
+        sourceIndex: QModelIndex = self.mapToSource(index) if (index.model() == self.proxyModel if self.proxyModel else False) else index
+        path: str = str(sourceIndex.data(QFileSystemModel.Roles.FilePathRole)) if sourceIndex.data(QFileSystemModel.Roles.FilePathRole) is not None else ""
+        
+        if not path or self.model.isDir(sourceIndex):
+            if q.directory().path() == path:
+                return
+
+            fileMode = q.fileMode()
+            q.setDirectory(path)
+            q.directoryEntered.emit(path)
+            if fileMode == RealQFileDialog.FileMode.Directory:
+                # C++ does both setText(QString()) and clear() - matching that
+                self.lineEdit().setText("")
                 self.lineEdit().clear()
-            q.directoryEntered.emit(filePath)
         else:
-            self.accept()
+            # Do not accept when shift-clicking to multi-select a file in environments with single-click-activation (KDE)
+            from qtpy.QtGui import QGuiApplication
+            style_hint = q.style().styleHint(
+                QStyle.StyleHint.SH_ItemView_ActivateItemOnSingleClick,
+                None,
+                self.qFileDialogUi.treeView if self.qFileDialogUi else None
+            )
+            keyboard_modifiers = QGuiApplication.keyboardModifiers()
+            ctrl_pressed = bool(keyboard_modifiers & Qt.KeyboardModifier.ControlModifier)
+            
+            if ((not style_hint or q.fileMode() != RealQFileDialog.FileMode.ExistingFiles or not ctrl_pressed)
+                and bool(index.model().flags(index) & Qt.ItemFlag.ItemIsEnabled)):
+                q.accept()
 
     def _q_goHome(self) -> None:
         """Provides a quick way to navigate to the user's home directory.
@@ -1932,15 +2145,31 @@ class QFileDialogPrivate:
     ) -> None:
         """Toggles the visibility of specific columns in the details view.
 
-        This allows users to customize the information displayed in the file dialog.
-
-        If this function is removed, users would lose the ability to customize the
-        visible columns in the details view, reducing the dialog's flexibility and usability.
+        Matches C++ showHeader() implementation which uses sender() to get action group.
         """
-        if self.qFileDialogUi is None or self.showActionGroup is None:
+        if self.qFileDialogUi is None:
             return
-
-        actionGroup: QActionGroup = self.showActionGroup
+        
+        q = self._public
+        # C++ uses q->sender() to get the action group - match that approach
+        # In PyQt/PySide, sender() is a QObject method
+        actionGroup: QActionGroup | None = None
+        try:
+            # Try to get sender if available (PyQt/PySide support this)
+            if hasattr(q, 'sender'):
+                sender: QObject | None = q.sender()
+                if sender is not None and isinstance(sender, QActionGroup):
+                    actionGroup = sender
+        except (AttributeError, TypeError, RuntimeError):
+            pass
+        
+        # Fallback to stored action group if sender() not available or didn't work
+        if actionGroup is None:
+            actionGroup = self.showActionGroup
+        
+        if actionGroup is None:
+            return
+        
         header: QHeaderView | None = self.qFileDialogUi.treeView.header()
         assert header is not None, f"{self.__class__.__name__}._q_showHeader: No header found."
         columnIndex: int = actionGroup.actions().index(action) + 1
@@ -2027,15 +2256,19 @@ class QFileDialogPrivate:
         q = self._public
         settings.beginGroup("FileDialog")
 
-        lastVisited: str | None = settings.value("lastVisited")
-        if lastVisited:
-            q.setDirectoryUrl(QUrl(lastVisited))
+        # Match C++: q->setDirectoryUrl(lastVisitedDir()->isEmpty() ? settings.value("lastVisited").toUrl() : *lastVisitedDir());
+        if self.lastVisitedDir.isEmpty():
+            lastVisited: str | None = settings.value("lastVisited")
+            if lastVisited:
+                q.setDirectoryUrl(QUrl(lastVisited))
+        else:
+            q.setDirectoryUrl(self.lastVisitedDir)
 
         viewMode = RealQFileDialog.ViewMode.Detail if settings.value("viewMode") == "Detail" else RealQFileDialog.ViewMode.List
         if sip_enum_to_int(viewMode):
             q.setViewMode(viewMode)
 
-        self.sidebarUrls: list[QUrl] = [QUrl(url) for url in settings.value("shortcuts", [])]
+        self.sidebarUrls = [QUrl(url) for url in settings.value("shortcuts", [])]
         self.headerData = settings.value("treeViewHeader", QByteArray())
 
         history: list[str] = []
@@ -2385,11 +2618,35 @@ class QFileDialogPrivate:
     ) -> bool:
         """Processes keyboard events in the item view of the file dialog.
 
-        Allows for keyboard-based navigation and selection in the file list.
+        Matches C++ itemViewKeyboardEvent() implementation.
+        For the list and tree view watch keys to goto parent and back in the history.
+        Returns True if handled.
         """
-        if e.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
-            self.accept()
+        q = self._public
+        # Handle Cancel key sequence
+        from qtpy.QtGui import QKeySequence
+        if e.matches(QKeySequence.StandardKey.Cancel):
+            q.reject()
             return True
+        
+        # Handle individual keys (matching C++ switch statement with fall-through)
+        key = e.key()
+        if key == Qt.Key.Key_Backspace:
+            self._q_navigateToParent()
+            return True
+        elif key == Qt.Key.Key_Back:
+            # Note: QT_KEYPAD_NAVIGATION check omitted in Python (platform-specific)
+            # In C++, Key_Back falls through to Key_Left case - handle both here
+            self._q_navigateBackward()
+            return True
+        elif key == Qt.Key.Key_Left:
+            # Navigate backward if Alt modifier is pressed (Key_Back handled above)
+            if e.modifiers() == Qt.KeyboardModifier.AltModifier:
+                self._q_navigateBackward()
+                return True
+            # If just Left without Alt, don't handle it
+            return False
+        
         return False
 
     def accept(self) -> None:
@@ -2411,66 +2668,96 @@ class QFileDialogPrivate:
 
 
 class QFileDialogComboBox(QComboBox):
+    """Custom combo box for file dialog directory navigation.
+    
+    Matches C++ QFileDialogComboBox implementation.
+    """
     def __init__(
         self,
         parent: RealQFileDialog,
     ):
+        # Match C++: QFileDialogComboBox(QWidget *parent = nullptr) : QComboBox(parent), urlModel(nullptr), d_ptr(nullptr) {}
         super().__init__(parent)
         self._private: QFileDialogPrivate | None = None
         self.m_history: list[str] = []
-        self.urlModel: QUrlModel = QUrlModel(self)
-        self.setModel(self.urlModel)
-        self.setEditable(False)
+        self.urlModel: QUrlModel | None = None  # Match C++: initialized as nullptr
+        # Note: setFileDialogPrivate() will set up the urlModel
 
     def _d_ptr(self) -> QFileDialogPrivate:
         return typing.cast("PublicQFileDialog", self)._private  # noqa: SLF001
 
     def showPopup(self) -> None:  # noqa: C901
+        """Show the popup menu. Matches C++ QFileDialogComboBox::showPopup() implementation."""
+        # Match C++: if (model()->rowCount() > 1) QComboBox::showPopup();
         model_of_self: QAbstractItemModel | None = self.model()
         if model_of_self is not None and model_of_self.rowCount() > 1:
             QComboBox.showPopup(self)
 
+        # Match C++: urlModel->setUrls(QList<QUrl>());
+        assert self.urlModel is not None, f"{self.__class__.__name__}.showPopup: urlModel is None"
         self.urlModel.setUrls([])
         urls: list[QUrl] = []
         fs_model: QFileSystemModel | None = self._d_ptr().model
         if fs_model is None:
             return
+        # Match C++: QModelIndex idx = d_ptr->model->index(d_ptr->rootPath());
         idx: QModelIndex = fs_model.index(self._d_ptr().rootPath())
+        # Match C++: while (idx.isValid()) { ... idx = idx.parent(); }
         while idx.isValid():
-            url: QUrl = QUrl.fromLocalFile(idx.data(QFileSystemModel.Roles.FilePathRole))
+            # Match C++: QUrl url = QUrl::fromLocalFile(idx.data(QFileSystemModel::FilePathRole).toString());
+            file_path_data = idx.data(QFileSystemModel.Roles.FilePathRole)
+            if isinstance(file_path_data, str):
+                url: QUrl = QUrl.fromLocalFile(file_path_data)
+            else:
+                url = QUrl()
             if url.isValid():
                 urls.append(url)
             idx = idx.parent()
 
-        # Add "my computer"
+        # Match C++: // add "my computer" list.append(QUrl("file:"_L1));
         urls.append(QUrl("file:"))
+        # Match C++: urlModel->addUrls(list, 0);
         self.urlModel.addUrls(urls, 0)
 
-        # Append history
-        history_urls: list[QUrl] = []
-        for path in self.m_history:
-            url: QUrl = QUrl.fromLocalFile(path)
-            if url not in history_urls:
-                history_urls.insert(0, url)
+        # Match C++: idx = model()->index(model()->rowCount() - 1, 0);
+        model: QAbstractItemModel | None = self.model()
+        if model is not None:
+            idx = model.index(model.rowCount() - 1, 0)
 
+        # Match C++: // append history
+        history_urls: list[QUrl] = []
+        # Match C++: for (int i = 0; i < m_history.size(); ++i)
+        for i in range(len(self.m_history)):
+            # Match C++: QUrl path = QUrl::fromLocalFile(m_history.at(i));
+            path_url: QUrl = QUrl.fromLocalFile(self.m_history[i])
+            # Match C++: if (!urls.contains(path)) urls.prepend(path);
+            if path_url not in history_urls:
+                history_urls.insert(0, path_url)
+
+        # Match C++: if (urls.size() > 0)
         if history_urls:
-            model: QAbstractItemModel | None = self.model()
             if model is not None:
+                # Match C++: model()->insertRow(model()->rowCount());
                 model.insertRow(model.rowCount())
-                idx: QModelIndex = model.index(model.rowCount() - 1, 0)
-                app: QCoreApplication | None = QApplication.instance()
-                if app is None or not isinstance(app, QApplication):
-                    return
-                model.setData(idx, app.tr("Recent Places"))
+                # Match C++: idx = model()->index(model()->rowCount()-1, 0);
+                idx = model.index(model.rowCount() - 1, 0)
+                # Match C++: // ### TODO maybe add a horizontal line before this
+                # Match C++: model()->setData(idx, QFileDialog::tr("Recent Places"));
+                from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as PublicQFileDialog
+                model.setData(idx, PublicQFileDialog.tr("Recent Places", "QFileDialog"))
+                # Match C++: QStandardItemModel *m = qobject_cast<QStandardItemModel*>(model());
                 if isinstance(model, QStandardItemModel):
+                    # Match C++: Qt::ItemFlags flags = m->flags(idx); flags &= ~Qt::ItemIsEnabled; m->item(idx.row(), idx.column())->setFlags(flags);
                     item: QStandardItem | None = model.item(idx.row(), idx.column())
                     if item is not None:
                         flags: Qt.ItemFlag = item.flags()
                         flags &= ~Qt.ItemFlag.ItemIsEnabled
                         item.setFlags(flags)
-            self.urlModel.addUrls(history_urls, -1, move=False)  # noqa: FBT003
-
+                # Match C++: urlModel->addUrls(urls, -1, false);
+                self.urlModel.addUrls(history_urls, -1, move=False)
+        # Match C++: setCurrentIndex(0);
         self.setCurrentIndex(0)
+        # Match C++: QComboBox::showPopup();
         QComboBox.showPopup(self)
 
     def setFileDialogPrivate(
@@ -2489,7 +2776,27 @@ class QFileDialogComboBox(QComboBox):
         self,
         paths: list[str],
     ) -> None:
+        """Set the browsing history. Matches C++ QFileDialogComboBox::setHistory() implementation."""
+        # Match C++: m_history = paths;
         self.m_history[:] = paths
+        # Match C++: Only populate the first item, showPopup will populate the rest if needed
+        if self._private is None or self.urlModel is None:
+            return
+        url_list: list[QUrl] = []
+        root_path = self._private.rootPath()
+        idx: QModelIndex = self._private.model.index(root_path) if self._private.model else QModelIndex()
+        # Match C++: On windows the popup display the "C:\", convert to nativeSeparators
+        if idx.isValid():
+            file_path = idx.data(QFileSystemModel.Roles.FilePathRole)
+            if isinstance(file_path, str):
+                url = QUrl.fromLocalFile(QDir.toNativeSeparators(file_path))
+            else:
+                url = QUrl("file:")
+        else:
+            url = QUrl("file:")
+        if url.isValid():
+            url_list.append(url)
+        self.urlModel.setUrls(url_list)
 
     def history(self) -> list[str]:
         return self.m_history
@@ -2499,7 +2806,7 @@ class QFileDialogComboBox(QComboBox):
         e: QPaintEvent,
     ) -> None:
         painter: QStylePainter = QStylePainter(self)
-        color_role = QPalette.ColorRole.Text if hasattr(QPalette, "ColorRole") else QPalette.Text
+        color_role = QPalette.ColorRole.Text if hasattr(QPalette, "ColorRole") else QPalette.Text  # pyright: ignore[reportAttributeAccessIssue]
         painter.setPen(self.palette().color(color_role))
         opt: QStyleOptionComboBox = QStyleOptionComboBox()
         self.initStyleOption(opt)
@@ -2539,22 +2846,23 @@ class QFileDialogLineEdit(QLineEdit):
     ) -> None:
         """FIXME: this is a hack to avoid propagating key press events
         to the dialog and from there to the "Ok" button.
+        
+        Matches C++ QFileDialogLineEdit::keyPressEvent() implementation.
         """
+        # Match C++: handle keypad navigation mode (if available)
+        # #ifdef QT_KEYPAD_NAVIGATION
+        # if (QApplication::navigationMode() == Qt::NavigationModeKeypadDirectional) {
+        #     QLineEdit::keyPressEvent(e);
+        #     return;
+        # }
+        # #endif
+        
+        # Match C++: #if QT_CONFIG(shortcut) int key = e->key(); #endif
+        key = e.key()
         super().keyPressEvent(e)
-        # not available in pyqt6?
-        # if QApplication.navigationMode() == Qt.NavigationMode.NavigationModeKeypadDirectional:
-        #    super().keyPressEvent(e)
-        #    return
-
-        # key = e.key()
-        # super().keyPressEvent(e)
-        # if not e.matches(QKeySequence.StandardKey.Cancel) and key != Qt.Key.Key_Back:
-        #     e.accept()
-        # if self.hideOnEsc and e.key() == Qt.Key.Key_Escape:
-        #     self.hide()
-        #     e.accept()
-        # else:
-        # super().keyPressEvent(e)
+        # Match C++: #if QT_CONFIG(shortcut) if (!e->matches(QKeySequence::Cancel) && key != Qt::Key_Back) #endif e->accept();
+        if not e.matches(QKeySequence.StandardKey.Cancel) and key != Qt.Key.Key_Back:
+            e.accept()
 
     def _d_ptr(self) -> QFileDialogPrivate:
         return typing.cast("PublicQFileDialog", self)._private  # noqa: SLF001
@@ -2624,19 +2932,21 @@ class QFileDialogListView(QListView):
         self,
         d_pointer: QFileDialogPrivate,
     ) -> None:
+        """Set the file dialog private pointer. Matches C++ QFileDialogListView::setFileDialogPrivate() implementation."""
+        # Match C++: d_ptr = d_pointer;
         self._private: QFileDialogPrivate = d_pointer
+        # Match C++: setSelectionBehavior(QAbstractItemView::SelectRows);
         self.setSelectionBehavior(QListView.SelectionBehavior.SelectRows)
+        # Match C++: setWrapping(true);
         self.setWrapping(True)
+        # Match C++: setResizeMode(QListView::Adjust);
         self.setResizeMode(QListView.ResizeMode.Adjust)
+        # Match C++: setEditTriggers(QAbstractItemView::EditKeyPressed);
         self.setEditTriggers(QAbstractItemView.EditTrigger.EditKeyPressed)
+        # Match C++: setContextMenuPolicy(Qt::CustomContextMenu);
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        # Match C++: #if QT_CONFIG(draganddrop) setDragDropMode(QAbstractItemView::InternalMove); #endif
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
-
-    def setCurrentIndex(
-        self,
-        index: QModelIndex,
-    ) -> None:
-        super().setCurrentIndex(index)
 
     def _d_ptr(self) -> QFileDialogPrivate:
         return typing.cast("PublicQFileDialog", self)._private  # noqa: SLF001

@@ -146,6 +146,11 @@ class AREEditor(Editor):
             self.ui.onHeartbeatSelect,
             self.ui.onUserDefinedSelect,
         ]
+        # Set maxLength for FilterComboBox script fields (ResRefs are max 16 characters)
+        for field in script_fields:
+            line_edit = field.lineEdit() if hasattr(field, "lineEdit") else None
+            if line_edit is not None:
+                line_edit.setMaxLength(16)
         for field in script_fields:
             installation.setup_file_context_menu(field, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
             field.setToolTip(tr("Right-click to find references to this script in the installation."))

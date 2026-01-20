@@ -747,7 +747,7 @@ def test_erf_editor_extract_single_resource_headless(qtbot: QtBot, installation:
             return
         
         # Wait for dialog to be ready
-        qtbot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
         
         # Find the line edit for file name
@@ -755,7 +755,7 @@ def test_erf_editor_extract_single_resource_headless(qtbot: QtBot, installation:
         if line_edit is not None:
             # Set the file path
             line_edit.setText(str(extracted_file))
-            qtbot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
         
         # Find and click the Save button
@@ -764,7 +764,7 @@ def test_erf_editor_extract_single_resource_headless(qtbot: QtBot, installation:
             save_button: QPushButton | None = button_box.button(QDialogButtonBox.StandardButton.Save)
             if save_button is not None and save_button.isEnabled():
                 QTest.mouseClick(save_button, Qt.MouseButton.LeftButton)
-                qtbot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
     
     # Also set up a timer to close the extraction results dialog if it appears
@@ -777,7 +777,7 @@ def test_erf_editor_extract_single_resource_headless(qtbot: QtBot, installation:
                 ok_button = widget.button(QMessageBox.StandardButton.Ok)
                 if ok_button is not None:
                     QTest.mouseClick(ok_button, Qt.MouseButton.LeftButton)
-                    qtbot.wait(50)
+                    QApplication.processEvents()
                     QApplication.processEvents()
     
     # Start extraction in a timer to allow dialog to open
@@ -788,7 +788,7 @@ def test_erf_editor_extract_single_resource_headless(qtbot: QtBot, installation:
     editor.extract_selected()
     
     # Wait for extraction to complete
-    qtbot.wait(1000)
+    QtBot.wait(1000)
     QApplication.processEvents()
 
     # Check if file was extracted
@@ -830,7 +830,7 @@ def test_erf_editor_extract_multiple_resources(qtbot: QtBot, installation: HTIns
         with patch('toolset.gui.common.extraction_feedback.show_extraction_results'):
             editor.extract_selected()
             # Process events to ensure extraction completes
-            qtbot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
     # Check if files were extracted
@@ -900,7 +900,7 @@ def test_erf_editor_rename_resource_valid(qtbot: QtBot, installation: HTInstalla
     with patch('toolset.gui.editors.erf.QInputDialog', return_value=mock_dialog):
         editor.rename_selected()
         # Process events to ensure rename completes
-        qtbot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
     # Verify resource was renamed
@@ -2263,7 +2263,7 @@ def test_erf_editor_roundtrip_with_modifications(qtbot: QtBot, installation: HTI
     # Patch QInputDialog constructor to return our mock
     with patch('toolset.gui.editors.erf.QInputDialog', return_value=mock_dialog):
         editor.rename_selected()
-        qtbot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
     # Save and verify

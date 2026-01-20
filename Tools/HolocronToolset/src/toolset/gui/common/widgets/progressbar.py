@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 
 from qtpy import QtCore
 from qtpy.QtCore import QRectF, QTimer
-from qtpy.QtGui import QBrush, QColor, QLinearGradient, QPainter
-from qtpy.QtWidgets import QProgressBar
+from qtpy.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPalette
+from qtpy.QtWidgets import QApplication, QProgressBar
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QRect
@@ -65,11 +65,27 @@ class AnimatedProgressBar(QProgressBar):
         if light_rect.right() > rect.right():
             light_rect.moveRight(rect.right())
 
-        # Create a linear gradient for the shimmering light effect
+        # Create a linear gradient for the shimmering light effect using palette colors
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+        else:
+            palette = QPalette()
+        
+        # Use BrightText or Light color for shimmer effect, which adapts to theme
+        shimmer_base_color = palette.color(QPalette.ColorRole.BrightText)
+        # If BrightText is too dark, use Light color instead
+        if shimmer_base_color.lightness() < 128:
+            shimmer_base_color = palette.color(QPalette.ColorRole.Light)
+        # Ensure we have a light color for the shimmer
+        if shimmer_base_color.lightness() < 180:
+            shimmer_base_color = QColor(shimmer_base_color)
+            shimmer_base_color = shimmer_base_color.lighter(150)
+        
         shimmer_gradient: QLinearGradient = QLinearGradient(light_rect.left(), 0, light_rect.right(), 0)
-        shimmer_gradient.setColorAt(0, QColor(255, 255, 255, 0))  # Transparent at the edges
-        shimmer_gradient.setColorAt(0.5, QColor(255, 255, 255, 150))  # Semi-transparent white in the center
-        shimmer_gradient.setColorAt(1, QColor(255, 255, 255, 0))  # Transparent at the edges
+        shimmer_gradient.setColorAt(0, QColor(shimmer_base_color.red(), shimmer_base_color.green(), shimmer_base_color.blue(), 0))  # Transparent at the edges
+        shimmer_gradient.setColorAt(0.5, QColor(shimmer_base_color.red(), shimmer_base_color.green(), shimmer_base_color.blue(), 150))  # Semi-transparent in the center
+        shimmer_gradient.setColorAt(1, QColor(shimmer_base_color.red(), shimmer_base_color.green(), shimmer_base_color.blue(), 0))  # Transparent at the edges
 
         painter.setBrush(QBrush(shimmer_gradient))
         painter.setPen(QtCore.Qt.PenStyle.NoPen)  # pyright: ignore[reportAttributeAccessIssue]

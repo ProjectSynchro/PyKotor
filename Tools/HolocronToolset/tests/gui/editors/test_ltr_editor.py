@@ -6,10 +6,12 @@ Following the ARE editor test pattern for comprehensive coverage.
 """
 from __future__ import annotations
 
+import pathlib
+
 import pytest
 from pathlib import Path
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QTableWidgetItem
+from qtpy.QtWidgets import QApplication, QTableWidgetItem
 from toolset.gui.editors.ltr import LTREditor  # type: ignore[import-not-found]
 from toolset.data.installation import HTInstallation  # type: ignore[import-not-found]
 from pykotor.resource.formats.ltr import LTR, read_ltr  # type: ignore[import-not-found]
@@ -97,26 +99,34 @@ def test_ltr_editor_manipulate_multiple_single_characters(qtbot: QtBot, installa
     
     editor.new()
     
-    # Test multiple characters
-    test_chars = ["A", "B", "C", "Z"]
+    # Test multiple characters (LTR.CHARACTER_SET uses lowercase)
+    # Use valid probability values between 0.0 and 1.0
+    test_chars = ["a", "b", "c", "z"]
     for i, char in enumerate(test_chars):
         index = editor.ui.comboBoxSingleChar.findText(char)
         if index >= 0:
             editor.ui.comboBoxSingleChar.setCurrentIndex(index)
-            editor.ui.spinBoxSingleStart.setValue(10 + i)
-            editor.ui.spinBoxSingleMiddle.setValue(20 + i)
-            editor.ui.spinBoxSingleEnd.setValue(30 + i)
+            # Use values in valid range [0.0, 1.0] with small increments
+            start_val = 0.1 + (i * 0.1)
+            middle_val = 0.2 + (i * 0.1)
+            end_val = 0.3 + (i * 0.1)
+            editor.ui.spinBoxSingleStart.setValue(start_val)
+            editor.ui.spinBoxSingleMiddle.setValue(middle_val)
+            editor.ui.spinBoxSingleEnd.setValue(end_val)
             editor.setSingleCharacter()
     
     # Build and verify
     data, _ = editor.build()
     modified_ltr = read_ltr(data)
     
-    # Verify all characters were set
+    # Verify all characters were set (use approximate comparison for floating-point values)
     for i, char in enumerate(test_chars):
-        assert modified_ltr._singles.get_start(char) == 10 + i
-        assert modified_ltr._singles.get_middle(char) == 20 + i
-        assert modified_ltr._singles.get_end(char) == 30 + i
+        expected_start = 0.1 + (i * 0.1)
+        expected_middle = 0.2 + (i * 0.1)
+        expected_end = 0.3 + (i * 0.1)
+        assert modified_ltr._singles.get_start(char) == pytest.approx(expected_start)
+        assert modified_ltr._singles.get_middle(char) == pytest.approx(expected_middle)
+        assert modified_ltr._singles.get_end(char) == pytest.approx(expected_end)
 
 # ============================================================================
 # DOUBLE CHARACTER MANIPULATIONS
@@ -162,8 +172,9 @@ def test_ltr_editor_manipulate_multiple_double_characters(qtbot: QtBot, installa
     
     editor.new()
     
-    # Test multiple double combinations
-    test_combos = [("A", "B"), ("B", "C"), ("C", "D")]
+    # Test multiple double combinations (LTR.CHARACTER_SET uses lowercase)
+    # Use valid probability values between 0.0 and 1.0
+    test_combos = [("a", "b"), ("b", "c"), ("c", "d")]
     for i, (prev, char) in enumerate(test_combos):
         prev_index = editor.ui.comboBoxDoublePrevChar.findText(prev)
         char_index = editor.ui.comboBoxDoubleChar.findText(char)
@@ -171,20 +182,29 @@ def test_ltr_editor_manipulate_multiple_double_characters(qtbot: QtBot, installa
         if prev_index >= 0 and char_index >= 0:
             editor.ui.comboBoxDoublePrevChar.setCurrentIndex(prev_index)
             editor.ui.comboBoxDoubleChar.setCurrentIndex(char_index)
-            editor.ui.spinBoxDoubleStart.setValue(5 + i)
-            editor.ui.spinBoxDoubleMiddle.setValue(10 + i)
-            editor.ui.spinBoxDoubleEnd.setValue(15 + i)
+            # Use values in valid range [0.0, 1.0] with small increments
+            start_val = 0.1 + (i * 0.1)
+            middle_val = 0.2 + (i * 0.1)
+            end_val = 0.3 + (i * 0.1)
+            editor.ui.spinBoxDoubleStart.setValue(start_val)
+            editor.ui.spinBoxDoubleMiddle.setValue(middle_val)
+            editor.ui.spinBoxDoubleEnd.setValue(end_val)
             editor.setDoubleCharacter()
     
     # Build and verify
     data, _ = editor.build()
     modified_ltr = read_ltr(data)
     
-    # Verify combinations were set
+    # Verify combinations were set (use approximate comparison for floating-point values)
     char_set = LTR.CHARACTER_SET
     for i, (prev, char) in enumerate(test_combos):
         prev_idx = char_set.index(prev)
-        assert modified_ltr._doubles[prev_idx].get_start(char) == 5 + i
+        expected_start = 0.1 + (i * 0.1)
+        expected_middle = 0.2 + (i * 0.1)
+        expected_end = 0.3 + (i * 0.1)
+        assert modified_ltr._doubles[prev_idx].get_start(char) == pytest.approx(expected_start)
+        assert modified_ltr._doubles[prev_idx].get_middle(char) == pytest.approx(expected_middle)
+        assert modified_ltr._doubles[prev_idx].get_end(char) == pytest.approx(expected_end)
 
 # ============================================================================
 # TRIPLE CHARACTER MANIPULATIONS
@@ -259,7 +279,7 @@ def test_ltr_editor_generate_multiple_names(qtbot: QtBot, installation: HTInstal
     editor.new()
     
     # Generate multiple names
-    generated_names = []
+    generated_names: list[str] = []
     for _ in range(10):
         editor.generateName()
         name = editor.ui.lineEditGeneratedName.text()
@@ -584,7 +604,7 @@ def test_ltr_editor_manipulate_all_character_types(qtbot: QtBot, installation: H
 # ============================================================================
 
 
-def test_ltreditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation):
+def test_ltreditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
     """Test that LTREditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
     from toolset.gui.dialogs.editor_help import EditorHelpDialog
     
@@ -593,7 +613,7 @@ def test_ltreditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
     
     # Trigger help dialog with the correct file for LTREditor
     editor._show_help_dialog("LTR-File-Format.md")
-    qtbot.wait(200)  # Wait for dialog to be created
+    QApplication.processEvents()  # Wait for dialog to be created
     
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
@@ -617,16 +637,19 @@ def test_ltreditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
     qtbot.addWidget(editor)
     
     # Try to find a LTR file
-    ltr_files = list(test_files_dir.glob("*.ltr")) + list(test_files_dir.rglob("*.ltr"))
+    ltr_files: list[Path] = list(test_files_dir.glob("*.ltr")) + list(test_files_dir.rglob("*.ltr"))
     if not ltr_files:
         # Try to get one from installation
-        ltr_resources = list(installation.resources(ResourceType.LTR))[:1]
+        ltr_resources = list(installation.resources((ResourceType.LTR,)).values())[:1]
         if not ltr_resources:
             pytest.skip("No LTR files available for testing")
         ltr_resource = ltr_resources[0]
-        ltr_data = installation.resource(ltr_resource.identifier)
+        assert ltr_resource is not None, "LTR resource is None"
+        ltr_resource_result = installation.resource(ltr_resource.resname, ltr_resource.restype)
+        assert ltr_resource_result is not None, "LTR resource result is None"
+        ltr_data = ltr_resource_result.data
         if not ltr_data:
-            pytest.skip(f"Could not load LTR data for {ltr_resource.identifier}")
+            pytest.skip(f"Could not load LTR data for {ltr_resource.identifier()}")
         editor.load(
             ltr_resource.filepath if hasattr(ltr_resource, 'filepath') else Path("module.ltr"),
             ltr_resource.resname,

@@ -43,6 +43,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_16 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_16.setObjectName("horizontalLayout_16")
         self.tagEdit = QtWidgets.QLineEdit(self.tab)
+        self.tagEdit.setMaxLength(16)
         self.tagEdit.setObjectName("tagEdit")
         self.horizontalLayout_16.addWidget(self.tagEdit)
         self.tagGenerateButton = QtWidgets.QPushButton(self.tab)

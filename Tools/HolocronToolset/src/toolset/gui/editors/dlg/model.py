@@ -20,7 +20,7 @@ from qtpy.QtCore import (
     Qt,
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
-from qtpy.QtGui import QBrush, QColor, QStandardItem, QStandardItemModel
+from qtpy.QtGui import QBrush, QColor, QPalette, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QApplication, QStyle
 
 from pykotor.extract.installation import SearchLocation  # type: ignore[import-untyped]  # pyright: ignore[reportMissingModuleSource]
@@ -1078,14 +1078,63 @@ class DLGStandardItemModel(QStandardItemModel):
         """Refreshes the item text and formatting based on the node data."""
         assert item.link is not None
         assert self.editor is not None
-        color: QColor = QColor("#646464")
+        
+        # Get palette colors for theme-aware node coloring
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+        else:
+            # Use default palette for fallback
+            from qtpy.QtGui import QPalette
+            palette = QPalette()
+        
+        link_color = palette.color(QPalette.ColorRole.Link)
+        window_text = palette.color(QPalette.ColorRole.WindowText)
+        mid_color = palette.color(QPalette.ColorRole.Mid)
+        
+        # Create semantic colors from palette
+        # Entry: Red-ish (error-like) - use link color adjusted to red
+        entry_color = QColor(link_color)
+        entry_color.setRed(min(255, int(entry_color.red() * 1.5 + 100)))
+        entry_color.setGreen(int(entry_color.green() * 0.3))
+        entry_color.setBlue(int(entry_color.blue() * 0.3))
+        
+        # Reply: Blue-ish (link-like) - use link color
+        reply_color = link_color
+        
+        # Default/Neutral: Muted gray from mid or window text
+        default_color = QColor(mid_color if mid_color.isValid() else window_text)
+        if default_color.lightness() > 200:  # Too light, darken
+            default_color = default_color.darker(150)
+        elif default_color.lightness() < 50:  # Too dark, lighten
+            default_color = default_color.lighter(150)
+        
+        # End Dialog: Orange-ish - create from link color
+        end_dialog_color_obj = QColor(link_color)
+        end_dialog_color_obj.setRed(min(255, int(end_dialog_color_obj.red() * 1.2 + 80)))
+        end_dialog_color_obj.setGreen(int(end_dialog_color_obj.green() * 0.7 + 50))
+        end_dialog_color_obj.setBlue(int(end_dialog_color_obj.blue() * 0.4))
+        
+        color: QColor = default_color
         prefix: Literal["E", "R", "N"] = "N"
         extra_node_info: str = ""
         if isinstance(item.link.node, DLGEntry):
-            color = QColor("#FF0000") if not item.is_copy() else QColor("#D25A5A")
+            # Use darker variant for copies
+            if item.is_copy():
+                copy_entry = QColor(entry_color)
+                copy_entry = copy_entry.darker(115)
+                color = copy_entry
+            else:
+                color = entry_color
             prefix = "E"
         elif isinstance(item.link.node, DLGReply):
-            color = QColor("#0000FF") if not item.is_copy() else QColor("#5A5AD2")
+            # Use darker variant for copies
+            if item.is_copy():
+                copy_reply = QColor(reply_color)
+                copy_reply = copy_reply.darker(115)
+                color = copy_reply
+            else:
+                color = reply_color
             prefix = "R"
             extra_node_info = " This means the player will not see this reply as a choice, and will (continue) to next entry."
 
@@ -1095,7 +1144,7 @@ class DLGStandardItemModel(QStandardItemModel):
             else self.editor._installation.string(item.link.node.text, "")  # noqa: SLF001
         )
         if not item.link.node.links:
-            end_dialog_color: str = QColor("#FF7F50").name()
+            end_dialog_color: str = end_dialog_color_obj.name()
             display_text: str = f"{text} <span style='color:{end_dialog_color};'><b>[End Dialog]</b></span>"
         elif not text and not text.strip():
             if item.link.node.text.stringref == -1:

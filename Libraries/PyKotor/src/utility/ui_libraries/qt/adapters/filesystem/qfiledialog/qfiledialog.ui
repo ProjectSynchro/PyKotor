@@ -313,7 +313,7 @@
   </customwidget>
   <customwidget>
    <class>QSidebar</class>
-   <extends>QListWidget</extends>
+   <extends>QListView</extends>
    <header>private/qsidebar_p.h</header>
   </customwidget>
   <customwidget>

@@ -117,6 +117,20 @@ class UTTEditor(Editor):
         self.ui.onUserDefinedSelect.populate_combo_box(self.relevant_script_resnames)
         installation.setup_file_context_menu(self.ui.onUserDefinedSelect, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
         self.ui.onUserDefinedSelect.setToolTip(tr("Right-click to find references to this script in the installation."))
+        # Set maxLength for FilterComboBox script fields (ResRefs are max 16 characters)
+        script_combo_boxes = [
+            self.ui.onClickEdit,
+            self.ui.onDisarmEdit,
+            self.ui.onEnterSelect,
+            self.ui.onExitSelect,
+            self.ui.onTrapTriggeredEdit,
+            self.ui.onHeartbeatSelect,
+            self.ui.onUserDefinedSelect,
+        ]
+        for combo_box in script_combo_boxes:
+            line_edit = combo_box.lineEdit()
+            if line_edit is not None:
+                line_edit.setMaxLength(16)
 
         # Setup reference search for Tag field
         installation.setup_file_context_menu(self.ui.tagEdit, [], enable_reference_search=True, reference_search_type="tag")

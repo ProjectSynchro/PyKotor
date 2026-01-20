@@ -15,8 +15,8 @@ import math
 from typing import TYPE_CHECKING
 
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QBrush, QColor, QPainter, QPen, QTransform
-from qtpy.QtWidgets import QWidget
+from qtpy.QtGui import QBrush, QColor, QPainter, QPalette, QPen, QTransform
+from qtpy.QtWidgets import QApplication, QWidget
 
 from pykotor.resource.formats.lyt import LYT, LYTDoorHook, LYTObstacle, LYTRoom, LYTTrack
 from utility.common.geometry import Vector2, Vector3, Vector4
@@ -287,8 +287,14 @@ class LYTRenderer(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # Fill background
-        painter.fillRect(0, 0, self.width(), self.height(), QColor(30, 30, 30))
+        # Fill background with palette color
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+            bg_color = palette.color(QPalette.ColorRole.Window)
+        else:
+            bg_color = QColor(30, 30, 30)
+        painter.fillRect(0, 0, self.width(), self.height(), bg_color)
 
         # Create transform
         transform = QTransform()
@@ -316,7 +322,15 @@ class LYTRenderer(QWidget):
     def _draw_grid(self, painter: QPainter):
         """Draw a background grid."""
         grid_size = 100.0
-        pen = QPen(QColor(50, 50, 50), 1.0 / self._zoom)
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+            grid_color = palette.color(QPalette.ColorRole.Mid)
+            if not grid_color.isValid():
+                grid_color = palette.color(QPalette.ColorRole.Shadow)
+        else:
+            grid_color = QColor(50, 50, 50)
+        pen = QPen(grid_color, 1.0 / self._zoom)
         painter.setPen(pen)
 
         # Calculate visible range

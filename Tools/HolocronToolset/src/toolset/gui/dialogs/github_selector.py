@@ -9,23 +9,22 @@ import time
 
 from contextlib import suppress
 from pathlib import PurePosixPath
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Sequence
 
 # Handle optional requests dependency
 try:
     import requests
-    import requests.structures
 except ImportError:
-    requests = None  # type: ignore[assignment, unused-ignore]
     # For type checking, we need a dummy type for requests.structures
     if TYPE_CHECKING:
+        import requests
+        import requests.structures
+    else:
         class CaseInsensitiveDict:  # noqa: PYI024
             pass
         class _RequestsStructures:
             CaseInsensitiveDict = CaseInsensitiveDict
         requests.structures = _RequestsStructures()  # type: ignore[assignment]
-    else:
-        requests.structures = None  # type: ignore[assignment, attr-defined]
 
 from loggerplus import RobustLogger
 from qtpy import QtCore
@@ -33,20 +32,12 @@ from qtpy.QtCore import QTimer, Qt
 from qtpy.QtGui import QBrush, QPalette
 from qtpy.QtWidgets import (
     QApplication,
-    QComboBox,
     QDialog,
-    QDialogButtonBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
     QMenu,
     QMessageBox,
-    QPushButton,
-    QStatusBar,
     QStyle,
     QTreeWidget,
     QTreeWidgetItem,
-    QVBoxLayout,
 )
 
 from toolset.gui.common.localization import translate as tr, trf  # type: ignore[import-not-found]
@@ -102,10 +93,6 @@ class GitHubFileSelector(QDialog):
             & ~QtCore.Qt.WindowType.WindowContextHelpButtonHint
             & ~QtCore.Qt.WindowType.WindowMinMaxButtonsHint
         )
-        self.setWindowTitle(tr("Select a GitHub Repository File"))
-        self.setMinimumSize(600, 400)
-        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
-        
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
         self._no_scroll_filter = NoScrollEventFilter(self)
@@ -136,55 +123,34 @@ class GitHubFileSelector(QDialog):
         self.rate_limit_reset: int | None = None
         self.rate_limit_remaining: int | None = None
 
-        main_layout = QVBoxLayout(self)
-        self.setLayout(main_layout)
+        from toolset.uic.qtpy.dialogs.github_selector import Ui_Dialog
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
 
-        self.label: QLabel = QLabel(tr("Please select the correct script path or enter manually:"))
-        main_layout.addWidget(self.label)
+        # Update label text with translation
+        self.ui.label.setText(tr("Please select the correct script path or enter manually:"))
+        self.ui.forkLabel.setText(tr("Select Fork:"))
+        self.ui.filterEdit.setPlaceholderText(tr("Type to filter paths..."))
+        self.ui.searchButton.setText(tr("Search"))
+        self.ui.refreshButton.setText(tr("Refresh"))
+        self.ui.repoTreeWidget.setHeaderLabel(tr("GitHub Repository"))
+        self.ui.cloneButton.setText(tr("Clone Repository"))
 
-        self.fork_combo_box: QComboBox = QComboBox(self)
-        self.fork_combo_box.setFixedWidth(300)
-        self.fork_combo_box.currentIndexChanged.connect(self.on_fork_changed)
-        main_layout.addWidget(QLabel(tr("Select Fork:")))
-        main_layout.addWidget(self.fork_combo_box)
+        # Configure tree widget
+        self.ui.repoTreeWidget.setSelectionMode(QTreeWidget.SelectionMode.ExtendedSelection)  # pyright: ignore[reportArgumentType]
+        self.ui.repoTreeWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)  # pyright: ignore[reportArgumentType]
+        self.ui.filterEdit.setFocusPolicy(Qt.FocusPolicy.StrongFocus)  # pyright: ignore[reportArgumentType]
 
-        filter_layout = QHBoxLayout()
-        self.filter_edit: QLineEdit = QLineEdit(self)
-        self.filter_edit.setPlaceholderText(tr("Type to filter paths..."))
-        self.filter_edit.setFocusPolicy(Qt.FocusPolicy.StrongFocus)  # pyright: ignore[reportArgumentType]
-        self.filter_edit.textChanged.connect(self.on_filter_edit_changed)
-        filter_layout.addWidget(self.filter_edit)
-
-        self.search_button: QPushButton = QPushButton(tr("Search"), self)
-        self.search_button.clicked.connect(self.search_files)
-        filter_layout.addWidget(self.search_button)
-
-        self.refresh_button: QPushButton = QPushButton(tr("Refresh"), self)
-        self.refresh_button.clicked.connect(self.refresh_data)
-        filter_layout.addWidget(self.refresh_button)
-
-        main_layout.addLayout(filter_layout)
-
-        self.repo_tree_widget: QTreeWidget = QTreeWidget(self)
-        self.repo_tree_widget.setColumnCount(1)
-        self.repo_tree_widget.setHeaderLabel(tr("GitHub Repository"))
-        self.repo_tree_widget.setSelectionMode(QTreeWidget.SelectionMode.ExtendedSelection)  # pyright: ignore[reportArgumentType]
-        self.repo_tree_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)  # pyright: ignore[reportArgumentType]
-        self.repo_tree_widget.customContextMenuRequested.connect(self.show_context_menu)
-        self.repo_tree_widget.itemDoubleClicked.connect(self.on_item_double_clicked)
-        main_layout.addWidget(self.repo_tree_widget)
-
-        self.button_box: QDialogButtonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)  # pyright: ignore[reportArgumentType]
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-        main_layout.addWidget(self.button_box)
-
-        self.cloneButton: QPushButton = QPushButton(tr("Clone Repository"), self)
-        self.cloneButton.clicked.connect(self.clone_repository)
-        main_layout.addWidget(self.cloneButton)
-
-        self.statusBar: QStatusBar = QStatusBar(self)
-        main_layout.addWidget(self.statusBar)
+        # Connect signals
+        self.ui.forkComboBox.currentIndexChanged.connect(self.on_fork_changed)
+        self.ui.filterEdit.textChanged.connect(self.on_filter_edit_changed)
+        self.ui.searchButton.clicked.connect(self.search_files)
+        self.ui.refreshButton.clicked.connect(self.refresh_data)
+        self.ui.repoTreeWidget.customContextMenuRequested.connect(self.show_context_menu)
+        self.ui.repoTreeWidget.itemDoubleClicked.connect(self.on_item_double_clicked)
+        self.ui.buttonBox.accepted.connect(self.accept)
+        self.ui.buttonBox.rejected.connect(self.reject)
+        self.ui.cloneButton.clicked.connect(self.clone_repository)
 
         self.timer: QTimer = QTimer(self)
         self.timer.timeout.connect(self.update_rate_limit_status)
@@ -194,7 +160,7 @@ class GitHubFileSelector(QDialog):
 
         # Initialize filterEdit with selectedFiles and call searchFiles
         if self.selected_files and self.repo_data is not None:
-            self.filter_edit.setText(";".join(self.selected_files))
+            self.ui.filterEdit.setText(";".join(self.selected_files))
             self.search_files()
 
     def initialize_repo_data(self) -> CompleteRepoData | None:
@@ -220,7 +186,7 @@ class GitHubFileSelector(QDialog):
                     fork_repo_data: CompleteRepoData | None = CompleteRepoData.load_repo(fork_owner, fork_repo)
                     if fork_repo_data is None:
                         raise RuntimeError(f"Failed to load fork '{first_fork}'")
-                    self.fork_combo_box.addItem(first_fork)
+                    self.ui.forkComboBox.addItem(first_fork)
                     self._load_repo_data(fork_repo_data, do_fork_combo_update=False)
                     return fork_repo_data
                 QMessageBox.critical(self, tr("No Forks Available"), tr("No forks are available to load."))
@@ -241,7 +207,7 @@ class GitHubFileSelector(QDialog):
         self.repo_data = data
         if do_fork_combo_update:
             self.populate_fork_combobox()
-        selected_fork = self.fork_combo_box.itemText(self.fork_combo_box.currentIndex())
+        selected_fork = self.ui.forkComboBox.itemText(self.ui.forkComboBox.currentIndex())
         if not selected_fork or selected_fork == f"{self.owner}/{self.repo} (main)":
             self.load_main_branch_files()
         else:
@@ -249,7 +215,7 @@ class GitHubFileSelector(QDialog):
 
     def load_main_branch_files(self) -> None:
         if self.repo_data:
-            self.repo_tree_widget.clear()
+            self.ui.repoTreeWidget.clear()
             self.populate_tree_widget()
 
     def populate_tree_widget(
@@ -280,7 +246,7 @@ class GitHubFileSelector(QDialog):
                 parent_item = path_to_item[parent_path]
                 parent_item.addChild(tree_item)
             else:
-                self.repo_tree_widget.addTopLevelItem(tree_item)
+                self.ui.repoTreeWidget.addTopLevelItem(tree_item)
 
     def load_directory_contents(
         self,
@@ -290,18 +256,18 @@ class GitHubFileSelector(QDialog):
         self.populate_tree_widget(parent_item=parent_item)
 
     def populate_fork_combobox(self) -> None:
-        self.fork_combo_box.clear()
-        self.fork_combo_box.addItem(f"{self.owner}/{self.repo} (main)")
+        self.ui.forkComboBox.clear()
+        self.ui.forkComboBox.addItem(f"{self.owner}/{self.repo} (main)")
         if self.repo_data is None or self.repo_data.forks is None:
             return
         for fork in self.repo_data.forks:
-            self.fork_combo_box.addItem(fork.full_name)
+            self.ui.forkComboBox.addItem(fork.full_name)
 
     def search_files(self):
         self.on_filter_edit_changed()
 
     def on_filter_edit_changed(self):
-        filter_text: str = self.filter_edit.text()
+        filter_text: str = self.ui.filterEdit.text()
         if filter_text:
             file_names: list[str] = filter_text.lower().split(";")
             self.search_and_highlight(file_names)
@@ -311,11 +277,13 @@ class GitHubFileSelector(QDialog):
             def unhide_item(item: QTreeWidgetItem):
                 item.setHidden(False)
                 for i in range(item.childCount()):
-                    child = item.child(i)
+                    child: QTreeWidgetItem | None = item.child(i)
+                    if child is None:
+                        continue
                     unhide_item(child)
 
-            for i in range(self.repo_tree_widget.topLevelItemCount()):
-                top_level_item = self.repo_tree_widget.topLevelItem(i)
+            for i in range(self.ui.repoTreeWidget.topLevelItemCount()):
+                top_level_item: QTreeWidgetItem | None = self.ui.repoTreeWidget.topLevelItem(i)
                 if top_level_item is None:
                     continue
                 unhide_item(top_level_item)
@@ -349,16 +317,16 @@ class GitHubFileSelector(QDialog):
 
         def highlight_path(path: str):
             parts: list[str] = path.split("/")
-            current_item = None
+            current_item: QTreeWidgetItem | None = None
             for part in parts:
                 if current_item:
                     next_item: QTreeWidgetItem | None = find_item(current_item, part)
                     if next_item is None:
                         return  # Stop if the expected part is not found
-                    current_item: QTreeWidgetItem = next_item
+                    current_item = next_item
                 else:  # Top level
-                    for i in range(self.repo_tree_widget.topLevelItemCount()):
-                        child: QTreeWidgetItem | None = self.repo_tree_widget.topLevelItem(i)
+                    for i in range(self.ui.repoTreeWidget.topLevelItemCount()):
+                        child: QTreeWidgetItem | None = self.ui.repoTreeWidget.topLevelItem(i)
                         if child is not None and child.text(0) == part:
                             current_item = child
                             child.setHidden(False)
@@ -367,7 +335,7 @@ class GitHubFileSelector(QDialog):
                         return  # Stop if the expected part is not found
 
             if current_item:
-                pal = self.repo_tree_widget.palette()
+                pal = self.ui.repoTreeWidget.palette()
                 current_item.setBackground(0, QBrush(pal.color(QPalette.ColorRole.Highlight)))
                 current_item.setForeground(0, QBrush(pal.color(QPalette.ColorRole.HighlightedText)))
                 current_item.setExpanded(True)
@@ -384,15 +352,15 @@ class GitHubFileSelector(QDialog):
                 unhide_all_children(child)
 
         def hide_all_items():
-            for i in range(self.repo_tree_widget.topLevelItemCount()):
-                top_level_item: QTreeWidgetItem | None = self.repo_tree_widget.topLevelItem(i)
+            for i in range(self.ui.repoTreeWidget.topLevelItemCount()):
+                top_level_item: QTreeWidgetItem | None = self.ui.repoTreeWidget.topLevelItem(i)
                 if top_level_item is not None:
                     hide_item(top_level_item)
 
         def hide_item(item: QTreeWidgetItem):
             item.setHidden(True)
             item.setBackground(0, QBrush(Qt.GlobalColor.transparent))
-            item.setForeground(0, QBrush(self.repo_tree_widget.palette().color(QPalette.ColorRole.Text)))
+            item.setForeground(0, QBrush(self.ui.repoTreeWidget.palette().color(QPalette.ColorRole.Text)))
             for i in range(item.childCount()):
                 child: QTreeWidgetItem | None = item.child(i)
                 if child is None:
@@ -404,31 +372,39 @@ class GitHubFileSelector(QDialog):
             highlight_path(path)
 
     def expand_all_items(self):
-        root: QTreeWidgetItem | None = self.repo_tree_widget.invisibleRootItem()
+        root: QTreeWidgetItem | None = self.ui.repoTreeWidget.invisibleRootItem()
         if root is None:
             return
-        stack: list[QTreeWidgetItem] = [root]
+        stack: list[QTreeWidgetItem | None] = [root]
         while stack:
-            item: QTreeWidgetItem = stack.pop()
+            item: QTreeWidgetItem | None = stack.pop()
+            if item is None:
+                continue
             item.setExpanded(True)
             stack.extend(item.child(i) for i in range(item.childCount()))
 
     def collapse_all_items(self):
-        root: QTreeWidgetItem | None = self.repo_tree_widget.invisibleRootItem()
+        root: QTreeWidgetItem | None = self.ui.repoTreeWidget.invisibleRootItem()
+        if root is None:
+            return
         stack: list[QTreeWidgetItem | None] = [root]
         while stack:
             item: QTreeWidgetItem | None = stack.pop()
+            if item is None:
+                continue
             item.setExpanded(False)
             stack.extend(item.child(i) for i in range(item.childCount()))
 
     def get_selected_path(self) -> str | None:
-        selected_items: list[QTreeWidgetItem] = self.repo_tree_widget.selectedItems()
+        selected_items: Sequence[QTreeWidgetItem | None] = self.ui.repoTreeWidget.selectedItems()
         if not selected_items:
             return None
 
-        item: QTreeWidgetItem = selected_items[0]
+        item: QTreeWidgetItem | None = selected_items[0]
+        if item is None:
+            return None
         item_info: TreeInfoData | None = item.data(0, Qt.ItemDataRole.UserRole)
-        if item_info and item_info.type == "blob":
+        if item_info is not None and item_info.type == "blob":
             return item_info.path
 
         return None
@@ -452,7 +428,7 @@ class GitHubFileSelector(QDialog):
         self,
         fork_name: str,
     ) -> None:
-        self.repo_tree_widget.clear()
+        self.ui.repoTreeWidget.clear()
         full_name: str = fork_name
         # Format the contents_url with the proper path and add the recursive parameter
         tree_url: str = f"https://api.github.com/repos/{full_name}/git/trees/master?recursive=1"
@@ -495,17 +471,17 @@ class GitHubFileSelector(QDialog):
 
     def stop_rate_limit_timer(self) -> None:
         self.timer.stop()
-        self.statusBar.clearMessage()
+        self.ui.statusBar.clearMessage()
 
     def update_rate_limit_status(self) -> None:
         if self.rate_limit_reset is None or self.rate_limit_remaining is None:
             return
         if self.rate_limit_remaining > 0:
-            self.statusBar.showMessage(f"Requests remaining: {self.rate_limit_remaining}")
+            self.ui.statusBar.showMessage(f"Requests remaining: {self.rate_limit_remaining}")
             self.stop_rate_limit_timer()
         else:
             remaining_time = max(self.rate_limit_reset - time.time(), 0)
-            self.statusBar.showMessage(f"Rate limit exceeded. Try again in {int(remaining_time)} seconds.")
+            self.ui.statusBar.showMessage(f"Rate limit exceeded. Try again in {int(remaining_time)} seconds.")
             if int(remaining_time) % 15 == 0:  # Refresh every 15 seconds, sometimes github's X-RateLimit-Reset is wrong.
                 self.refresh_data()
             elif remaining_time <= 0:
@@ -536,7 +512,7 @@ class GitHubFileSelector(QDialog):
         self.accept()
 
     def clone_repository(self) -> None:
-        selected_fork = self.fork_combo_box.currentText().replace(" (main)", "")
+        selected_fork = self.ui.forkComboBox.currentText().replace(" (main)", "")
         if not selected_fork:
             QMessageBox.warning(self, tr("No Fork Selected"), tr("Please select a fork to clone."))
             return
@@ -558,14 +534,14 @@ class GitHubFileSelector(QDialog):
         self,
         position: QPoint,
     ) -> None:
-        item: QTreeWidgetItem | None = self.repo_tree_widget.itemAt(position)
+        item: QTreeWidgetItem | None = self.ui.repoTreeWidget.itemAt(position)
         if item is None:
             return
         context_menu = QMenu(self)
         context_menu.addAction(tr("Open in Web Browser")).triggered.connect(lambda: self.open_in_web_browser(item))
         context_menu.addAction(tr("Copy URL")).triggered.connect(lambda: self.copy_url(item))
         context_menu.addAction(tr("Download")).triggered.connect(lambda: self.download(item))
-        viewport: QWidget | None = self.repo_tree_widget.viewport()
+        viewport: QWidget | None = self.ui.repoTreeWidget.viewport()
         if viewport is None:
             return
         context_menu.exec(viewport.mapToGlobal(position))

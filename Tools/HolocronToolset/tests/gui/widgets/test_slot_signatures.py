@@ -148,7 +148,7 @@ class TestTextureListSlots:
 
         texture_list.queue_load_visible_icons = wrapper
         QTimer.singleShot(10, lambda: texture_list.queue_load_visible_icons(0))
-        qtbot.wait(50)
+        QtBot.wait(50)
         assert texture_list._queue_called
 
     def test_on_reload_clicked_with_bool(self, texture_list, qtbot):
@@ -418,7 +418,7 @@ class TestSignalConnections:
 
         # Emit clicked signal (emits bool)
         resource_list.ui.reloadButton.clicked.emit(False)
-        qtbot.wait(10)
+        QtBot.wait(10)
         assert len(called_with) > 0
         assert called_with[0] is False
 
@@ -435,7 +435,7 @@ class TestSignalConnections:
         resource_list.on_filter_string_updated = capture
 
         resource_list.ui.searchEdit.textChanged.emit("test")
-        qtbot.wait(10)
+        QtBot.wait(10)
         assert len(called_with) > 0
         assert called_with[0] == "test"
 
@@ -452,7 +452,7 @@ class TestSignalConnections:
         resource_list.on_section_changed = capture
 
         resource_list.ui.sectionCombo.currentIndexChanged.emit(1)
-        qtbot.wait(10)
+        QtBot.wait(10)
         assert len(called_with) > 0
         assert called_with[0] == 1
 
@@ -476,7 +476,7 @@ class TestSignalConnections:
         scrollbar = texture_list.ui.resourceList.verticalScrollBar()
         if scrollbar:
             scrollbar.valueChanged.emit(50)
-            qtbot.wait(10)
+            QtBot.wait(10)
             assert len(called_with) > 0
             assert called_with[0] == 50
 
@@ -495,7 +495,7 @@ class TestSignalConnections:
         model = QStandardItemModel()
         index = model.index(0, 0)
         resource_list.ui.resourceTree.doubleClicked.emit(index)
-        qtbot.wait(10)
+        QtBot.wait(10)
         assert len(called_with) > 0
         assert called_with[0] == index
 
@@ -526,5 +526,5 @@ class TestQTimerSingleShotCompatibility:
         texture_list.queue_load_visible_icons = lambda *args: (original(*args), check())[1]
 
         QTimer.singleShot(10, lambda: texture_list.queue_load_visible_icons(0))
-        qtbot.wait(50)
+        QtBot.wait(50)
         assert called

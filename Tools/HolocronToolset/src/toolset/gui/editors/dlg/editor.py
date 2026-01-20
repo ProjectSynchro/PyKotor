@@ -12,7 +12,7 @@ import qtpy
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtCore import QByteArray, QDataStream, QIODevice, QItemSelectionModel, QMimeData, QModelIndex, QPropertyAnimation, QRect, QTimer, Qt
-from qtpy.QtGui import QDrag, QFont, QKeySequence, QStandardItem, QStandardItemModel
+from qtpy.QtGui import QColor, QDrag, QFont, QKeySequence, QPalette, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QAction,  # pyright: ignore[reportPrivateImportUsage]
@@ -1275,6 +1275,23 @@ Should return 1 or 0, representing a boolean.
     ):
         """Sets up the installation for the UI."""
         self._installation = installation  # pyright: ignore[reportIncompatibleVariableOverride]
+        # Set maxLength for resref FilterComboBox fields (ResRefs are max 16 characters)
+        resref_combo_boxes = [
+            self.ui.script1ResrefEdit,
+            self.ui.script2ResrefEdit,
+            self.ui.condition1ResrefEdit,
+            self.ui.condition2ResrefEdit,
+            self.ui.onAbortCombo,
+            self.ui.onEndEdit,
+            self.ui.soundComboBox,
+            self.ui.voiceComboBox,
+            self.ui.ambientTrackCombo,
+            self.ui.cameraModelSelect,
+        ]
+        for combo_box in resref_combo_boxes:
+            line_edit = combo_box.lineEdit()
+            if line_edit is not None:
+                line_edit.setMaxLength(16)
         installation.setup_file_context_menu(self.ui.script1ResrefEdit, [ResourceType.NSS, ResourceType.NCS])
         if installation.game().is_k1():
             required: list[str] = [HTInstallation.TwoDA_VIDEO_EFFECTS, HTInstallation.TwoDA_DIALOG_ANIMS]
@@ -1515,7 +1532,19 @@ Should return 1 or 0, representing a boolean.
         if link is None:
             return None
         if "(Light)" in GlobalSettings().selectedTheme or GlobalSettings().selectedTheme == "Native":
-            self.ui.dialogTree.setStyleSheet("QTreeView { background: #FFFFEE; }")
+            # Use palette color instead of hardcoded color
+            from qtpy.QtWidgets import QApplication
+            from qtpy.QtGui import QPalette
+            app = QApplication.instance()
+            if app is not None and isinstance(app, QApplication):
+                palette = app.palette()
+            else:
+                # Use default palette for fallback
+                from qtpy.QtGui import QPalette
+                palette = QPalette()
+            
+            base_color = palette.color(QPalette.ColorRole.Base)
+            self.ui.dialogTree.setStyleSheet(f"QTreeView {{ background: {base_color.name()}; }}")
         self.model.clear()
         self._focused = True
 
@@ -2635,10 +2664,25 @@ Should return 1 or 0, representing a boolean.
                 self.ui.cameraAnimSpin.setToolTip("")
 
             if self.ui.cameraIdSpin.value() == -1 and self.ui.cameraAngleSelect.currentText() == "Static Camera":
-                self.ui.cameraIdSpin.setStyleSheet("QSpinBox { color: red; }")
-                self.ui.cameraIdLabel.setStyleSheet("QLabel { color: red; }")
-                self.ui.cameraAngleSelect.setStyleSheet("QComboBox { color: red; }")
-                self.ui.cameraAngleLabel.setStyleSheet("QLabel { color: red; }")
+                # Get error color from palette
+                app = QApplication.instance()
+                if app is None or not isinstance(app, QApplication):
+                    palette = QPalette()
+                else:
+                    palette = app.palette()
+                
+                shadow_color = palette.color(QPalette.ColorRole.Shadow)
+                error_color = QColor(shadow_color)
+                if error_color.lightness() < 128:  # Dark theme
+                    error_color = error_color.lighter(150)
+                else:  # Light theme
+                    error_color = error_color.darker(110)
+                
+                error_color_str = error_color.name()
+                self.ui.cameraIdSpin.setStyleSheet(f"QSpinBox {{ color: {error_color_str}; }}")
+                self.ui.cameraIdLabel.setStyleSheet(f"QLabel {{ color: {error_color_str}; }}")
+                self.ui.cameraAngleSelect.setStyleSheet(f"QComboBox {{ color: {error_color_str}; }}")
+                self.ui.cameraAngleLabel.setStyleSheet(f"QLabel {{ color: {error_color_str}; }}")
                 self.ui.cameraIdSpin.setToolTip("A Camera ID must be defined for Static Cameras.")
                 self.ui.cameraAngleSelect.setToolTip("A Camera ID must be defined for Static Cameras.")
             else:

@@ -17,6 +17,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
+from qtpy.QtWidgets import QApplication
 
 import pytest
 
@@ -24,6 +25,8 @@ from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
     from toolset.data.installation import HTInstallation
+    from toolset.gui.editors.wav import WAVEditor
+    from pytestqt.qtbot import QtBot
 
 
 # ============================================================================
@@ -31,7 +34,7 @@ if TYPE_CHECKING:
 # ============================================================================
 
 @pytest.fixture
-def wav_editor(qtbot, installation: HTInstallation):
+def wav_editor(qtbot: QtBot, installation: HTInstallation):
     """Create a WAVEditor instance for testing."""
     from toolset.gui.editors.wav import WAVEditor
     editor = WAVEditor(None, installation)
@@ -111,76 +114,76 @@ def sample_flac_data() -> bytes:
 class TestFormatDetection:
     """Test audio format detection based on magic bytes."""
 
-    def test_detect_wav_format(self, wav_editor, sample_wav_data: bytes):
+    def test_detect_wav_format(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test WAV format detection from RIFF header."""
         result = wav_editor.detect_audio_format(sample_wav_data)
         assert result == ".wav"
 
-    def test_detect_mp3_format_id3(self, wav_editor, sample_mp3_data: bytes):
+    def test_detect_mp3_format_id3(self, wav_editor: WAVEditor, sample_mp3_data: bytes):
         """Test MP3 format detection from ID3 header."""
         result = wav_editor.detect_audio_format(sample_mp3_data)
         assert result == ".mp3"
 
-    def test_detect_mp3_format_frame_sync(self, wav_editor):
+    def test_detect_mp3_format_frame_sync(self, wav_editor: WAVEditor):
         """Test MP3 format detection from frame sync bytes."""
         # MP3 frame sync: 0xFF 0xFB (MPEG Audio Layer 3)
         data = b'\xff\xfb\x90\x00' + b'\x00' * 100
         result = wav_editor.detect_audio_format(data)
         assert result == ".mp3"
 
-    def test_detect_mp3_format_lame(self, wav_editor):
+    def test_detect_mp3_format_lame(self, wav_editor: WAVEditor):
         """Test MP3 format detection from LAME header."""
         data = b'LAME' + b'\x00' * 100
         result = wav_editor.detect_audio_format(data)
         assert result == ".mp3"
 
-    def test_detect_ogg_format(self, wav_editor, sample_ogg_data: bytes):
+    def test_detect_ogg_format(self, wav_editor: WAVEditor, sample_ogg_data: bytes):
         """Test OGG format detection from OggS header."""
         result = wav_editor.detect_audio_format(sample_ogg_data)
         assert result == ".ogg"
 
-    def test_detect_flac_format(self, wav_editor, sample_flac_data: bytes):
+    def test_detect_flac_format(self, wav_editor: WAVEditor, sample_flac_data: bytes):
         """Test FLAC format detection from fLaC header."""
         result = wav_editor.detect_audio_format(sample_flac_data)
         assert result == ".flac"
 
-    def test_detect_unknown_format_defaults_to_wav(self, wav_editor):
+    def test_detect_unknown_format_defaults_to_wav(self, wav_editor: WAVEditor):
         """Test that unknown formats default to WAV."""
         data = b'UNKN' + b'\x00' * 100
         result = wav_editor.detect_audio_format(data)
         assert result == ".wav"
 
-    def test_detect_empty_data_defaults_to_wav(self, wav_editor):
+    def test_detect_empty_data_defaults_to_wav(self, wav_editor: WAVEditor):
         """Test that empty data defaults to WAV."""
         result = wav_editor.detect_audio_format(b'')
         assert result == ".wav"
 
-    def test_detect_short_data_defaults_to_wav(self, wav_editor):
+    def test_detect_short_data_defaults_to_wav(self, wav_editor: WAVEditor):
         """Test that data shorter than 4 bytes defaults to WAV."""
         result = wav_editor.detect_audio_format(b'AB')
         assert result == ".wav"
 
-    def test_get_format_name_wav(self, wav_editor):
+    def test_get_format_name_wav(self, wav_editor: WAVEditor):
         """Test human-readable format name for WAV."""
         result = wav_editor.get_format_name(".wav")
         assert result == "WAV (RIFF)"
 
-    def test_get_format_name_mp3(self, wav_editor):
+    def test_get_format_name_mp3(self, wav_editor: WAVEditor):
         """Test human-readable format name for MP3."""
         result = wav_editor.get_format_name(".mp3")
         assert result == "MP3"
 
-    def test_get_format_name_ogg(self, wav_editor):
+    def test_get_format_name_ogg(self, wav_editor: WAVEditor):
         """Test human-readable format name for OGG."""
         result = wav_editor.get_format_name(".ogg")
         assert result == "OGG Vorbis"
 
-    def test_get_format_name_flac(self, wav_editor):
+    def test_get_format_name_flac(self, wav_editor: WAVEditor):
         """Test human-readable format name for FLAC."""
         result = wav_editor.get_format_name(".flac")
         assert result == "FLAC"
 
-    def test_get_format_name_unknown(self, wav_editor):
+    def test_get_format_name_unknown(self, wav_editor: WAVEditor):
         """Test human-readable format name for unknown format."""
         result = wav_editor.get_format_name(".xyz")
         assert result == "Unknown"
@@ -193,11 +196,11 @@ class TestFormatDetection:
 class TestEditorInitialization:
     """Test WAVEditor initialization and setup."""
 
-    def test_editor_creates_successfully(self, wav_editor):
+    def test_editor_creates_successfully(self, wav_editor: WAVEditor):
         """Test that editor initializes without errors."""
         assert wav_editor is not None
 
-    def test_editor_has_ui_elements(self, wav_editor):
+    def test_editor_has_ui_elements(self, wav_editor: WAVEditor):
         """Test that editor has all required UI elements."""
         assert hasattr(wav_editor.ui, 'playButton')
         assert hasattr(wav_editor.ui, 'pauseButton')
@@ -207,7 +210,7 @@ class TestEditorInitialization:
         assert hasattr(wav_editor.ui, 'totalTimeLabel')
         assert hasattr(wav_editor.ui, 'formatLabel')
 
-    def test_editor_has_menu_actions(self, wav_editor):
+    def test_editor_has_menu_actions(self, wav_editor: WAVEditor):
         """Test that editor has standard file menu actions."""
         menubar = wav_editor.menuBar()
         assert menubar is not None
@@ -220,14 +223,14 @@ class TestEditorInitialization:
                 break
         assert file_menu is not None
 
-    def test_editor_initial_state(self, wav_editor):
+    def test_editor_initial_state(self, wav_editor: WAVEditor):
         """Test editor's initial state after creation."""
         assert wav_editor.ui.currentTimeLabel.text() == "00:00:00"
         assert wav_editor.ui.totalTimeLabel.text() == "00:00:00"
         assert wav_editor.ui.formatLabel.text() == "Format: -"
         assert wav_editor.ui.timeSlider.value() == 0
 
-    def test_editor_window_title(self, wav_editor):
+    def test_editor_window_title(self, wav_editor: WAVEditor):
         """Test editor window title contains expected text."""
         title = wav_editor.windowTitle()
         assert "Audio Editor" in title or "Audio" in title
@@ -240,7 +243,7 @@ class TestEditorInitialization:
 class TestFileOperations:
     """Test file operations (new, load, save, revert)."""
 
-    def test_new_resets_state(self, wav_editor, sample_wav_data: bytes):
+    def test_new_resets_state(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test that new() resets editor state."""
         # First load some data
         wav_editor.load(Path("test.wav"), "test", ResourceType.WAV, sample_wav_data)
@@ -253,28 +256,28 @@ class TestFileOperations:
         assert wav_editor._detected_format == "Unknown"
         assert wav_editor.ui.formatLabel.text() == "Format: -"
 
-    def test_load_wav_file(self, wav_editor, sample_wav_data: bytes):
+    def test_load_wav_file(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test loading a WAV file."""
         wav_editor.load(Path("test.wav"), "test", ResourceType.WAV, sample_wav_data)
         
         assert wav_editor._audio_data == sample_wav_data
         assert "WAV" in wav_editor._detected_format
 
-    def test_load_mp3_file(self, wav_editor, sample_mp3_data: bytes):
+    def test_load_mp3_file(self, wav_editor: WAVEditor, sample_mp3_data: bytes):
         """Test loading an MP3 file."""
         wav_editor.load(Path("test.mp3"), "test", ResourceType.MP3, sample_mp3_data)
         
         assert wav_editor._audio_data == sample_mp3_data
         assert "MP3" in wav_editor._detected_format
 
-    def test_load_updates_format_label(self, wav_editor, sample_wav_data: bytes):
+    def test_load_updates_format_label(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test that loading updates the format label."""
         wav_editor.load(Path("test.wav"), "test", ResourceType.WAV, sample_wav_data)
         
         format_text = wav_editor.ui.formatLabel.text()
         assert "WAV" in format_text or "RIFF" in format_text
 
-    def test_build_returns_audio_data(self, wav_editor, sample_wav_data: bytes):
+    def test_build_returns_audio_data(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test that build() returns the current audio data."""
         wav_editor.load(Path("test.wav"), "test", ResourceType.WAV, sample_wav_data)
         
@@ -282,7 +285,7 @@ class TestFileOperations:
         assert data == sample_wav_data
         assert extra == b""
 
-    def test_build_empty_after_new(self, wav_editor):
+    def test_build_empty_after_new(self, wav_editor: WAVEditor):
         """Test that build() returns empty bytes after new()."""
         wav_editor.new()
         
@@ -290,7 +293,7 @@ class TestFileOperations:
         assert data == b""
         assert extra == b""
 
-    def test_load_with_bytearray(self, wav_editor, sample_wav_data: bytes):
+    def test_load_with_bytearray(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test loading with bytearray instead of bytes."""
         bytearray_data = bytearray(sample_wav_data)
         wav_editor.load(Path("test.wav"), "test", ResourceType.WAV, bytearray_data)
@@ -307,33 +310,33 @@ class TestFileOperations:
 class TestPlaybackControls:
     """Test playback control functionality."""
 
-    def test_play_button_exists_and_clickable(self, wav_editor, qtbot):
+    def test_play_button_exists_and_clickable(self, wav_editor: WAVEditor, qtbot: QtBot):
         """Test that play button exists and can be clicked."""
         assert wav_editor.ui.playButton is not None
         # Just verify it doesn't crash when clicked (no media loaded)
         qtbot.mouseClick(wav_editor.ui.playButton, pytest.importorskip("qtpy.QtCore").Qt.MouseButton.LeftButton)
 
-    def test_pause_button_exists_and_clickable(self, wav_editor, qtbot):
+    def test_pause_button_exists_and_clickable(self, wav_editor: WAVEditor, qtbot: QtBot):
         """Test that pause button exists and can be clicked."""
         assert wav_editor.ui.pauseButton is not None
         qtbot.mouseClick(wav_editor.ui.pauseButton, pytest.importorskip("qtpy.QtCore").Qt.MouseButton.LeftButton)
 
-    def test_stop_button_exists_and_clickable(self, wav_editor, qtbot):
+    def test_stop_button_exists_and_clickable(self, wav_editor: WAVEditor, qtbot: QtBot):
         """Test that stop button exists and can be clicked."""
         assert wav_editor.ui.stopButton is not None
         qtbot.mouseClick(wav_editor.ui.stopButton, pytest.importorskip("qtpy.QtCore").Qt.MouseButton.LeftButton)
 
-    def test_time_slider_exists(self, wav_editor):
+    def test_time_slider_exists(self, wav_editor: WAVEditor):
         """Test that time slider exists."""
         assert wav_editor.ui.timeSlider is not None
 
-    def test_time_slider_initial_range(self, wav_editor):
+    def test_time_slider_initial_range(self, wav_editor: WAVEditor):
         """Test time slider initial range after new()."""
         wav_editor.new()
         assert wav_editor.ui.timeSlider.minimum() == 0
         assert wav_editor.ui.timeSlider.maximum() == 0
 
-    def test_on_duration_changed_updates_label(self, wav_editor):
+    def test_on_duration_changed_updates_label(self, wav_editor: WAVEditor):
         """Test that duration change updates the total time label."""
         # Simulate duration change of 65000ms (1 minute 5 seconds)
         wav_editor._on_duration_changed(65000)
@@ -341,7 +344,7 @@ class TestPlaybackControls:
         assert wav_editor.ui.totalTimeLabel.text() == "00:01:05"
         assert wav_editor.ui.timeSlider.maximum() == 65000
 
-    def test_on_position_changed_updates_label(self, wav_editor):
+    def test_on_position_changed_updates_label(self, wav_editor: WAVEditor):
         """Test that position change updates the current time label."""
         # First set a duration
         wav_editor._on_duration_changed(120000)  # 2 minutes
@@ -351,7 +354,7 @@ class TestPlaybackControls:
         
         assert wav_editor.ui.currentTimeLabel.text() == "00:01:05"
 
-    def test_on_position_changed_updates_slider(self, wav_editor):
+    def test_on_position_changed_updates_slider(self, wav_editor: WAVEditor):
         """Test that position change updates slider when not being dragged."""
         wav_editor._on_duration_changed(120000)
         wav_editor._on_position_changed(30000)
@@ -366,26 +369,26 @@ class TestPlaybackControls:
 class TestUIState:
     """Test UI state management."""
 
-    def test_format_label_shows_wav_format(self, wav_editor, sample_wav_data: bytes):
+    def test_format_label_shows_wav_format(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test format label shows correct format for WAV files."""
         wav_editor.load(Path("test.wav"), "test", ResourceType.WAV, sample_wav_data)
         
         format_text = wav_editor.ui.formatLabel.text()
         assert "WAV" in format_text or "RIFF" in format_text
 
-    def test_format_label_shows_mp3_format(self, wav_editor, sample_mp3_data: bytes):
+    def test_format_label_shows_mp3_format(self, wav_editor: WAVEditor, sample_mp3_data: bytes):
         """Test format label shows correct format for MP3 files."""
         wav_editor.load(Path("test.mp3"), "test", ResourceType.MP3, sample_mp3_data)
         
         format_text = wav_editor.ui.formatLabel.text()
         assert "MP3" in format_text
 
-    def test_format_label_shows_dash_for_empty(self, wav_editor):
+    def test_format_label_shows_dash_for_empty(self, wav_editor: WAVEditor):
         """Test format label shows dash when no file loaded."""
         wav_editor.new()
         assert wav_editor.ui.formatLabel.text() == "Format: -"
 
-    def test_time_labels_reset_on_new(self, wav_editor, sample_wav_data: bytes):
+    def test_time_labels_reset_on_new(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test time labels reset to 00:00:00 on new()."""
         wav_editor.load(Path("test.wav"), "test", ResourceType.WAV, sample_wav_data)
         wav_editor._on_duration_changed(60000)  # Set some duration
@@ -403,17 +406,17 @@ class TestUIState:
 class TestTempFileCleanup:
     """Test temporary file management."""
 
-    def test_temp_file_initially_none(self, wav_editor):
+    def test_temp_file_initially_none(self, wav_editor: WAVEditor):
         """Test that temp file is initially None."""
         assert wav_editor._temp_file is None
 
-    def test_cleanup_temp_file_when_none(self, wav_editor):
+    def test_cleanup_temp_file_when_none(self, wav_editor: WAVEditor):
         """Test cleanup doesn't crash when no temp file."""
         wav_editor._temp_file = None
         wav_editor._cleanup_temp_file()
         assert wav_editor._temp_file is None
 
-    def test_cleanup_temp_file_removes_file(self, wav_editor):
+    def test_cleanup_temp_file_removes_file(self, wav_editor: WAVEditor):
         """Test cleanup removes existing temp file."""
         # Create a real temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as f:
@@ -428,7 +431,7 @@ class TestTempFileCleanup:
         assert wav_editor._temp_file is None
         assert not Path(temp_path).exists()
 
-    def test_new_cleans_up_temp_file(self, wav_editor, sample_wav_data: bytes):
+    def test_new_cleans_up_temp_file(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test that new() cleans up any temp files."""
         # Create a temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as f:
@@ -448,7 +451,7 @@ class TestTempFileCleanup:
 class TestSaveLoadRoundtrip:
     """Test save/load roundtrip preserves data."""
 
-    def test_wav_roundtrip_preserves_data(self, wav_editor, sample_wav_data: bytes):
+    def test_wav_roundtrip_preserves_data(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test WAV file roundtrip preserves all data."""
         wav_editor.load(Path("test.wav"), "test", ResourceType.WAV, sample_wav_data)
         
@@ -456,7 +459,7 @@ class TestSaveLoadRoundtrip:
         
         assert saved_data == sample_wav_data
 
-    def test_mp3_roundtrip_preserves_data(self, wav_editor, sample_mp3_data: bytes):
+    def test_mp3_roundtrip_preserves_data(self, wav_editor: WAVEditor, sample_mp3_data: bytes):
         """Test MP3 file roundtrip preserves all data."""
         wav_editor.load(Path("test.mp3"), "test", ResourceType.MP3, sample_mp3_data)
         
@@ -464,23 +467,23 @@ class TestSaveLoadRoundtrip:
         
         assert saved_data == sample_mp3_data
 
-    def test_multiple_load_save_cycles(self, wav_editor, sample_wav_data: bytes, qtbot):
+    def test_multiple_load_save_cycles(self, wav_editor: WAVEditor, sample_wav_data: bytes, qtbot: QtBot):
         """Test multiple load/save cycles preserve data."""
         original_data = sample_wav_data
         
         # Use fewer cycles and add small delays to avoid Qt crashes
         for i in range(3):
             wav_editor.load(Path(f"test_{i}.wav"), f"test_{i}", ResourceType.WAV, original_data)
-            qtbot.wait(50)  # Small delay to let Qt process events
+            QApplication.processEvents()  # Small delay to let Qt process events
             saved_data, _ = wav_editor.build()
             assert saved_data == original_data, f"Cycle {i} failed"
             
             # Stop player and clear state between loads
             wav_editor.mediaPlayer.player.stop()  # pyright: ignore[reportAttributeAccessIssue]
-            qtbot.wait(10)
+            QApplication.processEvents()
 
     def test_load_different_formats_sequentially(
-        self, wav_editor, sample_wav_data: bytes, sample_mp3_data: bytes
+        self, wav_editor: WAVEditor, sample_wav_data: bytes, sample_mp3_data: bytes
     ):
         """Test loading different formats sequentially."""
         # Load WAV
@@ -501,14 +504,14 @@ class TestSaveLoadRoundtrip:
 class TestEdgeCases:
     """Test edge cases and boundary conditions."""
 
-    def test_load_empty_data(self, wav_editor):
+    def test_load_empty_data(self, wav_editor: WAVEditor):
         """Test loading empty data doesn't crash."""
         wav_editor.load(Path("empty.wav"), "empty", ResourceType.WAV, b"")
         
         data, _ = wav_editor.build()
         assert data == b""
 
-    def test_load_very_small_data(self, wav_editor):
+    def test_load_very_small_data(self, wav_editor: WAVEditor):
         """Test loading very small data (less than header size)."""
         small_data = b"AB"
         wav_editor.load(Path("small.wav"), "small", ResourceType.WAV, small_data)
@@ -516,7 +519,7 @@ class TestEdgeCases:
         data, _ = wav_editor.build()
         assert data == small_data
 
-    def test_load_corrupted_wav_header(self, wav_editor):
+    def test_load_corrupted_wav_header(self, wav_editor: WAVEditor):
         """Test loading data with corrupted WAV header."""
         # Starts with RIFF but invalid content
         corrupted = b"RIFF\x00\x00\x00\x00WAVE" + b"\x00" * 100
@@ -526,7 +529,7 @@ class TestEdgeCases:
         data, _ = wav_editor.build()
         assert data == corrupted
 
-    def test_position_exceeds_duration(self, wav_editor):
+    def test_position_exceeds_duration(self, wav_editor: WAVEditor):
         """Test position change when it exceeds duration."""
         wav_editor._on_duration_changed(60000)  # 1 minute
         
@@ -535,14 +538,14 @@ class TestEdgeCases:
         
         assert wav_editor.ui.timeSlider.maximum() >= 90000
 
-    def test_zero_duration(self, wav_editor):
+    def test_zero_duration(self, wav_editor: WAVEditor):
         """Test handling of zero duration."""
         wav_editor._on_duration_changed(0)
         
         assert wav_editor.ui.totalTimeLabel.text() == "00:00:00"
         assert wav_editor.ui.timeSlider.maximum() == 0
 
-    def test_very_long_duration(self, wav_editor):
+    def test_very_long_duration(self, wav_editor: WAVEditor):
         """Test handling of very long duration (hours)."""
         # 3 hours, 25 minutes, 45 seconds = 12345000 ms
         wav_editor._on_duration_changed(12345000)
@@ -559,7 +562,7 @@ class TestEdgeCases:
 class TestWindowClose:
     """Test window close behavior."""
 
-    def test_close_event_cleans_up(self, wav_editor, sample_wav_data: bytes):
+    def test_close_event_cleans_up(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test that close event performs cleanup."""
         # Create a temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as f:
@@ -583,7 +586,7 @@ class TestWindowClose:
 class TestIntegration:
     """Integration tests for full workflows."""
 
-    def test_full_workflow_new_to_save(self, wav_editor, sample_wav_data: bytes, tmp_path: Path):
+    def test_full_workflow_new_to_save(self, wav_editor: WAVEditor, sample_wav_data: bytes, tmp_path: Path):
         """Test full workflow from new file to save."""
         # Start fresh
         wav_editor.new()
@@ -604,7 +607,7 @@ class TestIntegration:
         assert output_path.read_bytes() == sample_wav_data
 
     def test_format_switching(
-        self, wav_editor, sample_wav_data: bytes, sample_mp3_data: bytes
+        self, wav_editor: WAVEditor, sample_wav_data: bytes, sample_mp3_data: bytes
     ):
         """Test switching between different audio formats."""
         # Load WAV
@@ -627,21 +630,21 @@ class TestIntegration:
 class TestEditorInheritance:
     """Test that WAVEditor properly inherits from Editor base class."""
 
-    def test_inherits_from_editor(self, wav_editor):
+    def test_inherits_from_editor(self, wav_editor: WAVEditor):
         """Test WAVEditor inherits from Editor."""
         from toolset.gui.editor import Editor
         assert isinstance(wav_editor, Editor)
 
-    def test_has_media_player_widget(self, wav_editor):
+    def test_has_media_player_widget(self, wav_editor: WAVEditor):
         """Test WAVEditor has access to mediaPlayer widget."""
         # The mediaPlayer is inherited from Editor
         assert hasattr(wav_editor, 'mediaPlayer')
 
-    def test_has_installation_attribute(self, wav_editor):
+    def test_has_installation_attribute(self, wav_editor: WAVEditor):
         """Test WAVEditor has installation attribute."""
         assert hasattr(wav_editor, '_installation')
 
-    def test_supported_types_set_correctly(self, wav_editor):
+    def test_supported_types_set_correctly(self, wav_editor: WAVEditor):
         """Test supported resource types are set correctly."""
         # Should support WAV and MP3
         # Access via getattr since it's a private attribute
@@ -688,17 +691,17 @@ class TestStaticMethods:
 class TestResourceTypeHandling:
     """Test handling of different resource types."""
 
-    def test_loads_wav_resource_type(self, wav_editor, sample_wav_data: bytes):
+    def test_loads_wav_resource_type(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test loading with WAV resource type."""
         wav_editor.load(Path("test.wav"), "test", ResourceType.WAV, sample_wav_data)
         assert wav_editor._restype == ResourceType.WAV
 
-    def test_loads_mp3_resource_type(self, wav_editor, sample_mp3_data: bytes):
+    def test_loads_mp3_resource_type(self, wav_editor: WAVEditor, sample_mp3_data: bytes):
         """Test loading with MP3 resource type."""
         wav_editor.load(Path("test.mp3"), "test", ResourceType.MP3, sample_mp3_data)
         assert wav_editor._restype == ResourceType.MP3
 
-    def test_resource_type_preserved_after_load(self, wav_editor, sample_wav_data: bytes):
+    def test_resource_type_preserved_after_load(self, wav_editor: WAVEditor, sample_wav_data: bytes):
         """Test resource type is preserved in editor state."""
         wav_editor.load(Path("test.wav"), "test", ResourceType.WAV, sample_wav_data)
         

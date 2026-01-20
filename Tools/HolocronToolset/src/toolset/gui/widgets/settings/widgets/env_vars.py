@@ -297,13 +297,25 @@ class EnvVariableDialog(QDialog):
                     if value > 0:
                         self.value_edit.setStyleSheet("")  # Valid positive integer
                     else:
-                        self.value_edit.setStyleSheet("border: 1px solid red;")  # Not a positive integer
+                        # Use palette error color for validation errors
+                        from toolset.gui.common.palette_helpers import get_semantic_colors
+                        colors = get_semantic_colors()
+                        error_color = colors.get('error', 'red')
+                        self.value_edit.setStyleSheet(f"border: 1px solid {error_color};")  # Not a positive integer
                 except ValueError:
-                    self.value_edit.setStyleSheet("border: 1px solid red;")  # Not an integer
+                    # Use palette error color for validation errors
+                    from toolset.gui.common.palette_helpers import get_semantic_colors
+                    colors = get_semantic_colors()
+                    error_color = colors.get('error', 'red')
+                    self.value_edit.setStyleSheet(f"border: 1px solid {error_color};")  # Not an integer
             else:
                 possible_values = current_var.possible_values.split(", ")
                 if self.value_edit.text() not in possible_values:
-                    self.value_edit.setStyleSheet("border: 1px solid red;")
+                    # Use palette error color for validation errors
+                    from toolset.gui.common.palette_helpers import get_semantic_colors
+                    colors = get_semantic_colors()
+                    error_color = colors.get('error', 'red')
+                    self.value_edit.setStyleSheet(f"border: 1px solid {error_color};")
                 else:
                     self.value_edit.setStyleSheet("")
         else:

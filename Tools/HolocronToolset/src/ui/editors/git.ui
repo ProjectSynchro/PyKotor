@@ -42,15 +42,15 @@
       <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QLineEdit" name="filterEdit">
+         <widget class="SearchFilterWidget" name="filterEdit">
           <property name="text">
-           <string/>
-          </property>
-          <property name="maxLength">
-           <number>16</number>
+           <string />
           </property>
           <property name="placeholderText">
            <string>filter...</string>
+          </property>
+          <property name="maxLength">
+           <number>16</number>
           </property>
          </widget>
         </item>
@@ -102,35 +102,35 @@
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckbox {
-	spacing: 0px;
-}
+              spacing: 0px;
+              }
 
-QCheckBox::indicator {
-    image: url(:/images/icons/lock.png);
-	border: 1px solid rgba(30, 144, 255, 0.0);
-	width: 26px;
-	height: 26px;
-}
+              QCheckBox::indicator {
+              image: url(:/images/icons/lock.png);
+              border: 1px solid rgba(30, 144, 255, 0.0);
+              width: 26px;
+              height: 26px;
+              }
 
-QCheckBox::indicator:unchecked:hover {
-	background: rgba(30, 144, 255, 0.2);
-	border: 1px solid rgba(30, 144, 255, 0.4);
-}
+              QCheckBox::indicator:unchecked:hover {
+              background: rgba(30, 144, 255, 0.2);
+              border: 1px solid rgba(30, 144, 255, 0.4);
+              }
 
-QCheckBox::indicator:checked {
-	background: rgba(30, 144, 255, 0.4);
-	border:1px solid rgba(30, 144, 255, 0.6);
-}
+              QCheckBox::indicator:checked {
+              background: rgba(30, 144, 255, 0.4);
+              border:1px solid rgba(30, 144, 255, 0.6);
+              }
 
-QCheckBox::indicator:checked:hover {
-	background: rgba(30, 144, 255, 0.5);
-	border:1px solid rgba(30, 144, 255, 0.7);
-}
+              QCheckBox::indicator:checked:hover {
+              background: rgba(30, 144, 255, 0.5);
+              border:1px solid rgba(30, 144, 255, 0.7);
+              }
 
-</string>
+             </string>
             </property>
             <property name="text">
-             <string/>
+             <string />
             </property>
             <property name="checked">
              <bool>false</bool>
@@ -168,35 +168,35 @@ QCheckBox::indicator:checked:hover {
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckbox {
-	spacing: 0px;
-}
+              spacing: 0px;
+              }
 
-QCheckBox::indicator {
-    image: url(:/images/icons/k1/creature.png);
-	border: 1px solid rgba(30, 144, 255, 0.0);
-	width: 26px;
-	height: 26px;
-}
+              QCheckBox::indicator {
+              image: url(:/images/icons/k1/creature.png);
+              border: 1px solid rgba(30, 144, 255, 0.0);
+              width: 26px;
+              height: 26px;
+              }
 
-QCheckBox::indicator:unchecked:hover {
-	background: rgba(30, 144, 255, 0.2);
-	border: 1px solid rgba(30, 144, 255, 0.4);
-}
+              QCheckBox::indicator:unchecked:hover {
+              background: rgba(30, 144, 255, 0.2);
+              border: 1px solid rgba(30, 144, 255, 0.4);
+              }
 
-QCheckBox::indicator:checked {
-	background: rgba(30, 144, 255, 0.4);
-	border:1px solid rgba(30, 144, 255, 0.6);
-}
+              QCheckBox::indicator:checked {
+              background: rgba(30, 144, 255, 0.4);
+              border:1px solid rgba(30, 144, 255, 0.6);
+              }
 
-QCheckBox::indicator:checked:hover {
-	background: rgba(30, 144, 255, 0.5);
-	border:1px solid rgba(30, 144, 255, 0.7);
-}
+              QCheckBox::indicator:checked:hover {
+              background: rgba(30, 144, 255, 0.5);
+              border:1px solid rgba(30, 144, 255, 0.7);
+              }
 
-</string>
+             </string>
             </property>
             <property name="text">
-             <string/>
+             <string />
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -216,31 +216,31 @@ QCheckBox::indicator:checked:hover {
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckBox::indicator {
-    image: url(:/images/icons/k1/door.png);
-	border: 1px solid rgba(30, 144, 255, 0.0);
-	width: 26px;
-	height: 26px;
-}
+              image: url(:/images/icons/k1/door.png);
+              border: 1px solid rgba(30, 144, 255, 0.0);
+              width: 26px;
+              height: 26px;
+              }
 
-QCheckBox::indicator:unchecked:hover {
-	background: rgba(30, 144, 255, 0.2);
-	border: 1px solid rgba(30, 144, 255, 0.4);
-}
+              QCheckBox::indicator:unchecked:hover {
+              background: rgba(30, 144, 255, 0.2);
+              border: 1px solid rgba(30, 144, 255, 0.4);
+              }
 
-QCheckBox::indicator:checked {
-	background: rgba(30, 144, 255, 0.4);
-	border:1px solid rgba(30, 144, 255, 0.6);
-}
+              QCheckBox::indicator:checked {
+              background: rgba(30, 144, 255, 0.4);
+              border:1px solid rgba(30, 144, 255, 0.6);
+              }
 
-QCheckBox::indicator:checked:hover {
-	background: rgba(30, 144, 255, 0.5);
-	border:1px solid rgba(30, 144, 255, 0.7);
-}
+              QCheckBox::indicator:checked:hover {
+              background: rgba(30, 144, 255, 0.5);
+              border:1px solid rgba(30, 144, 255, 0.7);
+              }
 
-</string>
+             </string>
             </property>
             <property name="text">
-             <string/>
+             <string />
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -260,31 +260,31 @@ QCheckBox::indicator:checked:hover {
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckBox::indicator {
-    image: url(:/images/icons/k1/placeable.png);
-	border: 1px solid rgba(30, 144, 255, 0.0);
-	width: 26px;
-	height: 26px;
-}
+              image: url(:/images/icons/k1/placeable.png);
+              border: 1px solid rgba(30, 144, 255, 0.0);
+              width: 26px;
+              height: 26px;
+              }
 
-QCheckBox::indicator:unchecked:hover {
-	background: rgba(30, 144, 255, 0.2);
-	border: 1px solid rgba(30, 144, 255, 0.4);
-}
+              QCheckBox::indicator:unchecked:hover {
+              background: rgba(30, 144, 255, 0.2);
+              border: 1px solid rgba(30, 144, 255, 0.4);
+              }
 
-QCheckBox::indicator:checked {
-	background: rgba(30, 144, 255, 0.4);
-	border:1px solid rgba(30, 144, 255, 0.6);
-}
+              QCheckBox::indicator:checked {
+              background: rgba(30, 144, 255, 0.4);
+              border:1px solid rgba(30, 144, 255, 0.6);
+              }
 
-QCheckBox::indicator:checked:hover {
-	background: rgba(30, 144, 255, 0.5);
-	border:1px solid rgba(30, 144, 255, 0.7);
-}
+              QCheckBox::indicator:checked:hover {
+              background: rgba(30, 144, 255, 0.5);
+              border:1px solid rgba(30, 144, 255, 0.7);
+              }
 
-</string>
+             </string>
             </property>
             <property name="text">
-             <string/>
+             <string />
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -304,31 +304,31 @@ QCheckBox::indicator:checked:hover {
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckBox::indicator {
-    image: url(:/images/icons/k1/merchant.png);
-	border: 1px solid rgba(30, 144, 255, 0.0);
-	width: 26px;
-	height: 26px;
-}
+              image: url(:/images/icons/k1/merchant.png);
+              border: 1px solid rgba(30, 144, 255, 0.0);
+              width: 26px;
+              height: 26px;
+              }
 
-QCheckBox::indicator:unchecked:hover {
-	background: rgba(30, 144, 255, 0.2);
-	border: 1px solid rgba(30, 144, 255, 0.4);
-}
+              QCheckBox::indicator:unchecked:hover {
+              background: rgba(30, 144, 255, 0.2);
+              border: 1px solid rgba(30, 144, 255, 0.4);
+              }
 
-QCheckBox::indicator:checked {
-	background: rgba(30, 144, 255, 0.4);
-	border:1px solid rgba(30, 144, 255, 0.6);
-}
+              QCheckBox::indicator:checked {
+              background: rgba(30, 144, 255, 0.4);
+              border:1px solid rgba(30, 144, 255, 0.6);
+              }
 
-QCheckBox::indicator:checked:hover {
-	background: rgba(30, 144, 255, 0.5);
-	border:1px solid rgba(30, 144, 255, 0.7);
-}
+              QCheckBox::indicator:checked:hover {
+              background: rgba(30, 144, 255, 0.5);
+              border:1px solid rgba(30, 144, 255, 0.7);
+              }
 
-</string>
+             </string>
             </property>
             <property name="text">
-             <string/>
+             <string />
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -348,31 +348,31 @@ QCheckBox::indicator:checked:hover {
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckBox::indicator {
-    image: url(:/images/icons/k1/sound.png);
-	border: 1px solid rgba(30, 144, 255, 0.0);
-	width: 26px;
-	height: 26px;
-}
+              image: url(:/images/icons/k1/sound.png);
+              border: 1px solid rgba(30, 144, 255, 0.0);
+              width: 26px;
+              height: 26px;
+              }
 
-QCheckBox::indicator:unchecked:hover {
-	background: rgba(30, 144, 255, 0.2);
-	border: 1px solid rgba(30, 144, 255, 0.4);
-}
+              QCheckBox::indicator:unchecked:hover {
+              background: rgba(30, 144, 255, 0.2);
+              border: 1px solid rgba(30, 144, 255, 0.4);
+              }
 
-QCheckBox::indicator:checked {
-	background: rgba(30, 144, 255, 0.4);
-	border:1px solid rgba(30, 144, 255, 0.6);
-}
+              QCheckBox::indicator:checked {
+              background: rgba(30, 144, 255, 0.4);
+              border:1px solid rgba(30, 144, 255, 0.6);
+              }
 
-QCheckBox::indicator:checked:hover {
-	background: rgba(30, 144, 255, 0.5);
-	border:1px solid rgba(30, 144, 255, 0.7);
-}
+              QCheckBox::indicator:checked:hover {
+              background: rgba(30, 144, 255, 0.5);
+              border:1px solid rgba(30, 144, 255, 0.7);
+              }
 
-</string>
+             </string>
             </property>
             <property name="text">
-             <string/>
+             <string />
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -392,31 +392,31 @@ QCheckBox::indicator:checked:hover {
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckBox::indicator {
-    image: url(:/images/icons/k1/waypoint.png);
-	border: 1px solid rgba(30, 144, 255, 0.0);
-	width: 26px;
-	height: 26px;
-}
+              image: url(:/images/icons/k1/waypoint.png);
+              border: 1px solid rgba(30, 144, 255, 0.0);
+              width: 26px;
+              height: 26px;
+              }
 
-QCheckBox::indicator:unchecked:hover {
-	background: rgba(30, 144, 255, 0.2);
-	border: 1px solid rgba(30, 144, 255, 0.4);
-}
+              QCheckBox::indicator:unchecked:hover {
+              background: rgba(30, 144, 255, 0.2);
+              border: 1px solid rgba(30, 144, 255, 0.4);
+              }
 
-QCheckBox::indicator:checked {
-	background: rgba(30, 144, 255, 0.4);
-	border:1px solid rgba(30, 144, 255, 0.6);
-}
+              QCheckBox::indicator:checked {
+              background: rgba(30, 144, 255, 0.4);
+              border:1px solid rgba(30, 144, 255, 0.6);
+              }
 
-QCheckBox::indicator:checked:hover {
-	background: rgba(30, 144, 255, 0.5);
-	border:1px solid rgba(30, 144, 255, 0.7);
-}
+              QCheckBox::indicator:checked:hover {
+              background: rgba(30, 144, 255, 0.5);
+              border:1px solid rgba(30, 144, 255, 0.7);
+              }
 
-</string>
+             </string>
             </property>
             <property name="text">
-             <string/>
+             <string />
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -436,31 +436,31 @@ QCheckBox::indicator:checked:hover {
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckBox::indicator {
-    image: url(:/images/icons/k1/camera.png);
-	border: 1px solid rgba(30, 144, 255, 0.0);
-	width: 26px;
-	height: 26px;
-}
+              image: url(:/images/icons/k1/camera.png);
+              border: 1px solid rgba(30, 144, 255, 0.0);
+              width: 26px;
+              height: 26px;
+              }
 
-QCheckBox::indicator:unchecked:hover {
-	background: rgba(30, 144, 255, 0.2);
-	border: 1px solid rgba(30, 144, 255, 0.4);
-}
+              QCheckBox::indicator:unchecked:hover {
+              background: rgba(30, 144, 255, 0.2);
+              border: 1px solid rgba(30, 144, 255, 0.4);
+              }
 
-QCheckBox::indicator:checked {
-	background: rgba(30, 144, 255, 0.4);
-	border:1px solid rgba(30, 144, 255, 0.6);
-}
+              QCheckBox::indicator:checked {
+              background: rgba(30, 144, 255, 0.4);
+              border:1px solid rgba(30, 144, 255, 0.6);
+              }
 
-QCheckBox::indicator:checked:hover {
-	background: rgba(30, 144, 255, 0.5);
-	border:1px solid rgba(30, 144, 255, 0.7);
-}
+              QCheckBox::indicator:checked:hover {
+              background: rgba(30, 144, 255, 0.5);
+              border:1px solid rgba(30, 144, 255, 0.7);
+              }
 
-</string>
+             </string>
             </property>
             <property name="text">
-             <string/>
+             <string />
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -480,31 +480,31 @@ QCheckBox::indicator:checked:hover {
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckBox::indicator {
-    image: url(:/images/icons/k1/encounter.png);
-	border: 1px solid rgba(30, 144, 255, 0.0);
-	width: 26px;
-	height: 26px;
-}
+              image: url(:/images/icons/k1/encounter.png);
+              border: 1px solid rgba(30, 144, 255, 0.0);
+              width: 26px;
+              height: 26px;
+              }
 
-QCheckBox::indicator:unchecked:hover {
-	background: rgba(30, 144, 255, 0.2);
-	border: 1px solid rgba(30, 144, 255, 0.4);
-}
+              QCheckBox::indicator:unchecked:hover {
+              background: rgba(30, 144, 255, 0.2);
+              border: 1px solid rgba(30, 144, 255, 0.4);
+              }
 
-QCheckBox::indicator:checked {
-	background: rgba(30, 144, 255, 0.4);
-	border:1px solid rgba(30, 144, 255, 0.6);
-}
+              QCheckBox::indicator:checked {
+              background: rgba(30, 144, 255, 0.4);
+              border:1px solid rgba(30, 144, 255, 0.6);
+              }
 
-QCheckBox::indicator:checked:hover {
-	background: rgba(30, 144, 255, 0.5);
-	border:1px solid rgba(30, 144, 255, 0.7);
-}
+              QCheckBox::indicator:checked:hover {
+              background: rgba(30, 144, 255, 0.5);
+              border:1px solid rgba(30, 144, 255, 0.7);
+              }
 
-</string>
+             </string>
             </property>
             <property name="text">
-             <string/>
+             <string />
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -524,31 +524,31 @@ QCheckBox::indicator:checked:hover {
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckBox::indicator {
-    image: url(:/images/icons/k1/trigger.png);
-	border: 1px solid rgba(30, 144, 255, 0.0);
-	width: 26px;
-	height: 26px;
-}
+              image: url(:/images/icons/k1/trigger.png);
+              border: 1px solid rgba(30, 144, 255, 0.0);
+              width: 26px;
+              height: 26px;
+              }
 
-QCheckBox::indicator:unchecked:hover {
-	background: rgba(30, 144, 255, 0.2);
-	border: 1px solid rgba(30, 144, 255, 0.4);
-}
+              QCheckBox::indicator:unchecked:hover {
+              background: rgba(30, 144, 255, 0.2);
+              border: 1px solid rgba(30, 144, 255, 0.4);
+              }
 
-QCheckBox::indicator:checked {
-	background: rgba(30, 144, 255, 0.4);
-	border:1px solid rgba(30, 144, 255, 0.6);
-}
+              QCheckBox::indicator:checked {
+              background: rgba(30, 144, 255, 0.4);
+              border:1px solid rgba(30, 144, 255, 0.6);
+              }
 
-QCheckBox::indicator:checked:hover {
-	background: rgba(30, 144, 255, 0.5);
-	border:1px solid rgba(30, 144, 255, 0.7);
-}
+              QCheckBox::indicator:checked:hover {
+              background: rgba(30, 144, 255, 0.5);
+              border:1px solid rgba(30, 144, 255, 0.7);
+              }
 
-</string>
+             </string>
             </property>
             <property name="text">
-             <string/>
+             <string />
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -598,16 +598,16 @@ QCheckBox::indicator:checked:hover {
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionNew"/>
-    <addaction name="actionOpen"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionSave_As"/>
-    <addaction name="actionRevert"/>
-    <addaction name="separator"/>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
-    <addaction name="separator"/>
-    <addaction name="actionExit"/>
+    <addaction name="actionNew" />
+    <addaction name="actionOpen" />
+    <addaction name="actionSave" />
+    <addaction name="actionSave_As" />
+    <addaction name="actionRevert" />
+    <addaction name="separator" />
+    <addaction name="actionUndo" />
+    <addaction name="actionRedo" />
+    <addaction name="separator" />
+    <addaction name="actionExit" />
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -617,83 +617,83 @@ QCheckBox::indicator:checked:hover {
      <property name="title">
       <string>Waypoint Labels</string>
      </property>
-     <addaction name="actionUseWaypointResRef"/>
-     <addaction name="actionUseWaypointName"/>
-     <addaction name="actionUseWaypointTag"/>
+     <addaction name="actionUseWaypointResRef" />
+     <addaction name="actionUseWaypointName" />
+     <addaction name="actionUseWaypointTag" />
     </widget>
     <widget class="QMenu" name="menuTriggerLabels">
      <property name="title">
       <string>Trigger Labels</string>
      </property>
-     <addaction name="actionUseTriggerResRef"/>
-     <addaction name="actionUseTriggerName"/>
-     <addaction name="actionUseTriggerTag"/>
+     <addaction name="actionUseTriggerResRef" />
+     <addaction name="actionUseTriggerName" />
+     <addaction name="actionUseTriggerTag" />
     </widget>
     <widget class="QMenu" name="menuDoorLabels">
      <property name="title">
       <string>Door Labels</string>
      </property>
-     <addaction name="actionUseDoorResRef"/>
-     <addaction name="actionUseDoorName"/>
-     <addaction name="actionUseDoorTag"/>
+     <addaction name="actionUseDoorResRef" />
+     <addaction name="actionUseDoorName" />
+     <addaction name="actionUseDoorTag" />
     </widget>
     <widget class="QMenu" name="menuCreatureLabels">
      <property name="title">
       <string>Creature Labels</string>
      </property>
-     <addaction name="actionUseCreatureResRef"/>
-     <addaction name="actionUseCreatureName"/>
-     <addaction name="actionUseCreatureTag"/>
+     <addaction name="actionUseCreatureResRef" />
+     <addaction name="actionUseCreatureName" />
+     <addaction name="actionUseCreatureTag" />
     </widget>
     <widget class="QMenu" name="menuPlaceableLabels">
      <property name="title">
       <string>Placeable Labels</string>
      </property>
-     <addaction name="actionUsePlaceableResRef"/>
-     <addaction name="actionUsePlaceableName"/>
-     <addaction name="actionUsePlaceableTag"/>
+     <addaction name="actionUsePlaceableResRef" />
+     <addaction name="actionUsePlaceableName" />
+     <addaction name="actionUsePlaceableTag" />
     </widget>
     <widget class="QMenu" name="menuMerchantLabels">
      <property name="title">
       <string>Merchant Labels</string>
      </property>
-     <addaction name="actionUseMerchantResRef"/>
-     <addaction name="actionUseMerchantName"/>
-     <addaction name="actionUseMerchantTag"/>
+     <addaction name="actionUseMerchantResRef" />
+     <addaction name="actionUseMerchantName" />
+     <addaction name="actionUseMerchantTag" />
     </widget>
     <widget class="QMenu" name="menuSound_Labels">
      <property name="title">
       <string>Sound Labels</string>
      </property>
-     <addaction name="actionUseSoundResRef"/>
-     <addaction name="actionUseSoundName"/>
-     <addaction name="actionUseSoundTag"/>
+     <addaction name="actionUseSoundResRef" />
+     <addaction name="actionUseSoundName" />
+     <addaction name="actionUseSoundTag" />
     </widget>
     <widget class="QMenu" name="menuEncounterLabels">
      <property name="title">
       <string>Encounter Labels</string>
      </property>
-     <addaction name="actionUseEncounterResRef"/>
-     <addaction name="actionUseEncounterName"/>
-     <addaction name="actionUseEncounterTag"/>
+     <addaction name="actionUseEncounterResRef" />
+     <addaction name="actionUseEncounterName" />
+     <addaction name="actionUseEncounterTag" />
     </widget>
-    <addaction name="actionZoomIn"/>
-    <addaction name="actionZoomOut"/>
-    <addaction name="actionRecentreCamera"/>
-    <addaction name="separator"/>
-    <addaction name="menuCreatureLabels"/>
-    <addaction name="menuDoorLabels"/>
-    <addaction name="menuPlaceableLabels"/>
-    <addaction name="menuMerchantLabels"/>
-    <addaction name="menuSound_Labels"/>
-    <addaction name="menuWaypointLabels"/>
-    <addaction name="menuEncounterLabels"/>
-    <addaction name="menuTriggerLabels"/>
+    <addaction name="actionZoomIn" />
+    <addaction name="actionZoomOut" />
+    <addaction name="actionRecentreCamera" />
+    <addaction name="separator" />
+    <addaction name="menuCreatureLabels" />
+    <addaction name="menuDoorLabels" />
+    <addaction name="menuPlaceableLabels" />
+    <addaction name="menuMerchantLabels" />
+    <addaction name="menuSound_Labels" />
+    <addaction name="menuWaypointLabels" />
+    <addaction name="menuEncounterLabels" />
+    <addaction name="menuTriggerLabels" />
    </widget>
-   <addaction name="menuNew"/>
-   <addaction name="menuView"/>
+   <addaction name="menuNew" />
+   <addaction name="menuView" />
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusbar" />
   <action name="actionNew">
    <property name="text">
     <string>New</string>
@@ -892,9 +892,14 @@ QCheckBox::indicator:checked:hover {
    <header location="global">toolset.gui.widgets.renderer.walkmesh</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>SearchFilterWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">utility.ui_libraries.qt.widgets.widgets.search_filter</header>
+  </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../resources/resources.qrc"/>
+  <include location="../../resources/resources.qrc" />
  </resources>
- <connections/>
+ <connections />
 </ui>

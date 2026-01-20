@@ -139,6 +139,21 @@ class ReferenceChooserDialog(QDialog):
         return int(doc.idealWidth())
 
     def get_stylesheet(self) -> str:
+        from qtpy.QtWidgets import QApplication
+        from qtpy.QtGui import QPalette
+        
+        # Get palette color for dialog background
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+            window_color = palette.color(QPalette.ColorRole.Window)
+            bg_color = window_color.name()
+        else:
+            # Fallback: use default palette
+            default_palette = QPalette()
+            window_color = default_palette.color(QPalette.ColorRole.Window)
+            bg_color = window_color.name()
+        
         font_size = 12
         return f"""
         QListWidget {{
@@ -150,7 +165,7 @@ class ReferenceChooserDialog(QDialog):
             padding: 5px 10px;
         }}
         QDialog {{
-            background-color: #f0f0f0;
+            background-color: {bg_color};
         }}
         .link-container:hover .link-hover-text {{
             display: block;

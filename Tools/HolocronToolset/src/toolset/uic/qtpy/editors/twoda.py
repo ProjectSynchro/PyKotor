@@ -23,7 +23,7 @@ class Ui_MainWindow(object):
         self.filterBox.setObjectName("filterBox")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.filterBox)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.filterEdit = QtWidgets.QLineEdit(self.filterBox)
+        self.filterEdit = SearchFilterWidget(self.filterBox)
         self.filterEdit.setObjectName("filterEdit")
         self.verticalLayout.addWidget(self.filterEdit)
         self.verticalLayout_2.addWidget(self.filterBox)
@@ -133,3 +133,4 @@ class Ui_MainWindow(object):
         self.actionDuplicateRow.setShortcut(_translate("MainWindow", "Ctrl+D"))
         self.actionplaceholder.setText(_translate("MainWindow", "placeholder"))
 from utility.ui_libraries.qt.widgets.itemviews.tableview import RobustTableView
+from utility.ui_libraries.qt.widgets.widgets.search_filter import SearchFilterWidget

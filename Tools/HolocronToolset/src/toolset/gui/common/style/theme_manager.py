@@ -3196,17 +3196,32 @@ class ThemeManager:
                 self._title.setFont(font or QFont("Arial", 12))
                 layout.addWidget(self._title)
 
-                # Buttons
-                button_style = """
-                    QPushButton {
+                # Buttons - use palette colors for hover effect
+                from qtpy.QtWidgets import QApplication
+                app = QApplication.instance()
+                if app is not None:
+                    palette = app.palette()
+                    # Use Highlight color with low opacity for hover effect
+                    hover_color = palette.color(QPalette.ColorRole.Highlight)
+                    hover_color.setAlpha(30)  # Low opacity for subtle hover
+                    hover_rgba = f"rgba({hover_color.red()}, {hover_color.green()}, {hover_color.blue()}, {hover_color.alpha() / 255.0:.2f})"
+                else:
+                    # Fallback if no app instance - use default palette
+                    default_palette = QPalette()
+                    hover_color = default_palette.color(QPalette.ColorRole.Highlight)
+                    hover_color.setAlpha(30)
+                    hover_rgba = f"rgba({hover_color.red()}, {hover_color.green()}, {hover_color.blue()}, {hover_color.alpha() / 255.0:.2f})"
+                
+                button_style = f"""
+                    QPushButton {{
                         background-color: transparent;
                         border: none;
                         width: 30px;
                         height: 30px;
-                    }
-                    QPushButton:hover {
-                        background-color: rgba(255, 255, 255, 30);
-                    }
+                    }}
+                    QPushButton:hover {{
+                        background-color: {hover_rgba};
+                    }}
                 """
                 if "min" in (hint or []):
                     self.min_button = QPushButton("🗕", self)
@@ -3277,7 +3292,16 @@ class ThemeManager:
         if bottom_separator:
             separator = QWidget(main_window)
             separator.setFixedHeight(1)
-            separator.setStyleSheet("background-color: #555;")
+            # Use palette color for separator
+            app = QApplication.instance()
+            if app is not None and isinstance(app, QApplication):
+                palette = app.palette()
+            else:
+                # Use default palette for fallback
+                palette = QPalette()
+            
+            mid_color = palette.color(QPalette.ColorRole.Mid)
+            separator.setStyleSheet(f"background-color: {mid_color.name()};")
             layout.addWidget(separator)
 
         return title_bar

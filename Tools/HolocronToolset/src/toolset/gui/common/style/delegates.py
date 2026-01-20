@@ -93,14 +93,25 @@ class HTMLDelegate(QStyledItemDelegate):
         text: str,
     ):
         painter.save()
-        background_color = QColor(255, 255, 255)
-        border_color = QColor(200, 200, 200)
+        # Get palette colors from parent widget or application
+        parent_widget = self.parent()
+        if parent_widget:
+            palette = parent_widget.palette()
+        else:
+            app = QApplication.instance()
+            if app is not None and isinstance(app, QApplication):
+                palette = app.palette()
+            else:
+                palette = QPalette()
+        
+        background_color = palette.color(QPalette.ColorRole.Base)
+        border_color = palette.color(QPalette.ColorRole.Mid)
+        text_color = palette.color(QPalette.ColorRole.WindowText)
 
         painter.setBrush(QBrush(background_color))
         painter.setPen(QPen(border_color, 2))
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         painter.drawEllipse(center, radius, radius)
-        text_color = QColor(0, 0, 0)
         painter.setPen(QPen(text_color))
         painter.setFont(QFont("Arial", max(10, self.text_size - 1), QFont.Weight.Bold))
         text_rect = QRect(center.x() - radius, center.y() - radius, radius * 2, radius * 2)
@@ -165,7 +176,18 @@ class HTMLDelegate(QStyledItemDelegate):
                 icon_rect: QRect = QRect(x_offset, y_offset, icon_size, icon_size)
 
                 if painter and icon is not None:
-                    background_color: QColor = QColor(235, 245, 255)  # Light pastel blue
+                    # Use AlternateBase for icon background, or Base if AlternateBase is not distinct
+                    palette = option.palette
+                    background_color: QColor = palette.color(QPalette.ColorRole.AlternateBase)
+                    base_color = palette.color(QPalette.ColorRole.Base)
+                    # If AlternateBase is too similar to Base, use a slightly lighter/darker variant
+                    if background_color.rgb() == base_color.rgb():
+                        background_color = QColor(base_color)
+                        # Make it slightly different for visibility
+                        if base_color.lightness() < 128:  # Dark theme
+                            background_color = background_color.lighter(110)
+                        else:  # Light theme
+                            background_color = background_color.darker(105)
                     painter.fillRect(icon_rect, background_color)
                     icon.paint(painter, icon_rect)
 
@@ -242,7 +264,8 @@ class HTMLDelegate(QStyledItemDelegate):
             if bool(option.state & QStyle.StateFlag.State_Selected):
                 highlight_color: QColor = option.palette.highlight().color()
                 if not option.widget.hasFocus():
-                    highlight_color = QColor(100, 100, 100)  # Grey color
+                    # Use Mid color for unfocused selection, which is theme-aware
+                    highlight_color = option.palette.color(QPalette.ColorRole.Mid)
                 highlight_color.setAlpha(int(highlight_color.alpha() * 0.4))
                 painter.fillRect(new_rect, highlight_color)  # Fill only new_rect for highlighting
                 ctx.palette.setColor(QPalette.ColorRole.Text, option.palette.highlightedText().color())

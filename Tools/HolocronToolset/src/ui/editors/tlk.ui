@@ -31,7 +31,7 @@
                         </property>
                         <layout class="QHBoxLayout" name="horizontalLayout_2">
                           <item>
-                            <widget class="QLineEdit" name="searchEdit" />
+                            <widget class="SearchFilterWidget" name="searchEdit" />
                           </item>
                           <item>
                             <widget class="QPushButton" name="searchButton">
@@ -233,6 +233,11 @@
       <class>RobustTableView</class>
       <extends>QTableView</extends>
       <header location="global">utility.ui_libraries.qt.widgets.itemviews.tableview</header>
+    </customwidget>
+    <customwidget>
+      <class>SearchFilterWidget</class>
+      <extends>QWidget</extends>
+      <header location="global">utility.ui_libraries.qt.widgets.widgets.search_filter</header>
     </customwidget>
   </customwidgets>
   <resources />

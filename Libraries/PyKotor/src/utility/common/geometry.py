@@ -24,13 +24,19 @@ class Vector2:
 
     def __init__(
         self,
-        x: float = 0.0,
+        x: float | Vector2 | Vector3 | Vector4 = 0.0,
         y: float | None = None,
     ):
+        # Handle construction from other vector types
+        if isinstance(x, (Vector2, Vector3, Vector4)):
+            self.x = float(x.x)
+            self.y = float(x.y)
+            return
+        # Handle scalar construction
         if y is None:
             y = x
-        self.x: float = x
-        self.y: float = y
+        self.x: float = float(x)
+        self.y: float = float(y)
 
     def __iter__(self) -> Iterator[float]:
         return iter((self.x, self.y))
@@ -69,6 +75,18 @@ class Vector2:
         new.y += other.y
         return new
 
+    def __radd__(
+        self,
+        other,
+    ):
+        """Right addition: scalar + Vector2 (returns Vector2)."""
+        if isinstance(other, (int, float)):
+            new = self.__class__.from_vector2(self)
+            new.x = other + new.x
+            new.y = other + new.y
+            return new
+        return NotImplemented
+
     def __sub__(
         self,
         other,
@@ -82,18 +100,41 @@ class Vector2:
         new.y -= other.y
         return new
 
+    def __rsub__(
+        self,
+        other,
+    ):
+        """Right subtraction: scalar - Vector2."""
+        if isinstance(other, (int, float)):
+            new = self.__class__.from_vector2(self)
+            new.x = other - new.x
+            new.y = other - new.y
+            return new
+        return NotImplemented
+
     def __mul__(
         self,
         other,
     ):
-        """Multiplies the components by a scalar integer."""
-        if not isinstance(other, int):
-            return NotImplemented
+        """Multiplies the components by a scalar."""
+        if isinstance(other, (int, float)):
+            new = self.__class__.from_vector2(self)
+            new.x *= other
+            new.y *= other
+            return new
+        return NotImplemented
 
-        new = self.__class__.from_vector2(self)
-        new.x *= other
-        new.y *= other
-        return new
+    def __rmul__(
+        self,
+        other,
+    ):
+        """Right multiplication: scalar * Vector2."""
+        if isinstance(other, (int, float)):
+            new = self.__class__.from_vector2(self)
+            new.x *= other
+            new.y *= other
+            return new
+        return NotImplemented
 
     def __truediv__(
         self,
@@ -112,16 +153,28 @@ class Vector2:
 
         Processing Logic:
         ----------------
-            - Check if other is an integer
+            - Check if other is a scalar
             - Create a new vector from self
             - Divide x element by other
             - Divide y element by other
             - Return the new vector.
         """
-        if isinstance(other, int):
+        if isinstance(other, (int, float)):
             new = self.__class__.from_vector2(self)
             new.x /= other
             new.y /= other
+            return new
+        return NotImplemented
+
+    def __rtruediv__(
+        self,
+        other,
+    ):
+        """Right division: scalar / Vector2."""
+        if isinstance(other, (int, float)):
+            new = self.__class__.from_vector2(self)
+            new.x = other / new.x if new.x != 0 else 0.0
+            new.y = other / new.y if new.y != 0 else 0.0
             return new
         return NotImplemented
 
@@ -346,17 +399,24 @@ class Vector3:
 
     def __init__(
         self,
-        x: float = 0.0,
+        x: float | Vector2 | Vector3 | Vector4 = 0.0,
         y: float | None = None,
         z: float | None = None,
     ):
+        # Handle construction from other vector types
+        if isinstance(x, (Vector2, Vector3, Vector4)):
+            self.x = float(x.x)
+            self.y = float(x.y)
+            self.z = float(getattr(x, "z", 0.0))
+            return
+        # Handle scalar construction
         if y is None:
             y = x
         if z is None:
             z = x
-        self.x: float = x
-        self.y: float = y
-        self.z: float = z
+        self.x = float(x)
+        self.y = float(y)
+        self.z = float(z)
 
     def __iter__(self) -> Iterator[float]:
         return iter((self.x, self.y, self.z))
@@ -400,6 +460,19 @@ class Vector3:
         new.z += other.z
         return new
 
+    def __radd__(
+        self,
+        other,
+    ):
+        """Right addition: scalar + Vector3 (returns Vector3)."""
+        if isinstance(other, (int, float)):
+            new = self.__class__.from_vector3(self)
+            new.x = other + new.x
+            new.y = other + new.y
+            new.z = other + new.z
+            return new
+        return NotImplemented
+
     def __sub__(
         self,
         other,
@@ -413,6 +486,19 @@ class Vector3:
         new.y -= other.y
         new.z -= other.z
         return new
+
+    def __rsub__(
+        self,
+        other,
+    ):
+        """Right subtraction: scalar - Vector3."""
+        if isinstance(other, (int, float)):
+            new = self.__class__.from_vector3(self)
+            new.x = other - new.x
+            new.y = other - new.y
+            new.z = other - new.z
+            return new
+        return NotImplemented
 
     def __mul__(
         self,
@@ -456,6 +542,19 @@ class Vector3:
             new.x /= other
             new.y /= other
             new.z /= other
+            return new
+        return NotImplemented
+
+    def __rtruediv__(
+        self,
+        other,
+    ):
+        """Right division: scalar / Vector3."""
+        if isinstance(other, (int, float)):
+            new = self.__class__.from_vector3(self)
+            new.x = other / new.x if new.x != 0 else 0.0
+            new.y = other / new.y if new.y != 0 else 0.0
+            new.z = other / new.z if new.z != 0 else 0.0
             return new
         return NotImplemented
 
@@ -678,21 +777,41 @@ class Vector4:
 
     def __init__(
         self,
-        x: float = 0.0,
+        x: float | Vector2 | Vector3 | Vector4 = 0.0,
         y: float | None = None,
         z: float | None = None,
         w: float | None = None,
     ):
+        # Handle construction from other vector types
+        if isinstance(x, Vector2):
+            self.x = float(x.x)
+            self.y = float(x.y)
+            self.z = 0.0
+            self.w = float(y) if y is not None else 0.0
+            return
+        if isinstance(x, Vector3):
+            self.x = float(x.x)
+            self.y = float(x.y)
+            self.z = float(x.z)
+            self.w = float(y) if y is not None else 0.0
+            return
+        if isinstance(x, Vector4):
+            self.x = float(x.x)
+            self.y = float(x.y)
+            self.z = float(x.z)
+            self.w = float(x.w)
+            return
+        # Handle scalar construction
         if y is None:
             y = x
         if z is None:
             z = x
         if w is None:
             w = x
-        self.x: float = x
-        self.y: float = y
-        self.z: float = z
-        self.w: float = w
+        self.x: float = float(x)
+        self.y: float = float(y)
+        self.z: float = float(z)
+        self.w: float = float(w)
 
     def __iter__(self) -> Iterator[float]:
         return iter((self.x, self.y, self.z, self.w))
@@ -734,6 +853,20 @@ class Vector4:
         new.z += other.z
         new.w += other.w
         return new
+
+    def __radd__(
+        self,
+        other,
+    ):
+        """Right addition: scalar + Vector4 (returns Vector4)."""
+        if isinstance(other, (int, float)):
+            new = self.__class__.from_vector4(self)
+            new.x = other + new.x
+            new.y = other + new.y
+            new.z = other + new.z
+            new.w = other + new.w
+            return new
+        return NotImplemented
 
     def __getitem__(
         self,
@@ -788,6 +921,20 @@ class Vector4:
         new.w -= other.w
         return new
 
+    def __rsub__(
+        self,
+        other,
+    ):
+        """Right subtraction: scalar - Vector4."""
+        if isinstance(other, (int, float)):
+            new = self.__class__.from_vector4(self)
+            new.x = other - new.x
+            new.y = other - new.y
+            new.z = other - new.z
+            new.w = other - new.w
+            return new
+        return NotImplemented
+
     def __mul__(
         self,
         other: int | float | Vector4,
@@ -834,6 +981,20 @@ class Vector4:
             new.y /= other
             new.z /= other
             new.w /= other
+            return new
+        return NotImplemented
+
+    def __rtruediv__(
+        self,
+        other,
+    ):
+        """Right division: scalar / Vector4."""
+        if isinstance(other, (int, float)):
+            new = self.__class__.from_vector4(self)
+            new.x = other / new.x if new.x != 0 else 0.0
+            new.y = other / new.y if new.y != 0 else 0.0
+            new.z = other / new.z if new.z != 0 else 0.0
+            new.w = other / new.w if new.w != 0 else 0.0
             return new
         return NotImplemented
 

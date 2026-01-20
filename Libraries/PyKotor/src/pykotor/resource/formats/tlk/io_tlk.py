@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import struct
 from typing import TYPE_CHECKING
 
 from pykotor.common.language import Language
@@ -58,8 +59,8 @@ class TLKBinaryReader(ResourceReader):
         self._reader.seek(0)
 
         self._load_file_header()
-        for stringref, _entry in self._tlk:
-            self._load_entry(stringref)
+        # Optimize: batch read all entry headers at once instead of one-by-one
+        self._load_entries_batch()
         for stringref, _entry in self._tlk:
             self._load_text(stringref)
 
@@ -84,11 +85,52 @@ class TLKBinaryReader(ResourceReader):
 
         self._texts_offset = entries_offset
 
+    def _load_entries_batch(self):
+        """Optimized batch loading of all entry headers.
+        
+        Reads all entry headers in one batch operation instead of one-by-one.
+        This reduces seeks from N (one per entry) to 1 (one batch read).
+        """
+        string_count = len(self._tlk)
+        if string_count == 0:
+            return
+        
+        # Calculate where entries start (after 20-byte header)
+        entries_start = _FILE_HEADER_SIZE
+        # Each entry is 40 bytes: flags(4) + sound_resref(16) + volume(4) + pitch(4) + text_offset(4) + text_length(4) + sound_length(4)
+        entries_size = string_count * _ENTRY_SIZE
+        
+        # Read all entry data at once
+        self._reader.seek(entries_start)
+        entries_data = self._reader.read_bytes(entries_size)
+        
+        # Parse entries from batch data
+        for stringref in range(string_count):
+            entry: TLKEntry = self._tlk.entries[stringref]
+            offset = stringref * _ENTRY_SIZE
+            
+            # Parse entry: flags(4) + sound_resref(16) + volume(4) + pitch(4) + text_offset(4) + text_length(4) + sound_length(4)
+            entry_flags, = struct.unpack("<I", entries_data[offset:offset + 4])
+            sound_resref_bytes = entries_data[offset + 4:offset + 20]
+            # Find null terminator for sound_resref
+            null_pos = sound_resref_bytes.find(b'\x00')
+            if null_pos >= 0:
+                sound_resref_bytes = sound_resref_bytes[:null_pos]
+            sound_resref = sound_resref_bytes.decode("ascii", errors="ignore")
+            _volume_variance, _pitch_variance, text_offset, text_length = struct.unpack("<IIII", entries_data[offset + 20:offset + 36])
+            entry.sound_length, = struct.unpack("<f", entries_data[offset + 36:offset + 40])
+            
+            entry.text_present = (entry_flags & 0x0001) != 0
+            entry.sound_present = (entry_flags & 0x0002) != 0
+            entry.soundlength_present = (entry_flags & 0x0004) != 0
+            entry.voiceover = ResRef(sound_resref)
+            self._text_headers.append(ArrayHead(text_offset, text_length))
+
     def _load_entry(
         self,
         stringref: int,
     ):
-        
+        """Legacy method kept for compatibility - use _load_entries_batch instead."""
         entry: TLKEntry = self._tlk.entries[stringref]
 
         entry_flags = self._reader.read_uint32()

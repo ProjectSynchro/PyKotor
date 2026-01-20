@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import qtpy
 
 from qtpy.QtCore import QSortFilterProxyModel, Qt
-from qtpy.QtGui import QStandardItem, QStandardItemModel
+from qtpy.QtGui import QColor, QPalette, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
     QApplication,
@@ -81,55 +81,81 @@ class TwoDAEditor(Editor):
 
         self.new()
         if vert_header is not None and "(Dark)" in GlobalSettings().selectedTheme:
-            vert_header.setStyleSheet("""
-                QHeaderView::section {
-                    color: rgba(255, 255, 255, 0.0);  /* Transparent text */
-                    background-color: #333333;  /* Dark background */
-                }
-                QHeaderView::section:checked {
-                    color: #FFFFFF;  /* White text for checked sections */
-                    background-color: #444444;  /* Slightly lighter background for checked sections */
-                }
-                QHeaderView::section:hover {
-                    color: #FFFFFF;  /* White text on hover */
-                    background-color: #555555;  /* Even lighter background on hover */
-                }
+            # Get palette colors
+            app = QApplication.instance()
+            if app is None or not isinstance(app, QApplication):
+                palette = QPalette()
+            else:
+                palette = app.palette()
+            
+            window_text = palette.color(QPalette.ColorRole.WindowText)
+            base = palette.color(QPalette.ColorRole.Base)
+            alternate_base = palette.color(QPalette.ColorRole.AlternateBase)
+            
+            # Create transparent text color
+            transparent_text = QColor(window_text)
+            transparent_text.setAlpha(0)
+            
+            # Create hover background (slightly lighter/darker than base)
+            hover_bg = QColor(alternate_base if alternate_base != base else base)
+            if hover_bg.lightness() < 128:  # Dark theme
+                hover_bg = hover_bg.lighter(110)
+            else:  # Light theme
+                hover_bg = hover_bg.darker(95)
+            
+            vert_header.setStyleSheet(f"""
+                QHeaderView::section {{
+                    color: rgba({transparent_text.red()}, {transparent_text.green()}, {transparent_text.blue()}, 0);  /* Transparent text */
+                    background-color: {base.name()};  /* Base background */
+                }}
+                QHeaderView::section:checked {{
+                    color: {window_text.name()};  /* Window text for checked sections */
+                    background-color: {alternate_base.name() if alternate_base != base else hover_bg.name()};  /* Alternate base for checked sections */
+                }}
+                QHeaderView::section:hover {{
+                    color: {window_text.name()};  /* Window text on hover */
+                    background-color: {hover_bg.name()};  /* Hover background */
+                }}
             """)
-            self.ui.twodaTable.setStyleSheet("""
-                QHeaderView::section {
-                    background-color: #444444;  /* Dark background for header */
-                    color: #FFFFFF;  /* White text for header */
+            mid_color = palette.color(QPalette.ColorRole.Mid)
+            highlight = palette.color(QPalette.ColorRole.Highlight)
+            highlighted_text = palette.color(QPalette.ColorRole.HighlightedText)
+            
+            self.ui.twodaTable.setStyleSheet(f"""
+                QHeaderView::section {{
+                    background-color: {base.name()};  /* Base background for header */
+                    color: {window_text.name()};  /* Window text for header */
                     padding: 4px;
-                    border: 1px solid #333333;
-                }
-                QHeaderView::section:checked {
-                    background-color: #555555;  /* Slightly lighter background for checked header */
-                    color: #FFFFFF;  /* White text for checked header */
-                }
-                QHeaderView::section:hover {
-                    background-color: #555555;  /* Lighter background for hovered header */
-                    color: #FFFFFF;  /* White text for hovered header */
-                }
-                QTableView {
-                    background-color: #333333;  /* Dark background for table */
-                    alternate-background-color: #3c3c3c;  /* Slightly lighter background for alternating rows */
-                    color: #FFFFFF;  /* White text for table */
-                    gridline-color: #444444;  /* Dark grid lines */
-                    selection-background-color: #555555;  /* Slightly lighter background for selected items */
-                    selection-color: #FFFFFF;  /* White text for selected items */
-                }
-                QTableView::item {
-                    background-color: #333333;  /* Dark background for items */
-                    color: #FFFFFF;  /* White text for items */
-                }
-                QTableView::item:selected {
-                    background-color: #555555;  /* Slightly lighter background for selected items */
-                    color: #FFFFFF;  /* White text for selected items */
-                }
-                QTableCornerButton::section {
-                    background-color: #444444;  /* Dark background for corner button */
-                    border: 1px solid #333333;
-                }
+                    border: 1px solid {mid_color.name()};
+                }}
+                QHeaderView::section:checked {{
+                    background-color: {alternate_base.name() if alternate_base != base else hover_bg.name()};  /* Alternate base for checked header */
+                    color: {window_text.name()};  /* Window text for checked header */
+                }}
+                QHeaderView::section:hover {{
+                    background-color: {hover_bg.name()};  /* Hover background for hovered header */
+                    color: {window_text.name()};  /* Window text for hovered header */
+                }}
+                QTableView {{
+                    background-color: {base.name()};  /* Base background for table */
+                    alternate-background-color: {alternate_base.name()};  /* Alternate base for alternating rows */
+                    color: {window_text.name()};  /* Window text for table */
+                    gridline-color: {mid_color.name()};  /* Mid color for grid lines */
+                    selection-background-color: {highlight.name()};  /* Highlight for selected items */
+                    selection-color: {highlighted_text.name()};  /* Highlighted text for selected items */
+                }}
+                QTableView::item {{
+                    background-color: {base.name()};  /* Base background for items */
+                    color: {window_text.name()};  /* Window text for items */
+                }}
+                QTableView::item:selected {{
+                    background-color: {highlight.name()};  /* Highlight for selected items */
+                    color: {highlighted_text.name()};  /* Highlighted text for selected items */
+                }}
+                QTableCornerButton::section {{
+                    background-color: {base.name()};  /* Base background for corner button */
+                    border: 1px solid {mid_color.name()};
+                }}
             """)
 
     def _setup_signals(self):
@@ -379,58 +405,99 @@ class TwoDAEditor(Editor):
                     col_index = i
             headers = [self.source_model.item(i, col_index).text() for i in range(self.source_model.rowCount())]
         elif self.vertical_header_option == VerticalHeaderOption.NONE:
+            # Get palette colors
+            app = QApplication.instance()
+            if app is None or not isinstance(app, QApplication):
+                palette = QPalette()
+            else:
+                palette = app.palette()
+            
+            window_text = palette.color(QPalette.ColorRole.WindowText)
+            base = palette.color(QPalette.ColorRole.Base)
+            alternate_base = palette.color(QPalette.ColorRole.AlternateBase)
+            
+            # Create transparent text color
+            transparent_text = QColor(window_text)
+            transparent_text.setAlpha(0)
+            
+            # Create hover background
+            hover_bg = QColor(alternate_base if alternate_base != base else base)
+            if hover_bg.lightness() < 128:  # Dark theme
+                hover_bg = hover_bg.lighter(110)
+            else:  # Light theme
+                hover_bg = hover_bg.darker(95)
+            
             if GlobalSettings().selectedTheme in ("Native", "Fusion (Light)"):
-                vertical_header.setStyleSheet("QHeaderView::section { color: rgba(0, 0, 0, 0.0); }" "QHeaderView::section:checked { color: #000000; }")
+                vertical_header.setStyleSheet(f"QHeaderView::section {{ color: rgba({transparent_text.red()}, {transparent_text.green()}, {transparent_text.blue()}, 0); }} QHeaderView::section:checked {{ color: {window_text.name()}; }}")
             elif GlobalSettings().selectedTheme == "Fusion (Dark)":
-                vertical_header.setStyleSheet("""
-                    QHeaderView::section {
-                        color: rgba(255, 255, 255, 0.0);  /* Transparent text */
-                        background-color: #333333;  /* Dark background */
-                    }
-                    QHeaderView::section:checked {
-                        color: #FFFFFF;  /* White text for checked sections */
-                        background-color: #444444;  /* Slightly lighter background for checked sections */
-                    }
-                    QHeaderView::section:hover {
-                        color: #FFFFFF;  /* White text on hover */
-                        background-color: #555555;  /* Even lighter background on hover */
-                    }
+                vertical_header.setStyleSheet(f"""
+                    QHeaderView::section {{
+                        color: rgba({transparent_text.red()}, {transparent_text.green()}, {transparent_text.blue()}, 0);  /* Transparent text */
+                        background-color: {base.name()};  /* Base background */
+                    }}
+                    QHeaderView::section:checked {{
+                        color: {window_text.name()};  /* Window text for checked sections */
+                        background-color: {alternate_base.name() if alternate_base != base else hover_bg.name()};  /* Alternate base for checked sections */
+                    }}
+                    QHeaderView::section:hover {{
+                        color: {window_text.name()};  /* Window text on hover */
+                        background-color: {hover_bg.name()};  /* Hover background */
+                    }}
                 """)
-                self.ui.twodaTable.setStyleSheet("""
-                    QHeaderView::section {
-                        background-color: #444444;  /* Dark background for header */
-                        color: #FFFFFF;  /* White text for header */
+                # Get additional palette colors for table styling
+                button = palette.color(QPalette.ColorRole.Button)
+                button_text = palette.color(QPalette.ColorRole.ButtonText)
+                highlight = palette.color(QPalette.ColorRole.Highlight)
+                highlighted_text = palette.color(QPalette.ColorRole.HighlightedText)
+                mid = palette.color(QPalette.ColorRole.Mid)
+                dark = palette.color(QPalette.ColorRole.Dark)
+                
+                # Create variants for hover/checked states
+                header_bg = QColor(button if button.isValid() else base)
+                header_hover_bg = QColor(header_bg)
+                if header_hover_bg.lightness() < 128:  # Dark theme
+                    header_hover_bg = header_hover_bg.lighter(110)
+                else:  # Light theme
+                    header_hover_bg = header_hover_bg.darker(95)
+                
+                # Use Mid for gridlines, fallback to Dark if Mid is invalid
+                gridline = QColor(mid if mid.isValid() else (dark if dark.isValid() else base))
+                
+                self.ui.twodaTable.setStyleSheet(f"""
+                    QHeaderView::section {{
+                        background-color: {header_bg.name()};
+                        color: {button_text.name() if button_text.isValid() else window_text.name()};
                         padding: 4px;
-                        border: 1px solid #333333;
-                    }
-                    QHeaderView::section:checked {
-                        background-color: #555555;  /* Slightly lighter background for checked header */
-                        color: #FFFFFF;  /* White text for checked header */
-                    }
-                    QHeaderView::section:hover {
-                        background-color: #555555;  /* Lighter background for hovered header */
-                        color: #FFFFFF;  /* White text for hovered header */
-                    }
-                    QTableView {
-                        background-color: #333333;  /* Dark background for table */
-                        alternate-background-color: #3c3c3c;  /* Slightly lighter background for alternating rows */
-                        color: #FFFFFF;  /* White text for table */
-                        gridline-color: #444444;  /* Dark grid lines */
-                        selection-background-color: #555555;  /* Slightly lighter background for selected items */
-                        selection-color: #FFFFFF;  /* White text for selected items */
-                    }
-                    QTableView::item {
-                        background-color: #333333;  /* Dark background for items */
-                        color: #FFFFFF;  /* White text for items */
-                    }
-                    QTableView::item:selected {
-                        background-color: #555555;  /* Slightly lighter background for selected items */
-                        color: #FFFFFF;  /* White text for selected items */
-                    }
-                    QTableCornerButton::section {
-                        background-color: #444444;  /* Dark background for corner button */
-                        border: 1px solid #333333;
-                    }
+                        border: 1px solid {gridline.name()};
+                    }}
+                    QHeaderView::section:checked {{
+                        background-color: {header_hover_bg.name()};
+                        color: {button_text.name() if button_text.isValid() else window_text.name()};
+                    }}
+                    QHeaderView::section:hover {{
+                        background-color: {header_hover_bg.name()};
+                        color: {button_text.name() if button_text.isValid() else window_text.name()};
+                    }}
+                    QTableView {{
+                        background-color: {base.name()};
+                        alternate-background-color: {alternate_base.name() if alternate_base != base else base.name()};
+                        color: {window_text.name()};
+                        gridline-color: {gridline.name()};
+                        selection-background-color: {highlight.name()};
+                        selection-color: {highlighted_text.name()};
+                    }}
+                    QTableView::item {{
+                        background-color: {base.name()};
+                        color: {window_text.name()};
+                    }}
+                    QTableView::item:selected {{
+                        background-color: {highlight.name()};
+                        color: {highlighted_text.name()};
+                    }}
+                    QTableCornerButton::section {{
+                        background-color: {header_bg.name()};
+                        border: 1px solid {gridline.name()};
+                    }}
                 """)
             headers = ["⯈" for _ in range(self.source_model.rowCount())]
 

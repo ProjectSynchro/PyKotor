@@ -286,7 +286,7 @@ def test_ute_editor_manipulate_infinite_respawn_checkbox(qtbot, installation: HT
     
     # Enable infinite respawn
     editor.ui.infiniteRespawnCheckbox.setChecked(True)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify respawn count spin is disabled and value is -1
     assert not editor.ui.respawnCountSpin.isEnabled()
@@ -294,7 +294,7 @@ def test_ute_editor_manipulate_infinite_respawn_checkbox(qtbot, installation: HT
     
     # Disable infinite respawn
     editor.ui.infiniteRespawnCheckbox.setChecked(False)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify respawn count spin is enabled
     assert editor.ui.respawnCountSpin.isEnabled()
@@ -313,7 +313,7 @@ def test_ute_editor_manipulate_respawn_counts(qtbot, installation: HTInstallatio
     
     # Disable infinite respawn first
     editor.ui.infiniteRespawnCheckbox.setChecked(False)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Test respawn count
     test_values = [0, 1, 5, 10, 50]
@@ -351,7 +351,7 @@ def test_ute_editor_add_creature(qtbot, installation: HTInstallation, test_files
     
     # Add a creature
     editor.add_creature(resname="test_creature", appearance_id=1, challenge=2.0, single=False)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify row was added
     assert editor.ui.creatureTable.rowCount() == initial_rows + 1
@@ -375,21 +375,21 @@ def test_ute_editor_remove_creature(qtbot, installation: HTInstallation, test_fi
     
     # Add a creature first
     editor.add_creature(resname="test_creature_remove", appearance_id=1, challenge=2.0, single=False)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     initial_rows = editor.ui.creatureTable.rowCount()
     
     # Set current row (since cells contain widgets, currentRow is more reliable than selectedRows)
     last_row = initial_rows - 1
     editor.ui.creatureTable.setCurrentCell(last_row, 0)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify current row is set
     assert editor.ui.creatureTable.currentRow() == last_row, "Current row should be set"
     
     # Remove selected creature (will use currentRow as fallback)
     editor.remove_selected_creature()
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify row was removed
     assert editor.ui.creatureTable.rowCount() == initial_rows - 1
@@ -407,7 +407,7 @@ def test_ute_editor_modify_creature_properties(qtbot, installation: HTInstallati
     
     # Add a creature
     editor.add_creature(resname="test_creature", appearance_id=1, challenge=2.0, single=False)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Modify creature properties via table widgets
     row = editor.ui.creatureTable.rowCount() - 1
@@ -417,21 +417,21 @@ def test_ute_editor_modify_creature_properties(qtbot, installation: HTInstallati
     single_checkbox = editor.ui.creatureTable.cellWidget(row, 0)
     if isinstance(single_checkbox, QCheckBox):
         single_checkbox.setChecked(True)
-        qtbot.wait(10)
+        QtBot.wait(10)
     
     # Modify challenge rating
     from qtpy.QtWidgets import QDoubleSpinBox
     challenge_spin = editor.ui.creatureTable.cellWidget(row, 1)
     if isinstance(challenge_spin, QDoubleSpinBox):
         challenge_spin.setValue(5.0)
-        qtbot.wait(10)
+        QtBot.wait(10)
     
     # Modify appearance
     from qtpy.QtWidgets import QSpinBox
     appearance_spin = editor.ui.creatureTable.cellWidget(row, 2)
     if isinstance(appearance_spin, QSpinBox):
         appearance_spin.setValue(10)
-        qtbot.wait(10)
+        QtBot.wait(10)
     
     # Save and verify
     data, _ = editor.build()
@@ -455,7 +455,7 @@ def test_ute_editor_multiple_creatures(qtbot, installation: HTInstallation, test
     # Add multiple creatures
     for i in range(5):
         editor.add_creature(resname=f"creature_{i}", appearance_id=i, challenge=float(i), single=(i % 2 == 0))
-        qtbot.wait(10)
+        QtBot.wait(10)
     
     # Verify all were added
     assert editor.ui.creatureTable.rowCount() >= 5
@@ -845,7 +845,7 @@ def test_ute_editor_minimum_values(qtbot, installation: HTInstallation, test_fil
     
     # Disable infinite respawn to set count
     editor.ui.infiniteRespawnCheckbox.setChecked(False)
-    qtbot.wait(10)
+    QtBot.wait(10)
     editor.ui.respawnCountSpin.setValue(0)
     
     # Save and verify
@@ -1022,7 +1022,7 @@ def test_ute_editor_new_file_creation(qtbot, installation: HTInstallation):
     
     # Add a creature
     editor.add_creature(resname="test_creature", appearance_id=1, challenge=2.0, single=False)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Build and verify
     data, _ = editor.build()
@@ -1116,7 +1116,7 @@ def test_ute_editor_add_creature_button(qtbot, installation: HTInstallation, tes
     
     # Click add creature button
     qtbot.mouseClick(editor.ui.addCreatureButton, Qt.MouseButton.LeftButton)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify row was added
     assert editor.ui.creatureTable.rowCount() == initial_rows + 1
@@ -1134,21 +1134,21 @@ def test_ute_editor_remove_creature_button(qtbot, installation: HTInstallation, 
     
     # Add a creature first
     editor.add_creature(resname="test_remove", appearance_id=1, challenge=2.0, single=False)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     initial_rows = editor.ui.creatureTable.rowCount()
     
     # Set current row (since cells contain widgets, currentRow is more reliable than selectedRows)
     last_row = initial_rows - 1
     editor.ui.creatureTable.setCurrentCell(last_row, 0)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify current row is set
     assert editor.ui.creatureTable.currentRow() == last_row, "Current row should be set"
     
     # Click remove button
     qtbot.mouseClick(editor.ui.removeCreatureButton, Qt.MouseButton.LeftButton)
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify row was removed
     assert editor.ui.creatureTable.rowCount() == initial_rows - 1
@@ -1167,7 +1167,7 @@ def test_uteeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Trigger help dialog with the correct file for UTEEditor
     editor._show_help_dialog("GFF-UTE.md")
-    qtbot.wait(200)  # Wait for dialog to be created
+    QtBot.wait(200)  # Wait for dialog to be created
     
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
@@ -1199,7 +1199,7 @@ def test_uteeditor_continuous_respawn(qtbot, installation: HTInstallation, test_
     
     # Set to continuous spawn
     editor.ui.spawnSelect.setCurrentIndex(1)  # Continuous
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify respawn fields are enabled
     assert editor.ui.respawnsCheckbox.isEnabled()
@@ -1209,7 +1209,7 @@ def test_uteeditor_continuous_respawn(qtbot, installation: HTInstallation, test_
     
     # Set back to single shot
     editor.ui.spawnSelect.setCurrentIndex(0)  # Single shot
-    qtbot.wait(10)
+    QtBot.wait(10)
     
     # Verify respawn fields are disabled
     assert not editor.ui.respawnsCheckbox.isEnabled()

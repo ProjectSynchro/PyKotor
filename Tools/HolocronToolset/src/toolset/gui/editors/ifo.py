@@ -171,6 +171,10 @@ class IFOEditor(Editor):
                         if not tooltip
                         else f"{tooltip}\n\n{tr('Right-click to find references to this script in the installation.')}",
                     )
+                # Set maxLength for FilterComboBox script fields (ResRefs are max 16 characters)
+                line_edit = field.lineEdit() if hasattr(field, "lineEdit") else None
+                if line_edit is not None:
+                    line_edit.setMaxLength(16)
 
         # Populate script combo boxes with available scripts
         relevant_scripts = sorted(

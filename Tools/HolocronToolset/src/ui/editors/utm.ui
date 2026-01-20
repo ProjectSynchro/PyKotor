@@ -64,7 +64,11 @@
           <item row="1" column="1">
            <layout class="QHBoxLayout" name="horizontalLayout_19">
             <item>
-             <widget class="QLineEdit" name="tagEdit"/>
+             <widget class="QLineEdit" name="tagEdit">
+              <property name="maxLength">
+               <number>16</number>
+              </property>
+             </widget>
             </item>
             <item>
              <widget class="QPushButton" name="tagGenerateButton">

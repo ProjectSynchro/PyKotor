@@ -4,16 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import (
-    QDialog,
-    QHBoxLayout,
-    QLabel,
-    QPlainTextEdit,
-    QPushButton,
-    QSplitter,
-    QVBoxLayout,
-)
+from qtpy.QtWidgets import QDialog
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
@@ -37,66 +28,25 @@ class ResourceComparisonDialog(QDialog):
         super().__init__(parent)
         from toolset.gui.common.localization import trf
         self.setWindowTitle(trf("Compare: {name}.{ext}", name=resource1.resname(), ext=resource1.restype().extension))
-        self.resize(1200, 700)
 
         self.resource1 = resource1
         self.resource2 = resource2
 
-        self._setup_ui()
-        
-        # Setup event filter to prevent scroll wheel interaction with controls
-        from toolset.gui.common.filters import NoScrollEventFilter
-        self._no_scroll_filter = NoScrollEventFilter(self)
-        self._no_scroll_filter.setup_filter(parent_widget=self)
-        
-        self._load_resources()
+        from toolset.uic.qtpy.dialogs.resource_comparison import Ui_Dialog
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
 
-    def _setup_ui(self):
-        """Set up the user interface."""
-        layout = QVBoxLayout(self)
-
-        # Header with file paths
-        header_layout = QHBoxLayout()
-
-        # Left file info
-        left_header = QVBoxLayout()
-        self.left_path_label: QLabel = QLabel()
-        self.left_path_label.setWordWrap(True)
+        # Update localized labels
         from toolset.gui.common.localization import translate as tr
-        left_header.addWidget(QLabel(tr("<b>Left:</b>")))
-        left_header.addWidget(self.left_path_label)
-        header_layout.addLayout(left_header, 1)
-
-        # Right file info
-        right_header = QVBoxLayout()
-        self.right_path_label: QLabel = QLabel()
-        self.right_path_label.setWordWrap(True)
-        right_header.addWidget(QLabel(tr("<b>Right:</b>")))
-        right_header.addWidget(self.right_path_label)
-        header_layout.addLayout(right_header, 1)
-
-        layout.addLayout(header_layout)
-
-        # Comparison view
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-
-        # Left pane
-        self.left_text: QPlainTextEdit = QPlainTextEdit()
-        self.left_text.setReadOnly(True)
-        self.left_text.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-        splitter.addWidget(self.left_text)
-
-        # Right pane
-        self.right_text: QPlainTextEdit = QPlainTextEdit()
-        self.right_text.setReadOnly(True)
-        self.right_text.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-        splitter.addWidget(self.right_text)
+        self.ui.leftLabel.setText(tr("<b>Left:</b>"))
+        self.ui.rightLabel.setText(tr("<b>Right:</b>"))
+        self.ui.closeButton.setText(tr("Close"))
 
         # Sync scrollbars
-        left_vscroll = self.left_text.verticalScrollBar()
-        right_vscroll = self.right_text.verticalScrollBar()
-        left_hscroll = self.left_text.horizontalScrollBar()
-        right_hscroll = self.right_text.horizontalScrollBar()
+        left_vscroll = self.ui.leftText.verticalScrollBar()
+        right_vscroll = self.ui.rightText.verticalScrollBar()
+        left_hscroll = self.ui.leftText.horizontalScrollBar()
+        right_hscroll = self.ui.rightText.horizontalScrollBar()
 
         if left_vscroll and right_vscroll:
             left_vscroll.valueChanged.connect(right_vscroll.setValue)
@@ -106,44 +56,42 @@ class ResourceComparisonDialog(QDialog):
             left_hscroll.valueChanged.connect(right_hscroll.setValue)
             right_hscroll.valueChanged.connect(left_hscroll.setValue)
 
-        layout.addWidget(splitter)
-
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-
-        close_btn = QPushButton("Close")
-        close_btn.clicked.connect(self.accept)
-        button_layout.addWidget(close_btn)
-
-        layout.addLayout(button_layout)
+        # Connect button
+        self.ui.closeButton.clicked.connect(self.accept)
+        
+        # Setup event filter to prevent scroll wheel interaction with controls
+        from toolset.gui.common.filters import NoScrollEventFilter
+        self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter.setup_filter(parent_widget=self)
+        
+        self._load_resources()
 
     def _load_resources(self):
         """Load and display resource contents."""
         # Set paths
-        self.left_path_label.setText(str(self.resource1.filepath()))
+        self.ui.leftPathLabel.setText(str(self.resource1.filepath()))
         if self.resource2:
-            self.right_path_label.setText(str(self.resource2.filepath()))
+            self.ui.rightPathLabel.setText(str(self.resource2.filepath()))
         else:
             from toolset.gui.common.localization import translate as tr
-            self.right_path_label.setText(tr("[Not selected]"))
+            self.ui.rightPathLabel.setText(tr("[Not selected]"))
 
         # Load left resource
         try:
             data = self.resource1.data()
-            self.left_text.setPlainText(self._format_data(data))
+            self.ui.leftText.setPlainText(self._format_data(data))
         except Exception as e:  # noqa: BLE001
-            self.left_text.setPlainText(f"Error loading resource:\n{e}")
+            self.ui.leftText.setPlainText(f"Error loading resource:\n{e}")
 
         # Load right resource
         if self.resource2:
             try:
                 data = self.resource2.data()
-                self.right_text.setPlainText(self._format_data(data))
+                self.ui.rightText.setPlainText(self._format_data(data))
             except Exception as e:  # noqa: BLE001
-                self.right_text.setPlainText(f"Error loading resource:\n{e}")
+                self.ui.rightText.setPlainText(f"Error loading resource:\n{e}")
         else:
-            self.right_text.setPlainText("[No resource selected for comparison]")
+            self.ui.rightText.setPlainText("[No resource selected for comparison]")
 
     def _format_data(self, data: bytes) -> str:
         """Format resource data for display."""

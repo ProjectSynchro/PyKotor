@@ -469,58 +469,65 @@ def _search_gff_for_resref_with_gff(
     # Pre-compute ResRef and String type checks (most common case)
     check_resref = GFFFieldType.ResRef in field_types
     check_string = GFFFieldType.String in field_types
+    # Use integer comparisons for field types (optimization: avoid enum lookups)
+    STRUCT_TYPE = 14  # GFFFieldType.Struct
+    LIST_TYPE = 15  # GFFFieldType.List
+    RESREF_TYPE = 11  # GFFFieldType.ResRef
+    STRING_TYPE = 10  # GFFFieldType.String
+
+    def recurse_nested(
+        field_type: GFFFieldType,
+        value: Any,
+        label: str,
+        path_prefix: str,
+    ) -> None:
+        """Helper to recurse into nested structures (Struct/List)."""
+        # Use integer comparison for performance
+        field_type_int = field_type.value if isinstance(field_type, GFFFieldType) else field_type
+        if field_type_int == STRUCT_TYPE and isinstance(value, GFFStruct):
+            new_path = f"{path_prefix}.{label}" if path_prefix else label
+            recurse_struct(value, new_path)
+        elif field_type_int == LIST_TYPE and isinstance(value, GFFList):
+            base_path = f"{path_prefix}.{label}" if path_prefix else label
+            for idx, item in enumerate(value):
+                if isinstance(item, GFFStruct):
+                    list_path = f"{base_path}[{idx}]"
+                    recurse_struct(item, list_path)
 
     def recurse_struct(gff_struct: GFFStruct, path_prefix: str = "") -> None:
         """Recursively search GFF struct for ResRef matches."""
         # Use direct field access instead of iteration when possible for better performance
         for label, field_type, value in gff_struct:
-            # Early exit: skip field name check if we're filtering by field names
-            if field_names is not None and label not in field_names:
-                # Still need to recurse into nested structures even if we skip this field
-                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                    new_path = f"{path_prefix}.{label}" if path_prefix else label
-                    recurse_struct(value, new_path)
-                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                    base_path = f"{path_prefix}.{label}" if path_prefix else label
-                    for idx, item in enumerate(value):
-                        if isinstance(item, GFFStruct):
-                            list_path = f"{base_path}[{idx}]"
-                            recurse_struct(item, list_path)
+            # Use integer comparison for field type (optimization)
+            field_type_int = field_type.value if isinstance(field_type, GFFFieldType) else field_type
+            
+            # Check field name filter
+            name_matches = field_names is None or label in field_names
+            # Check field type filter using integer comparison (faster than enum)
+            type_matches = field_type_int in field_type_ints
+            
+            # If name doesn't match, only recurse into nested structures
+            if not name_matches:
+                recurse_nested(field_type, value, label, path_prefix)
                 continue
-
-            # Early exit: skip type check if field type doesn't match
-            if field_type not in field_types:
-                # Still need to recurse into nested structures
-                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                    new_path = f"{path_prefix}.{label}" if path_prefix else label
-                    recurse_struct(value, new_path)
-                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                    base_path = f"{path_prefix}.{label}" if path_prefix else label
-                    for idx, item in enumerate(value):
-                        if isinstance(item, GFFStruct):
-                            list_path = f"{base_path}[{idx}]"
-                            recurse_struct(item, list_path)
+            
+            # If type doesn't match, only recurse into nested structures
+            if not type_matches:
+                recurse_nested(field_type, value, label, path_prefix)
                 continue
 
             # At this point, we know the field name and type match - check the value
-            # Optimize string conversion based on field type
-            if field_type == GFFFieldType.ResRef and check_resref:
+            # Optimize string conversion based on field type using integer comparison
+            resref_str: str | None = None
+            if field_type_int == RESREF_TYPE and check_resref:
                 # ResRef is already a string subclass, direct access is fastest
-                resref_str: str = value  # type: ignore[assignment]
-            elif field_type == GFFFieldType.String and check_string:
+                resref_str = value  # type: ignore[assignment]
+            elif field_type_int == STRING_TYPE and check_string:
                 resref_str = str(value)
-            else:
-                # Field type matched but not ResRef or String - shouldn't happen, but skip
-                # Still recurse into nested structures
-                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                    new_path = f"{path_prefix}.{label}" if path_prefix else label
-                    recurse_struct(value, new_path)
-                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                    base_path = f"{path_prefix}.{label}" if path_prefix else label
-                    for idx, item in enumerate(value):
-                        if isinstance(item, GFFStruct):
-                            list_path = f"{base_path}[{idx}]"
-                            recurse_struct(item, list_path)
+            
+            # If we couldn't extract a string value, recurse and continue
+            if resref_str is None:
+                recurse_nested(field_type, value, label, path_prefix)
                 continue
 
             # Fast path: direct comparison for exact matches (avoid regex when possible)
@@ -556,15 +563,7 @@ def _search_gff_for_resref_with_gff(
                     logger(f"Found '{resref}' in {resource.filename()} at {field_path}")
 
             # Recurse into nested structures (only once, not multiple times)
-            if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                new_path = f"{path_prefix}.{label}" if path_prefix else label
-                recurse_struct(value, new_path)
-            elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                base_path = f"{path_prefix}.{label}" if path_prefix else label
-                for idx, item in enumerate(value):
-                    if isinstance(item, GFFStruct):
-                        list_path = f"{base_path}[{idx}]"
-                        recurse_struct(item, list_path)
+            recurse_nested(field_type, value, label, path_prefix)
 
     recurse_struct(gff.root)
     return results
@@ -620,58 +619,67 @@ def _search_gff_for_value_with_gff(
     # Pre-compute ResRef and String type checks (most common case)
     check_resref = GFFFieldType.ResRef in field_types
     check_string = GFFFieldType.String in field_types
+    # Use integer comparisons for field types (optimization: avoid enum lookups)
+    STRUCT_TYPE = 14  # GFFFieldType.Struct
+    LIST_TYPE = 15  # GFFFieldType.List
+    RESREF_TYPE = 11  # GFFFieldType.ResRef
+    STRING_TYPE = 10  # GFFFieldType.String
+    # Convert field_types set to integers for faster comparison
+    field_type_ints = {ft.value if isinstance(ft, GFFFieldType) else ft for ft in field_types}
+
+    def recurse_nested(
+        field_type: GFFFieldType,
+        value: Any,
+        label: str,
+        path_prefix: str,
+    ) -> None:
+        """Helper to recurse into nested structures (Struct/List)."""
+        # Use integer comparison for performance
+        field_type_int = field_type.value if isinstance(field_type, GFFFieldType) else field_type
+        if field_type_int == STRUCT_TYPE and isinstance(value, GFFStruct):
+            new_path = f"{path_prefix}.{label}" if path_prefix else label
+            recurse_struct(value, new_path)
+        elif field_type_int == LIST_TYPE and isinstance(value, GFFList):
+            base_path = f"{path_prefix}.{label}" if path_prefix else label
+            for idx, item in enumerate(value):
+                if isinstance(item, GFFStruct):
+                    list_path = f"{base_path}[{idx}]"
+                    recurse_struct(item, list_path)
 
     def recurse_struct(gff_struct: GFFStruct, path_prefix: str = "") -> None:
         """Recursively search GFF struct for value matches."""
         # Use direct field access instead of iteration when possible for better performance
         for label, field_type, value in gff_struct:
-            # Early exit: skip field name check if we're filtering by field names
-            if field_names is not None and label not in field_names:
-                # Still need to recurse into nested structures even if we skip this field
-                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                    new_path = f"{path_prefix}.{label}" if path_prefix else label
-                    recurse_struct(value, new_path)
-                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                    base_path = f"{path_prefix}.{label}" if path_prefix else label
-                    for idx, item in enumerate(value):
-                        if isinstance(item, GFFStruct):
-                            list_path = f"{base_path}[{idx}]"
-                            recurse_struct(item, list_path)
+            # Use integer comparison for field type (optimization)
+            field_type_int = field_type.value if isinstance(field_type, GFFFieldType) else field_type
+            
+            # Check field name filter
+            name_matches = field_names is None or label in field_names
+            # Check field type filter using integer comparison (faster than enum)
+            type_matches = field_type_int in field_type_ints
+            
+            # If name doesn't match, only recurse into nested structures
+            if not name_matches:
+                recurse_nested(field_type, value, label, path_prefix)
                 continue
-
-            # Early exit: skip type check if field type doesn't match
-            if field_type not in field_types:
-                # Still need to recurse into nested structures
-                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                    new_path = f"{path_prefix}.{label}" if path_prefix else label
-                    recurse_struct(value, new_path)
-                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                    base_path = f"{path_prefix}.{label}" if path_prefix else label
-                    for idx, item in enumerate(value):
-                        if isinstance(item, GFFStruct):
-                            list_path = f"{base_path}[{idx}]"
-                            recurse_struct(item, list_path)
+            
+            # If type doesn't match, only recurse into nested structures
+            if not type_matches:
+                recurse_nested(field_type, value, label, path_prefix)
                 continue
 
             # At this point, we know the field name and type match - check the value
-            # Optimize string conversion based on field type
-            if field_type == GFFFieldType.ResRef and check_resref:
+            # Optimize string conversion based on field type using integer comparison
+            value_str: str | None = None
+            if field_type_int == RESREF_TYPE and check_resref:
                 # ResRef is already a string subclass, direct access is fastest
-                value_str: str = value  # type: ignore[assignment]
-            elif field_type == GFFFieldType.String and check_string:
+                value_str = value  # type: ignore[assignment]
+            elif field_type_int == STRING_TYPE and check_string:
                 value_str = str(value)
-            else:
-                # Field type matched but not ResRef or String - shouldn't happen, but skip
-                # Still recurse into nested structures
-                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                    new_path = f"{path_prefix}.{label}" if path_prefix else label
-                    recurse_struct(value, new_path)
-                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                    base_path = f"{path_prefix}.{label}" if path_prefix else label
-                    for idx, item in enumerate(value):
-                        if isinstance(item, GFFStruct):
-                            list_path = f"{base_path}[{idx}]"
-                            recurse_struct(item, list_path)
+            
+            # If we couldn't extract a string value, recurse and continue
+            if value_str is None:
+                recurse_nested(field_type, value, label, path_prefix)
                 continue
 
             # Fast path: direct comparison for exact matches (avoid regex when possible)
@@ -707,15 +715,7 @@ def _search_gff_for_value_with_gff(
                     logger(f"Found '{search_value}' in {resource.filename()} at {field_path}")
 
             # Recurse into nested structures (only once, not multiple times)
-            if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                new_path = f"{path_prefix}.{label}" if path_prefix else label
-                recurse_struct(value, new_path)
-            elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                base_path = f"{path_prefix}.{label}" if path_prefix else label
-                for idx, item in enumerate(value):
-                    if isinstance(item, GFFStruct):
-                        list_path = f"{base_path}[{idx}]"
-                        recurse_struct(item, list_path)
+            recurse_nested(field_type, value, label, path_prefix)
 
     recurse_struct(gff.root)
     return results

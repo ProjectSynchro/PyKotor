@@ -1440,7 +1440,7 @@ def test_ifo_editor_help_dialog_integration(qtbot: QtBot, installation: HTInstal
 
     # Trigger help dialog with the correct file for IFOEditor
     editor._show_help_dialog("GFF-IFO.md")
-    qtbot.wait(200)  # Wait for dialog to be created
+    QtBot.wait(200)  # Wait for dialog to be created
 
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]

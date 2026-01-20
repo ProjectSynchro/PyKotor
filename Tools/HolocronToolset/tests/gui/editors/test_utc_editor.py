@@ -11,14 +11,13 @@ import pytest
 from typing import TYPE_CHECKING
 from pathlib import Path
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QListWidgetItem
+from qtpy.QtWidgets import QSpinBox
 from toolset.gui.editors.utc import UTCEditor
 from toolset.data.installation import HTInstallation
-from pykotor.resource.generics.utc import UTC, read_utc  # pyright: ignore[reportMissingImports]
-from pykotor.resource.formats.gff.gff_auto import read_gff  # pyright: ignore[reportMissingImports]
+from pykotor.resource.generics.utc import read_utc  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.gff import read_gff  # pyright: ignore[reportMissingImports]
 from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
 from pykotor.common.language import Gender, Language, LocalizedString  # pyright: ignore[reportMissingImports]
-from pykotor.common.misc import ResRef  # pyright: ignore[reportMissingImports]
 
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
@@ -56,7 +55,7 @@ def test_utc_editor_manipulate_firstname_locstring(qtbot: QtBot, installation: H
     assert editor.ui.firstnameEdit.locstring().get(Language.ENGLISH, gender=Gender.MALE) == "ModifiedFirst"
 
 
-def test_utc_editor_manipulate_lastname_locstring(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_lastname_locstring(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating lastname LocalizedString field."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -82,7 +81,7 @@ def test_utc_editor_manipulate_lastname_locstring(qtbot, installation: HTInstall
     assert editor.ui.lastnameEdit.locstring().get(Language.ENGLISH, gender=Gender.MALE) == "ModifiedLast"
 
 
-def test_utc_editor_manipulate_tag(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_tag(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating tag field."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -107,7 +106,7 @@ def test_utc_editor_manipulate_tag(qtbot, installation: HTInstallation, test_fil
     assert editor.ui.tagEdit.text() == "modified_tag"
 
 
-def test_utc_editor_manipulate_tag_generate_button(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_tag_generate_button(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test tag generation button."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -130,7 +129,7 @@ def test_utc_editor_manipulate_tag_generate_button(qtbot, installation: HTInstal
     assert modified_utc.tag == editor.ui.resrefEdit.text()
 
 
-def test_utc_editor_manipulate_resref(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_resref(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating resref field."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -155,7 +154,7 @@ def test_utc_editor_manipulate_resref(qtbot, installation: HTInstallation, test_
     assert editor.ui.resrefEdit.text() == "modified_resref"
 
 
-def test_utc_editor_manipulate_appearance_select(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_appearance_select(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating appearance combo box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -167,6 +166,10 @@ def test_utc_editor_manipulate_appearance_select(qtbot, installation: HTInstalla
     original_data = utc_file.read_bytes()
     editor.load(utc_file, "p_hk47", ResourceType.UTC, original_data)
     original_utc = read_utc(original_data)
+
+    # Disable preview to avoid expensive 3D preview updates during testing
+    editor.ui.actionShowPreview.setChecked(False)
+    editor.update3dPreview()
 
     # Test all available appearances
     if editor.ui.appearanceSelect.count() > 0:
@@ -183,7 +186,7 @@ def test_utc_editor_manipulate_appearance_select(qtbot, installation: HTInstalla
             assert editor.ui.appearanceSelect.currentIndex() == i
 
 
-def test_utc_editor_manipulate_soundset_select(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_soundset_select(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating soundset combo box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -206,7 +209,7 @@ def test_utc_editor_manipulate_soundset_select(qtbot, installation: HTInstallati
             assert modified_utc.soundset_id == i
 
 
-def test_utc_editor_manipulate_portrait_select(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_portrait_select(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating portrait combo box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -229,7 +232,7 @@ def test_utc_editor_manipulate_portrait_select(qtbot, installation: HTInstallati
             assert modified_utc.portrait_id == i
 
 
-def test_utc_editor_manipulate_conversation(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_conversation(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating conversation field."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -254,7 +257,7 @@ def test_utc_editor_manipulate_conversation(qtbot, installation: HTInstallation,
     assert editor.ui.conversationEdit.currentText() == "test_conv"
 
 
-def test_utc_editor_manipulate_alignment_slider(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_alignment_slider(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating alignment slider."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -286,7 +289,7 @@ def test_utc_editor_manipulate_alignment_slider(qtbot, installation: HTInstallat
 # ============================================================================
 
 
-def test_utc_editor_manipulate_disarmable_checkbox(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_disarmable_checkbox(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating disarmable checkbox."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -310,7 +313,7 @@ def test_utc_editor_manipulate_disarmable_checkbox(qtbot, installation: HTInstal
     assert not modified_utc.disarmable
 
 
-def test_utc_editor_manipulate_no_perm_death_checkbox(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_no_perm_death_checkbox(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating no perm death checkbox."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -334,7 +337,7 @@ def test_utc_editor_manipulate_no_perm_death_checkbox(qtbot, installation: HTIns
     assert not modified_utc.no_perm_death
 
 
-def test_utc_editor_manipulate_min1_hp_checkbox(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_min1_hp_checkbox(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating min1 hp checkbox."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -358,7 +361,7 @@ def test_utc_editor_manipulate_min1_hp_checkbox(qtbot, installation: HTInstallat
     assert not modified_utc.min1_hp
 
 
-def test_utc_editor_manipulate_plot_checkbox(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_plot_checkbox(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating plot checkbox."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -382,7 +385,7 @@ def test_utc_editor_manipulate_plot_checkbox(qtbot, installation: HTInstallation
     assert not modified_utc.plot
 
 
-def test_utc_editor_manipulate_is_pc_checkbox(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_is_pc_checkbox(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating is PC checkbox."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -406,7 +409,7 @@ def test_utc_editor_manipulate_is_pc_checkbox(qtbot, installation: HTInstallatio
     assert not modified_utc.is_pc
 
 
-def test_utc_editor_manipulate_no_reorientate_checkbox(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_no_reorientate_checkbox(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating no reorientate checkbox."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -430,7 +433,7 @@ def test_utc_editor_manipulate_no_reorientate_checkbox(qtbot, installation: HTIn
     assert not modified_utc.not_reorienting
 
 
-def test_utc_editor_manipulate_tsl_only_checkboxes(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_tsl_only_checkboxes(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating TSL-only checkboxes (noBlock, hologram)."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -473,7 +476,7 @@ def test_utc_editor_manipulate_tsl_only_checkboxes(qtbot, installation: HTInstal
 # ============================================================================
 
 
-def test_utc_editor_manipulate_race_select(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_race_select(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating race combo box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -507,7 +510,7 @@ def test_utc_editor_manipulate_race_select(qtbot, installation: HTInstallation, 
             assert modified_utc.race_id == expected_race_id
 
 
-def test_utc_editor_manipulate_subrace_select(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_subrace_select(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating subrace combo box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -530,7 +533,7 @@ def test_utc_editor_manipulate_subrace_select(qtbot, installation: HTInstallatio
             assert modified_utc.subrace_id == i
 
 
-def test_utc_editor_manipulate_speed_select(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_speed_select(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating speed combo box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -553,7 +556,7 @@ def test_utc_editor_manipulate_speed_select(qtbot, installation: HTInstallation,
             assert modified_utc.walkrate_id == i
 
 
-def test_utc_editor_manipulate_faction_select(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_faction_select(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating faction combo box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -576,7 +579,7 @@ def test_utc_editor_manipulate_faction_select(qtbot, installation: HTInstallatio
             assert modified_utc.faction_id == i
 
 
-def test_utc_editor_manipulate_gender_select(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_gender_select(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating gender combo box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -599,7 +602,7 @@ def test_utc_editor_manipulate_gender_select(qtbot, installation: HTInstallation
             assert modified_utc.gender_id == i
 
 
-def test_utc_editor_manipulate_perception_select(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_perception_select(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating perception combo box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -627,7 +630,7 @@ def test_utc_editor_manipulate_perception_select(qtbot, installation: HTInstalla
 # ============================================================================
 
 
-def test_utc_editor_manipulate_challenge_rating_spin(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_challenge_rating_spin(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating challenge rating spin box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -650,7 +653,7 @@ def test_utc_editor_manipulate_challenge_rating_spin(qtbot, installation: HTInst
         assert abs(modified_utc.challenge_rating - val) < 0.001
 
 
-def test_utc_editor_manipulate_blindspot_spin(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_blindspot_spin(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating blindspot spin box."""
     # blindspot is a KotOR 2 only field, so skip if installation is K1
     if not installation.tsl:
@@ -677,7 +680,7 @@ def test_utc_editor_manipulate_blindspot_spin(qtbot, installation: HTInstallatio
         assert abs(modified_utc.blindspot - val) < 0.001
 
 
-def test_utc_editor_manipulate_multiplier_set_spin(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_multiplier_set_spin(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating multiplier set spin box."""
     # multiplier_set is a KotOR 2 only field, so skip if installation is K1
     if not installation.tsl:
@@ -709,7 +712,7 @@ def test_utc_editor_manipulate_multiplier_set_spin(qtbot, installation: HTInstal
 # ============================================================================
 
 
-def test_utc_editor_manipulate_computer_use_spin(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_computer_use_spin(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating computer use skill spin box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -732,7 +735,7 @@ def test_utc_editor_manipulate_computer_use_spin(qtbot, installation: HTInstalla
         assert modified_utc.computer_use == val
 
 
-def test_utc_editor_manipulate_all_skill_spins(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_all_skill_spins(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating all skill spin boxes."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -757,7 +760,7 @@ def test_utc_editor_manipulate_all_skill_spins(qtbot, installation: HTInstallati
     ]
 
     for spin_name, attr_name in skill_spins:
-        spin = getattr(editor.ui, spin_name)
+        spin: QSpinBox = getattr(editor.ui, spin_name)
         test_val = 15
         spin.setValue(test_val)
 
@@ -767,7 +770,7 @@ def test_utc_editor_manipulate_all_skill_spins(qtbot, installation: HTInstallati
         assert getattr(modified_utc, attr_name) == test_val
 
 
-def test_utc_editor_manipulate_all_save_spins(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_all_save_spins(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating all saving throw spin boxes."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -787,7 +790,7 @@ def test_utc_editor_manipulate_all_save_spins(qtbot, installation: HTInstallatio
     ]
 
     for spin_name, attr_name in save_spins:
-        spin = getattr(editor.ui, spin_name)
+        spin: QSpinBox = getattr(editor.ui, spin_name)
         test_val = 5
         spin.setValue(test_val)
 
@@ -797,7 +800,7 @@ def test_utc_editor_manipulate_all_save_spins(qtbot, installation: HTInstallatio
         assert getattr(modified_utc, attr_name) == test_val
 
 
-def test_utc_editor_manipulate_all_ability_spins(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_all_ability_spins(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating all ability score spin boxes."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -821,7 +824,7 @@ def test_utc_editor_manipulate_all_ability_spins(qtbot, installation: HTInstalla
     ]
 
     for spin_name, attr_name in ability_spins:
-        spin = getattr(editor.ui, spin_name)
+        spin: QSpinBox = getattr(editor.ui, spin_name)
         test_val = 14
         spin.setValue(test_val)
 
@@ -831,7 +834,7 @@ def test_utc_editor_manipulate_all_ability_spins(qtbot, installation: HTInstalla
         assert getattr(modified_utc, attr_name) == test_val
 
 
-def test_utc_editor_manipulate_hp_fp_spins(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_hp_fp_spins(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating HP and FP spin boxes."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -851,7 +854,7 @@ def test_utc_editor_manipulate_hp_fp_spins(qtbot, installation: HTInstallation, 
     ]
 
     for spin_name, attr_name in hp_spins:
-        spin = getattr(editor.ui, spin_name)
+        spin: QSpinBox = getattr(editor.ui, spin_name)
         test_val = 100
         spin.setValue(test_val)
 
@@ -867,7 +870,7 @@ def test_utc_editor_manipulate_hp_fp_spins(qtbot, installation: HTInstallation, 
     ]
 
     for spin_name, attr_name in fp_spins:
-        spin = getattr(editor.ui, spin_name)
+        spin: QSpinBox = getattr(editor.ui, spin_name)
         test_val = 50
         spin.setValue(test_val)
 
@@ -882,7 +885,7 @@ def test_utc_editor_manipulate_hp_fp_spins(qtbot, installation: HTInstallation, 
 # ============================================================================
 
 
-def test_utc_editor_manipulate_class1_select(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_class1_select(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating class1 combo box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -906,7 +909,7 @@ def test_utc_editor_manipulate_class1_select(qtbot, installation: HTInstallation
                 assert modified_utc.classes[0].class_id == i
 
 
-def test_utc_editor_manipulate_class1_level_spin(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_class1_level_spin(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating class1 level spin box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -934,7 +937,7 @@ def test_utc_editor_manipulate_class1_level_spin(qtbot, installation: HTInstalla
                 assert modified_utc.classes[0].class_level == level
 
 
-def test_utc_editor_manipulate_class2_select(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_class2_select(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating class2 combo box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -958,7 +961,7 @@ def test_utc_editor_manipulate_class2_select(qtbot, installation: HTInstallation
             assert modified_utc.classes[1].class_id == 0  # Adjusted for unset
 
 
-def test_utc_editor_manipulate_class2_level_spin(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_class2_level_spin(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating class2 level spin box."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -991,7 +994,7 @@ def test_utc_editor_manipulate_class2_level_spin(qtbot, installation: HTInstalla
 # ============================================================================
 
 
-def test_utc_editor_manipulate_feats_list(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_feats_list(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating feats list - checking/unchecking feats."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1035,7 +1038,7 @@ def test_utc_editor_manipulate_feats_list(qtbot, installation: HTInstallation, t
         assert len(modified_utc.feats) == 0
 
 
-def test_utc_editor_manipulate_powers_list(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_powers_list(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating powers list - checking/unchecking powers."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1076,7 +1079,7 @@ def test_utc_editor_manipulate_powers_list(qtbot, installation: HTInstallation, 
 # ============================================================================
 
 
-def test_utc_editor_manipulate_all_script_fields(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_all_script_fields(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating all script combo boxes."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1121,7 +1124,7 @@ def test_utc_editor_manipulate_all_script_fields(qtbot, installation: HTInstalla
 # ============================================================================
 
 
-def test_utc_editor_manipulate_comments(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_comments(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating comments field."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1159,7 +1162,7 @@ def test_utc_editor_manipulate_comments(qtbot, installation: HTInstallation, tes
 # ============================================================================
 
 
-def test_utc_editor_manipulate_all_basic_fields_combination(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_all_basic_fields_combination(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating all basic fields simultaneously."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1197,7 +1200,7 @@ def test_utc_editor_manipulate_all_basic_fields_combination(qtbot, installation:
     assert modified_utc.alignment == 75
 
 
-def test_utc_editor_manipulate_all_advanced_fields_combination(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_all_advanced_fields_combination(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating all advanced fields simultaneously."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1253,7 +1256,7 @@ def test_utc_editor_manipulate_all_advanced_fields_combination(qtbot, installati
         assert modified_utc.multiplier_set == 2
 
 
-def test_utc_editor_manipulate_all_stats_fields_combination(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_manipulate_all_stats_fields_combination(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating all stats fields simultaneously."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1309,7 +1312,7 @@ def test_utc_editor_manipulate_all_stats_fields_combination(qtbot, installation:
 # ============================================================================
 
 
-def test_utc_editor_save_load_roundtrip_identity(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_save_load_roundtrip_identity(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that save/load roundtrip preserves all data exactly."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1342,7 +1345,7 @@ def test_utc_editor_save_load_roundtrip_identity(qtbot, installation: HTInstalla
     assert editor.ui.appearanceSelect.currentIndex() == original_utc.appearance_id
 
 
-def test_utc_editor_save_load_roundtrip_with_modifications(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_save_load_roundtrip_with_modifications(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test save/load roundtrip with modifications preserves changes."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1356,7 +1359,8 @@ def test_utc_editor_save_load_roundtrip_with_modifications(qtbot, installation: 
     editor.load(utc_file, "p_hk47", ResourceType.UTC, original_data)
 
     # Make modifications
-    editor.ui.tagEdit.setText("modified_roundtrip")
+    # Note: Tag field is limited to 16 characters in the game engine
+    editor.ui.tagEdit.setText("modified_roundtr")  # 16 characters
     editor.ui.strengthSpin.setValue(20)
     editor.ui.baseHpSpin.setValue(200)
     editor.ui.comments.setPlainText("Roundtrip test comment")
@@ -1369,7 +1373,7 @@ def test_utc_editor_save_load_roundtrip_with_modifications(qtbot, installation: 
     editor.load(utc_file, "p_hk47", ResourceType.UTC, data1)
 
     # Verify modifications preserved
-    assert editor.ui.tagEdit.text() == "modified_roundtrip"
+    assert editor.ui.tagEdit.text() == "modified_roundtr"
     assert editor.ui.strengthSpin.value() == 20
     assert editor.ui.baseHpSpin.value() == 200
     assert editor.ui.comments.toPlainText() == "Roundtrip test comment"
@@ -1385,7 +1389,7 @@ def test_utc_editor_save_load_roundtrip_with_modifications(qtbot, installation: 
     assert saved_utc2.comment == saved_utc1.comment
 
 
-def test_utc_editor_multiple_save_load_cycles(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_multiple_save_load_cycles(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test multiple save/load cycles preserve data correctly."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1424,7 +1428,7 @@ def test_utc_editor_multiple_save_load_cycles(qtbot, installation: HTInstallatio
 # ============================================================================
 
 
-def test_utc_editor_gff_roundtrip_comparison(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_gff_roundtrip_comparison(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test GFF roundtrip comparison like resource tests.
 
     Note: This test compares UTC objects functionally rather than raw GFF structures,
@@ -1530,7 +1534,7 @@ def test_utc_editor_gff_roundtrip_comparison(qtbot, installation: HTInstallation
         assert new_utc.multiplier_set == original_utc.multiplier_set
 
 
-def test_utc_editor_gff_roundtrip_with_modifications(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_gff_roundtrip_with_modifications(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test GFF roundtrip with modifications still produces valid GFF."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1546,7 +1550,7 @@ def test_utc_editor_gff_roundtrip_with_modifications(qtbot, installation: HTInst
     editor.ui.tagEdit.setText("modified_gff_test")
     editor.ui.strengthSpin.setValue(20)
     editor.ui.plotCheckbox.setChecked(True)
-    qtbot.wait(10)  # Ensure Qt processes the checkbox state change in headless mode
+    QApplication.processEvents()
 
     # Save
     data, _ = editor.build()
@@ -1567,7 +1571,7 @@ def test_utc_editor_gff_roundtrip_with_modifications(qtbot, installation: HTInst
 # ============================================================================
 
 
-def test_utc_editor_new_file_creation(qtbot, installation: HTInstallation):
+def test_utc_editor_new_file_creation(qtbot: QtBot, installation: HTInstallation):
     """Test creating a new UTC file from scratch."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1603,7 +1607,7 @@ def test_utc_editor_new_file_creation(qtbot, installation: HTInstallation):
 # ============================================================================
 
 
-def test_utc_editor_minimum_values(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_minimum_values(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test setting all fields to minimum values."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1633,7 +1637,7 @@ def test_utc_editor_minimum_values(qtbot, installation: HTInstallation, test_fil
     assert modified_utc.blindspot == 0.0
 
 
-def test_utc_editor_maximum_values(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_maximum_values(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test setting all fields to maximum values."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1666,7 +1670,7 @@ def test_utc_editor_maximum_values(qtbot, installation: HTInstallation, test_fil
         assert modified_utc.blindspot == 360.0
 
 
-def test_utc_editor_feats_powers_combinations(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_feats_powers_combinations(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test various combinations of feats and powers."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1703,7 +1707,7 @@ def test_utc_editor_feats_powers_combinations(qtbot, installation: HTInstallatio
                         assert feat_id1 in modified_utc.feats
 
 
-def test_utc_editor_classes_combinations(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_classes_combinations(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test various class combinations."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1734,7 +1738,7 @@ def test_utc_editor_classes_combinations(qtbot, installation: HTInstallation, te
         assert modified_utc.classes[0].class_level == 5
 
 
-def test_utc_editor_all_scripts_combination(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_all_scripts_combination(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test setting all scripts simultaneously."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1764,7 +1768,7 @@ def test_utc_editor_all_scripts_combination(qtbot, installation: HTInstallation,
     assert str(modified_utc.on_heartbeat) == "test_heartbeat"
 
 
-def test_utc_editor_preview_updates(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_preview_updates(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that preview updates when appearance/alignment changes."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1788,7 +1792,7 @@ def test_utc_editor_preview_updates(qtbot, installation: HTInstallation, test_fi
     assert editor.ui.alignmentSlider.receivers(editor.ui.alignmentSlider.valueChanged) > 0
 
 
-def test_utc_editor_random_name_buttons(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_random_name_buttons(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test random name generation buttons."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1821,7 +1825,7 @@ def test_utc_editor_random_name_buttons(qtbot, installation: HTInstallation, tes
     assert modified_utc.last_name.get(Language.ENGLISH, gender=Gender.MALE) == lastname
 
 
-def test_utc_editor_inventory_button(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_inventory_button(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test inventory button opens dialog."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1838,7 +1842,7 @@ def test_utc_editor_inventory_button(qtbot, installation: HTInstallation, test_f
     assert editor.ui.inventoryButton.receivers(editor.ui.inventoryButton.clicked) > 0
 
 
-def test_utc_editor_menu_actions(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_menu_actions(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test menu actions."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1870,7 +1874,7 @@ def test_utc_editor_menu_actions(qtbot, installation: HTInstallation, test_files
     assert editor.ui.previewRenderer.isVisible() != initial_visible
 
 
-def test_utc_editor_comments_tab_title_update(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_comments_tab_title_update(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that comments tab title updates when comments are added."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1896,7 +1900,7 @@ def test_utc_editor_comments_tab_title_update(qtbot, installation: HTInstallatio
     assert "*" not in tab_text or tab_text == "Comments"
 
 
-def test_utc_editor_feat_summary_updates(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_feat_summary_updates(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that feat summary updates when feats are checked/unchecked."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1922,7 +1926,7 @@ def test_utc_editor_feat_summary_updates(qtbot, installation: HTInstallation, te
             # Summary may update
 
 
-def test_utc_editor_power_summary_updates(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_power_summary_updates(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that power summary updates when powers are checked/unchecked."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1944,7 +1948,7 @@ def test_utc_editor_power_summary_updates(qtbot, installation: HTInstallation, t
             assert len(summary) > 0 or summary == ""  # May be empty initially
 
 
-def test_utc_editor_item_count_updates(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_utc_editor_item_count_updates(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that item count label updates."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -1973,7 +1977,7 @@ from pykotor.common.language import LocalizedString  # pyright: ignore[reportMis
 from pykotor.common.misc import ResRef  # pyright: ignore[reportMissingImports]
 
 
-def test_utc_editor_all_widgets_exist(qtbot, installation: HTInstallation):
+def test_utc_editor_all_widgets_exist(qtbot: QtBot, installation: HTInstallation):
     """Verify ALL widgets exist in UTC editor."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -2079,7 +2083,7 @@ def test_utc_editor_all_widgets_exist(qtbot, installation: HTInstallation):
     assert hasattr(editor.ui, "actionShowPreview")
 
 
-def test_utc_editor_all_basic_widgets_interactions(qtbot, installation: HTInstallation):
+def test_utc_editor_all_basic_widgets_interactions(qtbot: QtBot, installation: HTInstallation):
     """Test ALL basic tab widgets with exhaustive interactions."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -2137,7 +2141,7 @@ def test_utc_editor_all_basic_widgets_interactions(qtbot, installation: HTInstal
     assert editor.ui.tagEdit.text() == editor.ui.resrefEdit.text()
 
 
-def test_utc_editor_all_advanced_widgets_interactions(qtbot, installation: HTInstallation):
+def test_utc_editor_all_advanced_widgets_interactions(qtbot: QtBot, installation: HTInstallation):
     """Test ALL advanced tab widgets with exhaustive interactions."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -2200,7 +2204,7 @@ def test_utc_editor_all_advanced_widgets_interactions(qtbot, installation: HTIns
             assert spin.value() == val
 
 
-def test_utc_editor_all_stats_widgets_interactions(qtbot, installation: HTInstallation):
+def test_utc_editor_all_stats_widgets_interactions(qtbot: QtBot, installation: HTInstallation):
     """Test ALL stats tab widgets with exhaustive interactions."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -2270,7 +2274,7 @@ def test_utc_editor_all_stats_widgets_interactions(qtbot, installation: HTInstal
             assert spin.value() == val
 
 
-def test_utc_editor_all_classes_widgets_interactions(qtbot, installation: HTInstallation):
+def test_utc_editor_all_classes_widgets_interactions(qtbot: QtBot, installation: HTInstallation):
     """Test ALL classes tab widgets with exhaustive interactions."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -2304,7 +2308,7 @@ def test_utc_editor_all_classes_widgets_interactions(qtbot, installation: HTInst
                 assert editor.ui.class2LevelSpin.value() == level
 
 
-def test_utc_editor_all_feats_powers_widgets_interactions(qtbot, installation: HTInstallation):
+def test_utc_editor_all_feats_powers_widgets_interactions(qtbot: QtBot, installation: HTInstallation):
     """Test ALL feats/powers tab widgets with exhaustive interactions."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -2357,7 +2361,7 @@ def test_utc_editor_all_feats_powers_widgets_interactions(qtbot, installation: H
         assert len(summary) == 0
 
 
-def test_utc_editor_all_scripts_widgets_interactions(qtbot, installation: HTInstallation):
+def test_utc_editor_all_scripts_widgets_interactions(qtbot: QtBot, installation: HTInstallation):
     """Test ALL scripts tab widgets with exhaustive interactions."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -2391,7 +2395,7 @@ def test_utc_editor_all_scripts_widgets_interactions(qtbot, installation: HTInst
         assert edit.currentText() == ""
 
 
-def test_utc_editor_all_widgets_build_verification(qtbot, installation: HTInstallation):
+def test_utc_editor_all_widgets_build_verification(qtbot: QtBot, installation: HTInstallation):
     """Test that ALL widget values are correctly saved in build()."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -2418,7 +2422,7 @@ def test_utc_editor_all_widgets_build_verification(qtbot, installation: HTInstal
     editor.ui.plotCheckbox.setChecked(True)
     editor.ui.isPcCheckbox.setChecked(True)
     editor.ui.noReorientateCheckbox.setChecked(True)
-    qtbot.wait(10)  # Ensure Qt processes checkbox state changes in headless mode
+    QtBot.wait(10)  # Ensure Qt processes checkbox state changes in headless mode
     if editor.ui.raceSelect.count() > 0:
         editor.ui.raceSelect.setCurrentIndex(0)
     if editor.ui.subraceSelect.count() > 0:
@@ -2502,7 +2506,7 @@ def test_utc_editor_all_widgets_build_verification(qtbot, installation: HTInstal
     assert str(utc.on_spawn) == "test_spawn"
 
 
-def test_utc_editor_load_real_file(qtbot, installation: HTInstallation, test_files_dir):
+def test_utc_editor_load_real_file(qtbot: QtBot, installation: HTInstallation, test_files_dir):
     """Test loading a real UTC file and verifying ALL widgets populate correctly."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -2525,7 +2529,7 @@ def test_utc_editor_load_real_file(qtbot, installation: HTInstallation, test_fil
     assert editor.ui.baseHpSpin.value() >= 0
 
 
-def test_utc_editor_menu_actions(qtbot, installation: HTInstallation):
+def test_utc_editor_menu_actions(qtbot: QtBot, installation: HTInstallation):
     """Test ALL menu actions."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -2538,14 +2542,14 @@ def test_utc_editor_menu_actions(qtbot, installation: HTInstallation):
 
     # Test setting to True
     editor.ui.actionSaveUnusedFields.setChecked(True)
-    qtbot.wait(10)  # Ensure Qt processes the setChecked() call
+    QtBot.wait(10)  # Ensure Qt processes the setChecked() call
     # Manually update settings to match the action state (simulating what the signal would do)
     editor.settings.saveUnusedFields = editor.ui.actionSaveUnusedFields.isChecked()
     assert editor.settings.saveUnusedFields is True
 
     # Test setting to False
     editor.ui.actionSaveUnusedFields.setChecked(False)
-    qtbot.wait(10)  # Ensure Qt processes the setChecked() call
+    QtBot.wait(10)  # Ensure Qt processes the setChecked() call
     # Manually update settings to match the action state (simulating what the signal would do)
     editor.settings.saveUnusedFields = editor.ui.actionSaveUnusedFields.isChecked()
     assert editor.settings.saveUnusedFields is False
@@ -2555,14 +2559,14 @@ def test_utc_editor_menu_actions(qtbot, installation: HTInstallation):
 
     # Test setting to True
     editor.ui.actionAlwaysSaveK2Fields.setChecked(True)
-    qtbot.wait(10)  # Ensure Qt processes the setChecked() call
+    QtBot.wait(10)  # Ensure Qt processes the setChecked() call
     # Manually update settings to match the action state (simulating what the signal would do)
     editor.settings.alwaysSaveK2Fields = editor.ui.actionAlwaysSaveK2Fields.isChecked()
     assert editor.settings.alwaysSaveK2Fields is True
 
     # Test setting to False
     editor.ui.actionAlwaysSaveK2Fields.setChecked(False)
-    qtbot.wait(10)  # Ensure Qt processes the setChecked() call
+    QtBot.wait(10)  # Ensure Qt processes the setChecked() call
     # Manually update settings to match the action state (simulating what the signal would do)
     editor.settings.alwaysSaveK2Fields = editor.ui.actionAlwaysSaveK2Fields.isChecked()
     assert editor.settings.alwaysSaveK2Fields is False
@@ -2573,7 +2577,7 @@ def test_utc_editor_menu_actions(qtbot, installation: HTInstallation):
     initial_visible = editor.ui.previewRenderer.isVisible()
     initial_preview_setting = editor.global_settings.showPreviewUTC
     editor.ui.actionShowPreview.trigger()
-    qtbot.wait(10)  # Ensure Qt processes the signal
+    QtBot.wait(10)  # Ensure Qt processes the signal
     # Verify the global setting was toggled
     assert editor.global_settings.showPreviewUTC != initial_preview_setting
     # The visibility might not change in headless mode, so we accept either state
@@ -2581,7 +2585,7 @@ def test_utc_editor_menu_actions(qtbot, installation: HTInstallation):
     assert isinstance(final_visible, bool)
 
 
-def test_utc_editor_inventory_button(qtbot, installation: HTInstallation):
+def test_utc_editor_inventory_button(qtbot: QtBot, installation: HTInstallation):
     """Test inventory button opens dialog."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -2595,7 +2599,7 @@ def test_utc_editor_inventory_button(qtbot, installation: HTInstallation):
     assert editor.ui.inventoryButton.receivers(editor.ui.inventoryButton.clicked) > 0
 
 
-def test_utceditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+def test_utceditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation):
     """Test that UTCEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
     from toolset.gui.dialogs.editor_help import EditorHelpDialog
 
@@ -2604,7 +2608,7 @@ def test_utceditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
 
     # Trigger help dialog with the correct file for UTCEditor
     editor._show_help_dialog("GFF-UTC.md")
-    qtbot.wait(200)  # Wait for dialog to be created
+    QtBot.wait(200)  # Wait for dialog to be created
 
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
@@ -2644,14 +2648,14 @@ def test_utceditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
 # ============================================================================
 
 
-def test_utc_editor_reference_search_context_menu_script_field(qtbot, installation: HTInstallation):
+def test_utc_editor_reference_search_context_menu_script_field(qtbot: QtBot, installation: HTInstallation):
     """Test that script fields have Find References context menu action."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
     editor.new()
 
     # Check that script fields have tooltips indicating reference search
-    assert "Right-click to find references" in editor.ui.onHeartbeatSelect.toolTip().lower()
+    assert "right-click to find references" in editor.ui.onHeartbeatSelect.toolTip().lower()
 
     # Simulate right-click to get context menu
     from qtpy.QtCore import QPoint
@@ -2662,33 +2666,33 @@ def test_utc_editor_reference_search_context_menu_script_field(qtbot, installati
     if menu is None:
         # Try custom context menu
         editor.ui.onHeartbeatSelect.customContextMenuRequested.emit(QPoint(0, 0))
-        qtbot.wait(100)
+        QtBot.wait(100)
 
     # Verify menu exists (context menu setup happens in setup_file_context_menu)
-    assert editor.ui.onHeartbeatSelect.toolTip() is not None
+    assert editor.ui.onHeartbeatSelect.toolTip() is not None, f"Script field tooltip should not be None, but got '{editor.ui.onHeartbeatSelect.toolTip()}'"
 
 
-def test_utc_editor_reference_search_context_menu_tag_field(qtbot, installation: HTInstallation):
+def test_utc_editor_reference_search_context_menu_tag_field(qtbot: QtBot, installation: HTInstallation):
     """Test that tag field has Find References context menu action."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
     editor.new()
 
     # Check that tag field has tooltip indicating reference search
-    assert "Right-click to find references" in editor.ui.tagEdit.toolTip().lower()
+    assert "right-click to find references" in editor.ui.tagEdit.toolTip().lower(), f"TagEdit tooltip should contain 'Right-click to find references', but got '{editor.ui.tagEdit.toolTip()}'"
 
 
-def test_utc_editor_reference_search_context_menu_conversation_field(qtbot, installation: HTInstallation):
+def test_utc_editor_reference_search_context_menu_conversation_field(qtbot: QtBot, installation: HTInstallation):
     """Test that conversation field has Find References context menu action."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
     editor.new()
 
     # Check that conversation field has tooltip indicating reference search
-    assert "Right-click to find references" in editor.ui.conversationEdit.toolTip().lower()
+    assert "right-click to find references" in editor.ui.conversationEdit.toolTip().lower(), f"ConversationEdit tooltip should contain 'Right-click to find references', but got '{editor.ui.conversationEdit.toolTip()}'"
 
 
-def test_reference_finder_find_script_references(qtbot, installation: HTInstallation):
+def test_reference_finder_find_script_references(qtbot: QtBot, installation: HTInstallation):
     """Test find_script_references function."""
     from pykotor.tools.reference_finder import find_script_references
 
@@ -2696,13 +2700,13 @@ def test_reference_finder_find_script_references(qtbot, installation: HTInstalla
     results = find_script_references(installation, "k_act_heal", partial_match=False, case_sensitive=False)
 
     # Results should be a list
-    assert isinstance(results, list)
+    assert isinstance(results, list), f"Results should be a list, but got '{type(results)}'"
 
     # In a real installation, we might find results, but in test we just verify it doesn't crash
-    assert len(results) >= 0
+    assert len(results) >= 0, f"Results should have at least 0 items, but got '{len(results)}'"
 
 
-def test_reference_finder_find_tag_references(qtbot, installation: HTInstallation):
+def test_reference_finder_find_tag_references(qtbot: QtBot, installation: HTInstallation):
     """Test find_tag_references function."""
     from pykotor.tools.reference_finder import find_tag_references
 
@@ -2710,11 +2714,11 @@ def test_reference_finder_find_tag_references(qtbot, installation: HTInstallatio
     results = find_tag_references(installation, "PLAYER", partial_match=False, case_sensitive=False)
 
     # Results should be a list
-    assert isinstance(results, list)
-    assert len(results) >= 0
+    assert isinstance(results, list), f"Results should be a list, but got '{type(results)}'"
+    assert len(results) >= 0, f"Results should have at least 0 items, but got '{len(results)}'"
 
 
-def test_reference_finder_find_conversation_references(qtbot, installation: HTInstallation):
+def test_reference_finder_find_conversation_references(qtbot: QtBot, installation: HTInstallation):
     """Test find_conversation_references function."""
     from pykotor.tools.reference_finder import find_conversation_references
 
@@ -2722,11 +2726,11 @@ def test_reference_finder_find_conversation_references(qtbot, installation: HTIn
     results = find_conversation_references(installation, "test", partial_match=True, case_sensitive=False)
 
     # Results should be a list
-    assert isinstance(results, list)
-    assert len(results) >= 0
+    assert isinstance(results, list), f"Results should be a list, but got '{type(results)}'"
+    assert len(results) >= 0, f"Results should have at least 0 items, but got '{len(results)}'"
 
 
-def test_reference_search_options_dialog(qtbot):
+def test_reference_search_options_dialog(qtbot: QtBot):
     """Test ReferenceSearchOptions dialog."""
     from toolset.gui.dialogs.reference_search_options import ReferenceSearchOptions
     from qtpy.QtWidgets import QWidget
@@ -2735,21 +2739,18 @@ def test_reference_search_options_dialog(qtbot):
     dialog = ReferenceSearchOptions(parent)
     qtbot.addWidget(dialog)
 
-    # Verify dialog widgets exist
-    assert hasattr(dialog, "ui")
-
     # Test default values
-    assert dialog.get_partial_match() == False  # Default should be False
-    assert dialog.get_case_sensitive() == False  # Default should be False
+    assert dialog.get_partial_match() == False, f"Partial match should be False, but got '{dialog.get_partial_match()}'"
+    assert dialog.get_case_sensitive() == False, f"Case sensitive should be False, but got '{dialog.get_case_sensitive()}'"
 
     # Test setting values
     dialog.ui.partialMatchCheck.setChecked(True)
     dialog.ui.caseSensitiveCheck.setChecked(True)
-    assert dialog.get_partial_match() == True
-    assert dialog.get_case_sensitive() == True
+    assert dialog.get_partial_match() == True, f"Partial match should be True, but got '{dialog.get_partial_match()}'"
+    assert dialog.get_case_sensitive() == True, f"Case sensitive should be True, but got '{dialog.get_case_sensitive()}'"
 
 
-def test_file_results_dialog_with_reference_results(qtbot, installation: HTInstallation):
+def test_file_results_dialog_with_reference_results(qtbot: QtBot, installation: HTInstallation):
     """Test FileResults dialog with ReferenceSearchResult objects."""
     from toolset.gui.dialogs.search import FileResults
     from pykotor.tools.reference_finder import ReferenceSearchResult
@@ -2781,4 +2782,4 @@ def test_file_results_dialog_with_reference_results(qtbot, installation: HTInsta
     dialog.show()
 
     # Verify dialog shows the result
-    assert dialog.ui.resultsList.count() > 0
+    assert dialog.ui.resultList.count() > 0

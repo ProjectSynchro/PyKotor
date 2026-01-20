@@ -89,7 +89,7 @@ def get_body_model(  # noqa: C901, PLR0912, PLR0915
             # Attempt to load armor UTI
             armor_res_lookup: ResourceResult | None = installation.resource(str(armor_resref), ResourceType.UTI)
             if armor_res_lookup is None:
-                log.error("'%s.uti' missing from installation%s", armor_resref, context_base)
+                log.debug("'%s.uti' missing from installation%s", armor_resref, context_base)
                 # Fallback to default values if armor UTI is missing
                 model_column = "modela"
                 body_model = utc_appearance_row.get_string(model_column, context=f"Fetching model 'modela'{context_base}")
@@ -206,7 +206,7 @@ def _load_hand_uti(
 ) -> str | None:
     hand_lookup: ResourceResult | None = installation.resource(hand_resref, ResourceType.UTI)
     if not hand_lookup:
-        RobustLogger().error(f"{hand_resref}.uti missing from installation.")
+        RobustLogger().debug(f"{hand_resref}.uti missing from installation.")
         return None
     hand_uti: UTI = read_uti(hand_lookup.data)
     default_model: str = baseitems.get_row(hand_uti.base_item).get_string("defaultmodel")

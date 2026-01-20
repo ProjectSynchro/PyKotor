@@ -1,19 +1,25 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtCore import Qt  # pyright: ignore[reportAttributeAccessIssue]
-from qtpy.QtGui import QImage, QPixmap
+from qtpy.QtGui import QImage, QPixmap, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QHeaderView,
     QListWidgetItem,
     QMenu,
     QMessageBox,
+    QPushButton,
+    QScrollArea,
     QShortcut,
     QTableWidget,
     QTableWidgetItem,
+    QTextEdit,
+    QTreeView,
 )
 
 from pykotor.common.misc import ResRef
@@ -44,7 +50,7 @@ if TYPE_CHECKING:
 
 
 # Import localization function
-from toolset.gui.common.localization import translate as tr
+from toolset.gui.common.localization import translate as tr, translate_format as trf
 
 # Localized skill names
 SKILL_NAMES = [
@@ -139,12 +145,32 @@ class SaveGameEditor(Editor):
         self.ui.lineEditPortrait0.editingFinished.connect(self.on_save_info_changed)
         self.ui.lineEditPortrait1.editingFinished.connect(self.on_save_info_changed)
         self.ui.lineEditPortrait2.editingFinished.connect(self.on_save_info_changed)
+        self.ui.checkBoxCheatUsed.stateChanged.connect(self.on_save_info_changed)
+        self.ui.spinBoxGameplayHint.editingFinished.connect(self.on_save_info_changed)
+        self.ui.spinBoxStoryHint.editingFinished.connect(self.on_save_info_changed)
+        self.ui.lineEditLive1.editingFinished.connect(self.on_save_info_changed)
+        self.ui.lineEditLive2.editingFinished.connect(self.on_save_info_changed)
+        self.ui.lineEditLive3.editingFinished.connect(self.on_save_info_changed)
+        self.ui.lineEditLive4.editingFinished.connect(self.on_save_info_changed)
+        self.ui.lineEditLive5.editingFinished.connect(self.on_save_info_changed)
+        self.ui.lineEditLive6.editingFinished.connect(self.on_save_info_changed)
+        self.ui.spinBoxLiveContent.editingFinished.connect(self.on_save_info_changed)
         
         # Party Table signals
         self.ui.spinBoxGold.editingFinished.connect(self.on_party_table_changed)
         self.ui.spinBoxXPPool.editingFinished.connect(self.on_party_table_changed)
         self.ui.spinBoxComponents.editingFinished.connect(self.on_party_table_changed)
         self.ui.spinBoxChemicals.editingFinished.connect(self.on_party_table_changed)
+        self.ui.spinBoxTimePlayedPT.editingFinished.connect(self.on_party_table_changed)
+        self.ui.checkBoxCheatUsedPT.stateChanged.connect(self.on_party_table_changed)
+        self.ui.spinBoxControlledNPC.editingFinished.connect(self.on_party_table_changed)
+        self.ui.spinBoxAIState.editingFinished.connect(self.on_party_table_changed)
+        self.ui.spinBoxFollowState.editingFinished.connect(self.on_party_table_changed)
+        self.ui.checkBoxSoloMode.stateChanged.connect(self.on_party_table_changed)
+        self.ui.spinBoxLastGUIPanel.editingFinished.connect(self.on_party_table_changed)
+        self.ui.spinBoxJournalSortOrder.editingFinished.connect(self.on_party_table_changed)
+        self.ui.tableWidgetAvailableNPCs.itemChanged.connect(self.on_party_table_changed)
+        self.ui.tableWidgetInfluence.itemChanged.connect(self.on_party_table_changed)
         
         # Global variables signals
         self.ui.tableWidgetBooleans.itemChanged.connect(self.on_global_var_changed)
@@ -160,7 +186,30 @@ class SaveGameEditor(Editor):
         self.ui.spinBoxCharFP.editingFinished.connect(self.on_character_data_changed)
         self.ui.spinBoxCharMaxFP.editingFinished.connect(self.on_character_data_changed)
         self.ui.spinBoxCharXP.editingFinished.connect(self.on_character_data_changed)
+        self.ui.checkBoxCharMin1HP.stateChanged.connect(self.on_character_data_changed)
+        self.ui.spinBoxCharGoodEvil.editingFinished.connect(self.on_character_data_changed)
+        self.ui.spinBoxCharSTR.editingFinished.connect(self.on_character_data_changed)
+        self.ui.spinBoxCharDEX.editingFinished.connect(self.on_character_data_changed)
+        self.ui.spinBoxCharCON.editingFinished.connect(self.on_character_data_changed)
+        self.ui.spinBoxCharINT.editingFinished.connect(self.on_character_data_changed)
+        self.ui.spinBoxCharWIS.editingFinished.connect(self.on_character_data_changed)
+        self.ui.spinBoxCharCHA.editingFinished.connect(self.on_character_data_changed)
+        self.ui.spinBoxCharPortraitId.editingFinished.connect(self.on_character_data_changed)
+        self.ui.spinBoxCharAppearanceType.editingFinished.connect(self.on_character_data_changed)
+        self.ui.comboBoxCharGender.currentIndexChanged.connect(self.on_character_data_changed)
+        self.ui.spinBoxCharSoundset.editingFinished.connect(self.on_character_data_changed)
         self.ui.tableWidgetSkills.itemChanged.connect(self.on_character_data_changed)
+        self.ui.tableWidgetCharClasses.itemChanged.connect(self.on_character_data_changed)
+        self.ui.listWidgetCharFeats.itemChanged.connect(self.on_character_data_changed)
+        
+        # Cached modules signals
+        self.ui.pushButtonOpenModuleResource.clicked.connect(self.on_open_module_resource)
+        self.ui.treeViewCachedModules.doubleClicked.connect(self.on_open_module_resource)
+        
+        # Advanced/Raw signals
+        self.ui.tableWidgetAdvancedSaveInfo.itemChanged.connect(self.on_advanced_field_changed)
+        self.ui.tableWidgetAdvancedPartyTable.itemChanged.connect(self.on_advanced_field_changed)
+        self.ui.listWidgetAdvancedResources.itemDoubleClicked.connect(self.on_open_advanced_resource)
         
         # Tool actions
         self.ui.actionFlushEventQueue.triggered.connect(self.flush_event_queue)
@@ -218,6 +267,9 @@ class SaveGameEditor(Editor):
             self.populate_inventory()
             self.populate_journal()
             self.populate_screenshot()
+            self.populate_cached_modules()
+            self.populate_reputation()
+            self.populate_advanced_fields()
             
             self.ui.statusBar.showMessage(f"Loaded save: {self._save_info.savegame_name}", 3000)
             
@@ -236,7 +288,6 @@ class SaveGameEditor(Editor):
             try:
                 # Check if self is still valid before accessing it
                 if hasattr(self, 'isVisible') and hasattr(self, 'ui'):
-                    from toolset.gui.common.localization import translate as tr, trf
                     QMessageBox.critical(
                         self,
                         tr("Error Loading Save"),
@@ -288,6 +339,9 @@ class SaveGameEditor(Editor):
             self.update_party_table_from_ui()
             self.update_global_vars_from_ui()
             self.update_characters_from_ui()
+            self.update_inventory_from_ui()
+            self.update_reputation_from_ui()
+            self.update_advanced_fields_from_ui()
             
             # Save all components
             if self._save_info:
@@ -296,8 +350,11 @@ class SaveGameEditor(Editor):
                 self._party_table.save()
             if self._global_vars:
                 self._global_vars.save()
+            if self._nested_capsule:
+                self._nested_capsule.save()
+            if self._save_folder:
+                self._save_folder.save()
             
-            from toolset.gui.common.localization import translate as tr, trf
             self.ui.statusBar.showMessage(tr("Save game saved successfully"), 3000)
             
         except Exception as e:
@@ -325,6 +382,9 @@ class SaveGameEditor(Editor):
         self.clear_inventory()
         self.clear_journal()
         self.clear_screenshot()
+        self.clear_cached_modules()
+        self.clear_reputation()
+        self.clear_advanced_fields()
 
     # ==================== Save Info Methods ====================
     
@@ -333,28 +393,85 @@ class SaveGameEditor(Editor):
         if not self._save_info:
             return
         
+        # Basic information
         self.ui.lineEditSaveName.setText(self._save_info.savegame_name)
         self.ui.lineEditAreaName.setText(self._save_info.area_name)
         self.ui.lineEditLastModule.setText(self._save_info.last_module)
         self.ui.spinBoxTimePlayed.setValue(self._save_info.time_played)
         self.ui.lineEditPCName.setText(self._save_info.pc_name)
+        
+        # Timestamp - format as readable date if available
+        if self._save_info.timestamp is not None:
+            # Windows FILETIME: 100-nanosecond intervals since Jan 1, 1601
+            # Convert to seconds since epoch
+            try:
+                from datetime import datetime, timezone
+                win_epoch = datetime(1601, 1, 1, tzinfo=timezone.utc)
+                seconds_since_win_epoch = self._save_info.timestamp / 10_000_000
+                dt = win_epoch + timedelta(seconds=seconds_since_win_epoch)
+                self.ui.lineEditTimestamp.setText(dt.strftime("%Y-%m-%d %H:%M:%S UTC"))
+            except Exception:
+                self.ui.lineEditTimestamp.setText(str(self._save_info.timestamp))
+        else:
+            self.ui.lineEditTimestamp.clear()
+        
+        # Cheat flag
+        self.ui.checkBoxCheatUsed.setChecked(self._save_info.cheat_used)
+        
+        # Hints
+        self.ui.spinBoxGameplayHint.setValue(self._save_info.gameplay_hint)
+        self.ui.spinBoxStoryHint.setValue(self._save_info.story_hint)
+        
+        # Portraits
         self.ui.lineEditPortrait0.setText(str(self._save_info.portrait0))
         self.ui.lineEditPortrait1.setText(str(self._save_info.portrait1))
         self.ui.lineEditPortrait2.setText(str(self._save_info.portrait2))
+        
+        # Xbox Live
+        self.ui.lineEditLive1.setText(self._save_info.live1)
+        self.ui.lineEditLive2.setText(self._save_info.live2)
+        self.ui.lineEditLive3.setText(self._save_info.live3)
+        self.ui.lineEditLive4.setText(self._save_info.live4)
+        self.ui.lineEditLive5.setText(self._save_info.live5)
+        self.ui.lineEditLive6.setText(self._save_info.live6)
+        self.ui.spinBoxLiveContent.setValue(self._save_info.livecontent)
     
     def update_save_info_from_ui(self):
         """Update SaveInfo data structure from UI."""
         if not self._save_info:
             return
         
+        # Basic information
         self._save_info.savegame_name = self.ui.lineEditSaveName.text()
         self._save_info.area_name = self.ui.lineEditAreaName.text()
         self._save_info.last_module = self.ui.lineEditLastModule.text()
         self._save_info.time_played = self.ui.spinBoxTimePlayed.value()
         self._save_info.pc_name = self.ui.lineEditPCName.text()
-        self._save_info.portrait0 = self.ui.lineEditPortrait0.text()
-        self._save_info.portrait1 = self.ui.lineEditPortrait1.text()
-        self._save_info.portrait2 = self.ui.lineEditPortrait2.text()
+        
+        # Timestamp - preserve existing if not editable (read-only field)
+        # Note: Timestamp editing would require date picker, keeping read-only for now
+        
+        # Cheat flag
+        self._save_info.cheat_used = self.ui.checkBoxCheatUsed.isChecked()
+        
+        # Hints
+        self._save_info.gameplay_hint = self.ui.spinBoxGameplayHint.value()
+        self._save_info.story_hint = self.ui.spinBoxStoryHint.value()
+        
+        # Portraits
+        from pykotor.common.misc import ResRef
+        self._save_info.portrait0 = ResRef(self.ui.lineEditPortrait0.text())
+        self._save_info.portrait1 = ResRef(self.ui.lineEditPortrait1.text())
+        self._save_info.portrait2 = ResRef(self.ui.lineEditPortrait2.text())
+        
+        # Xbox Live
+        self._save_info.live1 = self.ui.lineEditLive1.text()
+        self._save_info.live2 = self.ui.lineEditLive2.text()
+        self._save_info.live3 = self.ui.lineEditLive3.text()
+        self._save_info.live4 = self.ui.lineEditLive4.text()
+        self._save_info.live5 = self.ui.lineEditLive5.text()
+        self._save_info.live6 = self.ui.lineEditLive6.text()
+        self._save_info.livecontent = self.ui.spinBoxLiveContent.value()
     
     def clear_save_info(self):
         """Clear Save Info tab."""
@@ -363,9 +480,20 @@ class SaveGameEditor(Editor):
         self.ui.lineEditLastModule.clear()
         self.ui.spinBoxTimePlayed.setValue(0)
         self.ui.lineEditPCName.clear()
+        self.ui.lineEditTimestamp.clear()
+        self.ui.checkBoxCheatUsed.setChecked(False)
+        self.ui.spinBoxGameplayHint.setValue(0)
+        self.ui.spinBoxStoryHint.setValue(0)
         self.ui.lineEditPortrait0.clear()
         self.ui.lineEditPortrait1.clear()
         self.ui.lineEditPortrait2.clear()
+        self.ui.lineEditLive1.clear()
+        self.ui.lineEditLive2.clear()
+        self.ui.lineEditLive3.clear()
+        self.ui.lineEditLive4.clear()
+        self.ui.lineEditLive5.clear()
+        self.ui.lineEditLive6.clear()
+        self.ui.spinBoxLiveContent.setValue(0)
     
     def clear_screenshot(self):
         """Clear screenshot preview."""
@@ -398,6 +526,27 @@ class SaveGameEditor(Editor):
         self.ui.spinBoxXPPool.setValue(self._party_table.pt_xp_pool)
         self.ui.spinBoxComponents.setValue(self._party_table.pt_item_componen)
         self.ui.spinBoxChemicals.setValue(self._party_table.pt_item_chemical)
+        self.ui.spinBoxTimePlayedPT.setValue(self._party_table.time_played)
+        self.ui.checkBoxCheatUsedPT.setChecked(self._party_table.pt_cheat_used)
+        
+        # Party state
+        self.ui.spinBoxControlledNPC.setValue(self._party_table.pt_controlled_npc)
+        self.ui.spinBoxAIState.setValue(self._party_table.pt_aistate)
+        self.ui.spinBoxFollowState.setValue(self._party_table.pt_followstate)
+        self.ui.checkBoxSoloMode.setChecked(self._party_table.pt_solomode)
+        self.ui.spinBoxLastGUIPanel.setValue(self._party_table.pt_last_gui_pnl)
+        self.ui.spinBoxJournalSortOrder.setValue(self._party_table.jnl_sort_order)
+        
+        # Available NPCs
+        self._populate_available_npcs()
+        
+        # Influence (K2 only)
+        self._populate_influence()
+        
+        # Pazaak, UI messages, cost multipliers - show summary (full editing in Advanced tab)
+        self._populate_pazaak_summary()
+        self._populate_ui_messages_summary()
+        self._populate_cost_multipliers_summary()
         
         # Ensure cached characters are loaded for name resolution
         if self._nested_capsule:
@@ -667,8 +816,33 @@ class SaveGameEditor(Editor):
             lines.append("<b>Vital Statistics</b><br>")
             hp_percent = (char.current_hp / char.max_hp * 100) if char.max_hp > 0 else 0
             fp_percent = (char.fp / char.max_fp * 100) if char.max_fp > 0 else 0
-            hp_color = "#00AA00" if hp_percent > 50 else "#FFAA00" if hp_percent > 25 else "#FF0000"
-            fp_color = "#00AA00" if fp_percent > 50 else "#FFAA00" if fp_percent > 25 else "#FF0000"
+            
+            # Use palette colors for HP/FP indicators
+            from qtpy.QtWidgets import QApplication
+            from qtpy.QtGui import QPalette, QColor
+            app = QApplication.instance()
+            if app is not None and isinstance(app, QApplication):
+                palette = app.palette()
+            else:
+                # Use default palette for fallback
+                palette = QPalette()
+            
+            link_color = palette.color(QPalette.ColorRole.Link)
+            # Create semantic colors from palette
+            # High: use link color (usually good/positive)
+            # Medium: create orange-ish color from link
+            # Low: create red-ish color from link
+            high_color = link_color
+            medium_color = QColor(link_color)
+            medium_color.setRed(min(255, int(medium_color.red() * 1.5)))
+            medium_color.setGreen(int(medium_color.green() * 0.7))
+            low_color = QColor(link_color)
+            low_color.setRed(min(255, int(low_color.red() * 1.8)))
+            low_color.setGreen(int(low_color.green() * 0.3))
+            low_color.setBlue(int(low_color.blue() * 0.3))
+            
+            hp_color = high_color.name() if hp_percent > 50 else medium_color.name() if hp_percent > 25 else low_color.name()
+            fp_color = high_color.name() if fp_percent > 50 else medium_color.name() if fp_percent > 25 else low_color.name()
             lines.append(f"<b>HP:</b> <span style='color: {hp_color}'>{char.current_hp}/{char.max_hp}</span> ({hp_percent:.1f}%)<br>")
             lines.append(f"<b>FP:</b> <span style='color: {fp_color}'>{char.fp}/{char.max_fp}</span> ({fp_percent:.1f}%)<br>")
             
@@ -849,15 +1023,131 @@ class SaveGameEditor(Editor):
         
         return None
     
+    def _populate_available_npcs(self):
+        """Populate Available NPCs table."""
+        if not self._party_table:
+            return
+        
+        # Ensure we have enough entries
+        while len(self._party_table.pt_avail_npcs) < 12:
+            from pykotor.extract.savedata import AvailableNPCEntry
+            self._party_table.pt_avail_npcs.append(AvailableNPCEntry())
+        
+        self.ui.tableWidgetAvailableNPCs.setRowCount(12)
+        for row in range(12):
+            if row < len(self._party_table.pt_avail_npcs):
+                npc = self._party_table.pt_avail_npcs[row]
+                
+                # Index
+                index_item = QTableWidgetItem(str(row))
+                index_item.setFlags(index_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                self.ui.tableWidgetAvailableNPCs.setItem(row, 0, index_item)
+                
+                # Available checkbox
+                avail_checkbox = QCheckBox()
+                avail_checkbox.setChecked(npc.npc_available)
+                avail_checkbox.stateChanged.connect(self.on_party_table_changed)
+                self.ui.tableWidgetAvailableNPCs.setCellWidget(row, 1, avail_checkbox)
+                
+                # Selectable checkbox
+                select_checkbox = QCheckBox()
+                select_checkbox.setChecked(npc.npc_selected)
+                select_checkbox.stateChanged.connect(self.on_party_table_changed)
+                self.ui.tableWidgetAvailableNPCs.setCellWidget(row, 2, select_checkbox)
+    
+    def _populate_influence(self):
+        """Populate Influence table (K2 only)."""
+        if not self._party_table:
+            return
+        
+        influence_list = self._party_table.pt_influence or []
+        self.ui.tableWidgetInfluence.setRowCount(max(12, len(influence_list)))
+        
+        for row in range(12):
+            # NPC Index
+            index_item = QTableWidgetItem(str(row))
+            index_item.setFlags(index_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.ui.tableWidgetInfluence.setItem(row, 0, index_item)
+            
+            # Influence value
+            if row < len(influence_list):
+                influence_item = QTableWidgetItem(str(influence_list[row]))
+            else:
+                influence_item = QTableWidgetItem("0")
+            influence_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.ui.tableWidgetInfluence.setItem(row, 1, influence_item)
+    
+    def _populate_pazaak_summary(self):
+        """Populate Pazaak summary (read-only, full editing in Advanced tab)."""
+        if not self._party_table:
+            return
+        
+        cards_count = len(self._party_table.pt_pazaakcards) if self._party_table.pt_pazaakcards else 0
+        decks_count = len(self._party_table.pt_pazaakdecks) if self._party_table.pt_pazaakdecks else 0
+        self.ui.textEditPazaakCards.setPlainText(f"Pazaak Cards: {cards_count} entries (GFF List - edit in Advanced/Raw tab)")
+        self.ui.textEditPazaakDecks.setPlainText(f"Pazaak Decks: {decks_count} entries (GFF List - edit in Advanced/Raw tab)")
+    
+    def _populate_ui_messages_summary(self):
+        """Populate UI messages summary."""
+        if not self._party_table:
+            return
+        
+        fb_count = len(self._party_table.pt_fb_msg_list) if self._party_table.pt_fb_msg_list else 0
+        dlg_count = len(self._party_table.pt_dlg_msg_list) if self._party_table.pt_dlg_msg_list else 0
+        tut_size = len(self._party_table.pt_tut_wnd_shown) if self._party_table.pt_tut_wnd_shown else 0
+        self.ui.textEditFBMsgList.setPlainText(f"Feedback Messages: {fb_count} entries (GFF List - edit in Advanced/Raw tab)")
+        self.ui.textEditDlgMsgList.setPlainText(f"Dialog Messages: {dlg_count} entries (GFF List - edit in Advanced/Raw tab)")
+        self.ui.lineEditTutWndShown.setText(f"Binary data: {tut_size} bytes (edit in Advanced/Raw tab)")
+    
+    def _populate_cost_multipliers_summary(self):
+        """Populate cost multipliers summary."""
+        if not self._party_table:
+            return
+        
+        cost_count = len(self._party_table.pt_cost_mult_lis) if self._party_table.pt_cost_mult_lis else 0
+        self.ui.textEditCostMultipliers.setPlainText(f"Cost Multipliers: {cost_count} entries (GFF List - edit in Advanced/Raw tab)")
+    
     def update_party_table_from_ui(self):
         """Update PartyTable data structure from UI."""
         if not self._party_table:
             return
         
+        # Resources
         self._party_table.pt_gold = self.ui.spinBoxGold.value()
         self._party_table.pt_xp_pool = self.ui.spinBoxXPPool.value()
         self._party_table.pt_item_componen = self.ui.spinBoxComponents.value()
         self._party_table.pt_item_chemical = self.ui.spinBoxChemicals.value()
+        self._party_table.time_played = self.ui.spinBoxTimePlayedPT.value()
+        self._party_table.pt_cheat_used = self.ui.checkBoxCheatUsedPT.isChecked()
+        
+        # Party state
+        self._party_table.pt_controlled_npc = self.ui.spinBoxControlledNPC.value()
+        self._party_table.pt_aistate = self.ui.spinBoxAIState.value()
+        self._party_table.pt_followstate = self.ui.spinBoxFollowState.value()
+        self._party_table.pt_solomode = self.ui.checkBoxSoloMode.isChecked()
+        self._party_table.pt_last_gui_pnl = self.ui.spinBoxLastGUIPanel.value()
+        self._party_table.jnl_sort_order = self.ui.spinBoxJournalSortOrder.value()
+        
+        # Available NPCs
+        for row in range(min(12, self.ui.tableWidgetAvailableNPCs.rowCount())):
+            if row < len(self._party_table.pt_avail_npcs):
+                avail_widget = self.ui.tableWidgetAvailableNPCs.cellWidget(row, 1)
+                select_widget = self.ui.tableWidgetAvailableNPCs.cellWidget(row, 2)
+                if isinstance(avail_widget, QCheckBox):
+                    self._party_table.pt_avail_npcs[row].npc_available = avail_widget.isChecked()
+                if isinstance(select_widget, QCheckBox):
+                    self._party_table.pt_avail_npcs[row].npc_selected = select_widget.isChecked()
+        
+        # Influence (K2 only)
+        influence_list = []
+        for row in range(min(12, self.ui.tableWidgetInfluence.rowCount())):
+            influence_item = self.ui.tableWidgetInfluence.item(row, 1)
+            if influence_item:
+                try:
+                    influence_list.append(int(influence_item.text()))
+                except ValueError:
+                    influence_list.append(0)
+        self._party_table.pt_influence = influence_list
     
     def clear_party_table(self):
         """Clear Party Table tab."""
@@ -865,7 +1155,23 @@ class SaveGameEditor(Editor):
         self.ui.spinBoxXPPool.setValue(0)
         self.ui.spinBoxComponents.setValue(0)
         self.ui.spinBoxChemicals.setValue(0)
+        self.ui.spinBoxTimePlayedPT.setValue(-1)
+        self.ui.checkBoxCheatUsedPT.setChecked(False)
+        self.ui.spinBoxControlledNPC.setValue(-1)
+        self.ui.spinBoxAIState.setValue(0)
+        self.ui.spinBoxFollowState.setValue(0)
+        self.ui.checkBoxSoloMode.setChecked(False)
+        self.ui.spinBoxLastGUIPanel.setValue(0)
+        self.ui.spinBoxJournalSortOrder.setValue(0)
         self.ui.listWidgetPartyMembers.clear()
+        self.ui.tableWidgetAvailableNPCs.setRowCount(0)
+        self.ui.tableWidgetInfluence.setRowCount(0)
+        self.ui.textEditPazaakCards.clear()
+        self.ui.textEditPazaakDecks.clear()
+        self.ui.textEditFBMsgList.clear()
+        self.ui.textEditDlgMsgList.clear()
+        self.ui.lineEditTutWndShown.clear()
+        self.ui.textEditCostMultipliers.clear()
     
     def on_party_table_changed(self):
         """Handle Party Table changes."""
@@ -1174,6 +1480,8 @@ class SaveGameEditor(Editor):
         
         # Stats - resolve LocalizedString to actual text
         self.ui.lineEditCharName.setText(self._resolve_localized_string(char.first_name, ""))
+        self.ui.lineEditCharTag.setText(char.tag or "")
+        self.ui.lineEditCharResRef.setText(str(char.resref) if char.resref else "")
         self.ui.spinBoxCharHP.setValue(char.current_hp)
         self.ui.spinBoxCharMaxHP.setValue(char.max_hp)
         self.ui.spinBoxCharFP.setValue(char.fp)
@@ -1182,6 +1490,38 @@ class SaveGameEditor(Editor):
         # Get total XP from classes
         total_xp = sum(cls.class_level for cls in char.classes) if char.classes else 0
         self.ui.spinBoxCharXP.setValue(total_xp)
+        
+        # Flags
+        self.ui.checkBoxCharMin1HP.setChecked(char.min1_hp if hasattr(char, 'min1_hp') else False)
+        self.ui.spinBoxCharGoodEvil.setValue(char.good_evil if hasattr(char, 'good_evil') else 50)
+        
+        # Attributes
+        self.ui.spinBoxCharSTR.setValue(char.strength if hasattr(char, 'strength') else 10)
+        self.ui.spinBoxCharDEX.setValue(char.dexterity if hasattr(char, 'dexterity') else 10)
+        self.ui.spinBoxCharCON.setValue(char.constitution if hasattr(char, 'constitution') else 10)
+        self.ui.spinBoxCharINT.setValue(char.intelligence if hasattr(char, 'intelligence') else 10)
+        self.ui.spinBoxCharWIS.setValue(char.wisdom if hasattr(char, 'wisdom') else 10)
+        self.ui.spinBoxCharCHA.setValue(char.charisma if hasattr(char, 'charisma') else 10)
+        
+        # Appearance
+        self.ui.spinBoxCharPortraitId.setValue(char.portrait_id if hasattr(char, 'portrait_id') else 0)
+        self.ui.spinBoxCharAppearanceType.setValue(char.appearance_id if hasattr(char, 'appearance_id') else 0)
+        self.ui.spinBoxCharSoundset.setValue(char.soundset if hasattr(char, 'soundset') else 0)
+        
+        # Gender
+        if hasattr(self.ui, 'comboBoxCharGender'):
+            gender_id = char.gender if hasattr(char, 'gender') else 0
+            gender_names = ["None", "Male", "Female", "Other", "Both"]
+            self.ui.comboBoxCharGender.clear()
+            self.ui.comboBoxCharGender.addItems(gender_names)
+            if 0 <= gender_id < len(gender_names):
+                self.ui.comboBoxCharGender.setCurrentIndex(gender_id)
+        
+        # Classes
+        self._populate_character_classes(char)
+        
+        # Feats
+        self._populate_character_feats(char)
         
         # Skills (individual attributes) - add label showing whose skills these are
         skill_attrs = ['computer_use', 'demolitions', 'stealth', 'awareness', 'persuade', 'repair', 'security', 'treat_injury']
@@ -1265,6 +1605,57 @@ class SaveGameEditor(Editor):
         # Make equipment list editable (double-click to edit)
         self.ui.listWidgetEquipment.itemDoubleClicked.connect(self.on_equipment_item_double_clicked)
     
+    def _populate_character_classes(self, char: UTC):
+        """Populate character classes table."""
+        if not hasattr(self.ui, 'tableWidgetCharClasses'):
+            return
+        
+        classes = char.classes if hasattr(char, 'classes') and char.classes else []
+        self.ui.tableWidgetCharClasses.setRowCount(len(classes))
+        
+        for row, cls in enumerate(classes):
+            # Class name
+            class_name = self._get_class_name(cls.class_id) if self._installation else f"Class {cls.class_id}"
+            class_item = QTableWidgetItem(class_name or f"Class {cls.class_id}")
+            class_item.setFlags(class_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.ui.tableWidgetCharClasses.setItem(row, 0, class_item)
+            
+            # Level
+            level_item = QTableWidgetItem(str(cls.class_level))
+            level_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.ui.tableWidgetCharClasses.setItem(row, 1, level_item)
+            
+            # Powers count
+            powers_count = len(cls.known_spells) if hasattr(cls, 'known_spells') and cls.known_spells else 0
+            powers_item = QTableWidgetItem(str(powers_count))
+            powers_item.setFlags(powers_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            powers_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.ui.tableWidgetCharClasses.setItem(row, 2, powers_item)
+    
+    def _populate_character_feats(self, char: UTC):
+        """Populate character feats list."""
+        if not hasattr(self.ui, 'listWidgetCharFeats'):
+            return
+        
+        self.ui.listWidgetCharFeats.clear()
+        
+        feats = char.feats if hasattr(char, 'feats') and char.feats else []
+        for feat_id in feats:
+            # Try to get feat name from installation
+            feat_name = f"Feat {feat_id}"
+            if self._installation:
+                try:
+                    from toolset.data.installation import HTInstallation
+                    feats_2da: TwoDA | None = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_FEATS)
+                    if feats_2da and 0 <= feat_id < feats_2da.get_height():
+                        feat_name = feats_2da.get_cell(feat_id, "label") or feat_name
+                except Exception:
+                    pass
+            
+            item = QListWidgetItem(feat_name)
+            item.setData(Qt.ItemDataRole.UserRole, feat_id)
+            self.ui.listWidgetCharFeats.addItem(item)
+    
     def update_characters_from_ui(self):
         """Update character data from UI."""
         if not self._current_character:
@@ -1287,6 +1678,38 @@ class SaveGameEditor(Editor):
         self._current_character.max_fp = self.ui.spinBoxCharMaxFP.value()
         # NOTE: XP is stored per class, not as a single value
         
+        # Flags
+        if hasattr(self._current_character, 'min1_hp'):
+            self._current_character.min1_hp = self.ui.checkBoxCharMin1HP.isChecked()
+        if hasattr(self._current_character, 'good_evil'):
+            self._current_character.good_evil = self.ui.spinBoxCharGoodEvil.value()
+        
+        # Attributes
+        if hasattr(self._current_character, 'strength'):
+            self._current_character.strength = self.ui.spinBoxCharSTR.value()
+        if hasattr(self._current_character, 'dexterity'):
+            self._current_character.dexterity = self.ui.spinBoxCharDEX.value()
+        if hasattr(self._current_character, 'constitution'):
+            self._current_character.constitution = self.ui.spinBoxCharCON.value()
+        if hasattr(self._current_character, 'intelligence'):
+            self._current_character.intelligence = self.ui.spinBoxCharINT.value()
+        if hasattr(self._current_character, 'wisdom'):
+            self._current_character.wisdom = self.ui.spinBoxCharWIS.value()
+        if hasattr(self._current_character, 'charisma'):
+            self._current_character.charisma = self.ui.spinBoxCharCHA.value()
+        
+        # Appearance
+        if hasattr(self._current_character, 'portrait_id'):
+            self._current_character.portrait_id = self.ui.spinBoxCharPortraitId.value()
+        if hasattr(self._current_character, 'appearance_id'):
+            self._current_character.appearance_id = self.ui.spinBoxCharAppearanceType.value()
+        if hasattr(self._current_character, 'soundset'):
+            self._current_character.soundset = self.ui.spinBoxCharSoundset.value()
+        
+        # Gender
+        if hasattr(self._current_character, 'gender') and hasattr(self.ui, 'comboBoxCharGender'):
+            self._current_character.gender = self.ui.comboBoxCharGender.currentIndex()
+        
         # Update skills (individual attributes)
         skill_attrs = ['computer_use', 'demolitions', 'stealth', 'awareness', 'persuade', 'repair', 'security', 'treat_injury']
         for row in range(min(self.ui.tableWidgetSkills.rowCount(), len(skill_attrs))):
@@ -1297,6 +1720,17 @@ class SaveGameEditor(Editor):
                     setattr(self._current_character, skill_attrs[row], rank)
                 except ValueError:
                     pass
+        
+        # Update classes (level only - class ID and powers are read-only for now)
+        if hasattr(self._current_character, 'classes') and hasattr(self.ui, 'tableWidgetCharClasses'):
+            for row in range(min(len(self._current_character.classes), self.ui.tableWidgetCharClasses.rowCount())):
+                level_item = self.ui.tableWidgetCharClasses.item(row, 1)
+                if level_item:
+                    try:
+                        level = int(level_item.text())
+                        self._current_character.classes[row].class_level = level
+                    except (ValueError, IndexError):
+                        pass
     
     def clear_characters(self):
         """Clear Characters tab."""
@@ -1306,21 +1740,37 @@ class SaveGameEditor(Editor):
     def clear_character_details(self):
         """Clear character details panel."""
         self.ui.lineEditCharName.clear()
+        self.ui.lineEditCharTag.clear()
+        self.ui.lineEditCharResRef.clear()
         self.ui.spinBoxCharHP.setValue(0)
         self.ui.spinBoxCharMaxHP.setValue(0)
         self.ui.spinBoxCharFP.setValue(0)
         self.ui.spinBoxCharMaxFP.setValue(0)
         self.ui.spinBoxCharXP.setValue(0)
+        self.ui.checkBoxCharMin1HP.setChecked(False)
+        self.ui.spinBoxCharGoodEvil.setValue(50)
+        self.ui.spinBoxCharSTR.setValue(10)
+        self.ui.spinBoxCharDEX.setValue(10)
+        self.ui.spinBoxCharCON.setValue(10)
+        self.ui.spinBoxCharINT.setValue(10)
+        self.ui.spinBoxCharWIS.setValue(10)
+        self.ui.spinBoxCharCHA.setValue(10)
+        self.ui.spinBoxCharPortraitId.setValue(0)
+        self.ui.spinBoxCharAppearanceType.setValue(0)
+        self.ui.spinBoxCharSoundset.setValue(0)
+        if hasattr(self.ui, 'comboBoxCharGender'):
+            self.ui.comboBoxCharGender.setCurrentIndex(0)
         self.ui.tableWidgetSkills.setRowCount(0)
         self.ui.listWidgetEquipment.clear()
+        if hasattr(self.ui, 'tableWidgetCharClasses'):
+            self.ui.tableWidgetCharClasses.setRowCount(0)
+        if hasattr(self.ui, 'listWidgetCharFeats'):
+            self.ui.listWidgetCharFeats.clear()
         
         # Reset skills label
         if hasattr(self.ui, 'labelSkillsCharacter'):
             self.ui.labelSkillsCharacter.setText("Skills")
             self.ui.labelSkillsCharacter.setToolTip("")
-        # Clear skills label
-        if hasattr(self.ui, 'labelSkillsCharacter'):
-            self.ui.labelSkillsCharacter.setText("Skills")
     
     def on_character_data_changed(self):
         """Handle character data changes."""
@@ -1462,9 +1912,13 @@ class SaveGameEditor(Editor):
         header = self.ui.tableWidgetInventory.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)  # Item name stretches
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)    # Count fixed
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)     # ResRef fixed
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)    # Charges fixed
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)     # ResRef fixed
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)     # Upgrades fixed
         self.ui.tableWidgetInventory.setColumnWidth(1, 80)   # Count column
-        self.ui.tableWidgetInventory.setColumnWidth(2, 150)  # ResRef column
+        self.ui.tableWidgetInventory.setColumnWidth(2, 80)   # Charges column
+        self.ui.tableWidgetInventory.setColumnWidth(3, 150)  # ResRef column
+        self.ui.tableWidgetInventory.setColumnWidth(4, 100)  # Upgrades column
         
         for row, item in enumerate(self._nested_capsule.inventory):
             # Get item name from installation - same logic as equipment display
@@ -1483,17 +1937,33 @@ class SaveGameEditor(Editor):
             # Stack size
             stack_size = getattr(item, 'stack_size', 1)  # Default to 1 if not available
             count_item = QTableWidgetItem(str(stack_size))
-            count_item.setFlags(count_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             count_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             count_item.setToolTip(f"Stack Size: {stack_size}")
             self.ui.tableWidgetInventory.setItem(row, 1, count_item)
+            
+            # Charges
+            charges = getattr(item, 'charges', 0)
+            max_charges = getattr(item, 'max_charges', 0)
+            charges_text = f"{charges}/{max_charges}" if max_charges > 0 else str(charges)
+            charges_item = QTableWidgetItem(charges_text)
+            charges_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            charges_item.setToolTip(f"Charges: {charges} / Max: {max_charges}")
+            self.ui.tableWidgetInventory.setItem(row, 2, charges_item)
             
             # ResRef
             resref_item = QTableWidgetItem(str(item.resref))
             resref_item.setFlags(resref_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             resref_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
             resref_item.setToolTip(f"Resource Reference: {item.resref}")
-            self.ui.tableWidgetInventory.setItem(row, 2, resref_item)
+            self.ui.tableWidgetInventory.setItem(row, 3, resref_item)
+            
+            # Upgrades (K2 only)
+            upgrades = getattr(item, 'upgrades', 0)
+            upgrades_text = str(upgrades) if upgrades > 0 else "0"
+            upgrades_item = QTableWidgetItem(upgrades_text)
+            upgrades_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            upgrades_item.setToolTip(f"Upgrades: {upgrades}")
+            self.ui.tableWidgetInventory.setItem(row, 4, upgrades_item)
     
     def _get_item_name(self, item) -> str:
         """Get display name for an inventory item.
@@ -1562,6 +2032,23 @@ class SaveGameEditor(Editor):
         stack_size = getattr(item, 'stack_size', 1)  # Default to 1 if not available
         lines.append(f"<b>Stack Size:</b> {stack_size}<br>")
         
+        # Charges
+        charges = getattr(item, 'charges', 0)
+        max_charges = getattr(item, 'max_charges', 0)
+        if max_charges > 0:
+            lines.append(f"<b>Charges:</b> {charges} / {max_charges}<br>")
+        
+        # Upgrades (K2)
+        upgrades = getattr(item, 'upgrades', 0)
+        if upgrades > 0:
+            lines.append(f"<b>Upgrades:</b> {upgrades}<br>")
+            # Upgrade slots (K2)
+            upgrade_slots = getattr(item, 'upgrade_slots', None)
+            if upgrade_slots:
+                slots_text = ", ".join(str(slot) for slot in upgrade_slots if slot > 0)
+                if slots_text:
+                    lines.append(f"<b>Upgrade Slots:</b> {slots_text}<br>")
+        
         # Additional item properties if available
         if hasattr(item, 'droppable'):
             lines.append(f"<b>Droppable:</b> {'Yes' if item.droppable else 'No'}<br>")
@@ -1591,9 +2078,78 @@ class SaveGameEditor(Editor):
         
         return "".join(lines)
     
+    def update_inventory_from_ui(self):
+        """Update inventory from UI (stack size, charges, upgrades)."""
+        if not self._nested_capsule:
+            return
+        
+        # Update inventory items from UI
+        for row in range(min(len(self._nested_capsule.inventory), self.ui.tableWidgetInventory.rowCount())):
+            item = self._nested_capsule.inventory[row]
+            
+            # Update stack size
+            count_item = self.ui.tableWidgetInventory.item(row, 1)
+            if count_item:
+                try:
+                    stack_size = int(count_item.text())
+                    if hasattr(item, 'stack_size'):
+                        item.stack_size = stack_size
+                except ValueError:
+                    pass
+            
+            # Update charges
+            charges_item = self.ui.tableWidgetInventory.item(row, 2)
+            if charges_item:
+                try:
+                    charges_text = charges_item.text()
+                    if '/' in charges_text:
+                        charges, max_charges = charges_text.split('/')
+                        if hasattr(item, 'charges'):
+                            item.charges = int(charges.strip())
+                        if hasattr(item, 'max_charges'):
+                            item.max_charges = int(max_charges.strip())
+                    else:
+                        if hasattr(item, 'charges'):
+                            item.charges = int(charges_text.strip())
+                except ValueError:
+                    pass
+            
+            # Update upgrades
+            upgrades_item = self.ui.tableWidgetInventory.item(row, 4)
+            if upgrades_item:
+                try:
+                    upgrades = int(upgrades_item.text())
+                    if hasattr(item, 'upgrades'):
+                        item.upgrades = upgrades
+                except ValueError:
+                    pass
+        
+        # Update inventory GFF - rebuild from updated UTI objects
+        # This ensures changes are serialized when SaveNestedCapsule.save() is called
+        if self._nested_capsule.inventory_gff:
+            from pykotor.resource.formats.gff import GFFList
+            from pykotor.resource.generics.uti import dismantle_uti
+            from copy import deepcopy
+            
+            inventory_list: GFFList = self._nested_capsule.inventory_gff.root.set_list("ItemList", GFFList())
+            inventory_list.clear()
+            for uti in self._nested_capsule.inventory:
+                uti_gff = dismantle_uti(uti, game=self._nested_capsule.game, use_deprecated=True)
+                inventory_list.append(deepcopy(uti_gff.root))
+    
     def clear_inventory(self):
         """Clear Inventory tab."""
         self.ui.tableWidgetInventory.setRowCount(0)
+    
+    def update_reputation_from_ui(self):
+        """Update reputation from UI."""
+        # TODO: Implement reputation editing when REPUTE.fac structure is fully understood
+        pass
+    
+    def update_advanced_fields_from_ui(self):
+        """Update additional fields from Advanced/Raw tabs."""
+        # TODO: Implement advanced field editing with proper GFF type conversion
+        pass
 
     # ==================== Journal Methods ====================
     
@@ -1989,6 +2545,271 @@ class SaveGameEditor(Editor):
         
         return super().eventFilter(obj, event)
 
+    # ==================== Cached Modules Methods ====================
+    
+    def populate_cached_modules(self):
+        """Populate Cached Modules tab with tree view of nested resources."""
+        if not self._nested_capsule:
+            return
+        
+        
+        # Use QStandardItemModel for tree view
+        model = QStandardItemModel()
+        model.setHorizontalHeaderLabels(["Resource", "Type", "Size"])
+        
+        root_item = model.invisibleRootItem()
+        
+        # Add cached modules
+        modules_item = QStandardItem("Cached Modules (.sav)")
+        modules_item.setEditable(False)
+        root_item.appendRow(modules_item)
+        
+        for module_id, module_erf in self._nested_capsule.cached_modules.items():
+            module_item = QStandardItem(str(module_id.resname))
+            module_item.setEditable(False)
+            module_item.setData(module_id, Qt.ItemDataRole.UserRole)
+            modules_item.appendRow(module_item)
+            
+            # Add resources within module
+            if hasattr(module_erf, 'resources'):
+                for res_id in module_erf.resources.keys():
+                    res_item = QStandardItem(str(res_id.resname))
+                    res_item.setEditable(False)
+                    res_item.setData((module_id, res_id), Qt.ItemDataRole.UserRole)
+                    type_item = QStandardItem(str(res_id.restype))
+                    type_item.setEditable(False)
+                    module_item.appendRow([res_item, type_item])
+        
+        # Add cached characters
+        chars_item = QStandardItem("Cached Characters (AVAILNPC*.utc)")
+        chars_item.setEditable(False)
+        root_item.appendRow(chars_item)
+        
+        for char_id, char_utc in self._nested_capsule.cached_characters.items():
+            char_item = QStandardItem(str(char_id.resname))
+            char_item.setEditable(False)
+            char_item.setData(char_id, Qt.ItemDataRole.UserRole)
+            type_item = QStandardItem("UTC")
+            type_item.setEditable(False)
+            chars_item.appendRow([char_item, type_item])
+        
+        # Add other resources
+        if self._nested_capsule.other_resources:
+            other_item = QStandardItem("Other Resources")
+            other_item.setEditable(False)
+            root_item.appendRow(other_item)
+            
+            for res_id in self._nested_capsule.other_resources.keys():
+                res_item = QStandardItem(str(res_id.resname))
+                res_item.setEditable(False)
+                res_item.setData(res_id, Qt.ItemDataRole.UserRole)
+                type_item = QStandardItem(str(res_id.restype))
+                type_item.setEditable(False)
+                other_item.appendRow([res_item, type_item])
+        
+        self.ui.treeViewCachedModules.setModel(model)
+        self.ui.treeViewCachedModules.expandAll()
+    
+    def clear_cached_modules(self):
+        """Clear Cached Modules tab."""
+        from qtpy.QtGui import QStandardItemModel
+        model = QStandardItemModel()
+        model.setHorizontalHeaderLabels(["Resource", "Type", "Size"])
+        self.ui.treeViewCachedModules.setModel(model)
+    
+    def on_open_module_resource(self):
+        """Open selected resource from cached modules in appropriate editor."""
+        selection = self.ui.treeViewCachedModules.selectedIndexes()
+        if not selection:
+            return
+        
+        index = selection[0]
+        model = index.model()
+        if not model:
+            return
+        
+        data = model.data(index, Qt.ItemDataRole.UserRole)
+        if not data:
+            return
+        
+        # Get the main window to access editor registry
+        from toolset.gui.windows.main import ToolWindow
+        main_window = self.parent()
+        while main_window and not isinstance(main_window, ToolWindow):
+            main_window = main_window.parent()
+        
+        if not main_window:
+            QMessageBox.warning(
+                self,
+                tr("Cannot Open Resource"),
+                tr("Main window not found. Cannot open resource editor.")
+            )
+            return
+        
+        # Determine resource identifier
+        if isinstance(data, tuple):
+            # Nested resource (module_id, res_id)
+            module_id, res_id = data
+            # TODO: Extract resource from nested module ERF
+            QMessageBox.information(
+                self,
+                tr("Nested Resource"),
+                trf("Opening nested resource {resname} from module {module}", 
+                    resname=str(res_id.resname), module=str(module_id.resname))
+            )
+        else:
+            # Direct resource
+            res_id = data
+            # Open in appropriate editor
+            try:
+                main_window.open_resource_editor(res_id.resname, res_id.restype, None)
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    tr("Error Opening Resource"),
+                    trf("Failed to open resource:\n{error}", error=str(e))
+                )
+    
+    # ==================== Reputation Methods ====================
+    
+    def populate_reputation(self):
+        """Populate Reputation tab from REPUTE.fac."""
+        if not self._nested_capsule or not self._nested_capsule.repute:
+            return
+        
+        # REPUTE.fac is a GFF file with faction reputation data
+        # Structure varies, but typically has faction entries
+        repute_gff = self._nested_capsule.repute
+        root = repute_gff.root
+        
+        # Try to find faction list or iterate all fields
+        # This is a simplified implementation - full implementation would parse GFF structure
+        factions = []
+        if root.exists("FactionList"):
+            faction_list = root.get_list("FactionList")
+            for i, faction_struct in enumerate(faction_list):
+                faction_name = faction_struct.acquire("FactionName", f"Faction {i}")
+                reputation = faction_struct.acquire("Reputation", 50)
+                factions.append((faction_name, reputation))
+        else:
+            # Fallback: show all fields as key-value pairs
+            for label, field_type, value in root:
+                if field_type.name not in ["List", "Struct"]:
+                    factions.append((label, str(value)))
+        
+        self.ui.tableWidgetReputation.setRowCount(len(factions))
+        for row, (faction, rep_value) in enumerate(factions):
+            faction_item = QTableWidgetItem(str(faction))
+            faction_item.setFlags(faction_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.ui.tableWidgetReputation.setItem(row, 0, faction_item)
+            
+            rep_item = QTableWidgetItem(str(rep_value))
+            rep_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.ui.tableWidgetReputation.setItem(row, 1, rep_item)
+    
+    def clear_reputation(self):
+        """Clear Reputation tab."""
+        self.ui.tableWidgetReputation.setRowCount(0)
+    
+    # ==================== Advanced/Raw Fields Methods ====================
+    
+    def populate_advanced_fields(self):
+        """Populate Advanced/Raw tabs with additional fields."""
+        # SaveInfo additional fields
+        if self._save_info and self._save_info.additional_fields:
+            self.ui.tableWidgetAdvancedSaveInfo.setRowCount(len(self._save_info.additional_fields))
+            for row, (label, (field_type, value)) in enumerate(self._save_info.additional_fields.items()):
+                name_item = QTableWidgetItem(label)
+                name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                self.ui.tableWidgetAdvancedSaveInfo.setItem(row, 0, name_item)
+                
+                type_item = QTableWidgetItem(field_type.name if hasattr(field_type, 'name') else str(field_type))
+                type_item.setFlags(type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                self.ui.tableWidgetAdvancedSaveInfo.setItem(row, 1, type_item)
+                
+                value_str = self._format_gff_value_for_display(value, field_type)
+                value_item = QTableWidgetItem(value_str)
+                self.ui.tableWidgetAdvancedSaveInfo.setItem(row, 2, value_item)
+        
+        # PartyTable additional fields
+        if self._party_table and self._party_table.additional_fields:
+            self.ui.tableWidgetAdvancedPartyTable.setRowCount(len(self._party_table.additional_fields))
+            for row, (label, (field_type, value)) in enumerate(self._party_table.additional_fields.items()):
+                name_item = QTableWidgetItem(label)
+                name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                self.ui.tableWidgetAdvancedPartyTable.setItem(row, 0, name_item)
+                
+                type_item = QTableWidgetItem(field_type.name if hasattr(field_type, 'name') else str(field_type))
+                type_item.setFlags(type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                self.ui.tableWidgetAdvancedPartyTable.setItem(row, 1, type_item)
+                
+                value_str = self._format_gff_value_for_display(value, field_type)
+                value_item = QTableWidgetItem(value_str)
+                self.ui.tableWidgetAdvancedPartyTable.setItem(row, 2, value_item)
+        
+        # Other resources
+        if self._nested_capsule and self._nested_capsule.other_resources:
+            self.ui.listWidgetAdvancedResources.clear()
+            for res_id in sorted(self._nested_capsule.other_resources.keys(), key=lambda x: str(x.resname)):
+                item_text = f"{res_id.resname} ({res_id.restype})"
+                item = QListWidgetItem(item_text)
+                item.setData(Qt.ItemDataRole.UserRole, res_id)
+                self.ui.listWidgetAdvancedResources.addItem(item)
+    
+    def _format_gff_value_for_display(self, value: Any, field_type) -> str:
+        """Format GFF value for display in Advanced tab."""
+        from pykotor.resource.formats.gff import GFFFieldType
+        
+        if field_type == GFFFieldType.List:
+            return f"List ({len(value) if hasattr(value, '__len__') else '?'} items)"
+        elif field_type == GFFFieldType.Struct:
+            return f"Struct ({len(value.fields()) if hasattr(value, 'fields') else '?'} fields)"
+        elif field_type == GFFFieldType.Binary:
+            return f"Binary ({len(value) if isinstance(value, bytes) else '?'} bytes)"
+        elif isinstance(value, bytes):
+            return f"<{len(value)} bytes>"
+        else:
+            return str(value)
+    
+    def clear_advanced_fields(self):
+        """Clear Advanced/Raw tabs."""
+        self.ui.tableWidgetAdvancedSaveInfo.setRowCount(0)
+        self.ui.tableWidgetAdvancedPartyTable.setRowCount(0)
+        self.ui.listWidgetAdvancedResources.clear()
+    
+    def on_advanced_field_changed(self, item: QTableWidgetItem):
+        """Handle changes to advanced/raw fields."""
+        # TODO: Update additional_fields dict when user edits values
+        # This requires parsing the edited string back to the appropriate GFF type
+        pass
+    
+    def on_open_advanced_resource(self, item: QListWidgetItem):
+        """Open advanced resource in appropriate editor."""
+        res_id = item.data(Qt.ItemDataRole.UserRole)
+        if not res_id:
+            return
+        
+        # Get the main window to access editor registry
+        from toolset.gui.windows.main import ToolWindow
+        main_window = self.parent()
+        while main_window and not isinstance(main_window, ToolWindow):
+            main_window = main_window.parent()
+        
+        if not main_window:
+            return
+        
+        # Get resource data from nested capsule
+        if res_id in self._nested_capsule.other_resources:
+            resource_data = self._nested_capsule.other_resources[res_id]
+            try:
+                main_window.open_resource_editor(res_id.resname, res_id.restype, resource_data)
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    tr("Error Opening Resource"),
+                    trf("Failed to open resource:\n{error}", error=str(e))
+                )
+    
     # ==================== Tool Methods ====================
     
     def flush_event_queue(self):

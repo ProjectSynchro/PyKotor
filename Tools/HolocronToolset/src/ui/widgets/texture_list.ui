@@ -61,7 +61,7 @@
         </widget>
       </item>
       <item>
-        <widget class="QLineEdit" name="searchEdit">
+        <widget class="SearchFilterWidget" name="searchEdit">
           <property name="placeholderText">
             <string>search...</string>
           </property>
@@ -115,6 +115,11 @@
       <extends>QListView</extends>
       <header location="global">utility.ui_libraries.qt.widgets.itemviews.listview</header>
       <container>1</container>
+    </customwidget>
+    <customwidget>
+      <class>SearchFilterWidget</class>
+      <extends>QWidget</extends>
+      <header location="global">utility.ui_libraries.qt.widgets.widgets.search_filter</header>
     </customwidget>
   </customwidgets>
   <resources />

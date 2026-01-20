@@ -462,7 +462,7 @@ def test_editor_help_action_triggered_opens_dialog(qtbot: QtBot, installation: H
 
         # Trigger the action
         doc_action.trigger()
-        qtbot.wait(100)  # Wait for dialog to be created
+        QtBot.wait(100)  # Wait for dialog to be created
 
         # Find the dialog
         dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
@@ -678,7 +678,7 @@ def test_f1_shortcut_opens_help(qtbot: QtBot, installation: HTInstallation, tmp_
 
         # Trigger the action (simulating F1 press)
         doc_action.trigger()
-        qtbot.wait(100)
+        QtBot.wait(100)
 
         # Find the dialog
         dialogs: list[EditorHelpDialog] = [child for child in editor.findChildren(EditorHelpDialog)]
@@ -798,7 +798,7 @@ ARE files define static area properties.
 
         # Trigger the action
         doc_action.trigger()
-        qtbot.wait(200)  # Wait for dialog to be created and shown
+        QtBot.wait(200)  # Wait for dialog to be created and shown
 
         # Find the dialog
         dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
@@ -825,11 +825,11 @@ def test_help_dialog_can_be_opened_multiple_times(qtbot: QtBot, installation: HT
     with patch("toolset.gui.dialogs.editor_help.get_wiki_path", return_value=wiki_dir):
         # Open dialog multiple times
         editor._show_help_dialog("test.md")
-        qtbot.wait(100)
+        QtBot.wait(100)
         editor._show_help_dialog("test.md")
-        qtbot.wait(100)
+        QtBot.wait(100)
         editor._show_help_dialog("test.md")
-        qtbot.wait(100)
+        QtBot.wait(100)
 
         # Should have multiple dialogs
         dialogs: list[EditorHelpDialog] = [child for child in editor.findChildren(EditorHelpDialog)]

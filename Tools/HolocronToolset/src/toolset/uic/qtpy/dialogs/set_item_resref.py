@@ -18,6 +18,7 @@ class Ui_Dialog(object):
         self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")
         self.resrefEdit = QtWidgets.QLineEdit(Dialog)
+        self.resrefEdit.setMaxLength(16)
         self.resrefEdit.setObjectName("resrefEdit")
         self.verticalLayout.addWidget(self.resrefEdit)
         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)

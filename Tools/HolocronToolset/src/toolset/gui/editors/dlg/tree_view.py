@@ -10,8 +10,8 @@ import qtpy
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtCore import QDataStream, QIODevice, QItemSelectionModel, QMimeData, QModelIndex, QPoint, QPointF, QRect, QTimer, Qt
-from qtpy.QtGui import QBrush, QColor, QCursor, QDrag, QFont, QPainter, QPen, QPixmap, QRadialGradient, QStandardItemModel, QTextDocument
-from qtpy.QtWidgets import QAbstractItemDelegate, QAbstractItemView, QStyledItemDelegate, QToolTip, QWidget
+from qtpy.QtGui import QBrush, QColor, QCursor, QDrag, QFont, QPainter, QPen, QPixmap, QPalette, QRadialGradient, QStandardItemModel, QTextDocument
+from qtpy.QtWidgets import QAbstractItemDelegate, QAbstractItemView, QApplication, QStyledItemDelegate, QToolTip, QWidget
 
 from pykotor.resource.generics.dlg import DLGEntry, DLGLink, DLGNode, DLGReply
 from toolset.gui.editors.dlg.constants import QT_STANDARD_ITEM_FORMAT, _DLG_MIME_DATA_ROLE, _LINK_PARENT_NODE_PATH_ROLE, _MODEL_INSTANCE_ID_ROLE
@@ -177,12 +177,29 @@ class DLGTreeView(RobustTreeView):
 
         painter = QPainter(self.viewport())
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        # Get palette colors for drop indicator
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+            highlight_color_obj = palette.color(QPalette.ColorRole.Highlight)
+            window_text_color = palette.color(QPalette.ColorRole.WindowText)
+        else:
+            palette = QPalette()
+            highlight_color_obj = palette.color(QPalette.ColorRole.Highlight)
+            window_text_color = palette.color(QPalette.ColorRole.WindowText)
+        
+        if not highlight_color_obj.isValid():
+            highlight_color_obj = QColor(200, 200, 200)
+        if not window_text_color.isValid():
+            window_text_color = QColor(0, 0, 0)
+        
         if self.drop_indicator_rect.topLeft().y() == self.drop_indicator_rect.bottomLeft().y():
-            pen = QPen(Qt.GlobalColor.black, 1, Qt.PenStyle.DashLine)
+            pen = QPen(window_text_color, 1, Qt.PenStyle.DashLine)
             painter.setPen(pen)
             painter.drawLine(self.drop_indicator_rect.topLeft(), self.drop_indicator_rect.topRight())
         else:
-            highlight_color = QColor(200, 200, 200, 120)
+            highlight_color = QColor(highlight_color_obj)
+            highlight_color.setAlpha(120)
             painter.fillRect(self.drop_indicator_rect, highlight_color)
 
         painter.end()
@@ -230,20 +247,59 @@ class DLGTreeView(RobustTreeView):
         pixmap.fill(Qt.GlobalColor.transparent)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setBrush(QColor(255, 255, 255, 200))
-        painter.setPen(QPen(QColor(200, 200, 200), 1))
+        # Get palette colors for drag preview
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+        else:
+            # Fallback to default palette
+            palette = QPalette()
+        
+        link_color = palette.color(QPalette.ColorRole.Link)
+        window_color = palette.color(QPalette.ColorRole.Window)
+        mid_color = palette.color(QPalette.ColorRole.Mid)
+        
+        # Ensure valid colors
+        if not link_color.isValid():
+            link_color = QColor(0, 120, 212)  # Default blue
+        if not window_color.isValid():
+            window_color = QColor(255, 255, 255)  # Default white
+        if not mid_color.isValid():
+            mid_color = QColor(200, 200, 200)  # Default gray
+        
+        # Entry color: Red-ish derived from link color (same as model.py)
+        entry_color_obj = QColor(link_color)
+        entry_color_obj.setRed(min(255, int(entry_color_obj.red() * 1.5 + 100)))
+        entry_color_obj.setGreen(int(entry_color_obj.green() * 0.3))
+        entry_color_obj.setBlue(int(entry_color_obj.blue() * 0.3))
+        entry_color = entry_color_obj.name()
+        
+        # Reply color: Use link color (blue-ish)
+        reply_color = link_color.name()
+        
+        # Background colors
+        bg_color = QColor(window_color)
+        bg_color.setAlpha(200)
+        border_color = QColor(mid_color)
+        
+        painter.setBrush(bg_color)
+        painter.setPen(QPen(border_color, 1))
         painter.drawRoundedRect(QRect(0, 0, pixmap.width(), pixmap.height()), 10, 10)
-        self.draw_drag_icons(painter, QPoint(30, 25), 15, QColor(255, 0, 0), f"{self.num_links}")
-        self.draw_drag_icons(painter, QPoint(pixmap.width() - 30, 25), 15, QColor(0, 0, 255), f"{self.num_unique_nodes}")
+        
+        # Use palette colors for icons
+        entry_qcolor = QColor(entry_color)
+        reply_qcolor = QColor(reply_color)
+        self.draw_drag_icons(painter, QPoint(30, 25), 15, entry_qcolor, f"{self.num_links}")
+        self.draw_drag_icons(painter, QPoint(pixmap.width() - 30, 25), 15, reply_qcolor, f"{self.num_unique_nodes}")
         font = QFont("Arial", 11)
         painter.setFont(font)
         doc = QTextDocument()
         if not dragged_item.index().parent().isValid():
-            color = "red"
+            color = entry_color
             link_list_display = "StartingList"
             node_list_display = "EntryList"
         else:
-            color = "blue"
+            color = reply_color
             assert dragged_item.link is not None
             link_list_display: Literal["EntriesList", "RepliesList", "StartingList"] = "EntriesList" if isinstance(dragged_item.link.node, DLGEntry) else "RepliesList"
             node_list_display: Literal["EntryList", "ReplyList"] = "EntryList" if isinstance(dragged_item.link.node, DLGEntry) else "ReplyList"
@@ -272,14 +328,32 @@ class DLGTreeView(RobustTreeView):
         color: QColor,
         text: str,
     ):
+        # Get palette colors for text
+        app = QApplication.instance()
+        if app is not None and isinstance(app, QApplication):
+            palette = app.palette()
+            window_text_color = palette.color(QPalette.ColorRole.WindowText)
+            bright_text_color = palette.color(QPalette.ColorRole.BrightText)
+            # Use bright text if available, otherwise window text
+            text_color = bright_text_color if bright_text_color.isValid() else window_text_color
+        else:
+            palette = QPalette()
+            text_color = palette.color(QPalette.ColorRole.WindowText)
+        
+        if not text_color.isValid():
+            text_color = QColor(0, 0, 0)  # Fallback to black
+        
+        # Create gradient with palette-aware colors
+        bright_color = QColor(text_color)
+        bright_color.setAlpha(200)
         gradient: QRadialGradient = QRadialGradient(QPointF(center), radius) if qtpy.QT5 else QRadialGradient(QPointF(center), radius, QPointF(center))
-        gradient.setColorAt(0, QColor(255, 255, 255, 200))
+        gradient.setColorAt(0, bright_color)
         gradient.setColorAt(0.5, color.lighter())
         gradient.setColorAt(1, color)
         painter.setBrush(QBrush(gradient))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawEllipse(center, radius, radius)
-        painter.setPen(QColor(0, 0, 0))
+        painter.setPen(text_color)
         painter.setFont(QFont("Arial", 10, QFont.Weight.Bold))
         text_rect = QRect(center.x() - radius, center.y() - radius, radius * 2, radius * 2)
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, text)

@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING, Any, Optional, cast
 import qtpy
 
 from qtpy.QtCore import QTimer, QUrl, Qt
-from qtpy.QtGui import QKeySequence
+from qtpy.QtGui import QGuiApplication, QKeyEvent, QKeySequence, QPalette
 from qtpy.QtMultimedia import QAudioOutput, QMediaPlayer
 from qtpy.QtWidgets import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
+    QApplication,  # pyright: ignore[reportPrivateImportUsage]
     QComboBox,
     QDoubleSpinBox,
     QFileDialog,
@@ -18,6 +19,7 @@ from qtpy.QtWidgets import (
     QLabel,
     QLineEdit,
     QListWidget,
+    QListWidgetItem,
     QMenu,
     QMessageBox,
     QPushButton,
@@ -26,6 +28,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from loggerplus import RobustLogger
 from pykotor.resource.formats.lip import LIP, LIPKeyFrame, LIPShape, bytes_lip, read_lip
 from pykotor.resource.type import ResourceType
 from toolset.gui.editor import Editor
@@ -34,7 +37,7 @@ if TYPE_CHECKING:
     import os
 
     from qtpy.QtCore import QPoint
-    from qtpy.QtGui import _QAction
+    from qtpy.QtGui import QAction
 
     from toolset.data.installation import HTInstallation
 
@@ -375,22 +378,26 @@ class LIPEditor(Editor):
         self.preview_timer.timeout.connect(self.update_preview_display)
 
         # Initialize undo/redo actions
-        self.undo_action: Optional[QAction] = None
-        self.redo_action: Optional[QAction] = None
+        self.undo_action: QAction | None = None
+        self.redo_action: QAction | None = None
 
         # Current preview state
-        self.current_shape: Optional[LIPShape] = None
-        self.preview_label: Optional[QLabel] = None
+        self.current_shape: LIPShape | None = None
+        self.preview_label: QLabel | None = None
+
+        # Store shortcuts to prevent garbage collection
+        self._shortcuts: list[QShortcut] = []
 
         self.setup_ui()
+        
+        # Initialize undo/redo system BEFORE setting up menus (menus need it)
+        self.undo_redo_manager = UndoRedoManager()
+        
         self._setup_menus()
         self._add_help_action()
         self.setup_shortcuts()
 
-        # Initialize undo/redo system
-        self.undo_redo_manager = UndoRedoManager()
-
-        self.lip: Optional[LIP] = None
+        self.lip: LIP | None = None
         self.duration: float = 0.0
 
     def setup_ui(self):
@@ -473,15 +480,25 @@ class LIPEditor(Editor):
         preview_layout = QHBoxLayout()
         preview_layout.addWidget(QLabel("Current Shape:"))
         self.preview_label = QLabel("None")
-        self.preview_label.setStyleSheet("""
-            QLabel {
+
+        # Use application palette for colors, no hardcoded color values
+        app = QApplication.instance()
+        assert isinstance(app, QGuiApplication), f"QApplication is not a QGuiApplication, instead got {app.__class__.__name__}"
+
+        palette = app.palette()
+        bg_color = palette.color(QPalette.ColorGroup.Normal, QPalette.ColorRole.Window)
+        text_color = palette.color(QPalette.ColorGroup.Normal, QPalette.ColorRole.WindowText)
+        border_color = palette.color(QPalette.ColorGroup.Normal, QPalette.ColorRole.Mid)
+        self.preview_label.setStyleSheet(f"""
+            QLabel {{
                 font-size: 24px;
                 font-weight: bold;
                 padding: 10px;
-                border: 1px solid #ccc;
+                border: 1px solid {border_color.name()};
                 border-radius: 5px;
-                background-color: #f0f0f0;
-            }
+                background-color: {bg_color.name()};
+                color: {text_color.name()};
+            }}
         """)
         preview_layout.addWidget(self.preview_label)
         layout.addLayout(preview_layout)
@@ -504,44 +521,46 @@ class LIPEditor(Editor):
     def setup_shortcuts(self):
         """Set up keyboard shortcuts."""
         # File operations
-        QShortcut(QKeySequence.StandardKey.Open, self, self.load_audio)
-        QShortcut(QKeySequence.StandardKey.Save, self, self.save)
-        QShortcut(QKeySequence.StandardKey.SaveAs, self, self.save_as)
+        self._shortcuts.append(QShortcut(QKeySequence.StandardKey.Open, self, self.load_audio))
+        self._shortcuts.append(QShortcut(QKeySequence.StandardKey.Save, self, self.save))
+        self._shortcuts.append(QShortcut(QKeySequence.StandardKey.SaveAs, self, self.save_as))
 
         # Keyframe operations
-        QShortcut(Qt.Key.Key_Insert, self, self.add_keyframe)
-        QShortcut(Qt.Key.Key_Return, self, self.update_keyframe)
-        QShortcut(Qt.Key.Key_Delete, self, self.delete_keyframe)
+        self._shortcuts.append(QShortcut(QKeySequence(Qt.Key.Key_Insert), self, self.add_keyframe))
+        self._shortcuts.append(QShortcut(QKeySequence(Qt.Key.Key_Return), self, self.update_keyframe))
+        self._shortcuts.append(QShortcut(QKeySequence(Qt.Key.Key_Delete), self, self.delete_keyframe))
 
         # Playback controls
-        QShortcut(Qt.Key.Key_Space, self, self.play_preview)
-        QShortcut(Qt.Key.Key_Escape, self, self.stop_preview)
+        self._shortcuts.append(QShortcut(QKeySequence(Qt.Key.Key_Space), self, self.play_preview))
+        self._shortcuts.append(QShortcut(QKeySequence(Qt.Key.Key_Escape), self, self.stop_preview))
 
         # Undo/Redo
-        QShortcut(QKeySequence.StandardKey.Undo, self, self.undo)
-        QShortcut(QKeySequence.StandardKey.Redo, self, self.redo)
+        self._shortcuts.append(QShortcut(QKeySequence.StandardKey.Undo, self, self.undo))
+        self._shortcuts.append(QShortcut(QKeySequence.StandardKey.Redo, self, self.redo))
 
     def _setup_menus(self):
         """Set up the edit menu with undo/redo actions."""
-        from qtpy.QtWidgets import QMenuBar
-
         # Get the menu bar
         menubar = self.menuBar()
-        if not menubar:
+        if menubar is None:
             return
 
         # Find or create Edit menu
         edit_menu = menubar.findChild(QMenu, "edit_menu")
-        if not edit_menu:
+        if edit_menu is None:
             edit_menu = menubar.addMenu("&Edit")
 
         # Add undo/redo actions
-        self.undo_action = edit_menu.addAction("&Undo")
+        self.undo_action: QAction | None = edit_menu.addAction("&Undo")
+        if self.undo_action is None:
+            return
         self.undo_action.setShortcut(QKeySequence.StandardKey.Undo)
         self.undo_action.triggered.connect(self.undo)
         self.undo_action.setEnabled(False)
 
-        self.redo_action = edit_menu.addAction("&Redo")
+        self.redo_action: QAction | None = edit_menu.addAction("&Redo")
+        if self.redo_action is None:
+            return
         self.redo_action.setShortcut(QKeySequence.StandardKey.Redo)
         self.redo_action.triggered.connect(self.redo)
         self.redo_action.setEnabled(False)
@@ -551,7 +570,7 @@ class LIPEditor(Editor):
 
     def _update_undo_redo_state(self):
         """Update the enabled state and text of undo/redo actions."""
-        if self.undo_action:
+        if self.undo_action is not None:
             can_undo = self.undo_redo_manager.can_undo()
             self.undo_action.setEnabled(can_undo)
             if can_undo:
@@ -560,7 +579,7 @@ class LIPEditor(Editor):
             else:
                 self.undo_action.setText("&Undo")
 
-        if self.redo_action:
+        if self.redo_action is not None:
             can_redo = self.undo_redo_manager.can_redo()
             self.redo_action.setEnabled(can_redo)
             if can_redo:
@@ -574,16 +593,22 @@ class LIPEditor(Editor):
         menu = QMenu(self)
 
         # Add actions
-        add_action: _QAction = menu.addAction("Add Keyframe")
+        add_action: QAction | None = menu.addAction("Add Keyframe")
+        if add_action is None:
+            return
         add_action.triggered.connect(self.add_keyframe)
 
         # Only enable these if an item is selected
-        selected_items = self.preview_list.selectedItems()
-        if selected_items:
-            update_action: _QAction = menu.addAction("Update Keyframe")
+        selected_items: list[QListWidgetItem] | None = self.preview_list.selectedItems()
+        if selected_items is not None:
+            update_action: QAction | None = menu.addAction("Update Keyframe")
+            if update_action is None:
+                return
             update_action.triggered.connect(self.update_keyframe)
 
-            delete_action: _QAction = menu.addAction("Delete Keyframe")
+            delete_action: QAction | None = menu.addAction("Delete Keyframe")
+            if delete_action is None:
+                return
             delete_action.triggered.connect(self.delete_keyframe)
 
         menu.exec(self.preview_list.mapToGlobal(pos))
@@ -591,27 +616,27 @@ class LIPEditor(Editor):
     def undo(self):
         """Undo last action."""
         command = self.undo_redo_manager.undo()
-        if command:
+        if command is not None:
             self.update_preview()
             # Update UI state after undo
             self._update_undo_redo_state()
         else:
-            QMessageBox.information(self, "Undo", "Nothing to undo")
+            RobustLogger().debug("Undo: Nothing to undo")
 
     def redo(self):
         """Redo last undone action."""
         command = self.undo_redo_manager.redo()
-        if command:
+        if command is not None:
             self.update_preview()
             # Update UI state after redo
             self._update_undo_redo_state()
         else:
-            QMessageBox.information(self, "Redo", "Nothing to redo")
+            RobustLogger().debug("Redo: Nothing to redo")
 
     def load_audio(self):
         """Load an audio file."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Audio File", "", "Audio Files (*.wav)")
-        if file_path:
+        if file_path and file_path.strip():
             self.audio_path.setText(file_path)
             # Get audio duration
             with wave.open(file_path, "rb") as wav:
@@ -648,8 +673,8 @@ class LIPEditor(Editor):
             self.update_preview()
             self._update_undo_redo_state()
 
-        except ValueError as e:
-            QMessageBox.warning(self, "Error", str(e))
+        except ValueError:
+            RobustLogger().exception("Error updating keyframe")
 
     def update_keyframe(self):
         """Update the selected keyframe."""
@@ -657,7 +682,7 @@ class LIPEditor(Editor):
             QMessageBox.warning(self, "Error", "No LIP file loaded")
             return
 
-        selected_items = self.preview_list.selectedItems()
+        selected_items: list[QListWidgetItem] | None = self.preview_list.selectedItems()
         if not selected_items:
             QMessageBox.warning(self, "Error", "Please select a keyframe to update")
             return
@@ -701,15 +726,15 @@ class LIPEditor(Editor):
 
     def on_keyframe_selected(self):
         """Update inputs when a keyframe is selected."""
-        if not self.lip:
+        if self.lip is None:
             return
 
-        selected_items = self.preview_list.selectedItems()
+        selected_items: list[QListWidgetItem] | None = self.preview_list.selectedItems()
         if not selected_items:
             return
 
-        selected_idx = self.preview_list.row(selected_items[0])
-        frame = self.lip.frames[selected_idx]
+        selected_idx: int = self.preview_list.row(selected_items[0])
+        frame: LIPKeyFrame = self.lip.frames[selected_idx]
 
         self.time_input.setValue(frame.time)
         self.shape_select.setCurrentText(frame.shape.name)
@@ -717,7 +742,7 @@ class LIPEditor(Editor):
     def update_preview(self):
         """Update the preview list."""
         self.preview_list.clear()
-        if not self.lip:
+        if self.lip is None:
             return
 
         for frame in sorted(self.lip.frames, key=lambda f: f.time):
@@ -725,7 +750,7 @@ class LIPEditor(Editor):
 
     def play_preview(self):
         """Start preview playback."""
-        if not self.lip or not self.audio_path.text():
+        if self.lip is None or not self.audio_path.text():
             QMessageBox.warning(self, "Error", "Please load both a LIP file and audio file")
             return
 
@@ -736,23 +761,23 @@ class LIPEditor(Editor):
         """Stop preview playback."""
         self.player.stop()
         self.preview_timer.stop()
-        if self.preview_label:
+        if self.preview_label is not None:
             self.preview_label.setText("None")
         self.current_shape = None
 
     def on_playback_position_changed(self, position: int):
         """Update current time during playback."""
-        current_time = position / 1000.0  # Convert ms to seconds
+        current_time: float = position / 1000.0  # Convert ms to seconds
 
         # Find the current shape based on time
-        if not self.lip:
+        if self.lip is None:
             return
 
         # Sort frames by time
-        sorted_frames = sorted(self.lip.frames, key=lambda f: f.time)
+        sorted_frames: list[LIPKeyFrame] = sorted(self.lip.frames, key=lambda f: f.time)
 
         # Find the last frame before current_time
-        current_shape = None
+        current_shape: LIPShape | None = None
         for frame in sorted_frames:
             if frame.time <= current_time:
                 current_shape = frame.shape
@@ -763,10 +788,10 @@ class LIPEditor(Editor):
 
     def update_preview_display(self):
         """Update the preview display with current shape."""
-        if not self.preview_label:
+        if self.preview_label is None:
             return
 
-        if self.current_shape:
+        if self.current_shape is not None:
             self.preview_label.setText(self.current_shape.name)
         else:
             self.preview_label.setText("None")
@@ -775,7 +800,7 @@ class LIPEditor(Editor):
         """Handle playback state changes."""
         state_enum = QMediaPlayer.State if qtpy.QT5 else QMediaPlayer.PlaybackState  # type: ignore[attr-defined]
         if state == state_enum.StoppedState:
-            if self.preview_label:
+            if self.preview_label is not None:
                 self.preview_label.setText("None")
             self.preview_timer.stop()
             self.current_shape = None
@@ -799,7 +824,7 @@ class LIPEditor(Editor):
 
     def build(self) -> tuple[bytes, bytes]:
         """Build LIP file data."""
-        if not self.lip:
+        if self.lip is None:
             return b"", b""
 
         return bytes_lip(self.lip), b""
@@ -812,4 +837,44 @@ class LIPEditor(Editor):
         command = NewLIPCommand(self, old_lip)
         self.undo_redo_manager.execute(command)
         self._update_undo_redo_state()
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Handle key press events as fallback for shortcuts."""
+        key = event.key()
+        modifiers = event.modifiers()
+        
+        # Handle keyframe operations
+        if key == Qt.Key.Key_Insert:
+            self.add_keyframe()
+            event.accept()
+            return
+        elif key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
+            self.update_keyframe()
+            event.accept()
+            return
+        elif key == Qt.Key.Key_Delete:
+            self.delete_keyframe()
+            event.accept()
+            return
+        # Handle playback controls
+        elif key == Qt.Key.Key_Space:
+            self.play_preview()
+            event.accept()
+            return
+        elif key == Qt.Key.Key_Escape:
+            self.stop_preview()
+            event.accept()
+            return
+        # Handle undo/redo
+        elif key == Qt.Key.Key_Z and modifiers == Qt.KeyboardModifier.ControlModifier:
+            self.undo()
+            event.accept()
+            return
+        elif key == Qt.Key.Key_Y and modifiers == Qt.KeyboardModifier.ControlModifier:
+            self.redo()
+            event.accept()
+            return
+        
+        # Let parent handle other keys
+        super().keyPressEvent(event)
 

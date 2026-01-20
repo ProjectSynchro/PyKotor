@@ -1,59 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>336</width>
-    <height>373</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>Open Module</string>
-  </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QLineEdit" name="filterEdit">
-     <property name="placeholderText">
-      <string>filter...</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QListWidget" name="moduleList"/>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QPushButton" name="cancelButton">
-       <property name="text">
-        <string>Cancel</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="browseButton">
-       <property name="text">
-        <string>Browse</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="openButton">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Open</string>
-       </property>
-      </widget>
-     </item>
+  <class>Dialog</class>
+  <widget class="QDialog" name="Dialog">
+    <property name="geometry">
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>336</width>
+        <height>373</height>
+      </rect>
+    </property>
+    <property name="windowTitle">
+      <string>Open Module</string>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+        <widget class="SearchFilterWidget" name="filterEdit">
+          <property name="text">
+            <string />
+          </property>
+          <property name="placeholderText">
+            <string>filter...</string>
+          </property>
+          <property name="maxLength">
+            <number>16</number>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QListWidget" name="moduleList" />
+      </item>
+      <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+            <widget class="QPushButton" name="cancelButton">
+              <property name="text">
+                <string>Cancel</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QPushButton" name="browseButton">
+              <property name="text">
+                <string>Browse</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QPushButton" name="openButton">
+              <property name="enabled">
+                <bool>false</bool>
+              </property>
+              <property name="text">
+                <string>Open</string>
+              </property>
+            </widget>
+          </item>
+        </layout>
+      </item>
     </layout>
-   </item>
-  </layout>
- </widget>
- <resources/>
- <connections/>
+  </widget>
+  <customwidgets>
+    <customwidget>
+      <class>SearchFilterWidget</class>
+      <extends>QWidget</extends>
+      <header location="global">utility.ui_libraries.qt.widgets.widgets.search_filter</header>
+    </customwidget>
+  </customwidgets>
+  <resources />
+  <connections />
 </ui>

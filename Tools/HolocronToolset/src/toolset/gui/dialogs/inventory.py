@@ -14,7 +14,7 @@ from qtpy.QtCore import (
     Qt,
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
-from qtpy.QtGui import QIcon, QPixmap, QStandardItem, QStandardItemModel
+from qtpy.QtGui import QIcon, QPixmap, QStandardItem, QStandardItemModel, QValidator
 from qtpy.QtWidgets import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
     QDialog,
@@ -25,6 +25,7 @@ from qtpy.QtWidgets import (
     QTableWidgetItem,
     QTreeView,
     QVBoxLayout,
+    QWidget,
 )
 
 from pykotor.common.misc import EquipmentSlot, InventoryItem, ResRef
@@ -825,6 +826,32 @@ class ItemModel(QStandardItemModel):
         self._get_category_item(category).appendRow(item)
 
 
+class CP1252ResRefValidator(QValidator):
+    """Validator that ensures input contains only cp-1252 (windows-1252) characters and invalid filename characters are excluded."""
+    
+    INVALID_CHARACTERS = '<>:"/\\|?*'
+    
+    def validate(
+        self,
+        text: str,
+        pos: int,
+    ) -> tuple[QValidator.State, str, int]:
+        """Validates that the text contains only cp-1252 characters and no invalid filename characters."""
+        if not text:
+            return (QValidator.Acceptable, text, pos)
+        
+        # Check for invalid filename characters
+        if any(char in self.INVALID_CHARACTERS for char in text):
+            return (QValidator.Invalid, text, pos)
+        
+        # Check if all characters can be encoded in cp-1252
+        try:
+            text.encode('cp1252')
+            return (QValidator.Acceptable, text, pos)
+        except UnicodeEncodeError:
+            return (QValidator.Invalid, text, pos)
+
+
 class SetItemResRefDialog(QDialog):
     def __init__(
         self,
@@ -837,6 +864,10 @@ class SetItemResRefDialog(QDialog):
 
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
+        
+        # Set validator to ensure only cp-1252 characters are allowed
+        validator = CP1252ResRefValidator(self)
+        self.ui.resrefEdit.setValidator(validator)
         
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter

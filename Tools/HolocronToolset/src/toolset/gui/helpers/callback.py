@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Any, Union
 from loggerplus import RobustLogger
 from qtpy import QtGui, QtWidgets
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QLabel, QMessageBox
+from qtpy.QtGui import QIcon, QPalette
+from qtpy.QtWidgets import QApplication, QLabel, QMessageBox
 
 from utility.gui.base import UserCommunication
 
@@ -412,21 +412,32 @@ class BetterMessageBox(QtWidgets.QDialog):
         self.adjustSize()  # Let Qt adjust the size optimally
 
     def applyStylesheet(self):
-        self.setStyleSheet("""
-            QLabel {
+        # Get palette colors
+        app = QApplication.instance()
+        if app is None or not isinstance(app, QApplication):
+            palette = QPalette()
+        else:
+            palette = app.palette()
+        
+        text_color = palette.color(QPalette.ColorRole.WindowText)
+        base_color = palette.color(QPalette.ColorRole.Base)
+        mid_color = palette.color(QPalette.ColorRole.Mid)
+        
+        self.setStyleSheet(f"""
+            QLabel {{
                 font-size: 14px;
-            }
-            QPushButton {
+            }}
+            QPushButton {{
                 min-width: 80px;
                 min-height: 30px;
                 font-size: 14px;
-            }
-            QTextEdit {
+            }}
+            QTextEdit {{
                 font-size: 12px;
-                color: gray;
-                background-color: #f0f0f0;
-                border: 1px solid #d0d0d0;
-            }
+                color: {text_color.name()};
+                background-color: {base_color.name()};
+                border: 1px solid {mid_color.name()};
+            }}
         """)
 
 
@@ -458,7 +469,7 @@ class QtUserCommunication(UserCommunication):
     def update_response(
         self,
         text: str,
-        color: str = "black",
+        color: str | None = None,
         font_size: int = 14,
         font_family: str = "Comic Sans",
     ):
@@ -471,6 +482,17 @@ class QtUserCommunication(UserCommunication):
             status_bar.showMessage(text)
         else:
             status_bar.setText(text)
+        
+        # Use palette color if no color specified
+        if color is None:
+            app = QApplication.instance()
+            if app is not None and isinstance(app, QApplication):
+                palette = app.palette()
+                text_color = palette.color(QPalette.ColorRole.WindowText)
+                color = text_color.name()
+            else:
+                color = "black"  # Fallback if no application
+        
         status_bar.setStyleSheet(f"color: {color}; font-size: {font_size}px; font-family: {font_family}; font-weight: bold;")
 
 

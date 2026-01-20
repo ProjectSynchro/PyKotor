@@ -147,7 +147,7 @@ class TwoDAEditorTest(TestCase):
         else:
             assert obj1 == obj2, context
 
-    def test_basic_syntax(self):
+    def test_editor_init(self):
         ...
 
 
