@@ -6,20 +6,18 @@ from typing import TYPE_CHECKING
 
 import qtpy
 
-from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import (
-    QCheckBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QWidget,
+from qtpy.QtCore import (
+    Qt,
+    Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
+from qtpy.QtWidgets import QLineEdit, QWidget
+from qtpy.QtWidgets import QPushButton
 
 from toolset.gui.common.localization import translate as tr
 
 if TYPE_CHECKING:
     from qtpy.QtGui import QKeyEvent
+    from qtpy.QtWidgets import QCheckBox
 
 if qtpy.QT5:
     pass  # pyright: ignore[reportAttributeAccessIssue]
@@ -44,81 +42,57 @@ class FindReplaceWidget(QWidget):
 
     def setup_ui(self):
         """Set up the UI components."""
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(8, 4, 8, 4)
-        layout.setSpacing(6)
+        from toolset.uic.qtpy.widgets.find_replace_widget import Ui_FindReplaceWidget
 
-        # Find input
-        find_label = QLabel(tr("Find:"))
-        self.find_input = QLineEdit()
+        self.ui: Ui_FindReplaceWidget = Ui_FindReplaceWidget()
+        self.ui.setupUi(self)
+
+        # Get references to UI elements
+        self.find_input: QLineEdit = self.ui.findInput
+        self.replace_input: QLineEdit = self.ui.replaceInput
+        self.prev_button: QPushButton = self.ui.prevButton
+        self.next_button: QPushButton = self.ui.nextButton
+        self.replace_button: QPushButton = self.ui.replaceButton
+        self.replace_all_button: QPushButton = self.ui.replaceAllButton
+        self.close_button: QPushButton = self.ui.closeButton
+        self.case_sensitive_check: QCheckBox = self.ui.caseSensitiveCheck
+        self.whole_words_check: QCheckBox = self.ui.wholeWordsCheck
+        self.regex_check: QCheckBox = self.ui.regexCheck
+
+        # Apply localization
+        self.ui.findLabel.setText(tr("Find:"))
         self.find_input.setPlaceholderText(tr("Find..."))
-        self.find_input.setMinimumWidth(200)
+        self.ui.replaceLabel.setText(tr("Replace:"))
+        self.replace_input.setPlaceholderText(tr("Replace..."))
+        self.prev_button.setToolTip(tr("Find Previous (Shift+F3)"))
+        self.next_button.setToolTip(tr("Find Next (F3)"))
+        self.replace_button.setText(tr("Replace"))
+        self.replace_all_button.setText(tr("Replace All"))
+        self.close_button.setToolTip(tr("Close (Escape)"))
+        self.case_sensitive_check.setToolTip(tr("Match Case"))
+        self.whole_words_check.setToolTip(tr("Match Whole Word"))
+        self.regex_check.setToolTip(tr("Use Regular Expression"))
+
+        # Connect signals
         self.find_input.returnPressed.connect(self._on_find_next)
         self.find_input.textChanged.connect(self._on_find_text_changed)
-
-        # Replace input (initially hidden)
-        replace_label = QLabel(tr("Replace:"))
-        self.replace_input = QLineEdit()
-        self.replace_input.setPlaceholderText(tr("Replace..."))
-        self.replace_input.setMinimumWidth(200)
         self.replace_input.returnPressed.connect(self._on_replace_next)
-
-        # Buttons
-        self.prev_button = QPushButton("↑")
-        self.prev_button.setToolTip(tr("Find Previous (Shift+F3)"))
-        self.prev_button.setMaximumWidth(30)
+        self.replace_input.textChanged.connect(self._on_replace_text_changed)
         self.prev_button.clicked.connect(self._on_find_previous)
-
-        self.next_button = QPushButton("↓")
-        self.next_button.setToolTip(tr("Find Next (F3)"))
-        self.next_button.setMaximumWidth(30)
         self.next_button.clicked.connect(self._on_find_next)
-
-        self.replace_button = QPushButton(tr("Replace"))
         self.replace_button.clicked.connect(self._on_replace)
-        self.replace_button.setEnabled(False)
-
-        self.replace_all_button = QPushButton(tr("Replace All"))
         self.replace_all_button.clicked.connect(self._on_replace_all)
-        self.replace_all_button.setEnabled(False)
-
-        self.close_button = QPushButton("✕")
-        self.close_button.setMaximumWidth(25)
-        self.close_button.setToolTip(tr("Close (Escape)"))
         self.close_button.clicked.connect(self.hide)
-
-        # Options
-        self.case_sensitive_check = QCheckBox("Aa")
-        self.case_sensitive_check.setToolTip(tr("Match Case"))
         self.case_sensitive_check.toggled.connect(self._on_options_changed)
-
-        self.whole_words_check = QCheckBox("Ab")
-        self.whole_words_check.setToolTip(tr("Match Whole Word"))
         self.whole_words_check.toggled.connect(self._on_options_changed)
-
-        self.regex_check = QCheckBox(".*")
-        self.regex_check.setToolTip(tr("Use Regular Expression"))
         self.regex_check.toggled.connect(self._on_options_changed)
 
-        # Store replace label for show/hide
-        self.replace_label = replace_label
-        
-        # Add to layout
-        layout.addWidget(find_label)
-        layout.addWidget(self.find_input)
-        layout.addWidget(self.prev_button)
-        layout.addWidget(self.next_button)
-        layout.addWidget(replace_label)
-        layout.addWidget(self.replace_input)
-        layout.addWidget(self.replace_button)
-        layout.addWidget(self.replace_all_button)
-        layout.addWidget(self.case_sensitive_check)
-        layout.addWidget(self.whole_words_check)
-        layout.addWidget(self.regex_check)
-        layout.addWidget(self.close_button)
-        
+        # Initially disable replace buttons
+        self.replace_button.setEnabled(False)
+        self.replace_all_button.setEnabled(False)
+
         # Initially hide replace components
-        replace_label.hide()
+        self.ui.replaceLabel.hide()
         self.replace_input.hide()
         self.replace_button.hide()
         self.replace_all_button.hide()
@@ -151,7 +125,7 @@ class FindReplaceWidget(QWidget):
             }
         """)
 
-        self._show_replace = False
+        self._show_replace: bool = False
 
     def keyPressEvent(self, event: QKeyEvent):
         """Handle keyboard shortcuts."""
@@ -171,11 +145,10 @@ class FindReplaceWidget(QWidget):
     def show_find(self, text: str | None = None):
         """Show the find widget."""
         self._show_replace = False
-        if hasattr(self, 'replace_label'):
-            self.replace_label.hide()
-        self.replace_input.hide()
-        self.replace_button.hide()
-        self.replace_all_button.hide()
+        self.ui.replaceLabel.hide()  # or .setVisible(False)
+        self.replace_input.hide()  # or .setVisible(False)
+        self.replace_button.hide()  # or .setVisible(False)
+        self.replace_all_button.hide()  # or .setVisible(False)
         self.show()
         if text:
             self.find_input.setText(text)
@@ -188,11 +161,10 @@ class FindReplaceWidget(QWidget):
     def show_replace(self, text: str | None = None):
         """Show the find and replace widget."""
         self._show_replace = True
-        if hasattr(self, 'replace_label'):
-            self.replace_label.show()
-        self.replace_input.show()
-        self.replace_button.show()
-        self.replace_all_button.show()
+        self.ui.replaceLabel.show()  # or .setVisible(True)
+        self.replace_input.show()  # or .setVisible(True)
+        self.replace_button.show()  # or .setVisible(True)
+        self.replace_all_button.show()  # or .setVisible(True)
         self.show()
         if text:
             self.find_input.setText(text)
@@ -211,14 +183,24 @@ class FindReplaceWidget(QWidget):
     def _on_find_text_changed(self):
         """Handle find text changes."""
         has_text = bool(self.find_input.text())
-        self.next_button.setEnabled(has_text)
-        self.prev_button.setEnabled(has_text)
-        self.replace_button.setEnabled(has_text)
-        self.replace_all_button.setEnabled(has_text and bool(self.replace_input.text()))
+        self.next_button.setEnabled(has_text)  # or .setDisabled(not has_text)
+        self.prev_button.setEnabled(has_text)  # or .setDisabled(not has_text)
+        self.replace_button.setEnabled(has_text)  # or .setDisabled(not has_text)
+        self._update_replace_all_button()
 
         # Auto-search as user types
         if has_text:
             self._on_find_next()
+
+    def _on_replace_text_changed(self):
+        """Handle replace text changes."""
+        self._update_replace_all_button()
+
+    def _update_replace_all_button(self):
+        """Update the replace all button enabled state."""
+        has_find_text = bool(self.find_input.text())
+        has_replace_text = bool(self.replace_input.text())
+        self.replace_all_button.setEnabled(has_find_text and has_replace_text)  # or .setDisabled(not has_find_text or not has_replace_text)
 
     def _on_find_next(self):
         """Emit find next signal."""
@@ -248,7 +230,7 @@ class FindReplaceWidget(QWidget):
         """Emit replace signal."""
         find_text = self.find_input.text()
         replace_text = self.replace_input.text()
-        if find_text:
+        if find_text and replace_text:
             self.replace_requested.emit(
                 find_text,
                 replace_text,
@@ -268,7 +250,7 @@ class FindReplaceWidget(QWidget):
         """Emit replace all signal."""
         find_text = self.find_input.text()
         replace_text = self.replace_input.text()
-        if find_text:
+        if find_text and replace_text:
             self.replace_all_requested.emit(
                 find_text,
                 replace_text,
@@ -281,4 +263,3 @@ class FindReplaceWidget(QWidget):
         """Handle option checkbox changes."""
         if self.find_input.text():
             self._on_find_next()
-

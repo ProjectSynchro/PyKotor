@@ -5,9 +5,7 @@ from __future__ import annotations
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QHeaderView,
-    QTableWidget,
     QTableWidgetItem,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -21,21 +19,18 @@ class DebugCallStackWidget(QWidget):
     
     def setup_ui(self):
         """Set up the UI components."""
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        from toolset.uic.qtpy.widgets.debug_callstack_widget import Ui_DebugCallStackWidget
         
-        # Create table for call stack
-        self.table = QTableWidget(self)
-        self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["Frame", "Function", "Instruction"])
+        self.ui = Ui_DebugCallStackWidget()
+        self.ui.setupUi(self)
+        
+        # Get reference to table
+        self.table = self.ui.table
+        
+        # Configure table header
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.setAlternatingRowColors(True)
-        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        
-        layout.addWidget(self.table)
     
     def update_call_stack(self, call_stack: list[tuple[str, int, int]]):
         """Update the call stack display.

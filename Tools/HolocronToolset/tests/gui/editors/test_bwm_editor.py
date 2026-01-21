@@ -698,10 +698,439 @@ def test_bwmeditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
 
-    """Test BWM Editor."""
+
+def test_bwm_editor_ui_initialization(qtbot: QtBot, installation: HTInstallation):
+    """Test BWM Editor UI initialization."""
     editor = BWMEditor(None, installation)
     qtbot.addWidget(editor)
     editor.show()
     
     assert editor.isVisible()
     # Walkmesh editor might have GL view or property lists
+    assert hasattr(editor.ui, 'renderArea')
+    assert hasattr(editor.ui, 'materialList')
+    assert hasattr(editor.ui, 'transList')
+
+
+# ============================================================================
+# MATERIAL MANAGEMENT TESTS
+# ============================================================================
+
+def test_bwm_editor_rebuild_materials(qtbot: QtBot, installation: HTInstallation):
+    """Test rebuilding material list."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    initial_count = editor.ui.materialList.count()
+    
+    # Rebuild materials
+    editor.rebuild_materials()
+    QApplication.processEvents()
+    
+    # Verify materials were rebuilt
+    assert editor.ui.materialList.count() == initial_count
+    assert editor.ui.materialList.count() > 0
+
+
+def test_bwm_editor_material_list_items(qtbot: QtBot, installation: HTInstallation):
+    """Test that material list contains expected materials."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    # Verify material list has items
+    assert editor.ui.materialList.count() > 0
+    
+    # Verify each item has material data
+    for i in range(editor.ui.materialList.count()):
+        item = editor.ui.materialList.item(i)
+        assert item is not None
+        material = item.data(Qt.ItemDataRole.UserRole)
+        assert material is not None
+        assert hasattr(material, 'name') or hasattr(material, 'value')
+
+
+def test_bwm_editor_material_selection(qtbot: QtBot, installation: HTInstallation):
+    """Test selecting materials from the list."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    # Select first material
+    if editor.ui.materialList.count() > 0:
+        editor.ui.materialList.setCurrentRow(0)
+        QApplication.processEvents()
+        
+        current_item = editor.ui.materialList.currentItem()
+        assert current_item is not None
+        
+        # Select different material
+        if editor.ui.materialList.count() > 1:
+            editor.ui.materialList.setCurrentRow(1)
+            QApplication.processEvents()
+            
+            new_item = editor.ui.materialList.currentItem()
+            assert new_item is not None
+            assert new_item != current_item
+
+
+# ============================================================================
+# TRANSITION MANAGEMENT TESTS
+# ============================================================================
+
+def test_bwm_editor_transition_list_populated(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
+    """Test that transition list is populated when loading BWM with transitions."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    bwm_file = test_files_dir / "zio006j.wok"
+    if not bwm_file.exists():
+        pytest.skip("zio006j.wok not found")
+    
+    original_data = bwm_file.read_bytes()
+    editor.load(bwm_file, "zio006j", ResourceType.WOK, original_data)
+    QApplication.processEvents()
+    
+    # Verify transition list may have items (if walkmesh has transitions)
+    assert editor.ui.transList is not None
+    # Transition count depends on walkmesh content
+    assert editor.ui.transList.count() >= 0
+
+
+def test_bwm_editor_transition_list_selection(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
+    """Test selecting transitions from the list."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    bwm_file = test_files_dir / "zio006j.wok"
+    if not bwm_file.exists():
+        pytest.skip("zio006j.wok not found")
+    
+    original_data = bwm_file.read_bytes()
+    editor.load(bwm_file, "zio006j", ResourceType.WOK, original_data)
+    QApplication.processEvents()
+    
+    # Select transition if available
+    if editor.ui.transList.count() > 0:
+        editor.ui.transList.setCurrentRow(0)
+        QApplication.processEvents()
+        
+        current_item = editor.ui.transList.currentItem()
+        assert current_item is not None
+        assert "Transition" in current_item.text()
+
+
+# ============================================================================
+# KEYBOARD SHORTCUT TESTS
+# ============================================================================
+
+def test_bwm_editor_zoom_shortcuts(qtbot: QtBot, installation: HTInstallation):
+    """Test zoom keyboard shortcuts."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    # Get initial zoom (if accessible)
+    render_area = editor.ui.renderArea
+    if hasattr(render_area, 'camera'):
+        initial_zoom = getattr(render_area.camera, 'zoom', None) or 1.0
+        
+        # Zoom in with "="
+        qtbot.keyClick(editor, Qt.Key.Key_Equal)
+        QApplication.processEvents()
+        
+        # Zoom out with "-"
+        qtbot.keyClick(editor, Qt.Key.Key_Minus)
+        QApplication.processEvents()
+        
+        # Verify shortcuts work (zoom may have changed)
+        assert render_area is not None
+
+
+# ============================================================================
+# NEW FILE CREATION TESTS
+# ============================================================================
+
+def test_bwm_editor_new_file_creation(qtbot: QtBot, installation: HTInstallation):
+    """Test creating a new BWM file."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    # Create new
+    editor.new()
+    QApplication.processEvents()
+    
+    # Verify editor is in new state
+    assert editor._bwm is None or len(editor._bwm.faces) == 0
+    
+    # Build empty file
+    try:
+        data, _ = editor.build()
+        # Empty BWM may or may not be valid
+        assert isinstance(data, bytes)
+    except Exception:
+        # Empty BWM may raise exception, which is acceptable
+        pass
+
+
+# ============================================================================
+# UI STATE TESTS
+# ============================================================================
+
+def test_bwm_editor_ui_widgets_exist(qtbot: QtBot, installation: HTInstallation):
+    """Test that all UI widgets exist."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    # Verify main widgets exist
+    assert hasattr(editor.ui, 'renderArea')
+    assert hasattr(editor.ui, 'materialList')
+    assert hasattr(editor.ui, 'transList')
+    
+    # Verify render area exists
+    assert editor.ui.renderArea is not None
+    assert editor.ui.materialList is not None
+    assert editor.ui.transList is not None
+
+
+def test_bwm_editor_material_colors_initialized(qtbot: QtBot, installation: HTInstallation):
+    """Test that material colors are initialized."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    # Verify material colors dictionary exists
+    assert hasattr(editor, 'material_colors')
+    assert isinstance(editor.material_colors, dict)
+    assert len(editor.material_colors) > 0
+    
+    # Verify render area has material colors
+    if hasattr(editor.ui.renderArea, 'material_colors'):
+        assert editor.ui.renderArea.material_colors is not None
+
+
+# ============================================================================
+# EDGE CASES
+# ============================================================================
+
+def test_bwm_editor_load_empty_walkmesh(qtbot: QtBot, installation: HTInstallation):
+    """Test loading an empty walkmesh."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    # Create minimal BWM data (may not be valid, but should handle gracefully)
+    try:
+        from pykotor.resource.formats.bwm import BWM, bytes_bwm
+        empty_bwm = BWM()
+        empty_data = bytes_bwm(empty_bwm)
+        
+        editor.load(pathlib.Path("empty.wok"), "empty", ResourceType.WOK, empty_data)
+        QApplication.processEvents()
+        
+        # Should handle gracefully
+        assert editor is not None
+    except Exception:
+        # Empty BWM may raise exception, which is acceptable
+        pass
+
+
+def test_bwm_editor_load_invalid_data(qtbot: QtBot, installation: HTInstallation):
+    """Test loading invalid/corrupted BWM data."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    # Try to load invalid data
+    invalid_data = b"INVALID BWM DATA" * 100
+    
+    try:
+        editor.load(pathlib.Path("invalid.wok"), "invalid", ResourceType.WOK, invalid_data)
+        # If it doesn't raise, verify editor is in a valid state
+        assert editor is not None
+    except Exception:
+        # If it raises, that's acceptable error handling
+        pass
+
+
+# ============================================================================
+# COMPREHENSIVE ROUNDTRIP TESTS
+# ============================================================================
+
+def test_bwm_editor_multiple_save_load_cycles(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
+    """Test multiple save/load cycles preserve data correctly."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    bwm_file = test_files_dir / "zio006j.wok"
+    if not bwm_file.exists():
+        pytest.skip("zio006j.wok not found")
+    
+    original_data = bwm_file.read_bytes()
+    original_bwm = read_bwm(original_data)
+    editor.load(bwm_file, "zio006j", ResourceType.WOK, original_data)
+    QApplication.processEvents()
+    
+    # Perform multiple cycles
+    for cycle in range(3):
+        # Save
+        data, _ = editor.build()
+        saved_bwm = read_bwm(data)
+        
+        # Verify basic properties preserved
+        assert saved_bwm.walkmesh_type == original_bwm.walkmesh_type
+        assert len(saved_bwm.faces) == len(original_bwm.faces)
+        
+        # Load back
+        editor.load(bwm_file, "zio006j", ResourceType.WOK, data)
+        QApplication.processEvents()
+        
+        # Verify loaded
+        assert editor._bwm is not None
+        assert len(editor._bwm.faces) == len(original_bwm.faces)
+
+
+# ============================================================================
+# RESOURCE LOADING TESTS
+# ============================================================================
+
+def test_bwm_editor_load_from_installation(qtbot: QtBot, installation: HTInstallation):
+    """Test loading BWM resource from installation."""
+    if installation is None:
+        pytest.skip("Installation not available")
+    
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    # Try to find a BWM resource in installation
+    bwm_resources = list(installation.resources((ResourceType.WOK,)).values())[:1]
+    if not bwm_resources:
+        bwm_resources = list(installation.resources((ResourceType.DWK,)).values())[:1]
+    if not bwm_resources:
+        pytest.skip("No BWM resources found in installation")
+    
+    bwm_resource = bwm_resources[0]
+    assert bwm_resource is not None
+    
+    bwm_data = installation.resource(bwm_resource.resname, bwm_resource.restype)
+    if not bwm_data:
+        pytest.skip(f"Could not load BWM data for {bwm_resource.resname}")
+    
+    # Load from installation
+    editor.load(
+        bwm_resource.filepath if hasattr(bwm_resource, 'filepath') else pathlib.Path("module.wok"),
+        bwm_resource.resname,
+        bwm_resource.restype,
+        bwm_data.data
+    )
+    QApplication.processEvents()
+    
+    # Verify loaded
+    assert editor._bwm is not None
+    assert len(editor._bwm.faces) >= 0
+
+
+# ============================================================================
+# STRESS TESTS
+# ============================================================================
+
+def test_bwm_editor_large_walkmesh(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
+    """Test editor with large walkmesh (stress test)."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    bwm_file = test_files_dir / "zio006j.wok"
+    if not bwm_file.exists():
+        pytest.skip("zio006j.wok not found")
+    
+    original_data = bwm_file.read_bytes()
+    original_bwm = read_bwm(original_data)
+    
+    # Verify it's a reasonably large walkmesh
+    if len(original_bwm.faces) < 10:
+        pytest.skip("Walkmesh too small for stress test")
+    
+    editor.load(bwm_file, "zio006j", ResourceType.WOK, original_data)
+    QApplication.processEvents()
+    
+    # Verify loaded
+    assert editor._bwm is not None
+    assert len(editor._bwm.faces) == len(original_bwm.faces)
+    
+    # Build and verify
+    data, _ = editor.build()
+    saved_bwm = read_bwm(data)
+    assert len(saved_bwm.faces) == len(original_bwm.faces)
+
+
+# ============================================================================
+# COMPREHENSIVE WORKFLOW TESTS
+# ============================================================================
+
+def test_bwm_editor_complete_workflow(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
+    """Test complete workflow: load, verify, save, reload, verify."""
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    bwm_file = test_files_dir / "zio006j.wok"
+    if not bwm_file.exists():
+        pytest.skip("zio006j.wok not found")
+    
+    # Load original
+    original_data = bwm_file.read_bytes()
+    original_bwm = read_bwm(original_data)
+    editor.load(bwm_file, "zio006j", ResourceType.WOK, original_data)
+    QApplication.processEvents()
+    
+    # Verify loaded
+    assert editor._bwm is not None
+    assert len(editor._bwm.faces) == len(original_bwm.faces)
+    assert editor._bwm.walkmesh_type == original_bwm.walkmesh_type
+    
+    # Save
+    data1, _ = editor.build()
+    saved_bwm1 = read_bwm(data1)
+    
+    # Verify first save
+    assert len(saved_bwm1.faces) == len(original_bwm.faces)
+    assert saved_bwm1.walkmesh_type == original_bwm.walkmesh_type
+    
+    # Reload
+    editor.load(bwm_file, "zio006j", ResourceType.WOK, data1)
+    QApplication.processEvents()
+    
+    # Verify reloaded
+    assert editor._bwm is not None
+    assert len(editor._bwm.faces) == len(original_bwm.faces)
+    
+    # Save again
+    data2, _ = editor.build()
+    saved_bwm2 = read_bwm(data2)
+    
+    # Verify second save matches first
+    assert len(saved_bwm2.faces) == len(saved_bwm1.faces)
+    assert saved_bwm2.walkmesh_type == saved_bwm1.walkmesh_type

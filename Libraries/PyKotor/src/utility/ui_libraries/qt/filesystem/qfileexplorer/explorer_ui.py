@@ -17,7 +17,7 @@ from utility.ui_libraries.qt.common.tasks.task_status_widget import TaskStatusWi
 from utility.ui_libraries.qt.widgets.widgets.stacked_view import DynamicStackedView
 
 if TYPE_CHECKING:
-    from utility.ui_libraries.qt.filesystem.qfiledialogextended.explorer import FileSystemExplorerWidget
+    from utility.ui_libraries.qt.filesystem.qfileexplorer.explorer import FileSystemExplorerWidget
 
 
 class Ui_QFileExplorer:
@@ -199,7 +199,7 @@ class Ui_QFileExplorer:
         self.sidebarToolBox.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(QFileExplorer)
 
-    def retranslateUi(self, QFileExplorer: FileSystemExplorerWidget):
+    def retranslateUi(self, QFileExplorer: FileSystemExplorerWidget | None = None):
         _translate = QtCore.QCoreApplication.translate
         self.searchBar.setPlaceholderText(_translate("QFileExplorer", "Search..."))
         self.fileSystemTreeView.setToolTip(_translate("QFileExplorer", "Browse file system hierarchy"))

@@ -1356,7 +1356,6 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 if missing_rooms:
                     self._show_missing_rooms_dialog(missing_rooms)
             except OSError as e:
-                from toolset.gui.common.localization import translate as tr, translate_format as trf
 
                 QMessageBox(
                     QMessageBox.Icon.Critical,

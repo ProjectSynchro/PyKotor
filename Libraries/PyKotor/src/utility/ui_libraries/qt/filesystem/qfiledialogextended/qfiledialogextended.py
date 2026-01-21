@@ -16,8 +16,13 @@ from qtpy.QtCore import (
     QEvent,
     QUrl,
     Qt,
+    pyqtBoundSignal,
 )
-from qtpy.QtWidgets import QApplication, QFileDialog, QFileSystemModel, QLayoutItem, QMessageBox, QWidget
+from qtpy.QtWidgets import QApplication, QLayoutItem, QWidget
+if TYPE_CHECKING:
+    from qtpy.QtWidgets import QFileSystemModel, QMessageBox  # pyright: ignore[reportPrivateImportUsage]
+else:
+    from qtpy.QtWidgets import QFileSystemModel, QMessageBox  # pyright: ignore[reportPrivateImportUsage]
 
 from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as AdapterQFileDialog
 from utility.ui_libraries.qt.common.actions_dispatcher import ActionsDispatcher
@@ -28,9 +33,9 @@ from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
 from utility.ui_libraries.qt.widgets.widgets.stacked_view import DynamicStackedView
 
 if TYPE_CHECKING:
-    from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QPoint
-    from qtpy.QtGui import QMouseEvent
-    from qtpy.QtWidgets import QAbstractItemView, QListView, QTreeView
+    from qtpy.QtCore import QAbstractItemModel, QAbstractProxyModel, QModelIndex, QObject, QPoint
+    from qtpy.QtGui import QAbstractFileIconProvider
+    from qtpy.QtWidgets import QAbstractItemDelegate, QAbstractItemView, QListView, QTreeView
 
 
 
@@ -51,9 +56,9 @@ class QFileDialogExtended(AdapterQFileDialog):
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.setOption(AdapterQFileDialog.Option.DontUseNativeDialog, True)  # noqa: FBT003
+        self.setOption(AdapterQFileDialog.Option.DontUseNativeDialog, True)  # pyright: ignore[reportArgumentType]
         self.setFileMode(AdapterQFileDialog.FileMode.Directory)
-        self.setOption(AdapterQFileDialog.Option.ShowDirsOnly, False)  # noqa: FBT003
+        self.setOption(AdapterQFileDialog.Option.ShowDirsOnly, False)  # pyright: ignore[reportArgumentType]
         self.ui: Ui_QFileDialogExtended = Ui_QFileDialogExtended()
         self.ui.setupUi(self)
         self.model_setup()
@@ -67,6 +72,7 @@ class QFileDialogExtended(AdapterQFileDialog):
         self.connect_signals()
         self._connect_extended_signals()
         self.setMouseTracking(True)
+        self._apply_windows11_styling()
         #self.installEventFilter(self)
         #self.ui.listView.installEventFilter(self)
         #self.ui.listView.setMouseTracking(True)
@@ -148,8 +154,8 @@ class QFileDialogExtended(AdapterQFileDialog):
         cast("RobustTreeView", self.ui.treeView).setModel(self.model)
         self.ui.vboxlayout2.update()
 
-        self.ui.listModeButton.clicked.connect(self._q_showListView)
-        self.ui.detailModeButton.clicked.connect(self._q_showDetailsView)
+        cast(pyqtBoundSignal, self.ui.listModeButton.clicked).connect(self._q_showListView)
+        cast(pyqtBoundSignal, self.ui.detailModeButton.clicked).connect(self._q_showDetailsView)
 
     def currentView(self) -> QAbstractItemView | None:
         assert self.ui is not None, f"{self.__class__.__name__}.currentView: UI is None"
@@ -180,7 +186,7 @@ class QFileDialogExtended(AdapterQFileDialog):
         if not index.isValid():
             view.clearSelection()
         menu = self.dispatcher.get_context_menu(view, position)
-        menu.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)  # noqa: FBT003
+        menu.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)  # pyright: ignore[reportArgumentType]
         viewport = view.viewport()
         assert viewport is not None, f"{self.__class__.__name__}._q_showContextMenu: viewport is None"
         menu.exec(viewport.mapToGlobal(position))
@@ -193,8 +199,8 @@ class QFileDialogExtended(AdapterQFileDialog):
         self.model: QFileSystemModel = cast("QFileSystemModel", fs_model)
 
     def connect_signals(self):
-        self.ui.treeView.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.ui.listView.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.ui.treeView.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)  # pyright: ignore[reportArgumentType]
+        self.ui.listView.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)  # pyright: ignore[reportArgumentType]
 
         def show_context_menu(pos: QPoint, view: QListView | QTreeView):
             index = view.indexAt(pos)
@@ -206,16 +212,16 @@ class QFileDialogExtended(AdapterQFileDialog):
                 assert viewport is not None, f"{self.__class__.__name__}._q_showContextMenu: viewport is None"
                 menu.exec(viewport.mapToGlobal(pos))
 
-        self.ui.treeView.customContextMenuRequested.disconnect()
-        self.ui.listView.customContextMenuRequested.disconnect()
+        cast(pyqtBoundSignal, self.ui.treeView.customContextMenuRequested).disconnect()
+        cast(pyqtBoundSignal, self.ui.listView.customContextMenuRequested).disconnect()
         self.ui.treeView.customContextMenuRequested.connect(lambda pos: show_context_menu(pos, self.ui.treeView))
         self.ui.listView.customContextMenuRequested.connect(lambda pos: show_context_menu(pos, self.ui.listView))
-        self.ui.treeView.doubleClicked.connect(self.dispatcher.on_open)
+        cast(pyqtBoundSignal, self.ui.treeView.doubleClicked).connect(self.dispatcher.on_open)
 
     def on_task_failed(self, task_id: str, error: Exception):
         RobustLogger().exception(f"Task {task_id} failed", exc_info=error)
         error_msg = QMessageBox()
-        error_msg.setIcon(QMessageBox.Icon.Critical)
+        error_msg.setIcon(QMessageBox.Icon.Critical)  # pyright: ignore[reportArgumentType]
         error_msg.setText(f"Task {task_id} failed")
         error_msg.setInformativeText(str(error))
         error_msg.setDetailedText("".join(traceback.format_exception(type(error), error, None)))
@@ -236,8 +242,8 @@ class QFileDialogExtended(AdapterQFileDialog):
 
         self.search_filter: SearchFilterWidget = SearchFilterWidget(self)
         self.search_filter.setObjectName("searchFilter")
-        self.search_filter.textChanged.connect(self._on_search_text_changed)
-        self.search_filter.searchRequested.connect(self._on_search_requested)
+        cast(pyqtBoundSignal, self.search_filter.textChanged).connect(self._on_search_text_changed)
+        cast(pyqtBoundSignal, self.search_filter.searchRequested).connect(self._on_search_requested)
 
     def _setup_ribbons(self) -> None:
         """Set up ribbons UI, sharing the same actions/menus as the dispatcher."""
@@ -295,7 +301,7 @@ class QFileDialogExtended(AdapterQFileDialog):
 
         self.proxy_model: QSortFilterProxyModel = QSortFilterProxyModel(self)
         self.proxy_model.setSourceModel(self.model)
-        self.proxy_model.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.proxy_model.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)  # pyright: ignore[reportArgumentType]
         self.proxy_model.setFilterKeyColumn(0)
         self.proxy_model.setRecursiveFilteringEnabled(True)
 
@@ -320,11 +326,181 @@ class QFileDialogExtended(AdapterQFileDialog):
     def _connect_extended_signals(self) -> None:
         self.directoryEntered.connect(self._on_directory_changed)
 
+    def _apply_windows11_styling(self) -> None:
+        """Apply comprehensive Windows 11 Fluent Design styling to the entire dialog."""
+        from qtpy.QtWidgets import QApplication
+        from qtpy.QtGui import QPalette
+        
+        app = QApplication.instance()
+        if not isinstance(app, QApplication):
+            return
+        palette = app.palette()
+        
+        # Windows 11 Fluent Design Color Palette
+        is_dark = palette.color(
+            QPalette.ColorGroup.Active,  # pyright: ignore[reportArgumentType]
+            QPalette.ColorRole.Window,  # pyright: ignore[reportArgumentType]
+        ).lightness() < 128
+        
+        if is_dark:
+            win11_bg = "#202020"
+            win11_widget_bg = "#2D2D2D"
+            win11_border = "#3D3D3D"
+            win11_text = "#E0E0E0"
+            win11_text_secondary = "#B0B0B0"
+            win11_hover = "#3A3A3A"
+            win11_button_bg = "#2D2D2D"
+            win11_button_hover = "#3A3A3A"
+            win11_input_bg = "#2D2D2D"
+            win11_selection = "#0066CC"
+        else:
+            win11_bg = "#FFFFFF"
+            win11_widget_bg = "#F9F9F9"
+            win11_border = "#E1E1E1"
+            win11_text = "#202020"
+            win11_text_secondary = "#606060"
+            win11_hover = "#F0F0F0"
+            win11_button_bg = "#FFFFFF"
+            win11_button_hover = "#F0F0F0"
+            win11_input_bg = "#FFFFFF"
+            win11_selection = "#0066CC"
+            win11_selection_color = "#FFFFFF"
+        
+        stylesheet = f"""
+            /* Windows 11 Fluent Design - Complete Dialog Styling */
+            QFileDialog, QWidget {{
+                font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+                font-size: 11pt;
+                color: {win11_text};
+                background-color: {win11_bg};
+            }}
+            
+            /* Buttons - Windows 11 style */
+            QPushButton {{
+                background-color: {win11_button_bg};
+                color: {win11_text};
+                border: 1px solid {win11_border};
+                border-radius: 4px;
+                padding: 6px 16px;
+                min-height: 28px;
+                font-size: 11pt;
+                font-weight: 400;
+            }}
+            
+            QPushButton:hover {{
+                background-color: {win11_button_hover};
+                border-color: {win11_border};
+            }}
+            
+            QPushButton:pressed {{
+                background-color: {win11_hover};
+                border-color: {win11_selection};
+            }}
+            
+            QPushButton:disabled {{
+                color: {win11_text_secondary};
+                background-color: {win11_widget_bg};
+                border-color: {win11_border};
+            }}
+            
+            /* Input fields - Windows 11 style */
+            QLineEdit, QComboBox {{
+                background-color: {win11_input_bg};
+                color: {win11_text};
+                border: 1px solid {win11_border};
+                border-radius: 4px;
+                padding: 6px 10px;
+                min-height: 28px;
+                font-size: 11pt;
+            }}
+            
+            QLineEdit:focus, QComboBox:focus {{
+                border-color: {win11_selection};
+                background-color: {win11_input_bg};
+            }}
+            
+            QLineEdit:hover, QComboBox:hover {{
+                border-color: {win11_border};
+            }}
+            
+            /* List and Tree Views - Windows 11 style */
+            QListView, QTreeView {{
+                background-color: {win11_bg};
+                color: {win11_text};
+                border: 1px solid {win11_border};
+                border-radius: 4px;
+                selection-background-color: {win11_selection};
+                selection-color: {win11_selection_color};
+                outline: none;
+            }}
+            
+            QListView::item:hover, QTreeView::item:hover {{
+                background-color: {win11_hover};
+            }}
+            
+            QListView::item:selected, QTreeView::item:selected {{
+                background-color: {win11_selection};
+                color: {win11_selection_color};
+            }}
+            
+            /* Labels - Windows 11 style */
+            QLabel {{
+                color: {win11_text};
+                background-color: transparent;
+                font-size: 11pt;
+            }}
+            
+            /* Scrollbars - Windows 11 style */
+            QScrollBar:vertical {{
+                background-color: {win11_widget_bg};
+                width: 12px;
+                border: none;
+                margin: 0px;
+            }}
+            
+            QScrollBar::handle:vertical {{
+                background-color: {win11_border};
+                min-height: 20px;
+                border-radius: 6px;
+                margin: 2px;
+            }}
+            
+            QScrollBar::handle:vertical:hover {{
+                background-color: {win11_text_secondary};
+            }}
+            
+            QScrollBar:horizontal {{
+                background-color: {win11_widget_bg};
+                height: 12px;
+                border: none;
+                margin: 0px;
+            }}
+            
+            QScrollBar::handle:horizontal {{
+                background-color: {win11_border};
+                min-width: 20px;
+                border-radius: 6px;
+                margin: 2px;
+            }}
+            
+            QScrollBar::handle:horizontal:hover {{
+                background-color: {win11_text_secondary};
+            }}
+            
+            /* Frames and Panels */
+            QFrame {{
+                background-color: {win11_widget_bg};
+                border: 1px solid {win11_border};
+                border-radius: 4px;
+            }}
+        """
+        self.setStyleSheet(stylesheet)
+
     @overload
     def setDirectory(self, directory: str | None) -> None: ...
     @overload
     def setDirectory(self, adirectory: QDir) -> None: ...
-    def setDirectory(self, directory) -> None:  # type: ignore[override]
+    def setDirectory(self, directory: str | QDir) -> None:  # type: ignore[override]
         super().setDirectory(directory)
         if hasattr(self, "address_bar"):
             self.address_bar.update_path(Path(self.directory().absolutePath()))
@@ -334,13 +510,36 @@ class QFileDialogExtended(AdapterQFileDialog):
         if hasattr(self, "address_bar"):
             self.address_bar.update_path(Path(self.directory().absolutePath()))
 
-    # 1:1 wrappers matching QtWidgets.pyi (2645-2771)
+    # Helper functions to convert None to empty string for adapter methods
     @staticmethod
-    def saveFileContent(fileContent, fileNameHint: str | None = None, parent: QWidget | None = None) -> None:  # noqa: N803
+    def _none_to_empty(s: str | None) -> str:
+        """Convert None to empty string for adapter method compatibility."""
+        return s if s is not None else ""
+    
+    @staticmethod
+    def _filter_none_from_iterable(items: Iterable[str | None]) -> list[str]:
+        """Filter None values from iterable for adapter method compatibility."""
+        return [item for item in items if item is not None]
+
+    # 1:1 wrappers matching QtWidgets.pyi (2645-2771) and _QFileDialog.pyi (1-1783) and PyQt5 stubs
+    @staticmethod
+    @overload
+    def saveFileContent(fileContent: QByteArray | bytes | bytearray | memoryview, fileNameHint: str | None = None) -> None: ...  # noqa: N803
+    @staticmethod
+    @overload
+    def saveFileContent(fileContent: QByteArray | bytes | bytearray, fileNameHint: str | None = None, parent: QWidget | None = None) -> None: ...  # noqa: N803
+    @staticmethod
+    def saveFileContent(
+        fileContent: QByteArray | bytes | bytearray | memoryview ,
+        fileNameHint: str | None = None,
+        parent: QWidget | None = None,
+    ) -> None:  # noqa: N803, ANN001
+        """Static method to save file content, matching all stub signatures."""
+        hint_str = QFileDialogExtended._none_to_empty(fileNameHint) if fileNameHint is not None else ""
         if parent is None:
-            AdapterQFileDialog.saveFileContent(fileContent, fileNameHint)
+            AdapterQFileDialog.saveFileContent(fileContent, hint_str)  # pyright: ignore[reportArgumentType]
         else:
-            AdapterQFileDialog.saveFileContent(fileContent, fileNameHint, parent)
+            AdapterQFileDialog.saveFileContent(fileContent, hint_str, parent)  # pyright: ignore[reportArgumentType, reportCallIssue]
 
     def selectedMimeTypeFilter(self) -> str:
         return super().selectedMimeTypeFilter()
@@ -349,19 +548,66 @@ class QFileDialogExtended(AdapterQFileDialog):
         return list(super().supportedSchemes())
 
     def setSupportedSchemes(self, schemes: Iterable[str | None]) -> None:
-        super().setSupportedSchemes(schemes)
+        super().setSupportedSchemes(self._filter_none_from_iterable(schemes))
 
     @staticmethod
-    def getSaveFileUrl(parent: QWidget | None = None, caption: str | None = None, directory: QUrl = QUrl(), filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog, supportedSchemes: Iterable[str | None] = ()) -> tuple[QUrl, str]:  # noqa: E501
-        return AdapterQFileDialog.getSaveFileUrl(parent, caption, directory, filter, initialFilter, options, supportedSchemes)
+    def getSaveFileUrl(
+        parent: QWidget | None = None,
+        caption: str | None = None,
+        directory: QUrl = QUrl(),
+        filter: str | None = None,
+        initialFilter: str | None = None,
+        options: AdapterQFileDialog.Option | None = None,
+        supportedSchemes: Iterable[str | None] | None = None,
+    ) -> tuple[QUrl, str]:  # noqa: E501
+        caption = "" if caption is None else caption
+        filter = "" if filter is None else filter
+        initialFilter = "" if initialFilter is None else initialFilter
+        supportedSchemes = () if supportedSchemes is None else supportedSchemes
+        options = AdapterQFileDialog.Option.DontUseNativeDialog if options is None else options  # pyright: ignore[reportAssignmentType]
+        return AdapterQFileDialog.getSaveFileUrl(parent, caption, directory, filter, initialFilter, options, supportedSchemes)  # pyright: ignore[reportArgumentType]
 
     @staticmethod
-    def getOpenFileUrls(parent: QWidget | None = None, caption: str | None = None, directory: QUrl = QUrl(), filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog, supportedSchemes: Iterable[str | None] = ()) -> tuple[list[QUrl], str]:  # noqa: E501
-        return AdapterQFileDialog.getOpenFileUrls(parent, caption, directory, filter, initialFilter, options, supportedSchemes)
+    def getOpenFileUrls(
+        parent: QWidget | None = None,
+        caption: str | None = None,
+        directory: QUrl = QUrl(),
+        filter: str | None = None,
+        initialFilter: str | None = None,
+        options: AdapterQFileDialog.Option | AdapterQFileDialog.Options | None = None,  # pyright: ignore[reportInvalidTypeForm]
+        supportedSchemes: Iterable[str | None] | None = None,
+    ) -> tuple[list[QUrl], str]:  # noqa: E501
+        caption = "" if caption is None else caption
+        filter = "" if filter is None else filter
+        initialFilter = "" if initialFilter is None else initialFilter
+        supportedSchemes = () if supportedSchemes is None else QFileDialogExtended._filter_none_from_iterable(supportedSchemes)
+        options = AdapterQFileDialog.Option.DontUseNativeDialog if options is None else options
+        return AdapterQFileDialog.getOpenFileUrls(parent, caption, directory, filter, initialFilter, options, supportedSchemes)  # pyright: ignore[reportArgumentType, reportCallIssue]
 
     @staticmethod
-    def getOpenFileUrl(parent: QWidget | None = None, caption: str | None = None, directory: QUrl = QUrl(), filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog, supportedSchemes: Iterable[str | None] = ()) -> tuple[QUrl, str]:  # noqa: E501
-        return AdapterQFileDialog.getOpenFileUrl(parent, caption, directory, filter, initialFilter, options, supportedSchemes)
+    def getOpenFileUrl(
+        parent: QWidget | None = None,
+        caption: str | None = None,
+        directory: QUrl = QUrl(),
+        filter: str | None = None,
+        initialFilter: str | None = None,
+        options: AdapterQFileDialog.Option | AdapterQFileDialog.Options | None = None,  # pyright: ignore[reportInvalidTypeForm]
+        supportedSchemes: Iterable[str | None] | None = None,
+    ) -> tuple[QUrl, str]:  # noqa: E501
+        caption = "" if caption is None else caption
+        filter = "" if filter is None else filter
+        initialFilter = "" if initialFilter is None else initialFilter
+        supportedSchemes = () if supportedSchemes is None else supportedSchemes
+        options = AdapterQFileDialog.Option.DontUseNativeDialog if options is None else options  # pyright: ignore[reportAssignmentType]
+        return AdapterQFileDialog.getOpenFileUrl(  # pyright: ignore[reportArgumentType, reportCallIssue]
+            parent,
+            QFileDialogExtended._none_to_empty(caption),
+            directory,
+            QFileDialogExtended._none_to_empty(filter),
+            QFileDialogExtended._none_to_empty(initialFilter),
+            options,
+            QFileDialogExtended._filter_none_from_iterable(supportedSchemes)
+        )
 
     def selectMimeTypeFilter(self, filter: str | None) -> None:  # noqa: A002
         super().selectMimeTypeFilter(filter)
@@ -370,7 +616,7 @@ class QFileDialogExtended(AdapterQFileDialog):
         return list(super().mimeTypeFilters())
 
     def setMimeTypeFilters(self, filters: Iterable[str | None]) -> None:
-        super().setMimeTypeFilters(filters)
+        super().setMimeTypeFilters(self._filter_none_from_iterable(filters))
 
     def selectedUrls(self) -> list[QUrl]:
         return list(super().selectedUrls())
@@ -384,7 +630,15 @@ class QFileDialogExtended(AdapterQFileDialog):
     def setVisible(self, visible: bool) -> None:
         super().setVisible(visible)
 
+    @overload
+    def open(self) -> None: ...
+    @overload
+    def open(self, slot) -> None: ...  # noqa: ANN001
     def open(self, slot=None) -> None:  # noqa: ANN001
+        """Show the dialog and connect the slot to the appropriate signal.
+        
+        Matches all stub signatures (PyQt5 and PyQt6).
+        """
         if slot is None:
             super().open()
         else:
@@ -402,31 +656,39 @@ class QFileDialogExtended(AdapterQFileDialog):
     def setOption(self, option: AdapterQFileDialog.Option, on: bool = True) -> None:
         super().setOption(option, on)
 
-    def setFilter(self, filters: QDir.Filters) -> None:
+    def setFilter(self, filters: QDir.Filters | QDir.Filter) -> None:  # pyright: ignore[reportAttributeAccessIssue]
         super().setFilter(filters)
 
-    def filter(self) -> QDir.Filters:
+    def filter(self) -> QDir.Filters | QDir.Filter:  # pyright: ignore[reportAttributeAccessIssue]
         return super().filter()
 
     def selectedNameFilter(self) -> str:
         return super().selectedNameFilter()
 
     def selectNameFilter(self, filter: str | None) -> None:  # noqa: A002
-        super().selectNameFilter(filter)
+        super().selectNameFilter(self._none_to_empty(filter))
 
     def nameFilters(self) -> list[str]:
         return list(super().nameFilters())
 
     def setNameFilters(self, filters: Iterable[str | None]) -> None:
-        super().setNameFilters(filters)
+        super().setNameFilters(self._filter_none_from_iterable(filters))
 
     def setNameFilter(self, filter: str | None) -> None:  # noqa: A002
-        super().setNameFilter(filter)
+        super().setNameFilter(self._none_to_empty(filter))
 
-    def proxyModel(self):  # type: ignore[override]
+    def proxyModel(self) -> "QAbstractProxyModel | None":
+        """Returns the proxy model used by the file dialog.
+        
+        Matches all stub signatures.
+        """
         return super().proxyModel()
 
-    def setProxyModel(self, model) -> None:  # type: ignore[override]
+    def setProxyModel(self, model: "QAbstractProxyModel | None") -> None:
+        """Sets the proxy model used by the file dialog.
+        
+        Matches all stub signatures.
+        """
         super().setProxyModel(model)
 
     def restoreState(self, state: QByteArray | bytes | bytearray | memoryview) -> bool:
@@ -442,7 +704,8 @@ class QFileDialogExtended(AdapterQFileDialog):
         super().setSidebarUrls(urls)
 
     def changeEvent(self, e: QEvent | None) -> None:  # noqa: N803
-        super().changeEvent(e)
+        if e is not None:
+            super().changeEvent(e)
 
     def accept(self) -> None:
         super().accept()
@@ -452,68 +715,128 @@ class QFileDialogExtended(AdapterQFileDialog):
 
     @staticmethod
     def getSaveFileName(parent: QWidget | None = None, caption: str | None = None, directory: str | None = None, filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog) -> tuple[str, str]:  # noqa: E501
-        return AdapterQFileDialog.getSaveFileName(parent, caption, directory, filter, initialFilter, options)
+        return AdapterQFileDialog.getSaveFileName(
+            parent,
+            QFileDialogExtended._none_to_empty(caption),
+            QFileDialogExtended._none_to_empty(directory),
+            QFileDialogExtended._none_to_empty(filter),
+            QFileDialogExtended._none_to_empty(initialFilter),
+            options
+        )
 
     @staticmethod
     def getOpenFileNames(parent: QWidget | None = None, caption: str | None = None, directory: str | None = None, filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog) -> tuple[list[str], str]:  # noqa: E501
-        return AdapterQFileDialog.getOpenFileNames(parent, caption, directory, filter, initialFilter, options)
+        return AdapterQFileDialog.getOpenFileNames(
+            parent,
+            QFileDialogExtended._none_to_empty(caption),
+            QFileDialogExtended._none_to_empty(directory),
+            QFileDialogExtended._none_to_empty(filter),
+            QFileDialogExtended._none_to_empty(initialFilter),
+            options
+        )
 
     @staticmethod
     def getOpenFileName(parent: QWidget | None = None, caption: str | None = None, directory: str | None = None, filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog) -> tuple[str, str]:  # noqa: E501
-        return AdapterQFileDialog.getOpenFileName(parent, caption, directory, filter, initialFilter, options)
+        return AdapterQFileDialog.getOpenFileName(
+            parent,
+            QFileDialogExtended._none_to_empty(caption),
+            QFileDialogExtended._none_to_empty(directory),
+            QFileDialogExtended._none_to_empty(filter),
+            QFileDialogExtended._none_to_empty(initialFilter),
+            options
+        )
 
     @staticmethod
-    def getExistingDirectoryUrl(parent: QWidget | None = None, caption: str | None = None, directory: QUrl = QUrl(), options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog, supportedSchemes: Iterable[str | None] = ()) -> QUrl:  # noqa: E501
-        return AdapterQFileDialog.getExistingDirectoryUrl(parent, caption, directory, options, supportedSchemes)
+    def getExistingDirectoryUrl(
+        parent: QWidget | None = None,
+        caption: str | None = None,
+        directory: QUrl = QUrl(),
+        options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog,
+        supportedSchemes: Iterable[str | None] = (),
+    ) -> QUrl:  # noqa: E501
+        return AdapterQFileDialog.getExistingDirectoryUrl(
+            parent,
+            QFileDialogExtended._none_to_empty(caption),
+            directory,
+            options,
+            QFileDialogExtended._filter_none_from_iterable(supportedSchemes)
+        )
 
     @staticmethod
-    def getExistingDirectory(parent: QWidget | None = None, caption: str | None = None, directory: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog) -> str:  # noqa: E501
-        return AdapterQFileDialog.getExistingDirectory(parent, caption, directory, options)
+    def getExistingDirectory(
+        parent: QWidget | None = None,
+        caption: str | None = None,
+        directory: str | None = None,
+        options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog,
+    ) -> str:  # noqa: E501
+        return AdapterQFileDialog.getExistingDirectory(
+            parent,
+            QFileDialogExtended._none_to_empty(caption),
+            QFileDialogExtended._none_to_empty(directory),
+            options
+        )
 
     def labelText(self, label: AdapterQFileDialog.DialogLabel) -> str:
         return super().labelText(label)
 
     def setLabelText(self, label: AdapterQFileDialog.DialogLabel, text: str | None) -> None:
-        super().setLabelText(label, text)
+        super().setLabelText(label, self._none_to_empty(text))
 
-    def iconProvider(self):
+    def iconProvider(self) -> QAbstractFileIconProvider | None:
+        """Returns the icon provider used by the file dialog.
+        
+        Matches all stub signatures (PyQt5 returns QFileIconProvider, PyQt6 returns QAbstractFileIconProvider | None).
+        """
         return super().iconProvider()
 
-    def setIconProvider(self, provider) -> None:
-        super().setIconProvider(provider)
+    def setIconProvider(self, provider: QAbstractFileIconProvider | None) -> None:
+        """Sets the icon provider used by the file dialog.
+        
+        Matches all stub signatures (PyQt5 returns QFileIconProvider, PyQt6 returns QAbstractFileIconProvider | None).
+        """
+        if provider is not None:
+            super().setIconProvider(provider)
 
-    def itemDelegate(self):
+    def itemDelegate(self) -> QAbstractItemDelegate | None:
+        """Returns the item delegate used to render items in the views.
+        
+        Matches all stub signatures.
+        """
         return super().itemDelegate()
 
-    def setItemDelegate(self, delegate) -> None:
-        super().setItemDelegate(delegate)
+    def setItemDelegate(self, delegate: QAbstractItemDelegate | None) -> None:
+        """Sets the item delegate used to render items in the views.
+        
+        Matches all stub signatures.
+        """
+        super().setItemDelegate(delegate)  # pyright: ignore[reportArgumentType]
 
     def history(self) -> list[str]:
         return list(super().history())
 
     def setHistory(self, paths: Iterable[str | None]) -> None:
-        super().setHistory(paths)
+        super().setHistory(self._filter_none_from_iterable(paths))
 
     def defaultSuffix(self) -> str:
         return super().defaultSuffix()
 
     def setDefaultSuffix(self, suffix: str | None) -> None:
-        super().setDefaultSuffix(suffix)
+        super().setDefaultSuffix(self._none_to_empty(suffix))
 
     def acceptMode(self) -> AdapterQFileDialog.AcceptMode:
-        return super().acceptMode()
+        return cast(AdapterQFileDialog.AcceptMode, super().acceptMode())
 
     def setAcceptMode(self, mode: AdapterQFileDialog.AcceptMode) -> None:
         super().setAcceptMode(mode)
 
     def fileMode(self) -> AdapterQFileDialog.FileMode:
-        return super().fileMode()
+        return cast(AdapterQFileDialog.FileMode, super().fileMode())
 
     def setFileMode(self, mode: AdapterQFileDialog.FileMode) -> None:
         super().setFileMode(mode)
 
     def viewMode(self) -> AdapterQFileDialog.ViewMode:
-        return super().viewMode()
+        return cast(AdapterQFileDialog.ViewMode, super().viewMode())
 
     def setViewMode(self, mode: AdapterQFileDialog.ViewMode) -> None:
         super().setViewMode(mode)
@@ -522,11 +845,10 @@ class QFileDialogExtended(AdapterQFileDialog):
         return list(super().selectedFiles())
 
     def selectFile(self, filename: str | None) -> None:
-        super().selectFile(filename)
+        super().selectFile(self._none_to_empty(filename))
 
     def directory(self) -> QDir:
         return super().directory()
-
 
 
 if __name__ == "__main__":
@@ -537,11 +859,11 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
 
-    file_dialog = QFileDialogExtended(None, Qt.WindowType.Window)
-    file_dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)  # noqa: FBT003
-    file_dialog.setFileMode(QFileDialog.FileMode.Directory)
-    file_dialog.setOption(QFileDialog.Option.ShowDirsOnly, False)  # noqa: FBT003
-    file_dialog.override_ui()
+    file_dialog = QFileDialogExtended(None, None)
+    file_dialog.setOption(AdapterQFileDialog.Option.DontUseNativeDialog, True)  # pyright: ignore[reportArgumentType]
+    file_dialog.setFileMode(AdapterQFileDialog.FileMode.Directory)
+    file_dialog.setOption(AdapterQFileDialog.Option.ShowDirsOnly, False)  # pyright: ignore[reportArgumentType]
+    #file_dialog.override_ui()
 
     file_dialog.resize(800, 600)
     file_dialog.show()

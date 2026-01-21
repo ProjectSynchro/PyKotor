@@ -3,13 +3,14 @@ from __future__ import annotations
 from typing import Callable
 
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtGui import QAction
+from qtpy.QtGui import QAction, QIcon
 from qtpy.QtWidgets import (
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QMenu,
     QSizePolicy,
+    QStyle,
     QTabWidget,
     QToolButton,
     QVBoxLayout,
@@ -319,6 +320,12 @@ class RibbonsWidget(QWidget):
         button.setFixedSize(80, 70)
         button.setIconSize(QSize(32, 32))
         button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        # Ensure icon is set from action if available
+        if action.icon().isNull():
+            # Use standard pixmap as fallback
+            button.setIcon(QIcon())  # Will be styled by CSS
+        else:
+            button.setIcon(action.icon())
         return button
 
     def create_small_button(self, text: str, action: QAction) -> QToolButton:
@@ -329,6 +336,12 @@ class RibbonsWidget(QWidget):
         button.setFixedSize(80, 22)
         button.setIconSize(QSize(16, 16))
         button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        # Ensure icon is set from action if available
+        if action.icon().isNull():
+            # Use standard pixmap as fallback
+            button.setIcon(QIcon())  # Will be styled by CSS
+        else:
+            button.setIcon(action.icon())
         return button
 
     def create_checkbox_button(self, text: str, action: QAction) -> QToolButton:
@@ -343,6 +356,7 @@ class RibbonsWidget(QWidget):
         return button
 
     def set_stylesheet(self):
+        """Apply Windows 11 Fluent Design styling to the ribbon widget."""
         from qtpy.QtWidgets import QApplication
         from qtpy.QtGui import QPalette
 
@@ -350,88 +364,161 @@ class RibbonsWidget(QWidget):
         assert isinstance(app, QApplication), "QApplication.instance() is not a QApplication"
         palette = app.palette()
 
-        # Fallback colors if running out-of-context or for headless tests
-        def color_hex(
-            role: str,
-            group: str = "Active",
-            default: str = "#C0C0C0",
-        ) -> str:
-            if palette is not None:
-                try:
-                    color_role = getattr(QPalette, role, None)
-                    color_group = getattr(QPalette, group, QPalette.ColorGroup.Active)
-                    if color_role is not None:
-                        return palette.color(color_group, color_role).name()
-                except Exception:
-                    pass
-            return default
-
-        # Replace hardcoded colors beneath with palette-based ones
-        border_color        = color_hex("Mid",       default="#C0C0C0")
-        groupbox_border     = color_hex("Midlight",  default="#C0C0C0")
-        tab_bg              = color_hex("Base",      default="#F0F0F0")
-        tab_border          = color_hex("Midlight",  default="#C4C4C3")
-        tab_selected_border = color_hex("Shadow",    default="#9B9B9B")
-        tab_selected_bg     = color_hex("Light",     default="#fafafa")
-        button_hover_bg     = color_hex("Highlight", default="#E5F3FF")
-        button_checked_bg   = color_hex("Button",    default="#CCE8FF")
-        button_focus_border = color_hex("Highlight", default="#0078D7")
+        # Windows 11 Fluent Design Color Palette
+        # Modern light theme colors matching Windows 11 Explorer
+        win11_bg = "#FFFFFF"
+        win11_ribbon_bg = "#F3F3F3"
+        win11_tab_bg = "#F9F9F9"
+        win11_tab_selected = "#FFFFFF"
+        win11_tab_hover = "#F5F5F5"
+        win11_border = "#E1E1E1"
+        win11_border_hover = "#D5D5D5"
+        win11_text = "#202020"
+        win11_text_secondary = "#606060"
+        win11_hover_bg = "#E5E5E5"
+        win11_hover_bg_light = "#F0F0F0"
+        win11_active_bg = "#E1F5FE"
+        win11_active_border = "#0078D7"
+        win11_group_border = "#E1E1E1"
         
-        tab_bar0_4 = color_hex("AlternateBase", default="#DEDEDE")
-        tab_bar0_5 = color_hex("Window",        default="#D8D8D8")
-        tab_bar1_0 = color_hex("Light",         default="#D3D3D3")
-        tab_hover_0_4 = color_hex("AlternateBase", default="#f4f4f4")
-        tab_hover_0_5 = color_hex("Window",        default="#e7e7e7")
-        tab_hover_1_0 = color_hex("Base",          default="#e0e0e0")
-        tab_selected_btm = color_hex("Dark",       default="#C2C7CB")
+        # Check if dark theme
+        is_dark = palette.color(QPalette.ColorRole.Window).lightness() < 128
+        
+        if is_dark:
+            # Dark theme colors
+            win11_bg = "#202020"
+            win11_ribbon_bg = "#2D2D2D"
+            win11_tab_bg = "#252525"
+            win11_tab_selected = "#2D2D2D"
+            win11_tab_hover = "#2A2A2A"
+            win11_border = "#3D3D3D"
+            win11_border_hover = "#4D4D4D"
+            win11_text = "#E0E0E0"
+            win11_text_secondary = "#B0B0B0"
+            win11_hover_bg = "#3A3A3A"
+            win11_hover_bg_light = "#323232"
+            win11_active_bg = "#1E3A5F"
+            win11_active_border = "#60CDFF"
+            win11_group_border = "#3D3D3D"
 
         stylesheet = f"""
+            /* Windows 11 Fluent Design Ribbon Styling */
+            QWidget {{
+                font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+                font-size: 11pt;
+                color: {win11_text};
+            }}
+            
+            /* Tab Widget - Windows 11 style */
             QTabWidget::pane {{
-                border-top: 1px solid {border_color};
-                position: absolute;
-                top: -1px;
+                background-color: {win11_tab_selected};
+                border: none;
+                border-top: 1px solid {win11_border};
             }}
+            
+            QTabBar {{
+                background-color: {win11_ribbon_bg};
+                border: none;
+                spacing: 0px;
+            }}
+            
             QTabBar::tab {{
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                            stop: 0 {tab_bg}, stop: 0.4 {tab_bar0_4},
-                                            stop: 0.5 {tab_bar0_5}, stop: 1.0 {tab_bar1_0});
-                border: 1px solid {tab_border};
-                border-bottom-color: {tab_selected_btm};
-                min-width: 8ex;
-                padding: 2px 8px;
+                background-color: {win11_tab_bg};
+                color: {win11_text};
+                border: none;
+                border-bottom: 2px solid transparent;
+                padding: 10px 20px;
+                margin-right: 0px;
+                min-width: 60px;
+                font-weight: 500;
+                font-size: 11pt;
             }}
-            QTabBar::tab:selected, QTabBar::tab:hover {{
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                            stop: 0 {tab_selected_bg}, stop: 0.4 {tab_hover_0_4},
-                                            stop: 0.5 {tab_hover_0_5}, stop: 1.0 {tab_hover_1_0});
+            
+            QTabBar::tab:hover {{
+                background-color: {win11_tab_hover};
+                color: {win11_text};
             }}
+            
             QTabBar::tab:selected {{
-                border-color: {tab_selected_border};
-                border-bottom-color: {tab_selected_btm};
+                background-color: {win11_tab_selected};
+                color: {win11_text};
+                border-bottom: 2px solid {win11_active_border};
+                font-weight: 600;
             }}
+            
+            /* Group Box - Modern Windows 11 style */
             QGroupBox {{
-                border: 1px solid {groupbox_border};
-                border-radius: 4px;
-                margin-top: 0.5em;
-                font-weight: bold;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 7px;
-                padding: 0 3px 0 3px;
-            }}
-            QToolButton {{
-                border: 1px solid transparent;
-                border-radius: 2px;
+                border: 1px solid {win11_group_border};
+                border-radius: 6px;
+                margin-top: 12px;
+                padding-top: 8px;
+                font-weight: 600;
+                font-size: 10pt;
+                color: {win11_text};
                 background-color: transparent;
             }}
-            QToolButton:hover {{
-                border: 1px solid {border_color};
-                background-color: {button_hover_bg};
+            
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                left: 10px;
+                padding: 0px 6px;
+                background-color: {win11_tab_selected};
+                color: {win11_text};
             }}
-            QToolButton:pressed, QToolButton:checked {{
-                border: 1px solid {button_focus_border};
-                background-color: {button_checked_bg};
+            
+            /* Tool Buttons - Windows 11 Fluent Design */
+            QToolButton {{
+                border: 1px solid transparent;
+                border-radius: 4px;
+                background-color: transparent;
+                padding: 4px 8px;
+                color: {win11_text};
+                font-size: 10pt;
+                text-align: center;
+            }}
+            
+            QToolButton:hover {{
+                background-color: {win11_hover_bg};
+                border: 1px solid {win11_border_hover};
+            }}
+            
+            QToolButton:pressed {{
+                background-color: {win11_hover_bg_light};
+                border: 1px solid {win11_active_border};
+            }}
+            
+            QToolButton:checked {{
+                background-color: {win11_active_bg};
+                border: 1px solid {win11_active_border};
+                color: {win11_text};
+            }}
+            
+            QToolButton:disabled {{
+                color: {win11_text_secondary};
+                background-color: transparent;
+            }}
+            
+            /* Large buttons with icons */
+            QToolButton[textUnderIcon="true"] {{
+                padding: 6px 4px;
+                spacing: 4px;
+            }}
+            
+            /* Small buttons with text beside icon */
+            QToolButton[textBesideIcon="true"] {{
+                padding: 3px 6px;
+                text-align: left;
+            }}
+            
+            /* Checkbox-style buttons */
+            QToolButton[checkable="true"] {{
+                padding: 4px 8px;
+                text-align: left;
+            }}
+            
+            QToolButton[checkable="true"]:checked {{
+                background-color: {win11_active_bg};
             }}
         """
         self.setStyleSheet(stylesheet)

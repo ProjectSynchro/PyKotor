@@ -20,11 +20,9 @@ from qtpy.QtWidgets import (
     QDialog,
     QFrame,
     QMenu,
-    QProgressBar,
     QTableWidget,
     QTableWidgetItem,
     QTreeView,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -636,6 +634,11 @@ class ItemBuilderDialog(QDialog):
         capsules: list[LazyCapsule],
     ):
         super().__init__(parent)
+        from toolset.uic.qtpy.dialogs.item_builder import Ui_Dialog
+
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+
         self.setWindowFlags(
             (Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
             | Qt.WindowType.WindowCloseButtonHint)
@@ -643,7 +646,7 @@ class ItemBuilderDialog(QDialog):
             & ~Qt.WindowType.WindowMinMaxButtonsHint
         )
 
-        self._progress_bar: QProgressBar = QProgressBar(self)
+        self._progress_bar = self.ui.progressBar
         self._progress_bar.setMaximum(0)
 
         # Setup event filter to prevent scroll wheel interaction with controls
@@ -652,11 +655,6 @@ class ItemBuilderDialog(QDialog):
         self._no_scroll_filter.setup_filter(parent_widget=self)
         self._progress_bar.setValue(0)
         self._progress_bar.setTextVisible(False)
-
-        self.resize(250, 40)
-        main_layout: QVBoxLayout = QVBoxLayout()
-        self.setLayout(main_layout)
-        main_layout.addWidget(self._progress_bar)
 
         from toolset.gui.common.localization import translate as tr
         self.setWindowTitle(tr("Building Item Lists..."))

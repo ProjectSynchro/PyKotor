@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QProcess, Qt, Signal  # pyright: ignore[reportPrivateImportUsage]
 from qtpy.QtGui import QFont, QTextCursor  # pyright: ignore[reportPrivateImportUsage]
-from qtpy.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget  # pyright: ignore[reportPrivateImportUsage]
+from qtpy.QtWidgets import QWidget  # pyright: ignore[reportPrivateImportUsage]
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QByteArray  # pyright: ignore[reportPrivateImportUsage]
@@ -37,32 +37,23 @@ class TerminalWidget(QWidget):
 
     def _setup_ui(self):
         """Set up the terminal UI."""
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        from toolset.uic.qtpy.widgets.terminal_widget import Ui_Widget
 
-        # Output display
-        self.terminal_output: QPlainTextEdit = QPlainTextEdit(self)
-        self.terminal_output.setReadOnly(True)
-        self.terminal_output.setUndoRedoEnabled(False)
-        self.terminal_output.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
-        self.terminal_output.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.terminal_output.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.ui = Ui_Widget()
+        self.ui.setupUi(self)
 
         # Set terminal-like font
         font = QFont("Consolas" if sys.platform == "win32" else "Monaco", 10)
         font.setStyleHint(QFont.StyleHint.Monospace)
-        self.terminal_output.setFont(font)
+        self.ui.terminalOutput.setFont(font)
+        self.ui.terminalInput.setFont(font)
 
-        # Input line
-        self.terminal_input: QLineEdit = QLineEdit(self)
-        self.terminal_input.setFont(font)
-        self.terminal_input.returnPressed.connect(self._on_enter_pressed)
-        self.terminal_input.installEventFilter(self)
+        # Disable undo/redo on output
+        self.ui.terminalOutput.setUndoRedoEnabled(False)
 
-        layout.addWidget(self.terminal_output)
-        layout.addWidget(self.terminal_input)
-        self.setLayout(layout)
+        # Connect input signals
+        self.ui.terminalInput.returnPressed.connect(self._on_enter_pressed)
+        self.ui.terminalInput.installEventFilter(self)
 
         # Apply terminal color scheme (VSCode dark theme style)
         # NOTE: Must be done after creating both widgets.
@@ -72,44 +63,8 @@ class TerminalWidget(QWidget):
 
     def _apply_terminal_theme(self):
         """Apply a theme that respects the current application palette."""
-        self.terminal_output.setStyleSheet("""
-            QPlainTextEdit {
-                background-color: palette(base);
-                color: palette(text);
-                border: none;
-                padding: 8px;
-                selection-background-color: palette(highlight);
-                selection-color: palette(highlighted-text);
-            }
-            QScrollBar:vertical {
-                background-color: palette(base);
-                width: 14px;
-                border: none;
-            }
-            QScrollBar::handle:vertical {
-                background-color: palette(mid);
-                min-height: 30px;
-                border-radius: 7px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background-color: palette(dark);
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-        """)
-        terminal_input = getattr(self, "terminal_input", None)
-        if terminal_input is not None:
-            terminal_input.setStyleSheet("""
-                QLineEdit {
-                    background-color: palette(base);
-                    color: palette(text);
-                    border: none;
-                    padding: 6px 8px;
-                    selection-background-color: palette(highlight);
-                    selection-color: palette(highlighted-text);
-                }
-            """)
+        # Styling is already applied in the .ui file, but we can override if needed
+        pass
 
     def _setup_process(self):
         """Set up the process for shell execution."""
@@ -132,40 +87,40 @@ class TerminalWidget(QWidget):
             text: str: The text to write
         """
         # Move cursor to end before appending
-        cursor = self.terminal_output.textCursor()
+        cursor = self.ui.terminalOutput.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
-        self.terminal_output.setTextCursor(cursor)
+        self.ui.terminalOutput.setTextCursor(cursor)
 
         # Insert text with proper encoding handling
         try:
             # Handle different encoding scenarios
             if isinstance(text, bytes):
                 text = text.decode("utf-8", errors="replace")
-            self.terminal_output.insertPlainText(text)
+            self.ui.terminalOutput.insertPlainText(text)
         except (UnicodeDecodeError, AttributeError):
             # Fallback to replace errors
             text_str = str(text)
-            self.terminal_output.insertPlainText(text_str)
+            self.ui.terminalOutput.insertPlainText(text_str)
 
         # Ensure we scroll to the bottom
-        self.terminal_output.ensureCursorVisible()
+        self.ui.terminalOutput.ensureCursorVisible()
 
     def eventFilter(self, obj, event):  # noqa: N802
         # Basic command history navigation on the input line.
-        if obj is self.terminal_input and event.type() == event.Type.KeyPress:
+        if obj is self.ui.terminalInput and event.type() == event.Type.KeyPress:
             if event.key() == Qt.Key.Key_Up:
                 if self._command_history and self._history_index > 0:
                     self._history_index -= 1
-                    self.terminal_input.setText(self._command_history[self._history_index])
+                    self.ui.terminalInput.setText(self._command_history[self._history_index])
                 return True
             if event.key() == Qt.Key.Key_Down:
                 if self._command_history:
                     if self._history_index < len(self._command_history) - 1:
                         self._history_index += 1
-                        self.terminal_input.setText(self._command_history[self._history_index])
+                        self.ui.terminalInput.setText(self._command_history[self._history_index])
                     else:
                         self._history_index = len(self._command_history)
-                        self.terminal_input.clear()
+                        self.ui.terminalInput.clear()
                 return True
             if event.key() == Qt.Key.Key_L and (event.modifiers() & Qt.KeyboardModifier.ControlModifier):
                 self.clear()
@@ -173,8 +128,8 @@ class TerminalWidget(QWidget):
         return super().eventFilter(obj, event)
 
     def _on_enter_pressed(self) -> None:
-        command = self.terminal_input.text()
-        self.terminal_input.clear()
+        command = self.ui.terminalInput.text()
+        self.ui.terminalInput.clear()
 
         if not command.strip():
             self._send_to_shell("\n")

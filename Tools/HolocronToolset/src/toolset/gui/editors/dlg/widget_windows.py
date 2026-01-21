@@ -12,7 +12,7 @@ from qtpy.QtCore import (
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
 from qtpy.QtGui import QTextDocument
-from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QListWidgetItem, QPushButton, QStyle, QStyleOptionViewItem, QVBoxLayout
+from qtpy.QtWidgets import QDialog, QListWidgetItem, QStyle, QStyleOptionViewItem
 
 from pykotor.resource.generics.dlg import DLGLink
 from toolset.gui.editors.dlg.list_widget_base import DLGListWidget, DLGListWidgetItem
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     import weakref
 
     from qtpy.QtCore import QObject
+    from qtpy.QtWidgets import QPushButton
 
     from pykotor.resource.generics.dlg import DLGLink
     from toolset.gui.editors.dlg.editor import DLGEditor
@@ -45,20 +46,44 @@ class ReferenceChooserDialog(QDialog):
         self.setWindowFlags(Qt.WindowType.Dialog | qt_constructor(Qt.WindowType.WindowCloseButtonHint & ~Qt.WindowType.WindowContextHelpButtonHint))  # pyright: ignore[reportAttributeAccessIssue]
         self.setWindowTitle("Node References")
 
-        layout = QVBoxLayout(self)
-        self.label = QLabel()
+        # Load UI from .ui file
+        from toolset.uic.qtpy.dialogs.reference_chooser import Ui_Dialog
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+
         self.editor: DLGEditor = parent
-        self.label.setTextFormat(Qt.TextFormat.RichText)
-        self.list_widget: DLGListWidget = DLGListWidget(parent)  # HACK(th3w1zard1): fix later (set editor attr properly in listWidget)
-        self.list_widget.use_hover_text = True
-        self.list_widget.setParent(self)
-        self.list_widget.setItemDelegate(HTMLDelegate(self.list_widget))
-        layout.addWidget(self.list_widget)
+        
+        # Replace QListWidget with custom DLGListWidget
+        from qtpy.QtWidgets import QListWidget
+        list_widget_placeholder: QListWidget | None = self.ui.listWidget
+        if list_widget_placeholder is not None:
+            # Get the parent layout and index
+            parent_layout = self.ui.verticalLayout
+            index = parent_layout.indexOf(list_widget_placeholder)
+            # Remove the placeholder
+            list_widget_placeholder.setParent(None)
+            # Create and add the custom widget
+            self.list_widget: DLGListWidget = DLGListWidget(parent)
+            self.list_widget.use_hover_text = True
+            self.list_widget.setItemDelegate(HTMLDelegate(self.list_widget))
+            parent_layout.insertWidget(index, self.list_widget)
+        else:
+            # Fallback: create the widget directly
+            self.list_widget = DLGListWidget(parent)
+            self.list_widget.use_hover_text = True
+            self.list_widget.setItemDelegate(HTMLDelegate(self.list_widget))
+            self.ui.verticalLayout.insertWidget(0, self.list_widget)
         
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
-        self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter: NoScrollEventFilter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
+
+        # Set button icons
+        self.back_button: QPushButton = self.ui.backButton
+        self.forward_button: QPushButton = self.ui.forwardButton
+        self.back_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack))  # pyright: ignore[reportOptionalMemberAccess]
+        self.forward_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward))  # pyright: ignore[reportOptionalMemberAccess]
 
         max_width = 0
         for linkref in references:
@@ -71,22 +96,9 @@ class ReferenceChooserDialog(QDialog):
             self.list_widget.addItem(item)
             max_width = max(max_width, self.calculate_html_width(item.data(Qt.ItemDataRole.DisplayRole)))
 
-        button_layout = QHBoxLayout()
-        self.back_button: QPushButton = QPushButton()
-        self.back_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack))  # pyright: ignore[reportOptionalMemberAccess]
-        self.forward_button: QPushButton = QPushButton()
-        self.forward_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward))  # pyright: ignore[reportOptionalMemberAccess]
-        ok_button: QPushButton = QPushButton("OK")
-        cancel_button: QPushButton = QPushButton("Cancel")
-        button_layout.addWidget(self.back_button)
-        button_layout.addWidget(self.forward_button)
-        button_layout.addWidget(ok_button)
-        button_layout.addWidget(cancel_button)
-
-        layout.addLayout(button_layout)
-
-        ok_button.clicked.connect(lambda: self.accept())
-        cancel_button.clicked.connect(lambda: self.reject())
+        # Connect buttons
+        self.ui.okButton.clicked.connect(lambda: self.accept())
+        self.ui.cancelButton.clicked.connect(lambda: self.reject())
         self.back_button.clicked.connect(lambda: self.go_back())
         self.forward_button.clicked.connect(lambda: self.go_forward())
 
@@ -197,7 +209,7 @@ class ReferenceChooserDialog(QDialog):
         referenceItems: list[weakref.ref[DLGLink]],
         item_text: str,
     ):
-        self.label.setText(item_text)
+        # Note: item_text parameter is kept for API compatibility but not currently displayed
         self.list_widget.clear()
         node_path: str = ""
         for linkref in referenceItems:

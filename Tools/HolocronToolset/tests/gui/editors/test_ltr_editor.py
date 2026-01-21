@@ -632,6 +632,8 @@ def test_ltreditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
 
+
+def test_ltr_editor_headless_ui_load_build(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
     """Test LTR Editor in headless UI - loads real file and builds data."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -672,4 +674,644 @@ def test_ltreditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
     # Verify we can read it back
     loaded_ltr = read_ltr(data)
     assert loaded_ltr is not None
+
+
+# ============================================================================
+# TABLE CELL EDITING TESTS
+# ============================================================================
+
+def test_ltr_editor_table_cell_editing_singles(qtbot: QtBot, installation: HTInstallation):
+    """Test editing cells directly in singles table."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Edit a cell directly
+    if editor.ui.tableSingles.rowCount() > 0:
+        item = editor.ui.tableSingles.item(0, 1)  # Start column
+        if item is not None:
+            editor.ui.tableSingles.setCurrentCell(0, 1)
+            editor.ui.tableSingles.editItem(item)
+            QApplication.processEvents()
+            
+            # Type new value
+            qtbot.keyClicks(editor.ui.tableSingles, "50")
+            qtbot.keyClick(editor.ui.tableSingles, Qt.Key.Key_Enter)
+            QApplication.processEvents()
+            
+            # Verify value was set
+            assert item.text() == "50"
+
+
+def test_ltr_editor_table_cell_editing_doubles(qtbot: QtBot, installation: HTInstallation):
+    """Test editing cells directly in doubles table."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Edit a cell directly
+    if editor.ui.tableDoubles.rowCount() > 0:
+        item = editor.ui.tableDoubles.item(0, 2)  # Start column
+        if item is not None:
+            editor.ui.tableDoubles.setCurrentCell(0, 2)
+            editor.ui.tableDoubles.editItem(item)
+            QApplication.processEvents()
+            
+            # Type new value
+            qtbot.keyClicks(editor.ui.tableDoubles, "25")
+            qtbot.keyClick(editor.ui.tableDoubles, Qt.Key.Key_Enter)
+            QApplication.processEvents()
+            
+            # Verify value was set
+            assert item.text() == "25"
+
+
+def test_ltr_editor_table_cell_editing_triples(qtbot: QtBot, installation: HTInstallation):
+    """Test editing cells directly in triples table."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Edit a cell directly
+    if editor.ui.tableTriples.rowCount() > 0:
+        item = editor.ui.tableTriples.item(0, 3)  # Start column
+        if item is not None:
+            editor.ui.tableTriples.setCurrentCell(0, 3)
+            editor.ui.tableTriples.editItem(item)
+            QApplication.processEvents()
+            
+            # Type new value
+            qtbot.keyClicks(editor.ui.tableTriples, "15")
+            qtbot.keyClick(editor.ui.tableTriples, Qt.Key.Key_Enter)
+            QApplication.processEvents()
+            
+            # Verify value was set
+            assert item.text() == "15"
+
+
+# ============================================================================
+# TABLE SORTING TESTS
+# ============================================================================
+
+def test_ltr_editor_table_sorting_singles(qtbot: QtBot, installation: HTInstallation):
+    """Test sorting singles table by different columns."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Sort by character column
+    editor.ui.tableSingles.sortItems(0, Qt.SortOrder.AscendingOrder)
+    QApplication.processEvents()
+    
+    # Verify sorted
+    first_item = editor.ui.tableSingles.item(0, 0)
+    if first_item is not None:
+        assert first_item.text() is not None
+    
+    # Sort by start column
+    editor.ui.tableSingles.sortItems(1, Qt.SortOrder.DescendingOrder)
+    QApplication.processEvents()
+    
+    # Verify sorted
+    first_start = editor.ui.tableSingles.item(0, 1)
+    second_start = editor.ui.tableSingles.item(1, 1)
+    if first_start is not None and second_start is not None:
+        first_val = float(first_start.text() or "0")
+        second_val = float(second_start.text() or "0")
+        assert first_val >= second_val
+
+
+def test_ltr_editor_table_sorting_doubles(qtbot: QtBot, installation: HTInstallation):
+    """Test sorting doubles table by different columns."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Sort by previous character column
+    editor.ui.tableDoubles.sortItems(0, Qt.SortOrder.AscendingOrder)
+    QApplication.processEvents()
+    
+    # Sort by start column
+    editor.ui.tableDoubles.sortItems(2, Qt.SortOrder.DescendingOrder)
+    QApplication.processEvents()
+    
+    # Verify sorted
+    first_start = editor.ui.tableDoubles.item(0, 2)
+    second_start = editor.ui.tableDoubles.item(1, 2)
+    if first_start is not None and second_start is not None:
+        first_val = float(first_start.text() or "0")
+        second_val = float(second_start.text() or "0")
+        assert first_val >= second_val
+
+
+def test_ltr_editor_table_sorting_triples(qtbot: QtBot, installation: HTInstallation):
+    """Test sorting triples table by different columns."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Sort by start column
+    editor.ui.tableTriples.sortItems(3, Qt.SortOrder.DescendingOrder)
+    QApplication.processEvents()
+    
+    # Verify sorted
+    first_start = editor.ui.tableTriples.item(0, 3)
+    second_start = editor.ui.tableTriples.item(1, 3)
+    if first_start is not None and second_start is not None:
+        first_val = float(first_start.text() or "0")
+        second_val = float(second_start.text() or "0")
+        assert first_val >= second_val
+
+
+# ============================================================================
+# HEADER CONTEXT MENU TESTS
+# ============================================================================
+
+def test_ltr_editor_header_context_menu_auto_fit(qtbot: QtBot, installation: HTInstallation):
+    """Test header context menu auto-fit columns action."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Get header
+    header = editor.ui.tableSingles.horizontalHeader()
+    assert header is not None
+    
+    # Trigger context menu
+    header.customContextMenuRequested.emit(header.mapFromGlobal(header.mapToGlobal(header.pos())))
+    QApplication.processEvents()
+    
+    # Find menu
+    menus = editor.findChildren(QMenu)
+    if menus:
+        menu = menus[-1]
+        actions = menu.actions()
+        auto_fit_action = next((a for a in actions if "Auto-fit" in a.text()), None)
+        if auto_fit_action:
+            # Toggle auto-fit
+            initial_state = editor.auto_resize_enabled
+            auto_fit_action.trigger()
+            QApplication.processEvents()
+            
+            # Verify state changed
+            assert editor.auto_resize_enabled != initial_state or editor.auto_resize_enabled is True
+
+
+def test_ltr_editor_header_context_menu_alternate_colors(qtbot: QtBot, installation: HTInstallation):
+    """Test header context menu alternate row colors action."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Get header
+    header = editor.ui.tableSingles.horizontalHeader()
+    assert header is not None
+    
+    # Get initial state
+    initial_state = editor.ui.tableSingles.alternatingRowColors()
+    
+    # Trigger context menu
+    header.customContextMenuRequested.emit(header.mapFromGlobal(header.mapToGlobal(header.pos())))
+    QApplication.processEvents()
+    
+    # Find menu
+    menus = editor.findChildren(QMenu)
+    if menus:
+        menu = menus[-1]
+        actions = menu.actions()
+        alternate_action = next((a for a in actions if "Alternate" in a.text()), None)
+        if alternate_action:
+            alternate_action.trigger()
+            QApplication.processEvents()
+            
+            # Verify state changed
+            assert editor.ui.tableSingles.alternatingRowColors() != initial_state
+
+
+# ============================================================================
+# AUTO-FIT COLUMNS TESTS
+# ============================================================================
+
+def test_ltr_editor_auto_fit_columns_enabled(qtbot: QtBot, installation: HTInstallation):
+    """Test auto-fit columns when enabled."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Enable auto-fit
+    editor.toggle_auto_fit_columns(True)
+    QApplication.processEvents()
+    
+    # Verify enabled
+    assert editor.auto_resize_enabled is True
+    
+    # Get column widths
+    header = editor.ui.tableSingles.horizontalHeader()
+    assert header is not None
+    widths = [header.sectionSize(i) for i in range(header.count())]
+    
+    # Verify columns have reasonable widths
+    assert all(w > 0 for w in widths)
+
+
+def test_ltr_editor_auto_fit_columns_disabled(qtbot: QtBot, installation: HTInstallation):
+    """Test auto-fit columns when disabled."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Disable auto-fit
+    editor.toggle_auto_fit_columns(False)
+    QApplication.processEvents()
+    
+    # Verify disabled
+    assert editor.auto_resize_enabled is False
+
+
+def test_ltr_editor_auto_fit_columns_toggle(qtbot: QtBot, installation: HTInstallation):
+    """Test toggling auto-fit columns multiple times."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Toggle multiple times
+    for _ in range(5):
+        current_state = editor.auto_resize_enabled
+        editor.toggle_auto_fit_columns()
+        QApplication.processEvents()
+        assert editor.auto_resize_enabled != current_state
+
+
+# ============================================================================
+# ALTERNATE ROW COLORS TESTS
+# ============================================================================
+
+def test_ltr_editor_alternate_row_colors_toggle(qtbot: QtBot, installation: HTInstallation):
+    """Test toggling alternate row colors multiple times."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Toggle multiple times
+    for _ in range(5):
+        initial_state = editor.ui.tableSingles.alternatingRowColors()
+        editor.toggle_alternate_row_colors()
+        QApplication.processEvents()
+        assert editor.ui.tableSingles.alternatingRowColors() != initial_state
+
+
+def test_ltr_editor_alternate_row_colors_all_tables(qtbot: QtBot, installation: HTInstallation):
+    """Test that alternate row colors affects all tables."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Get initial states
+    singles_state = editor.ui.tableSingles.alternatingRowColors()
+    doubles_state = editor.ui.tableDoubles.alternatingRowColors()
+    triples_state = editor.ui.tableTriples.alternatingRowColors()
+    
+    # Toggle
+    editor.toggle_alternate_row_colors()
+    QApplication.processEvents()
+    
+    # Verify all tables changed
+    assert editor.ui.tableSingles.alternatingRowColors() != singles_state
+    assert editor.ui.tableDoubles.alternatingRowColors() != doubles_state
+    assert editor.ui.tableTriples.alternatingRowColors() != triples_state
+
+
+# ============================================================================
+# NAME GENERATION TESTS
+# ============================================================================
+
+def test_ltr_editor_generate_name_consistency(qtbot: QtBot, installation: HTInstallation):
+    """Test that name generation produces valid names."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Generate multiple names
+    names = []
+    for _ in range(20):
+        editor.generateName()
+        name = editor.ui.lineEditGeneratedName.text()
+        names.append(name)
+        assert len(name) > 0
+        assert isinstance(name, str)
+    
+    # Verify names are generated (may be different)
+    assert len(set(names)) > 0
+
+
+def test_ltr_editor_generate_name_with_modified_probabilities(qtbot: QtBot, installation: HTInstallation):
+    """Test name generation after modifying character probabilities."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Modify some character probabilities
+    char = "a"
+    index = editor.ui.comboBoxSingleChar.findText(char)
+    if index >= 0:
+        editor.ui.comboBoxSingleChar.setCurrentIndex(index)
+        editor.ui.spinBoxSingleStart.setValue(0.5)
+        editor.ui.spinBoxSingleMiddle.setValue(0.5)
+        editor.ui.spinBoxSingleEnd.setValue(0.5)
+        editor.setSingleCharacter()
+    
+    # Generate name
+    editor.generateName()
+    name = editor.ui.lineEditGeneratedName.text()
+    
+    # Verify name was generated
+    assert len(name) > 0
+    assert name == editor.ltr.generate()
+
+
+# ============================================================================
+# ROW ADDITION/REMOVAL TESTS
+# ============================================================================
+
+def test_ltr_editor_add_remove_multiple_single_rows(qtbot: QtBot, installation: HTInstallation):
+    """Test adding and removing multiple single rows."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    initial_count = editor.ui.tableSingles.rowCount()
+    
+    # Add multiple rows
+    for _ in range(5):
+        editor.addSingleRow()
+        QApplication.processEvents()
+    
+    assert editor.ui.tableSingles.rowCount() == initial_count + 5
+    
+    # Remove rows
+    for _ in range(5):
+        if editor.ui.tableSingles.rowCount() > 0:
+            editor.ui.tableSingles.selectRow(editor.ui.tableSingles.rowCount() - 1)
+            editor.removeSingleRow()
+            QApplication.processEvents()
+    
+    assert editor.ui.tableSingles.rowCount() == initial_count
+
+
+def test_ltr_editor_add_remove_multiple_double_rows(qtbot: QtBot, installation: HTInstallation):
+    """Test adding and removing multiple double rows."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    initial_count = editor.ui.tableDoubles.rowCount()
+    
+    # Add multiple rows
+    for _ in range(5):
+        editor.addDoubleRow()
+        QApplication.processEvents()
+    
+    assert editor.ui.tableDoubles.rowCount() == initial_count + 5
+    
+    # Remove rows
+    for _ in range(5):
+        if editor.ui.tableDoubles.rowCount() > 0:
+            editor.ui.tableDoubles.selectRow(editor.ui.tableDoubles.rowCount() - 1)
+            editor.removeDoubleRow()
+            QApplication.processEvents()
+    
+    assert editor.ui.tableDoubles.rowCount() == initial_count
+
+
+def test_ltr_editor_add_remove_multiple_triple_rows(qtbot: QtBot, installation: HTInstallation):
+    """Test adding and removing multiple triple rows."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    initial_count = editor.ui.tableTriples.rowCount()
+    
+    # Add multiple rows
+    for _ in range(5):
+        editor.addTripleRow()
+        QApplication.processEvents()
+    
+    assert editor.ui.tableTriples.rowCount() == initial_count + 5
+    
+    # Remove rows
+    for _ in range(5):
+        if editor.ui.tableTriples.rowCount() > 0:
+            editor.ui.tableTriples.selectRow(editor.ui.tableTriples.rowCount() - 1)
+            editor.removeTripleRow()
+            QApplication.processEvents()
+    
+    assert editor.ui.tableTriples.rowCount() == initial_count
+
+
+# ============================================================================
+# EDGE CASES - EXTREME VALUES
+# ============================================================================
+
+def test_ltr_editor_extreme_probability_values(qtbot: QtBot, installation: HTInstallation):
+    """Test handling extreme probability values."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    char = "a"
+    index = editor.ui.comboBoxSingleChar.findText(char)
+    if index >= 0:
+        # Test minimum value
+        editor.ui.comboBoxSingleChar.setCurrentIndex(index)
+        editor.ui.spinBoxSingleStart.setValue(0.0)
+        editor.ui.spinBoxSingleMiddle.setValue(0.0)
+        editor.ui.spinBoxSingleEnd.setValue(0.0)
+        editor.setSingleCharacter()
+        
+        assert editor.ltr._singles.get_start(char) == 0.0
+        assert editor.ltr._singles.get_middle(char) == 0.0
+        assert editor.ltr._singles.get_end(char) == 0.0
+        
+        # Test maximum value
+        editor.ui.spinBoxSingleStart.setValue(1.0)
+        editor.ui.spinBoxSingleMiddle.setValue(1.0)
+        editor.ui.spinBoxSingleEnd.setValue(1.0)
+        editor.setSingleCharacter()
+        
+        assert editor.ltr._singles.get_start(char) == 1.0
+        assert editor.ltr._singles.get_middle(char) == 1.0
+        assert editor.ltr._singles.get_end(char) == 1.0
+
+
+def test_ltr_editor_all_characters_manipulated(qtbot: QtBot, installation: HTInstallation):
+    """Test manipulating all characters in the character set."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    char_set = LTR.CHARACTER_SET
+    
+    # Set values for all characters
+    for i, char in enumerate(char_set):
+        index = editor.ui.comboBoxSingleChar.findText(char)
+        if index >= 0:
+            editor.ui.comboBoxSingleChar.setCurrentIndex(index)
+            value = 0.1 + (i * 0.01)
+            editor.ui.spinBoxSingleStart.setValue(value)
+            editor.ui.spinBoxSingleMiddle.setValue(value)
+            editor.ui.spinBoxSingleEnd.setValue(value)
+            editor.setSingleCharacter()
+    
+    # Verify all characters were set
+    data, _ = editor.build()
+    modified_ltr = read_ltr(data)
+    
+    for i, char in enumerate(char_set):
+        expected_value = 0.1 + (i * 0.01)
+        assert modified_ltr._singles.get_start(char) == pytest.approx(expected_value)
+        assert modified_ltr._singles.get_middle(char) == pytest.approx(expected_value)
+        assert modified_ltr._singles.get_end(char) == pytest.approx(expected_value)
+
+
+# ============================================================================
+# COMPREHENSIVE ROUNDTRIP TESTS
+# ============================================================================
+
+def test_ltr_editor_comprehensive_roundtrip_all_tables(qtbot: QtBot, installation: HTInstallation):
+    """Test comprehensive roundtrip with all table types modified."""
+    editor = LTREditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    QApplication.processEvents()
+    
+    editor.new()
+    
+    # Modify singles
+    char = "a"
+    index = editor.ui.comboBoxSingleChar.findText(char)
+    if index >= 0:
+        editor.ui.comboBoxSingleChar.setCurrentIndex(index)
+        editor.ui.spinBoxSingleStart.setValue(0.2)
+        editor.ui.spinBoxSingleMiddle.setValue(0.3)
+        editor.ui.spinBoxSingleEnd.setValue(0.4)
+        editor.setSingleCharacter()
+    
+    # Modify doubles
+    prev_char = "a"
+    char2 = "b"
+    prev_index = editor.ui.comboBoxDoublePrevChar.findText(prev_char)
+    char2_index = editor.ui.comboBoxDoubleChar.findText(char2)
+    if prev_index >= 0 and char2_index >= 0:
+        editor.ui.comboBoxDoublePrevChar.setCurrentIndex(prev_index)
+        editor.ui.comboBoxDoubleChar.setCurrentIndex(char2_index)
+        editor.ui.spinBoxDoubleStart.setValue(0.1)
+        editor.ui.spinBoxDoubleMiddle.setValue(0.2)
+        editor.ui.spinBoxDoubleEnd.setValue(0.3)
+        editor.setDoubleCharacter()
+    
+    # Modify triples
+    prev2 = "a"
+    prev1 = "b"
+    char3 = "c"
+    prev2_index = editor.ui.comboBoxTriplePrev2Char.findText(prev2)
+    prev1_index = editor.ui.comboBoxTriplePrev1Char.findText(prev1)
+    char3_index = editor.ui.comboBoxTripleChar.findText(char3)
+    if prev2_index >= 0 and prev1_index >= 0 and char3_index >= 0:
+        editor.ui.comboBoxTriplePrev2Char.setCurrentIndex(prev2_index)
+        editor.ui.comboBoxTriplePrev1Char.setCurrentIndex(prev1_index)
+        editor.ui.comboBoxTripleChar.setCurrentIndex(char3_index)
+        editor.ui.spinBoxTripleStart.setValue(0.05)
+        editor.ui.spinBoxTripleMiddle.setValue(0.1)
+        editor.ui.spinBoxTripleEnd.setValue(0.15)
+        editor.setTripleCharacter()
+    
+    # Save
+    data1, _ = editor.build()
+    saved_ltr1 = read_ltr(data1)
+    
+    # Load
+    editor.load(Path("test.ltr"), "test", ResourceType.LTR, data1)
+    
+    # Verify all modifications preserved
+    if index >= 0:
+        assert saved_ltr1._singles.get_start(char) == pytest.approx(0.2)
+        assert saved_ltr1._singles.get_middle(char) == pytest.approx(0.3)
+        assert saved_ltr1._singles.get_end(char) == pytest.approx(0.4)
+    
+    if prev_index >= 0 and char2_index >= 0:
+        char_set = LTR.CHARACTER_SET
+        prev_idx = char_set.index(prev_char)
+        assert saved_ltr1._doubles[prev_idx].get_start(char2) == pytest.approx(0.1)
+        assert saved_ltr1._doubles[prev_idx].get_middle(char2) == pytest.approx(0.2)
+        assert saved_ltr1._doubles[prev_idx].get_end(char2) == pytest.approx(0.3)
+    
+    # Save again
+    data2, _ = editor.build()
+    saved_ltr2 = read_ltr(data2)
+    
+    # Verify second save matches first
+    if index >= 0:
+        assert saved_ltr2._singles.get_start(char) == saved_ltr1._singles.get_start(char)
+        assert saved_ltr2._singles.get_middle(char) == saved_ltr1._singles.get_middle(char)
+        assert saved_ltr2._singles.get_end(char) == saved_ltr1._singles.get_end(char)
 

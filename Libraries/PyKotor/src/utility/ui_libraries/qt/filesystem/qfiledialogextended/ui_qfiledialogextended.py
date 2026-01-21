@@ -10,6 +10,7 @@ from qtpy.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QLayout,
     QLineEdit,
     QListView,
     QSplitter,
@@ -21,7 +22,6 @@ from qtpy.QtWidgets import (
 )
 
 if TYPE_CHECKING:
-    from qtpy.QtWidgets import QLayout
     from typing_extensions import Self
 
     from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
@@ -148,34 +148,91 @@ class Ui_QFileDialogExtended(QFileDialog):  # noqa: N801
         self.hboxlayout: QHBoxLayout = hboxlayout
 
         # Assert correct widget containment
-        assert self.gridlayout.itemAtPosition(0, 0).widget() == self.lookInLabel
-        assert self.gridlayout.itemAtPosition(0, 1).layout() == self.hboxlayout
-        assert self.gridlayout.itemAtPosition(1, 0).widget() == self.splitter
-        assert self.gridlayout.itemAtPosition(2, 0).widget() == self.fileNameLabel
-        assert self.gridlayout.itemAtPosition(2, 1).widget() == self.fileNameEdit
-        assert self.gridlayout.itemAtPosition(2, 2).widget() == self.buttonBox
-        assert self.gridlayout.itemAtPosition(3, 0).widget() == self.fileTypeLabel
-        assert self.gridlayout.itemAtPosition(3, 1).widget() == self.fileTypeCombo
+        item = self.gridlayout.itemAtPosition(0, 0)
+        assert item is not None
+        assert item.widget() == self.lookInLabel
 
-        assert self.hboxlayout.itemAt(0).widget() == self.lookInCombo
-        assert self.hboxlayout.itemAt(1).widget() == self.backButton
-        assert self.hboxlayout.itemAt(2).widget() == self.forwardButton
-        assert self.hboxlayout.itemAt(3).widget() == self.toParentButton
-        assert self.hboxlayout.itemAt(4).widget() == self.newFolderButton
-        assert self.hboxlayout.itemAt(5).widget() == self.listModeButton
-        assert self.hboxlayout.itemAt(6).widget() == self.detailModeButton
+        item = self.gridlayout.itemAtPosition(0, 1)
+        assert item is not None
+        assert item.layout() == self.hboxlayout
 
-        assert self.splitter.widget(0) == self.sidebar
-        assert self.splitter.widget(1) == self.frame
+        item = self.gridlayout.itemAtPosition(1, 0)
+        assert item is not None
+        assert item.widget() == self.splitter
 
-        assert self.vboxlayout.itemAt(0).widget() == self.stackedWidget
+        item = self.gridlayout.itemAtPosition(2, 0)
+        assert item is not None
+        assert item.widget() == self.fileNameLabel
 
-        assert self.stackedWidget.widget(0) == self.page
-        assert self.stackedWidget.widget(1) == self.page_2
+        item = self.gridlayout.itemAtPosition(2, 1)
+        assert item is not None
+        assert item.widget() == self.fileNameEdit
 
-        assert self.vboxlayout1.itemAt(0).widget() == self.listView
-        assert self.vboxlayout2.itemAt(0).widget() == self.treeView
+        item = self.gridlayout.itemAtPosition(2, 2)
+        assert item is not None
+        assert item.widget() == self.buttonBox
 
-        assert self.page.layout() == self.vboxlayout1
-        assert self.page_2.layout() == self.vboxlayout2
+        item = self.gridlayout.itemAtPosition(3, 0)
+        assert item is not None
+        assert item.widget() == self.fileTypeLabel
+
+        item = self.gridlayout.itemAtPosition(3, 1)
+        assert item is not None
+        assert item.widget() == self.fileTypeCombo
+
+        item = self.hboxlayout.itemAt(0)
+        assert item is not None
+        assert item.widget() == self.lookInCombo
+        item = self.hboxlayout.itemAt(1)
+        assert item is not None
+        assert item.widget() == self.backButton
+        item = self.hboxlayout.itemAt(2)
+        assert item is not None
+        assert item.widget() == self.forwardButton
+        item = self.hboxlayout.itemAt(3)
+        assert item is not None
+        assert item.widget() == self.toParentButton
+        item = self.hboxlayout.itemAt(4)
+        assert item is not None
+        assert item.widget() == self.newFolderButton
+        item = self.hboxlayout.itemAt(5)
+        assert item is not None
+        assert item.widget() == self.listModeButton
+        item = self.hboxlayout.itemAt(6)
+        assert item is not None
+        assert item.widget() == self.detailModeButton
+
+        widget = self.splitter.widget(0)
+        assert widget is not None
+        assert widget == self.sidebar
+        widget = self.splitter.widget(1)
+        assert widget is not None
+        assert widget == self.frame
+
+        item = self.vboxlayout.itemAt(0)
+        assert item is not None
+        assert item.widget() == self.stackedWidget
+
+        widget = self.stackedWidget.widget(0)
+        assert widget is not None
+        assert widget == self.page
+
+        widget = self.stackedWidget.widget(1)
+        assert widget is not None
+        assert widget == self.page_2
+
+        item = self.vboxlayout1.itemAt(0)
+        assert item is not None
+        assert item.widget() == self.listView
+        item = self.vboxlayout2.itemAt(0)
+        assert item is not None
+        assert item.widget() == self.treeView
+
+        layout_page = self.page.layout()
+        assert layout_page is not None
+        assert layout_page == self.vboxlayout1
+        layout_page_2 = self.page_2.layout()
+        assert layout_page_2 is not None
+        assert layout_page_2 == self.vboxlayout2
+
         return self

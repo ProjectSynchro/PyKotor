@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 from qtpy.QtCore import QStringListModel, Qt
 from qtpy.QtGui import QStandardItemModel
-from qtpy.QtWidgets import QComboBox, QCompleter, QDialog, QFileDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextEdit, QVBoxLayout
+from qtpy.QtWidgets import QCompleter, QDialog, QFileDialog
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
@@ -187,72 +187,35 @@ class EnvVariableDialog(QDialog):
         from toolset.gui.common.localization import translate as tr
         self.setWindowTitle(tr("Edit Qt Environment Variable"))
 
-        # Layouts
-        main_layout = QVBoxLayout(self)
-        name_layout = QHBoxLayout()
-        value_layout = QHBoxLayout()
-        buttons_layout = QHBoxLayout()
-        docs_layout = QVBoxLayout()
+        # Load UI from .ui file
+        from toolset.uic.qtpy.dialogs.env_variable import Ui_Dialog
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
 
-        # Widgets
-        self.name_label = QLabel("Variable name:")
-        name_layout.addWidget(self.name_label)
-        self.value_label = QLabel("Variable value:")
-        value_layout.addWidget(self.value_label)
-
-        self.name_edit = QComboBox()
-        self.name_edit.setEditable(True)
-
-        for env_var in ENV_VARS:
-            self.name_edit.addItem(env_var.name)
-            self.name_edit.setItemData(self.name_edit.count() - 1, env_var.description, Qt.ToolTipRole)
-        name_layout.addWidget(self.name_edit)
-        
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 
-        self.value_edit = QLineEdit()
+        # Populate name combo box
+        for env_var in ENV_VARS:
+            self.ui.nameEdit.addItem(env_var.name)
+            self.ui.nameEdit.setItemData(self.ui.nameEdit.count() - 1, env_var.description, Qt.ToolTipRole)
+
+        # Setup value completer
         self.value_completer = QCompleter()
-        self.value_edit.setCompleter(self.value_completer)
-        self.value_edit.textChanged.connect(self.check_value_validity)
-        value_layout.addWidget(self.value_edit)
+        self.ui.valueEdit.setCompleter(self.value_completer)
+        self.ui.valueEdit.textChanged.connect(self.check_value_validity)
 
-        self.browse_dir_button = QPushButton("Browse Directory...")
-        buttons_layout.addWidget(self.browse_dir_button)
-        self.browse_file_button = QPushButton("Browse File...")
-        buttons_layout.addWidget(self.browse_file_button)
-        buttons_layout.addStretch()
-        self.ok_button = QPushButton("OK")
-        buttons_layout.addWidget(self.ok_button)
-        self.cancel_button = QPushButton("Cancel")
-        buttons_layout.addWidget(self.cancel_button)
-
-        self.doc_link_label = QLabel()
-        self.doc_link_label.setOpenExternalLinks(True)
-        self.doc_link_label.setTextFormat(Qt.RichText)
-        docs_layout.addWidget(self.doc_link_label)
-
-        self.description_edit = QTextEdit()
-        self.description_edit.setReadOnly(True)
-        self.description_edit.setFrameStyle(QFrame.NoFrame)  # For a cleaner look
-        self.description_edit.setStyleSheet("background-color: transparent;")
-        self.description_edit.setMaximumHeight(self.description_edit.minimumSizeHint().height())
-        docs_layout.addWidget(self.description_edit)
-
-        # Setup Layouts
-        main_layout.addLayout(name_layout)
-        main_layout.addLayout(value_layout)
-        main_layout.addLayout(buttons_layout)
-        main_layout.addLayout(docs_layout)
+        # Set description edit maximum height
+        self.ui.descriptionEdit.setMaximumHeight(self.ui.descriptionEdit.minimumSizeHint().height())
 
         # Connections
-        self.name_edit.currentTextChanged.connect(self.update_description_and_completer)
-        self.browse_dir_button.clicked.connect(self.browse_directory)
-        self.browse_file_button.clicked.connect(self.browse_file)
-        self.ok_button.clicked.connect(self.accept)
-        self.cancel_button.clicked.connect(self.reject)
+        self.ui.nameEdit.currentTextChanged.connect(self.update_description_and_completer)
+        self.ui.browseDirButton.clicked.connect(self.browse_directory)
+        self.ui.browseFileButton.clicked.connect(self.browse_file)
+        self.ui.okButton.clicked.connect(self.accept)
+        self.ui.cancelButton.clicked.connect(self.reject)
 
         # Initialize description and completer
         self.update_description_and_completer()
@@ -263,13 +226,13 @@ class EnvVariableDialog(QDialog):
             (
                 var
                 for var in ENV_VARS
-                if var.name == self.name_edit.currentText()
+                if var.name == self.ui.nameEdit.currentText()
             ),
             None,
         )
         if current_var:
-            self.doc_link_label.setText(f'<a href="{current_var.doc_link}">Documentation ({current_var.doc_link})</a>')
-            self.description_edit.setText(current_var.description)
+            self.ui.docLinkLabel.setText(f'<a href="{current_var.doc_link}">Documentation ({current_var.doc_link})</a>')
+            self.ui.descriptionEdit.setText(current_var.description)
 
             # Update completer for value_edit
             if current_var.possible_values:
@@ -286,40 +249,40 @@ class EnvVariableDialog(QDialog):
             (
                 var
                 for var in ENV_VARS
-                if var.name == self.name_edit.currentText()
+                if var.name == self.ui.nameEdit.currentText()
             ),
             None,
         )
         if current_var and current_var.possible_values:
             if current_var.possible_values == "Any positive integer":
                 try:
-                    value = int(self.value_edit.text())
+                    value = int(self.ui.valueEdit.text())
                     if value > 0:
-                        self.value_edit.setStyleSheet("")  # Valid positive integer
+                        self.ui.valueEdit.setStyleSheet("")  # Valid positive integer
                     else:
                         # Use palette error color for validation errors
                         from toolset.gui.common.palette_helpers import get_semantic_colors
                         colors = get_semantic_colors()
                         error_color = colors.get('error', 'red')
-                        self.value_edit.setStyleSheet(f"border: 1px solid {error_color};")  # Not a positive integer
+                        self.ui.valueEdit.setStyleSheet(f"border: 1px solid {error_color};")  # Not a positive integer
                 except ValueError:
                     # Use palette error color for validation errors
                     from toolset.gui.common.palette_helpers import get_semantic_colors
                     colors = get_semantic_colors()
                     error_color = colors.get('error', 'red')
-                    self.value_edit.setStyleSheet(f"border: 1px solid {error_color};")  # Not an integer
+                    self.ui.valueEdit.setStyleSheet(f"border: 1px solid {error_color};")  # Not an integer
             else:
                 possible_values = current_var.possible_values.split(", ")
-                if self.value_edit.text() not in possible_values:
+                if self.ui.valueEdit.text() not in possible_values:
                     # Use palette error color for validation errors
                     from toolset.gui.common.palette_helpers import get_semantic_colors
                     colors = get_semantic_colors()
                     error_color = colors.get('error', 'red')
-                    self.value_edit.setStyleSheet(f"border: 1px solid {error_color};")
+                    self.ui.valueEdit.setStyleSheet(f"border: 1px solid {error_color};")
                 else:
-                    self.value_edit.setStyleSheet("")
+                    self.ui.valueEdit.setStyleSheet("")
         else:
-            self.value_edit.setStyleSheet("")
+            self.ui.valueEdit.setStyleSheet("")
 
     def browse_directory(self):
         directory = QFileDialog.getExistingDirectory(self, "Select Directory")

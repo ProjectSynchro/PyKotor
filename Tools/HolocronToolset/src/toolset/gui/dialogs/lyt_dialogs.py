@@ -213,7 +213,17 @@ class AddRoomDialog(QDialog):
 
     def _setup_ui(self):
         """Initialize the UI."""
-        self.setWindowTitle("Add Room")
+        from toolset.gui.common.localization import translate as tr
+        from toolset.uic.qtpy.dialogs.add_room import Ui_Dialog
+        
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        
+        self.setWindowTitle(tr("Add Room"))
+        
+        # Connect buttons
+        self.ui.buttonBox.accepted.connect(self.accept)
+        self.ui.buttonBox.rejected.connect(self.reject)
 
 
 class AddDoorHookDialog(QDialog):
@@ -230,4 +240,14 @@ class AddDoorHookDialog(QDialog):
 
     def _setup_ui(self):
         """Initialize the UI."""
-        self.setWindowTitle("Add Door Hook")
+        from toolset.gui.common.localization import translate as tr
+        from toolset.uic.qtpy.dialogs.add_door_hook import Ui_Dialog
+        
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        
+        self.setWindowTitle(tr("Add Door Hook"))
+        
+        # Connect buttons
+        self.ui.okButton.clicked.connect(self.accept)
+        self.ui.cancelButton.clicked.connect(self.reject)

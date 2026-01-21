@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from qtpy.QtCore import Signal  # pyright: ignore[reportPrivateImportUsage]
-from qtpy.QtWidgets import QHBoxLayout, QPushButton, QStackedWidget, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QWidget
 
 from toolset.gui.editors.dlg.model import DLGStandardItem
 from toolset.gui.editors.dlg.tree_view import DLGTreeView
@@ -29,47 +29,27 @@ class DLGViewSwitcher(QWidget):
     ):
         super().__init__(parent)
 
-        # Create layout
-        layout: QVBoxLayout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        # Load UI from .ui file
+        from toolset.uic.qtpy.editors.view_switcher import Ui_Widget
+        
+        self.ui: Ui_Widget = Ui_Widget()
+        self.ui.setupUi(self)
 
-        # Create toolbar for view switching
-        toolbar: QHBoxLayout = QHBoxLayout()
-        toolbar.setContentsMargins(5, 5, 5, 5)
-
-        # Create view toggle buttons
-        self.tree_button: QPushButton = QPushButton("Tree View")
-        self.tree_button.setCheckable(True)
-        self.tree_button.setChecked(True)
-        self.tree_button.clicked.connect(lambda: self.switch_view("tree"))
-
-        self.graph_button: QPushButton = QPushButton("Graph View")
-        self.graph_button.setCheckable(True)
-        self.graph_button.clicked.connect(lambda: self.switch_view("graph"))
-
-        # Add buttons to toolbar
-        toolbar.addWidget(self.tree_button)
-        toolbar.addWidget(self.graph_button)
-        toolbar.addStretch()
-
-        # Add toolbar to layout
-        layout.addLayout(toolbar)
-
-        # Create stacked widget to hold views
-        self.stack: QStackedWidget = QStackedWidget()
-        layout.addWidget(self.stack)
+        # Connect button signals
+        self.ui.treeButton.clicked.connect(lambda: self.switch_view("tree"))
+        self.ui.graphButton.clicked.connect(lambda: self.switch_view("graph"))
 
         # Create views
         self.tree_view: DLGTreeView = DLGTreeView()
         self.graph_view: DialogueNodeEditor | None = None
 
         # Add views to stack
-        self.stack.addWidget(self.tree_view)
-        self.stack.addWidget(self.graph_view)
+        self.ui.stack.addWidget(self.tree_view)
+        self.ui.stack.addWidget(self.graph_view)
 
         # Set initial view
         self.current_view: Literal["tree", "graph"] = "tree"
-        self.stack.setCurrentWidget(self.tree_view)
+        self.ui.stack.setCurrentWidget(self.tree_view)
 
         # Track if graph has been built
         self.graph_built: bool = False
@@ -83,13 +63,13 @@ class DLGViewSwitcher(QWidget):
             return
 
         if view == "tree":
-            self.tree_button.setChecked(True)
-            self.graph_button.setChecked(False)
-            self.stack.setCurrentWidget(self.tree_view)
+            self.ui.treeButton.setChecked(True)
+            self.ui.graphButton.setChecked(False)
+            self.ui.stack.setCurrentWidget(self.tree_view)
         else:
-            self.tree_button.setChecked(False)
-            self.graph_button.setChecked(True)
-            self.stack.setCurrentWidget(self.graph_view)
+            self.ui.treeButton.setChecked(False)
+            self.ui.graphButton.setChecked(True)
+            self.ui.stack.setCurrentWidget(self.graph_view)
 
             # Build graph if needed
             if not self.graph_built:

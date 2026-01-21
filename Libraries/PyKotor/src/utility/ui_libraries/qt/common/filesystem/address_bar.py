@@ -244,6 +244,9 @@ class RobustAddressBar(QWidget):
 
         super().paintEvent(event)
 
+    def set_path(self, path: Path):
+        self.update_path(path)
+
     def update_path(self, path: Path):
         new_path = path.absolute()
         if new_path != self.current_path:

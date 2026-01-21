@@ -44,7 +44,13 @@ from typing import TYPE_CHECKING
 import pytest
 from qtpy.QtCore import QPoint, QPointF, Qt, QTimer
 from qtpy.QtGui import QMouseEvent
-from qtpy.QtWidgets import QApplication, QDialog, QMessageBox, QUndoStack
+from qtpy.QtWidgets import QApplication, QDialog, QMessageBox
+
+# QUndoStack location differs between Qt5/Qt6 bindings
+try:
+    from qtpy.QtWidgets import QUndoStack  # type: ignore[assignment]
+except ImportError:
+    from qtpy.QtGui import QUndoStack  # type: ignore[assignment]
 
 from pykotor.resource.formats.bwm.bwm_data import BWM
 from pykotor.common.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor

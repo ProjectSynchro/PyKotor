@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QSize, Qt, Signal  # pyright: ignore[reportPrivateImportUsage]
 from qtpy.QtGui import QIcon, QPixmap
-from qtpy.QtWidgets import QFileDialog, QGridLayout, QListWidget, QListWidgetItem, QPushButton, QScrollArea, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QFileDialog, QListWidget, QListWidgetItem, QWidget
 
 if TYPE_CHECKING:
     from os import PathLike
@@ -26,38 +26,27 @@ class TextureBrowser(QWidget):
     ):
         """Initialize texture browser UI."""
         super().__init__(parent, flags)
+        from toolset.uic.qtpy.widgets.texture_browser import Ui_Widget
+
+        self.ui = Ui_Widget()
+        self.ui.setupUi(self)
+
         self.textures: dict[str, QPixmap] = {}  # Map texture names to pixmaps
         self.selected_texture: str | None = None
-        self.initUI()
 
-    def initUI(self):
-        """Set up the texture browser UI."""
-        layout = QVBoxLayout(self)
-
-        # Add import button
+        # Get references to UI widgets
         from toolset.gui.common.localization import translate as tr
-        import_button = QPushButton(tr("Import Texture"), self)
-        import_button.clicked.connect(self.import_texture_dialog)
-        layout.addWidget(import_button)
+        self.ui.importButton.setText(tr("Import Texture"))
+        self.ui.importButton.clicked.connect(self.import_texture_dialog)
 
-        # Create scroll area for textures
-        scroll = QScrollArea(self)
-        scroll.setWidgetResizable(True)
-        layout.addWidget(scroll)
+        self.texture_widget = self.ui.scrollAreaWidgetContents
+        self.texture_layout = self.ui.textureLayout
 
-        # Create widget to hold texture grid
-        self.texture_widget = QWidget()
-        self.texture_layout = QGridLayout(self.texture_widget)
-        scroll.setWidget(self.texture_widget)
-
-        # Create list widget for textures
-        self.texture_list: QListWidget = QListWidget(self)
-        self.texture_list.setViewMode(QListWidget.ViewMode.IconMode)
+        self.texture_list = self.ui.textureList
         self.texture_list.setIconSize(QSize(64, 64))
         self.texture_list.setSpacing(5)
         self.texture_list.setResizeMode(QListWidget.ResizeMode.Adjust)
         self.texture_list.itemClicked.connect(self.on_texture_selected)
-        layout.addWidget(self.texture_list)
 
         # Enable drag and drop
         self.setAcceptDrops(True)
@@ -105,15 +94,11 @@ class TextureBrowser(QWidget):
         self.sig_texture_selected.emit(self.selected_texture)
         self.sig_texture_changed.emit(self.selected_texture)
 
-    def get_textures(self) -> list[str]:
-        """Get list of all texture names."""
-        return list(self.textures.keys())
-
     def highlight_texture(self, texture_name: str):
         """Highlight a specific texture in the browser."""
         for i in range(self.texture_list.count()):
             item = self.texture_list.item(i)
-            if item.text() == texture_name:
+            if item is not None and item.text() == texture_name:
                 item.setSelected(True)
                 self.texture_list.scrollToItem(item)
                 break

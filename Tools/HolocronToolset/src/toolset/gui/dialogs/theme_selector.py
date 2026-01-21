@@ -84,39 +84,39 @@ class ThemeSelectorDialog(QDialog):
         """Populate the theme and style lists."""
         # Update current theme display
         if self._current_theme:
-            self._current_theme_display.setText(self._current_theme)
+            self.ui.currentThemeDisplay.setText(self._current_theme)
         else:
-            self._current_theme_display.clear()
+            self.ui.currentThemeDisplay.clear()
         
         # Populate themes
-        self._themes_list.clear()
+        self.ui.themesList.clear()
         for theme_name in sorted(self._available_themes):
             item = QListWidgetItem(theme_name)
             item.setCheckState(Qt.CheckState.Unchecked)
             if self._current_theme and theme_name.lower() == self._current_theme.lower():
                 item.setCheckState(Qt.CheckState.Checked)
-                self._themes_list.setCurrentItem(item)
-                self._themes_list.scrollToItem(item)
-            self._themes_list.addItem(item)
+                self.ui.themesList.setCurrentItem(item)
+                self.ui.themesList.scrollToItem(item)
+            self.ui.themesList.addItem(item)
         
         # Update current style display
         if self._current_style == "":
-            self._current_style_display.setText(tr("Native (System Default)"))
+            self.ui.currentStyleDisplay.setText(tr("Native (System Default)"))
         elif self._current_style:
-            self._current_style_display.setText(self._current_style)
+            self.ui.currentStyleDisplay.setText(self._current_style)
         else:
-            self._current_style_display.clear()
+            self.ui.currentStyleDisplay.clear()
         
         # Populate styles
-        self._styles_list.clear()
+        self.ui.stylesList.clear()
         # Add "Native (System Default)" option
         native_item = QListWidgetItem(tr("Native (System Default)"))
         native_item.setData(Qt.ItemDataRole.UserRole, "")
         native_item.setCheckState(Qt.CheckState.Unchecked)
         if self._current_style == "":
             native_item.setCheckState(Qt.CheckState.Checked)
-            self._styles_list.setCurrentItem(native_item)
-        self._styles_list.addItem(native_item)
+            self.ui.stylesList.setCurrentItem(native_item)
+        self.ui.stylesList.addItem(native_item)
         
         # Add other styles
         for style_name in sorted(self._available_styles):
@@ -125,31 +125,31 @@ class ThemeSelectorDialog(QDialog):
             item.setCheckState(Qt.CheckState.Unchecked)
             if self._current_style == style_name:
                 item.setCheckState(Qt.CheckState.Checked)
-                self._styles_list.setCurrentItem(item)
-                self._styles_list.scrollToItem(item)
-            self._styles_list.addItem(item)
+                self.ui.stylesList.setCurrentItem(item)
+                self.ui.stylesList.scrollToItem(item)
+            self.ui.stylesList.addItem(item)
     
     def _filter_items(self, text: str):
         """Filter the theme and style lists based on search text."""
         search_text = text.lower()
         
         # Filter themes
-        for i in range(self._themes_list.count()):
-            item = self._themes_list.item(i)
+        for i in range(self.ui.themesList.count()):
+            item = self.ui.themesList.item(i)
             if item:
                 item.setHidden(search_text not in item.text().lower())
         
         # Filter styles
-        for i in range(self._styles_list.count()):
-            item = self._styles_list.item(i)
+        for i in range(self.ui.stylesList.count()):
+            item = self.ui.stylesList.item(i)
             if item:
                 item.setHidden(search_text not in item.text().lower())
     
     def _on_theme_selected(self, item: QListWidgetItem):
         """Handle theme selection."""
         # Uncheck all themes
-        for i in range(self._themes_list.count()):
-            list_item = self._themes_list.item(i)
+        for i in range(self.ui.themesList.count()):
+            list_item = self.ui.themesList.item(i)
             if list_item:
                 list_item.setCheckState(Qt.CheckState.Unchecked)
         
@@ -157,13 +157,13 @@ class ThemeSelectorDialog(QDialog):
         item.setCheckState(Qt.CheckState.Checked)
         
         # Update current theme display
-        self._current_theme_display.setText(item.text())
+        self.ui.currentThemeDisplay.setText(item.text())
     
     def _on_style_selected(self, item: QListWidgetItem):
         """Handle style selection."""
         # Uncheck all styles
-        for i in range(self._styles_list.count()):
-            list_item = self._styles_list.item(i)
+        for i in range(self.ui.stylesList.count()):
+            list_item = self.ui.stylesList.item(i)
             if list_item:
                 list_item.setCheckState(Qt.CheckState.Unchecked)
         
@@ -172,7 +172,7 @@ class ThemeSelectorDialog(QDialog):
         
         # Update current style display
         style_display_name = item.text()  # Use the display text (e.g., "Native (System Default)" or style name)
-        self._current_style_display.setText(style_display_name)
+        self.ui.currentStyleDisplay.setText(style_display_name)
     
     def _on_theme_double_clicked(self, item: QListWidgetItem):
         """Handle theme double-click - apply immediately."""
@@ -188,16 +188,16 @@ class ThemeSelectorDialog(QDialog):
         """Apply the selected theme and/or style."""
         # Check for selected theme
         selected_theme = None
-        for i in range(self._themes_list.count()):
-            item = self._themes_list.item(i)
+        for i in range(self.ui.themesList.count()):
+            item = self.ui.themesList.item(i)
             if item and item.checkState() == Qt.CheckState.Checked:
                 selected_theme = item.text()
                 break
         
         # Check for selected style
         selected_style = None
-        for i in range(self._styles_list.count()):
-            item = self._styles_list.item(i)
+        for i in range(self.ui.stylesList.count()):
+            item = self.ui.stylesList.item(i)
             if item and item.checkState() == Qt.CheckState.Checked:
                 selected_style = item.data(Qt.ItemDataRole.UserRole) or ""
                 break

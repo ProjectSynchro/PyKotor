@@ -300,9 +300,14 @@ class QUrlModel(QStandardItemModel):
                 self.setData(index, icon_to_set, Qt.ItemDataRole.DecorationRole)
 
     def setUrls(self, list_: list[QUrl]):
+        """Set URLs in the model. Matches C++ QUrlModel::setUrls() implementation."""
+        # Match C++: removeRows(0, rowCount());
         self.removeRows(0, self.rowCount())
+        # Match C++: invalidUrls.clear();
         self.invalidUrls.clear()
+        # Match C++: watching.clear();
         self.watching.clear()
+        # Match C++: addUrls(list, 0);
         self.addUrls(list_, 0)
 
     def addUrls(
@@ -508,19 +513,30 @@ class QSidebar(QListView):
         self.urlModel.addUrls(urls, row)
 
     def setModelAndUrls(self, model: QFileSystemModel, newUrls: list[QUrl]) -> None:  # noqa: N803
+        """Set model and URLs. Matches C++ QSidebar::setModelAndUrls() implementation."""
+        # Match C++: setUniformItemSizes(true);
         self.setUniformItemSizes(True)
+        # Match C++: urlModel = new QUrlModel(this);
         self.urlModel = QUrlModel(self)
+        # Match C++: urlModel->setFileSystemModel(model);
         self.urlModel.setFileSystemModel(model)
+        # Match C++: setModel(urlModel);
         self.setModel(self.urlModel)
+        # Match C++: setItemDelegate(new QSideBarDelegate(this));
         self.setItemDelegate(QSideBarDelegate(self))
 
+        # Match C++: connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &QSidebar::clicked);
         sel_model: QItemSelectionModel | None = self.selectionModel()
         if sel_model is not None:
             sel_model.currentChanged.connect(self.clicked)
+        # Match C++: #if QT_CONFIG(draganddrop) setDragDropMode(QAbstractItemView::DragDrop); #endif
         self.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
+        # Match C++: #if QT_CONFIG(menu) setContextMenuPolicy(Qt::CustomContextMenu); connect(...); #endif
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.showContextMenu)
+        # Match C++: urlModel->setUrls(newUrls);
         self.urlModel.setUrls(newUrls)
+        # Match C++: setCurrentIndex(this->model()->index(0,0));
         sidebar_model: QAbstractItemModel | None = self.model()
         if sidebar_model is not None:
             self.setCurrentIndex(sidebar_model.index(0, 0))
@@ -538,31 +554,42 @@ class QSidebar(QListView):
         )
 
     def selectUrl(self, url: QUrl) -> None:
-        sel_model: QItemSelectionModel | None = self.selectionModel()
-        if sel_model is None:
-            return
+        """Select URL in sidebar. Matches C++ QSidebar::selectUrl() implementation."""
         # Match C++: disconnect(selectionModel(), &QItemSelectionModel::currentChanged, this, &QSidebar::clicked);
-        # In Python, we need to check if the connection exists before disconnecting
-        try:
-            sel_model.currentChanged.disconnect(self.clicked)
-        except (TypeError, RuntimeError):
-            # Signal was not connected, which is fine
-            pass
-        sel_model.clear()
+        sel_model: QItemSelectionModel | None = self.selectionModel()
+        if sel_model is not None:
+            try:
+                sel_model.currentChanged.disconnect(self.clicked)
+            except (TypeError, RuntimeError):
+                # Signal was not connected, which is fine
+                pass
+
+        # Match C++: selectionModel()->clear();
+        if sel_model is not None:
+            sel_model.clear()
+        # Match C++: for (int i = 0; i < model()->rowCount(); ++i)
         sidebar_model: QAbstractItemModel | None = self.model()
         if sidebar_model is None:
             return
+        # Match C++: for (int i = 0; i < model()->rowCount(); ++i)
         for i in range(sidebar_model.rowCount()):
+            # Match C++: if (model()->index(i, 0).data(QUrlModel::UrlRole).toUrl() == url)
             url_data = sidebar_model.index(i, 0).data(QUrlModel.UrlRole)
-            if isinstance(url_data, QUrl) and url_data == url:
-                self.goToUrl.emit(url)  # Match C++: emit goToUrl(url)
-                sel_model.setCurrentIndex(
-                    sidebar_model.index(i, 0),
-                    QItemSelectionModel.SelectionFlag.SelectCurrent
-                )
+            url_from_data = url_data if isinstance(url_data, QUrl) else QUrl()
+            if url_from_data == url:
+                # Match C++: emit goToUrl(url);
+                self.goToUrl.emit(url)
+                # Match C++: selectionModel()->setCurrentIndex(model()->index(i, 0), QItemSelectionModel::SelectCurrent);
+                if sel_model is not None:
+                    sel_model.setCurrentIndex(
+                        sidebar_model.index(i, 0),
+                        QItemSelectionModel.SelectionFlag.SelectCurrent
+                    )
+                # Match C++: break;
                 break
         # Match C++: connect(selectionModel(), &QItemSelectionModel::currentChanged, this, &QSidebar::clicked);
-        sel_model.currentChanged.connect(self.clicked)
+        if sel_model is not None:
+            sel_model.currentChanged.connect(self.clicked)
 
     def showContextMenu(self, position: QPoint) -> None:
         """Show context menu for sidebar items. Matches C++ QSidebar::showContextMenu() implementation."""
@@ -622,19 +649,27 @@ class QSidebar(QListView):
         url_data = sidebar_model.index(index.row(), 0).data(QUrlModel.UrlRole)
         url = url_data if isinstance(url_data, QUrl) else QUrl()
         # Match C++: selectUrl(url);
-        self.selectUrl(url)  # selectUrl internally emits goToUrl
+        self.selectUrl(url)
 
     def focusInEvent(self, event: QFocusEvent) -> None:
+        """Handle focus in event. Matches C++ QSidebar::focusInEvent() implementation."""
+        # Match C++: QAbstractScrollArea::focusInEvent(event);
         QAbstractScrollArea.focusInEvent(self, event)
+        # Match C++: viewport()->update();
         viewport: QWidget | None = self.viewport()
-        if viewport is None:
-            return
-        viewport.update()
+        if viewport is not None:
+            viewport.update()
 
     def event(self, event: QEvent) -> bool:
+        """Handle events. Matches C++ QSidebar::event() implementation."""
+        # Match C++: if (event->type() == QEvent::KeyRelease)
         if event.type() == QEvent.Type.KeyRelease:
+            # Match C++: QKeyEvent *ke = static_cast<QKeyEvent *>(event);
             key_event = cast("QKeyEvent", event)
+            # Match C++: if (ke->key() == Qt::Key_Delete)
             if key_event.key() == Qt.Key.Key_Delete:
+                # Match C++: removeEntry(); return true;
                 self.removeEntry()
                 return True
+        # Match C++: return QListView::event(event);
         return QListView.event(self, event)

@@ -25,12 +25,12 @@ from qtpy.QtCore import (
 from qtpy.QtGui import QFont, QIcon, QImage, QPalette, QPixmap, QStandardItemModel
 from qtpy.QtWidgets import (
     QAbstractItemView,
-    QAction,
+    QAction,  # pyright: ignore[reportPrivateImportUsage]
     QApplication,
     QCompleter,
     QDialog,
     QFileIconProvider,
-    QFileSystemModel,
+    QFileSystemModel,  # pyright: ignore[reportPrivateImportUsage]
     QInputDialog,
     QLabel,
     QListView,
@@ -45,7 +45,7 @@ from qtpy.QtWidgets import (
 from utility.ui_libraries.qt.common.actions_dispatcher import ActionsDispatcher
 from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor
 from utility.ui_libraries.qt.common.tasks.task_details_dialog import TaskDetailsDialog
-from utility.ui_libraries.qt.filesystem.qfiledialogextended.explorer_ui import Ui_QFileExplorer
+from utility.ui_libraries.qt.filesystem.qfileexplorer.explorer_ui import Ui_QFileExplorer
 from utility.ui_libraries.qt.tools.image import IconLoader
 from utility.ui_libraries.qt.widgets.itemviews.abstractview import RobustAbstractItemView
 

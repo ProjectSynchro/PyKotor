@@ -12,6 +12,7 @@ except ImportError:
 
 from qtpy.QtCore import QBuffer, QEasingCurve, QIODevice, QPropertyAnimation, Qt  # type: ignore[attr-defined]
 from qtpy.QtGui import (
+    QColor,
     QDrag,
     QIcon,
     QImage,

@@ -1009,11 +1009,57 @@ class FileSelectionWindow(QMainWindow):
     ):
         super().__init__(editor)
 
-        self.resource_table = ResourceTableWidget(0, 3, resources=search_results)  # Start with zero rows and adjust based on checkbox
         self._installation: HTInstallation | None = installation
         self.editor: Editor | None = editor
         self.detailed_stat_attributes: list[str] = []
         self.init_ui()
+        
+        # Replace the QTableWidget from .ui with our custom ResourceTableWidget
+        # Store reference to the original table widget position in layout
+        main_layout = self.ui.mainLayout
+        table_index = -1
+        for i in range(main_layout.count()):
+            item = main_layout.itemAt(i)
+            if item is not None and item.widget() == self.ui.resourceTable:
+                table_index = i
+                break
+        
+        if table_index >= 0:
+            # Remove the placeholder QTableWidget
+            old_item = main_layout.takeAt(table_index)
+            if old_item is not None:
+                old_widget = old_item.widget()
+                if old_widget is not None:
+                    old_widget.deleteLater()
+            
+            # Create and insert the actual ResourceTableWidget
+            self.resource_table = ResourceTableWidget(0, 3, resources=search_results)
+            self.resource_table.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            self.resource_table.setWordWrap(True)
+            main_layout.insertWidget(table_index, self.resource_table)
+        else:
+            # Fallback: create resource_table if layout replacement failed
+            self.resource_table = ResourceTableWidget(0, 3, resources=search_results)
+            self.resource_table.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            self.resource_table.setWordWrap(True)
+        
+        # Connect signals
+        self.open_button.clicked.connect(lambda: self.resource_table.on_double_click(installation=self.installation))
+        self.resource_table.doubleClicked.connect(lambda: self.resource_table.on_double_click(installation=self.installation))
+        
+        # Configure table header
+        horiz_header: QHeaderView | None = self.resource_table.horizontalHeader()
+        if horiz_header is None:
+            raise ValueError("Horizontal header is not set for the resource table")
+        for i in range(self.resource_table.columnCount()):
+            horiz_header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
+        horiz_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        
+        # Initialize table and configure context menu
+        self._init_table()
+        self.resize(self.resource_table.sizeHint().width(), self.resource_table.sizeHint().height())
+        self.resource_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.resource_table.customContextMenuRequested.connect(lambda x: self.resource_table.run_context_menu(x, self.installation))
         
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
@@ -1026,35 +1072,21 @@ class FileSelectionWindow(QMainWindow):
 
     def init_ui(self):
         from toolset.gui.common.localization import translate as tr
-        self.setWindowTitle(tr("File Selection"))  # Set a window title
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
-        self.detailed_checkbox = QCheckBox(tr("Show detailed"))
-        self.detailed_checkbox.stateChanged.connect(self.toggle_detailed_info)
-        layout.addWidget(self.detailed_checkbox)
-
-        open_button = QPushButton(tr("Open"))
-        open_button.clicked.connect(lambda: self.resource_table.on_double_click(installation=self.installation))
-        self.resource_table.doubleClicked.connect(lambda: self.resource_table.on_double_click(installation=self.installation))
-
-        layout.addWidget(self.resource_table)
-        layout.addWidget(open_button)
-
-        self.resource_table.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.resource_table.setWordWrap(True)
+        from toolset.uic.qtpy.windows.file_selection import Ui_MainWindow
+        
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+        
+        self.setWindowTitle(tr("File Selection"))
         self.setMinimumSize(600, 400)
-        horiz_header: QHeaderView | None = self.resource_table.horizontalHeader()
-        if horiz_header is None:
-            raise ValueError("Horizontal header is not set for the resource table")
-        for i in range(self.resource_table.columnCount()):
-            horiz_header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
-        horiz_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-
-        self._init_table()
-        self.resize(self.resource_table.sizeHint().width(), self.resource_table.sizeHint().height())
-        self.resource_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.resource_table.customContextMenuRequested.connect(lambda x: self.resource_table.run_context_menu(x, self.installation))
+        
+        # Get references to UI widgets
+        self.detailed_checkbox = self.ui.detailedCheckbox
+        self.detailed_checkbox.setText(tr("Show detailed"))
+        self.detailed_checkbox.stateChanged.connect(self.toggle_detailed_info)
+        
+        self.open_button = self.ui.openButton
+        self.open_button.setText(tr("Open"))
 
     def center_and_adjust_window(self):
         primary_screen: QScreen | None = QApplication.primaryScreen()

@@ -9,13 +9,7 @@ from typing import TYPE_CHECKING, Optional
 from qtpy.QtWidgets import (
     QDialog,
     QFileDialog,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QListWidget,
     QMessageBox,
-    QPushButton,
-    QVBoxLayout,
 )
 
 from pykotor.resource.formats.lip import LIP, LIPShape, bytes_lip
@@ -34,9 +28,19 @@ class BatchLIPProcessor(QDialog):
     def __init__(self, parent: QWidget | None = None, installation: HTInstallation | None = None):
         """Initialize the batch processor."""
         super().__init__(parent)
+        from toolset.uic.qtpy.dialogs.batch_processor import Ui_Dialog
+
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+
         self.installation = installation
-        self.setWindowTitle("Batch LIP Generator")
-        self.setup_ui()
+        
+        # Connect signals
+        self.ui.addAudioBtn.clicked.connect(self.add_audio_files)
+        self.ui.removeAudioBtn.clicked.connect(self.remove_audio_file)
+        self.ui.clearAudioBtn.clicked.connect(self.clear_audio_files)
+        self.ui.browseBtn.clicked.connect(self.browse_output_dir)
+        self.ui.processBtn.clicked.connect(self.process_files)
         
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
@@ -47,50 +51,6 @@ class BatchLIPProcessor(QDialog):
         self.audio_files: list[Path] = []
         self.output_dir: Optional[Path] = None
 
-    def setup_ui(self):
-        """Set up the UI elements."""
-        layout = QVBoxLayout(self)
-
-        # Audio files list
-        audio_layout = QHBoxLayout()
-        self.audio_list = QListWidget()
-        self.audio_list.setToolTip("List of WAV files to process")
-        audio_layout.addWidget(self.audio_list)
-
-        # Audio file buttons
-        button_layout = QVBoxLayout()
-        add_audio_btn = QPushButton("Add Files...")
-        add_audio_btn.clicked.connect(self.add_audio_files)
-        button_layout.addWidget(add_audio_btn)
-
-        remove_audio_btn = QPushButton("Remove Selected")
-        remove_audio_btn.clicked.connect(self.remove_audio_file)
-        button_layout.addWidget(remove_audio_btn)
-
-        clear_audio_btn = QPushButton("Clear All")
-        clear_audio_btn.clicked.connect(self.clear_audio_files)
-        button_layout.addWidget(clear_audio_btn)
-
-        audio_layout.addLayout(button_layout)
-        layout.addLayout(audio_layout)
-
-        # Output directory
-        output_layout = QHBoxLayout()
-        self.output_path = QLineEdit()
-        self.output_path.setReadOnly(True)
-        self.output_path.setToolTip("Directory where LIP files will be saved")
-        output_layout.addWidget(QLabel("Output Directory:"))
-        output_layout.addWidget(self.output_path)
-        browse_btn = QPushButton("Browse...")
-        browse_btn.clicked.connect(self.browse_output_dir)
-        output_layout.addWidget(browse_btn)
-        layout.addLayout(output_layout)
-
-        # Process button
-        process_btn = QPushButton("Process Files")
-        process_btn.clicked.connect(self.process_files)
-        layout.addWidget(process_btn)
-
     def add_audio_files(self):
         """Add WAV files to process."""
         files, _ = QFileDialog.getOpenFileNames(
@@ -100,30 +60,30 @@ class BatchLIPProcessor(QDialog):
             path = Path(file)
             if path not in self.audio_files:
                 self.audio_files.append(path)
-                self.audio_list.addItem(path.name)
+                self.ui.audioList.addItem(path.name)
 
     def remove_audio_file(self):
         """Remove selected audio file."""
-        selected = self.audio_list.selectedItems()
+        selected = self.ui.audioList.selectedItems()
         if not selected:
             return
 
         for item in selected:
-            idx = self.audio_list.row(item)
+            idx = self.ui.audioList.row(item)
             self.audio_files.pop(idx)
-            self.audio_list.takeItem(idx)
+            self.ui.audioList.takeItem(idx)
 
     def clear_audio_files(self):
         """Clear all audio files."""
         self.audio_files.clear()
-        self.audio_list.clear()
+        self.ui.audioList.clear()
 
     def browse_output_dir(self):
         """Select output directory."""
         dir_path = QFileDialog.getExistingDirectory(self, "Select Output Directory")
         if dir_path:
             self.output_dir = Path(dir_path)
-            self.output_path.setText(str(self.output_dir))
+            self.ui.outputPath.setText(str(self.output_dir))
 
     def process_files(self):
         """Process all audio files."""

@@ -17,8 +17,6 @@ from qtpy.QtWidgets import (
     QDialog,
     QMenu,
     QMessageBox,
-    QProgressBar,
-    QVBoxLayout,
 )
 
 from pykotor.common.language import Language
@@ -517,20 +515,21 @@ class LoaderDialog(QDialog):
         model: QStandardItemModel,
     ):
         super().__init__(parent)
+        from toolset.uic.qtpy.dialogs.tlk_loader import Ui_Dialog
+
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+
         self.setWindowFlags(
             Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
             | Qt.WindowType.WindowCloseButtonHint
             | Qt.WindowType.WindowStaysOnTopHint & ~Qt.WindowType.WindowContextHelpButtonHint & ~Qt.WindowType.WindowMinMaxButtonsHint
         )
 
-        self._progress_bar: QProgressBar = QProgressBar(self)
+        self._progress_bar = self.ui.progressBar
         self._progress_bar.setMinimum(0)
         self._progress_bar.setMaximum(0)
         self._progress_bar.setTextVisible(False)
-
-        layout = QVBoxLayout()
-        layout.addWidget(self._progress_bar)
-        self.setLayout(layout)
 
         self.setWindowTitle(tr("Loading..."))
         self.setFixedSize(200, 40)
