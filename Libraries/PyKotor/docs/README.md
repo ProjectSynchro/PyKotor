@@ -6,7 +6,7 @@ A build tool for KOTOR projects with cli-compatible syntax.
 
 PyKotorCLI is a command-line tool for converting KOTOR modules, ERFs, and haks between binary and text-based source files. This allows git-based version control and team collaboration for KOTOR modding projects.
 
-**Built on PyKotor** - PyKotorCLI leverages PyKotor's comprehensive KOTOR file format libraries, providing native support for all KOTOR formats without external dependencies.
+**Built on PyKotor** - PyKotorCLI leverages PyKotor's comprehensive KOTOR file format libraries, providing native support for all KotOR formats without external dependencies.
 
 ### Features
 
@@ -26,29 +26,33 @@ PyKotorCLI is a command-line tool for converting KOTOR modules, ERFs, and haks b
 ### From Source
 
 ```bash
-cd Tools/PyKotorCLI
+git clone https://github.com/OldRepublicDevs/PyKotor
+cd PyKotor
+python -m venv .venv
+./.venv/Scripts/Activate.ps1
+./.venv/Scripts/python -m ensurepip
+./.venv/Scripts/python -m pip install -e .
 pip install -e .
 ```
 
 ### Requirements
 
 - Python 3.8+
-- PyKotor library (automatically installed)
-- nwnnsscomp (optional - falls back to built-in compiler)
+- Windows 7-11, MacOS, or any linux variant.
 
 ## Quick Start
 
 ### 1. Initialize a new project
 
 ```bash
-PyKotorCLI init myproject
+pykotor init myproject
 cd myproject
 ```
 
 ### 2. Unpack an existing module
 
 ```bash
-PyKotorCLI unpack --file path/to/mymodule.mod
+pykotor unpack --file path/to/mymodule.mod
 ```
 
 ### 3. Edit source files
@@ -58,7 +62,7 @@ Edit the files in the `src/` directory as needed.
 ### 4. Pack and install
 
 ```bash
-PyKotorCLI install
+pykotor install
 ```
 
 ### 5. Generate a kit (GUI or headless)
@@ -107,24 +111,25 @@ kotordiff
 python -m pykotor diff --gui
 ```
 
-## PyKotor Integration
+## Integration
 
-PyKotorCLI is built on PyKotor and uses the following modules:
+PyKotorCLI uses the following modules:
 
 - **GFF/JSON Conversion**: `pykotor.resource.formats.gff` - Reads/writes GFF files in binary and JSON format
 - **ERF/Module Handling**: `pykotor.resource.formats.erf` - Reads/writes ERF, MOD, SAV files
 - **RIM Handling**: `pykotor.resource.formats.rim` - Reads/writes RIM files
 - **NSS Compilation**: `pykotor.resource.formats.ncs.compilers` - Built-in NWScript compiler
-- **Resource Types**: `pykotor.resource.type` - KOTOR resource type system
+- **Resource Types**: `pykotor.resource.type` - KotOR resource type system
 
 ### Vendor Code References
 
-PyKotorCLI's implementation is informed by code from PyKotor's vendor directory:
+PyKotorCLI's implementation was derived from:
 
 - **xoreos-tools** (`vendor/xoreos-tools/`) - C++ reference for GFF, ERF, and NSS formats
 - **KotOR.js** (`vendor/KotOR.js/`) - TypeScript reference for all KOTOR formats
 - **Kotor.NET** (`vendor/Kotor.NET/`) - C# reference implementations
 - **reone** (`vendor/reone/`) - Comprehensive C++ engine reimplementation
+- **neverwinter.nim** (`vendor/neverwinter.nim/`) - Various tools and workflows for NWN
 
 ## Commands
 
@@ -133,29 +138,29 @@ PyKotorCLI's implementation is informed by code from PyKotor's vendor directory:
 Get, set, or unset user-defined configuration options.
 
 ```bash
-PyKotorCLI config <key> [<value>]
-PyKotorCLI config --list
-PyKotorCLI config --global nssCompiler /path/to/nwnnsscomp
+pykotor config <key> [<value>]
+pykotor config --list
+pykotor config --global nssCompiler /path/to/nwnnsscomp
 ```
 
 ### init
 
-Create a new PyKotorCLI package.
+Create a new pykotor package.
 
 ```bash
-PyKotorCLI init [dir] [file]
-PyKotorCLI init myproject
-PyKotorCLI init myproject --file mymodule.mod
+pykotor init [dir] [file]
+pykotor init myproject
+pykotor init myproject --file mymodule.mod
 ```
 
 ### list
 
-List all targets defined in PyKotorCLI.cfg.
+List all targets defined in pykotor.cfg.
 
 ```bash
-PyKotorCLI list
-PyKotorCLI list [target]
-PyKotorCLI list --verbose
+pykotor list
+pykotor list [target]
+pykotor list --verbose
 ```
 
 ### unpack
@@ -163,9 +168,9 @@ PyKotorCLI list --verbose
 Unpack a file into the project source tree.
 
 ```bash
-PyKotorCLI unpack [target] [file]
-PyKotorCLI unpack
-PyKotorCLI unpack --file mymodule.mod
+pykotor unpack [target] [file]
+pykotor unpack
+pykotor unpack --file mymodule.mod
 ```
 
 ### extract
@@ -211,10 +216,10 @@ $Env:PYTHONIOENCODING='utf-8'; uv --directory="Libraries/PyKotor/src" run --modu
 Convert all JSON sources to their GFF counterparts.
 
 ```bash
-PyKotorCLI convert [targets...]
-PyKotorCLI convert
-PyKotorCLI convert all
-PyKotorCLI convert demo test
+pykotor convert [targets...]
+pykotor convert
+pykotor convert all
+pykotor convert demo test
 ```
 
 ### compile
@@ -224,9 +229,9 @@ Compile all NWScript sources for target.
 **Note**: Uses PyKotor's built-in compiler by default. External compiler (nwnnsscomp) used if found in PATH.
 
 ```bash
-PyKotorCLI compile [targets...]
-PyKotorCLI compile
-PyKotorCLI compile --file myscript.nss
+pykotor compile [targets...]
+pykotor compile
+pykotor compile --file myscript.nss
 ```
 
 ### pack
@@ -234,10 +239,10 @@ PyKotorCLI compile --file myscript.nss
 Convert, compile, and pack all sources for target.
 
 ```bash
-PyKotorCLI pack [targets...]
-PyKotorCLI pack
-PyKotorCLI pack all
-PyKotorCLI pack demo --clean
+pykotor pack [targets...]
+pykotor pack
+pykotor pack all
+pykotor pack demo --clean
 ```
 
 ### install
@@ -245,10 +250,10 @@ PyKotorCLI pack demo --clean
 Convert, compile, pack, and install target.
 
 ```bash
-PyKotorCLI install [targets...]
-PyKotorCLI install
-PyKotorCLI install demo
-PyKotorCLI install --installDir /path/to/kotor
+pykotor install [targets...]
+pykotor install
+pykotor install demo
+pykotor install --installDir /path/to/kotor
 ```
 
 ### kit-generate (Holocron kits)
@@ -259,7 +264,7 @@ Generate a Holocron-compatible kit from a module. When no CLI args are supplied 
 python -m pykotor kit-generate --installation "C:\Games\KOTOR" --module danm13 --output .\kits --kit-id danm13 --log-level info
 ```
 
-### diff (KotorDiff)
+### Comparing Files and Resources (KotorDiff)
 
 Structured comparisons for files, folders, modules, or full installations. Stays headless when paths are supplied; falls back to the GUI when arguments are omitted or `--gui` is passed.
 
@@ -288,15 +293,15 @@ Key options:
 Convert, compile, pack, install, and launch target in-game.
 
 ```bash
-PyKotorCLI launch [target]
-PyKotorCLI serve [target]
-PyKotorCLI play [target]
-PyKotorCLI test [target]
+pykotor launch [target]
+pykotor serve [target]
+pykotor play [target]
+pykotor test [target]
 ```
 
 ## Configuration File
 
-The `PyKotorCLI.cfg` file uses TOML format and is compatible with cli's syntax.
+The `pykotor.cfg` file uses TOML format and is compatible with cli's syntax.
 
 ### Example Configuration
 
@@ -323,28 +328,13 @@ file = "mymod.mod"
 description = "Default module target"
 ```
 
-## Differences from cli
-
-While PyKotorCLI maintains cli's command syntax for familiarity, it has key differences:
-
-1. **Built on PyKotor** - Uses PyKotor's native Python libraries instead of neverwinter.nim
-2. **Built-in Compiler** - Includes a native NSS compiler, no external tools required
-3. **KOTOR-specific** - Targets KOTOR/KOTOR2 instead of Neverwinter Nights
-4. **Python ecosystem** - Easier to extend and integrate with Python tools
-
 ## License
 
-MIT License - See LICENSE file for details.
-
-## Credits
-
-- **Syntax inspired by**: [cli](https://github.com/squattingmonk/cli) by squattingmonk
-- **Built on**: [PyKotor](https://github.com/OldRepublicDevs/PyKotor)
-- **Format references**: xoreos-tools, KotOR.js, reone, Kotor.NET (in vendor/)
+LGPL License - See LICENSE file for details.
 
 ## Contributing
 
-Contributions welcome! Please see the main PyKotor repository for contribution guidelines.
+Contributions welcome! [See here for contributing guidelines.](https://github.com/OldRepublicDevs/PyKotor/edit/master/Libraries/PyKotor/docs/README.md)
 
 ## Documentation
 
