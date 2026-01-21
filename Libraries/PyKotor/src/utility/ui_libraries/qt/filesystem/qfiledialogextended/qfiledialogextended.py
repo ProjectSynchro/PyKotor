@@ -1,19 +1,25 @@
 from __future__ import annotations
 
+from pathlib import Path
 import sys
 import traceback
 
 from enum import Enum
 from typing import TYPE_CHECKING, cast, overload
+from collections.abc import Iterable
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtCore import (
     QAbstractItemModel,
+    QByteArray,
+    QDir,
     QEvent,
+    QUrl,
     Qt,
 )
 from qtpy.QtWidgets import QApplication, QFileDialog, QFileSystemModel, QMessageBox, QWidget
 
+from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as AdapterQFileDialog
 from utility.ui_libraries.qt.common.actions_dispatcher import ActionsDispatcher
 from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor
 from utility.ui_libraries.qt.filesystem.qfiledialogextended.ui_qfiledialogextended import Ui_QFileDialogExtended
@@ -33,7 +39,7 @@ class ReplaceStrategy(Enum):
     CLASS_REASSIGN = "class_reassign"
 
 
-class QFileDialogExtended(QFileDialog):
+class QFileDialogExtended(AdapterQFileDialog):
     @overload
     def __init__(self, parent: QWidget | None = None, f: Qt.WindowType | None = None) -> None: ...
     @overload
@@ -43,16 +49,21 @@ class QFileDialogExtended(QFileDialog):
         *args,
         **kwargs,
     ) -> None:
-        QFileDialog.__init__(self, *args, **kwargs)
-        self.setOption(QFileDialog.Option.DontUseNativeDialog, True)  # noqa: FBT003
-        self.setFileMode(QFileDialog.FileMode.Directory)
-        self.setOption(QFileDialog.Option.ShowDirsOnly, False)  # noqa: FBT003
+        super().__init__(*args, **kwargs)
+        self.setOption(AdapterQFileDialog.Option.DontUseNativeDialog, True)  # noqa: FBT003
+        self.setFileMode(AdapterQFileDialog.FileMode.Directory)
+        self.setOption(AdapterQFileDialog.Option.ShowDirsOnly, False)  # noqa: FBT003
         self.ui: Ui_QFileDialogExtended = Ui_QFileDialogExtended()
         self.ui.setupUi(self)
         self.model_setup()
+        self._setup_address_bar()
+        self._setup_search_filter()
+        self._insert_extended_rows()
+        self._setup_proxy_model()
         self.executor: FileActionsExecutor = FileActionsExecutor()
         self.dispatcher: ActionsDispatcher = ActionsDispatcher(self.model, self, self.executor)
         self.connect_signals()
+        self._connect_extended_signals()
         self.setMouseTracking(True)
         #self.installEventFilter(self)
         #self.ui.listView.installEventFilter(self)
@@ -67,30 +78,18 @@ class QFileDialogExtended(QFileDialog):
         #self.ui.sidebar.installEventFilter(self)
 
     def eventFilter(self, obj: QObject, event: QEvent) -> bool:
-        if event.type() == QEvent.Type.MouseMove:
-            mouse_event = cast("QMouseEvent", event)
-            print("MouseMove event", mouse_event.pos())
-            widget = self.childAt(mouse_event.pos())
-            if widget:
-                self.print_widget_info(widget)
-            return False  # Let the event propagate
         return super().eventFilter(obj, event)
 
     def print_widget_info(self, widget: QWidget) -> None:
-        print(
-            f"Widget under mouse cls name: {widget.__class__.__name__}",
-            "objectName:",
-            widget.objectName(),
-            "parent cls name:",
-            widget.parent().__class__.__name__,
-            f"parent objectName: {'' if widget.parent() is None else widget.parent().objectName()}",
+        RobustLogger().debug(
+            "Widget info",
+            extra={
+                "class": widget.__class__.__name__,
+                "objectName": widget.objectName(),
+                "parentClass": widget.parent().__class__.__name__ if widget.parent() else None,
+                "parentObjectName": widget.parent().objectName() if widget.parent() else None,
+            },
         )
-
-        # Recursively print info for child widgets
-        for child in widget.children():
-            if isinstance(child, QWidget):
-                print(f"Child of {widget.objectName()}:")
-                self.print_widget_info(child)
 
     def _q_showListView(self) -> None:
         """Changes the current view to list mode.
@@ -108,7 +107,7 @@ class QFileDialogExtended(QFileDialog):
         parent = self.ui.listView.parent()
         assert parent is self.ui.page, f"{type(self).__name__}._q_showListView: parent is not self.ui.page"
         self.ui.stackedWidget.setCurrentWidget(cast("QWidget", parent))
-        self.setViewMode(QFileDialog.ViewMode.List)
+        self.setViewMode(AdapterQFileDialog.ViewMode.List)
 
     def _q_showDetailsView(self) -> None:
         """Changes the current view to details mode.
@@ -125,7 +124,7 @@ class QFileDialogExtended(QFileDialog):
         parent = self.ui.treeView.parent()
         assert parent is self.ui.page_2, f"{type(self).__name__}._q_showDetailsView: parent is not self.ui.page"
         self.ui.stackedWidget.setCurrentWidget(cast("QWidget", parent))
-        self.setViewMode(QFileDialog.ViewMode.Detail)
+        self.setViewMode(AdapterQFileDialog.ViewMode.Detail)
 
     def override_ui(self):
 
@@ -212,6 +211,290 @@ class QFileDialogExtended(QFileDialog):
         error_msg.setDetailedText("".join(traceback.format_exception(type(error), error, None)))
         error_msg.setWindowTitle("Task Failed")
         error_msg.exec()
+
+    def _setup_address_bar(self) -> None:
+        from utility.ui_libraries.qt.common.filesystem.address_bar import RobustAddressBar
+
+        self.address_bar: RobustAddressBar = RobustAddressBar(self)
+        self.address_bar.setObjectName("addressBar")
+        self.address_bar.pathChanged.connect(self._on_address_bar_path_changed)
+        self.address_bar.returnPressed.connect(self._on_address_bar_return_pressed)
+        self.address_bar.set_path(Path(self.directory().absolutePath()))
+
+    def _setup_search_filter(self) -> None:
+        from utility.ui_libraries.qt.widgets.widgets.search_filter import SearchFilterWidget
+
+        self.search_filter: SearchFilterWidget = SearchFilterWidget(self)
+        self.search_filter.setObjectName("searchFilter")
+        self.search_filter.textChanged.connect(self._on_search_text_changed)
+        self.search_filter.searchRequested.connect(self._on_search_requested)
+
+    def _insert_extended_rows(self) -> None:
+        """Insert address bar + search above existing grid content."""
+        grid = self.ui.gridlayout
+        if grid is None:
+            return
+
+        items: list[tuple[object, int, int, int, int]] = []
+        for i in range(grid.count()):
+            item = grid.itemAt(i)
+            if item is None:
+                continue
+            row, col, row_span, col_span = grid.getItemPosition(i)
+            items.append((item, row, col, row_span, col_span))
+
+        for item, _, _, _, _ in items:
+            if item.widget():
+                grid.removeWidget(item.widget())
+            elif item.layout():
+                grid.removeItem(item)
+
+        grid.addWidget(self.address_bar, 0, 0, 1, 3)
+        grid.addWidget(self.search_filter, 1, 0, 1, 3)
+
+        for item, row, col, row_span, col_span in items:
+            if item.widget():
+                grid.addWidget(item.widget(), row + 2, col, row_span, col_span)
+            elif item.layout():
+                grid.addLayout(item.layout(), row + 2, col, row_span, col_span)
+
+    def _setup_proxy_model(self) -> None:
+        from qtpy.QtCore import QSortFilterProxyModel
+
+        self.proxy_model: QSortFilterProxyModel = QSortFilterProxyModel(self)
+        self.proxy_model.setSourceModel(self.model)
+        self.proxy_model.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.proxy_model.setFilterKeyColumn(0)
+        self.proxy_model.setRecursiveFilteringEnabled(True)
+
+        self.ui.listView.setModel(self.proxy_model)
+        self.ui.treeView.setModel(self.proxy_model)
+
+    def _on_address_bar_path_changed(self, path: Path) -> None:
+        self.setDirectory(str(path))
+
+    def _on_address_bar_return_pressed(self) -> None:
+        pass
+
+    def _on_search_text_changed(self, text: str) -> None:
+        self.proxy_model.setFilterFixedString(text)
+
+    def _on_search_requested(self, text: str) -> None:
+        self.proxy_model.setFilterFixedString(text)
+
+    def _on_directory_changed(self, directory: str) -> None:
+        self.address_bar.update_path(Path(directory))
+
+    def _connect_extended_signals(self) -> None:
+        self.directoryEntered.connect(self._on_directory_changed)
+
+    @overload
+    def setDirectory(self, directory: str | None) -> None: ...
+    @overload
+    def setDirectory(self, adirectory: QDir) -> None: ...
+    def setDirectory(self, directory) -> None:  # type: ignore[override]
+        super().setDirectory(directory)
+        if hasattr(self, "address_bar"):
+            self.address_bar.update_path(Path(self.directory().absolutePath()))
+
+    def setDirectoryUrl(self, directory: QUrl) -> None:
+        super().setDirectoryUrl(directory)
+        if hasattr(self, "address_bar"):
+            self.address_bar.update_path(Path(self.directory().absolutePath()))
+
+    # 1:1 wrappers matching QtWidgets.pyi (2645-2771)
+    @staticmethod
+    def saveFileContent(fileContent, fileNameHint: str | None = None, parent: QWidget | None = None) -> None:  # noqa: N803
+        if parent is None:
+            AdapterQFileDialog.saveFileContent(fileContent, fileNameHint)
+        else:
+            AdapterQFileDialog.saveFileContent(fileContent, fileNameHint, parent)
+
+    def selectedMimeTypeFilter(self) -> str:
+        return super().selectedMimeTypeFilter()
+
+    def supportedSchemes(self) -> list[str]:
+        return list(super().supportedSchemes())
+
+    def setSupportedSchemes(self, schemes: Iterable[str | None]) -> None:
+        super().setSupportedSchemes(schemes)
+
+    @staticmethod
+    def getSaveFileUrl(parent: QWidget | None = None, caption: str | None = None, directory: QUrl = QUrl(), filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog, supportedSchemes: Iterable[str | None] = ()) -> tuple[QUrl, str]:  # noqa: E501
+        return AdapterQFileDialog.getSaveFileUrl(parent, caption, directory, filter, initialFilter, options, supportedSchemes)
+
+    @staticmethod
+    def getOpenFileUrls(parent: QWidget | None = None, caption: str | None = None, directory: QUrl = QUrl(), filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog, supportedSchemes: Iterable[str | None] = ()) -> tuple[list[QUrl], str]:  # noqa: E501
+        return AdapterQFileDialog.getOpenFileUrls(parent, caption, directory, filter, initialFilter, options, supportedSchemes)
+
+    @staticmethod
+    def getOpenFileUrl(parent: QWidget | None = None, caption: str | None = None, directory: QUrl = QUrl(), filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog, supportedSchemes: Iterable[str | None] = ()) -> tuple[QUrl, str]:  # noqa: E501
+        return AdapterQFileDialog.getOpenFileUrl(parent, caption, directory, filter, initialFilter, options, supportedSchemes)
+
+    def selectMimeTypeFilter(self, filter: str | None) -> None:  # noqa: A002
+        super().selectMimeTypeFilter(filter)
+
+    def mimeTypeFilters(self) -> list[str]:
+        return list(super().mimeTypeFilters())
+
+    def setMimeTypeFilters(self, filters: Iterable[str | None]) -> None:
+        super().setMimeTypeFilters(filters)
+
+    def selectedUrls(self) -> list[QUrl]:
+        return list(super().selectedUrls())
+
+    def selectUrl(self, url: QUrl) -> None:
+        super().selectUrl(url)
+
+    def directoryUrl(self) -> QUrl:
+        return super().directoryUrl()
+
+    def setVisible(self, visible: bool) -> None:
+        super().setVisible(visible)
+
+    def open(self, slot=None) -> None:  # noqa: ANN001
+        if slot is None:
+            super().open()
+        else:
+            super().open(slot)
+
+    def options(self) -> AdapterQFileDialog.Option:
+        return super().options()
+
+    def setOptions(self, options: AdapterQFileDialog.Option) -> None:
+        super().setOptions(options)
+
+    def testOption(self, option: AdapterQFileDialog.Option) -> bool:
+        return super().testOption(option)
+
+    def setOption(self, option: AdapterQFileDialog.Option, on: bool = True) -> None:
+        super().setOption(option, on)
+
+    def setFilter(self, filters: QDir.Filters) -> None:
+        super().setFilter(filters)
+
+    def filter(self) -> QDir.Filters:
+        return super().filter()
+
+    def selectedNameFilter(self) -> str:
+        return super().selectedNameFilter()
+
+    def selectNameFilter(self, filter: str | None) -> None:  # noqa: A002
+        super().selectNameFilter(filter)
+
+    def nameFilters(self) -> list[str]:
+        return list(super().nameFilters())
+
+    def setNameFilters(self, filters: Iterable[str | None]) -> None:
+        super().setNameFilters(filters)
+
+    def setNameFilter(self, filter: str | None) -> None:  # noqa: A002
+        super().setNameFilter(filter)
+
+    def proxyModel(self):  # type: ignore[override]
+        return super().proxyModel()
+
+    def setProxyModel(self, model) -> None:  # type: ignore[override]
+        super().setProxyModel(model)
+
+    def restoreState(self, state: QByteArray | bytes | bytearray | memoryview) -> bool:
+        return super().restoreState(state)
+
+    def saveState(self) -> QByteArray:
+        return super().saveState()
+
+    def sidebarUrls(self) -> list[QUrl]:
+        return list(super().sidebarUrls())
+
+    def setSidebarUrls(self, urls: Iterable[QUrl]) -> None:
+        super().setSidebarUrls(urls)
+
+    def changeEvent(self, e: QEvent | None) -> None:  # noqa: N803
+        super().changeEvent(e)
+
+    def accept(self) -> None:
+        super().accept()
+
+    def done(self, result: int) -> None:
+        super().done(result)
+
+    @staticmethod
+    def getSaveFileName(parent: QWidget | None = None, caption: str | None = None, directory: str | None = None, filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog) -> tuple[str, str]:  # noqa: E501
+        return AdapterQFileDialog.getSaveFileName(parent, caption, directory, filter, initialFilter, options)
+
+    @staticmethod
+    def getOpenFileNames(parent: QWidget | None = None, caption: str | None = None, directory: str | None = None, filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog) -> tuple[list[str], str]:  # noqa: E501
+        return AdapterQFileDialog.getOpenFileNames(parent, caption, directory, filter, initialFilter, options)
+
+    @staticmethod
+    def getOpenFileName(parent: QWidget | None = None, caption: str | None = None, directory: str | None = None, filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog) -> tuple[str, str]:  # noqa: E501
+        return AdapterQFileDialog.getOpenFileName(parent, caption, directory, filter, initialFilter, options)
+
+    @staticmethod
+    def getExistingDirectoryUrl(parent: QWidget | None = None, caption: str | None = None, directory: QUrl = QUrl(), options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog, supportedSchemes: Iterable[str | None] = ()) -> QUrl:  # noqa: E501
+        return AdapterQFileDialog.getExistingDirectoryUrl(parent, caption, directory, options, supportedSchemes)
+
+    @staticmethod
+    def getExistingDirectory(parent: QWidget | None = None, caption: str | None = None, directory: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog) -> str:  # noqa: E501
+        return AdapterQFileDialog.getExistingDirectory(parent, caption, directory, options)
+
+    def labelText(self, label: AdapterQFileDialog.DialogLabel) -> str:
+        return super().labelText(label)
+
+    def setLabelText(self, label: AdapterQFileDialog.DialogLabel, text: str | None) -> None:
+        super().setLabelText(label, text)
+
+    def iconProvider(self):
+        return super().iconProvider()
+
+    def setIconProvider(self, provider) -> None:
+        super().setIconProvider(provider)
+
+    def itemDelegate(self):
+        return super().itemDelegate()
+
+    def setItemDelegate(self, delegate) -> None:
+        super().setItemDelegate(delegate)
+
+    def history(self) -> list[str]:
+        return list(super().history())
+
+    def setHistory(self, paths: Iterable[str | None]) -> None:
+        super().setHistory(paths)
+
+    def defaultSuffix(self) -> str:
+        return super().defaultSuffix()
+
+    def setDefaultSuffix(self, suffix: str | None) -> None:
+        super().setDefaultSuffix(suffix)
+
+    def acceptMode(self) -> AdapterQFileDialog.AcceptMode:
+        return super().acceptMode()
+
+    def setAcceptMode(self, mode: AdapterQFileDialog.AcceptMode) -> None:
+        super().setAcceptMode(mode)
+
+    def fileMode(self) -> AdapterQFileDialog.FileMode:
+        return super().fileMode()
+
+    def setFileMode(self, mode: AdapterQFileDialog.FileMode) -> None:
+        super().setFileMode(mode)
+
+    def viewMode(self) -> AdapterQFileDialog.ViewMode:
+        return super().viewMode()
+
+    def setViewMode(self, mode: AdapterQFileDialog.ViewMode) -> None:
+        super().setViewMode(mode)
+
+    def selectedFiles(self) -> list[str]:
+        return list(super().selectedFiles())
+
+    def selectFile(self, filename: str | None) -> None:
+        super().selectFile(filename)
+
+    def directory(self) -> QDir:
+        return super().directory()
+
 
 
 if __name__ == "__main__":
