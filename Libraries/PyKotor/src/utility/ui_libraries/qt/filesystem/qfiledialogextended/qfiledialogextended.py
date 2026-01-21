@@ -17,11 +17,12 @@ from qtpy.QtCore import (
     QUrl,
     Qt,
 )
-from qtpy.QtWidgets import QApplication, QFileDialog, QFileSystemModel, QMessageBox, QWidget
+from qtpy.QtWidgets import QApplication, QFileDialog, QFileSystemModel, QLayoutItem, QMessageBox, QWidget
 
 from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as AdapterQFileDialog
 from utility.ui_libraries.qt.common.actions_dispatcher import ActionsDispatcher
 from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor
+from utility.ui_libraries.qt.common.ribbons_widget import RibbonsWidget
 from utility.ui_libraries.qt.filesystem.qfiledialogextended.ui_qfiledialogextended import Ui_QFileDialogExtended
 from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
 from utility.ui_libraries.qt.widgets.widgets.stacked_view import DynamicStackedView
@@ -56,12 +57,13 @@ class QFileDialogExtended(AdapterQFileDialog):
         self.ui: Ui_QFileDialogExtended = Ui_QFileDialogExtended()
         self.ui.setupUi(self)
         self.model_setup()
+        self.executor: FileActionsExecutor = FileActionsExecutor()
+        self.dispatcher: ActionsDispatcher = ActionsDispatcher(self.model, self, self.executor)
+        self._setup_ribbons()
         self._setup_address_bar()
         self._setup_search_filter()
         self._insert_extended_rows()
         self._setup_proxy_model()
-        self.executor: FileActionsExecutor = FileActionsExecutor()
-        self.dispatcher: ActionsDispatcher = ActionsDispatcher(self.model, self, self.executor)
         self.connect_signals()
         self._connect_extended_signals()
         self.setMouseTracking(True)
@@ -81,13 +83,15 @@ class QFileDialogExtended(AdapterQFileDialog):
         return super().eventFilter(obj, event)
 
     def print_widget_info(self, widget: QWidget) -> None:
+        parent = widget.parent()
+        assert parent is not None, f"{self.__class__.__name__}.print_widget_info: parent is None"
         RobustLogger().debug(
             "Widget info",
             extra={
                 "class": widget.__class__.__name__,
                 "objectName": widget.objectName(),
-                "parentClass": widget.parent().__class__.__name__ if widget.parent() else None,
-                "parentObjectName": widget.parent().objectName() if widget.parent() else None,
+                "parentClass": None if parent is None else parent.__class__.__name__,
+                "parentObjectName": None if parent is None else parent.objectName(),
             },
         )
 
@@ -99,13 +103,13 @@ class QFileDialogExtended(AdapterQFileDialog):
         If this function is removed, users would lose the ability to switch to list view,
         limiting the flexibility of the file dialog's interface.
         """
-        assert self.ui is not None, f"{type(self).__name__}._q_showListView: No UI setup."
+        assert self.ui is not None, f"{self.__class__.__name__}._q_showListView: No UI setup."
         self.ui.listModeButton.setDown(True)
         self.ui.detailModeButton.setDown(False)
         self.ui.treeView.hide()
         self.ui.listView.show()
         parent = self.ui.listView.parent()
-        assert parent is self.ui.page, f"{type(self).__name__}._q_showListView: parent is not self.ui.page"
+        assert parent is self.ui.page, f"{self.__class__.__name__}._q_showListView: parent is not self.ui.page"
         self.ui.stackedWidget.setCurrentWidget(cast("QWidget", parent))
         self.setViewMode(AdapterQFileDialog.ViewMode.List)
 
@@ -121,8 +125,8 @@ class QFileDialogExtended(AdapterQFileDialog):
         self.ui.detailModeButton.setDown(True)
         self.ui.listView.hide()
         self.ui.treeView.show()
-        parent = self.ui.treeView.parent()
-        assert parent is self.ui.page_2, f"{type(self).__name__}._q_showDetailsView: parent is not self.ui.page"
+        parent = cast("QWidget", self.ui.treeView.parent())
+        assert parent is self.ui.page_2, f"{self.__class__.__name__}._q_showDetailsView: parent is not self.ui.page"
         self.ui.stackedWidget.setCurrentWidget(cast("QWidget", parent))
         self.setViewMode(AdapterQFileDialog.ViewMode.Detail)
 
@@ -131,7 +135,7 @@ class QFileDialogExtended(AdapterQFileDialog):
         # Replace treeView
         self.ui.stackedWidget.__class__ = DynamicStackedView
         DynamicStackedView.__init__(
-            self.ui.stackedWidget,
+            cast("DynamicStackedView", self.ui.stackedWidget),
             self.ui.frame,
             [self.ui.page, self.ui.page_2],
             should_call_qt_init=False,
@@ -148,8 +152,8 @@ class QFileDialogExtended(AdapterQFileDialog):
         self.ui.detailModeButton.clicked.connect(self._q_showDetailsView)
 
     def currentView(self) -> QAbstractItemView | None:
-        assert self.ui is not None, f"{type(self).__name__}.currentView: UI is None"
-        assert self.ui.stackedWidget is not None, f"{type(self).__name__}.currentView: stackedWidget is None"
+        assert self.ui is not None, f"{self.__class__.__name__}.currentView: UI is None"
+        assert self.ui.stackedWidget is not None, f"{self.__class__.__name__}.currentView: stackedWidget is None"
         if isinstance(self.ui.stackedWidget, DynamicStackedView):
             return self.ui.stackedWidget.current_view()
         # vanilla logic.
@@ -159,14 +163,15 @@ class QFileDialogExtended(AdapterQFileDialog):
 
     def mapToSource(self, index: QModelIndex) -> QModelIndex:
         proxy_model_lookup = self.proxyModel()
+        assert proxy_model_lookup is not None, f"{self.__class__.__name__}.mapToSource: proxy_model_lookup is None"
         return index if proxy_model_lookup is None else proxy_model_lookup.mapToSource(index)
 
     def _q_showContextMenu(self, position: QPoint) -> None:
-        assert self.ui is not None, f"{type(self).__name__}._q_showContextMenu: No UI setup."
-        assert self.model is not None, f"{type(self).__name__}._q_showContextMenu: No file system model setup."
+        assert self.ui is not None, f"{self.__class__.__name__}._q_showContextMenu: No UI setup."
+        assert self.model is not None, f"{self.__class__.__name__}._q_showContextMenu: No file system model setup."
 
         view: QAbstractItemView | None = self.currentView()
-        assert view is not None, f"{type(self).__name__}._q_showContextMenu: No view found."
+        assert view is not None, f"{self.__class__.__name__}._q_showContextMenu: No view found."
 
         index = view.indexAt(position)
         index = self.mapToSource(index.sibling(index.row(), 0))
@@ -176,13 +181,16 @@ class QFileDialogExtended(AdapterQFileDialog):
             view.clearSelection()
         menu = self.dispatcher.get_context_menu(view, position)
         menu.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)  # noqa: FBT003
-        menu.exec(view.viewport().mapToGlobal(position))
+        viewport = view.viewport()
+        assert viewport is not None, f"{self.__class__.__name__}._q_showContextMenu: viewport is None"
+        menu.exec(viewport.mapToGlobal(position))
 
     def model_setup(self):
-        fs_model: QAbstractItemModel = self.ui.treeView.model()  # same as self.listView.model()
-        assert isinstance(fs_model, QFileSystemModel), "QFileSystemModel not found in treeView"
-        assert fs_model is self.ui.listView.model(), "QFileSystemModel in treeView differs from listView's model?"
-        self.model: QFileSystemModel = fs_model
+        fs_model: QAbstractItemModel | None = self.ui.treeView.model()  # same as self.listView.model()
+        assert fs_model is not None, f"{self.__class__.__name__}.model_setup: fs_model is None"
+        assert isinstance(fs_model, QFileSystemModel), f"{self.__class__.__name__}.model_setup: fs_model is not a QFileSystemModel"
+        assert fs_model is self.ui.listView.model(), f"{self.__class__.__name__}.model_setup: QFileSystemModel in treeView differs from listView's model?"
+        self.model: QFileSystemModel = cast("QFileSystemModel", fs_model)
 
     def connect_signals(self):
         self.ui.treeView.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -193,8 +201,10 @@ class QFileDialogExtended(AdapterQFileDialog):
             if not index.isValid():
                 view.clearSelection()
             menu = self.dispatcher.get_context_menu(view, pos)
-            if menu:
-                menu.exec(view.viewport().mapToGlobal(pos))
+            if menu is not None:
+                viewport = view.viewport()
+                assert viewport is not None, f"{self.__class__.__name__}._q_showContextMenu: viewport is None"
+                menu.exec(viewport.mapToGlobal(pos))
 
         self.ui.treeView.customContextMenuRequested.disconnect()
         self.ui.listView.customContextMenuRequested.disconnect()
@@ -219,7 +229,7 @@ class QFileDialogExtended(AdapterQFileDialog):
         self.address_bar.setObjectName("addressBar")
         self.address_bar.pathChanged.connect(self._on_address_bar_path_changed)
         self.address_bar.returnPressed.connect(self._on_address_bar_return_pressed)
-        self.address_bar.set_path(Path(self.directory().absolutePath()))
+        self.address_bar.update_path(Path(self.directory().absolutePath()))
 
     def _setup_search_filter(self) -> None:
         from utility.ui_libraries.qt.widgets.widgets.search_filter import SearchFilterWidget
@@ -229,34 +239,56 @@ class QFileDialogExtended(AdapterQFileDialog):
         self.search_filter.textChanged.connect(self._on_search_text_changed)
         self.search_filter.searchRequested.connect(self._on_search_requested)
 
+    def _setup_ribbons(self) -> None:
+        """Set up ribbons UI, sharing the same actions/menus as the dispatcher."""
+        self.ribbons: RibbonsWidget = RibbonsWidget(
+            self,
+            menus=self.dispatcher.menus,
+            columns_callback=self.dispatcher.show_set_default_columns_dialog,
+        )
+        self.ribbons.setObjectName("ribbonsWidget")
+
     def _insert_extended_rows(self) -> None:
         """Insert address bar + search above existing grid content."""
         grid = self.ui.gridlayout
         if grid is None:
             return
 
-        items: list[tuple[object, int, int, int, int]] = []
+        # Store all existing items with their positions
+        items_data: list[tuple[int, int, int, int, object]] = []
         for i in range(grid.count()):
             item = grid.itemAt(i)
             if item is None:
                 continue
             row, col, row_span, col_span = grid.getItemPosition(i)
-            items.append((item, row, col, row_span, col_span))
+            assert row is not None, f"{self.__class__.__name__}._insert_extended_rows: row is None"
+            assert col is not None, f"{self.__class__.__name__}._insert_extended_rows: col is None"
+            assert row_span is not None, f"{self.__class__.__name__}._insert_extended_rows: row_span is None"
+            assert col_span is not None, f"{self.__class__.__name__}._insert_extended_rows: col_span is None"
+            items_data.append((row, col, row_span, col_span, item))
 
-        for item, _, _, _, _ in items:
-            if item.widget():
-                grid.removeWidget(item.widget())
-            elif item.layout():
-                grid.removeItem(item)
+        # Remove all items from grid (but keep widgets as children)
+        while grid.count() > 0:
+            item = grid.takeAt(0)
+            if item is None:
+                break
 
-        grid.addWidget(self.address_bar, 0, 0, 1, 3)
-        grid.addWidget(self.search_filter, 1, 0, 1, 3)
+        # Add extended components first: ribbon, address bar, search
+        grid.addWidget(self.ribbons, 0, 0, 1, 3)
+        grid.addWidget(self.address_bar, 1, 0, 1, 3)
+        grid.addWidget(self.search_filter, 2, 0, 1, 3)
 
-        for item, row, col, row_span, col_span in items:
-            if item.widget():
-                grid.addWidget(item.widget(), row + 2, col, row_span, col_span)
-            elif item.layout():
-                grid.addLayout(item.layout(), row + 2, col, row_span, col_span)
+        # Re-add all original items with row offset +3
+        for row, col, row_span, col_span, item in items_data:
+            assert item is not None, f"{self.__class__.__name__}._insert_extended_rows: item is None"
+            assert isinstance(item, QLayoutItem), f"{self.__class__.__name__}._insert_extended_rows: item is not a QLayoutItem"
+            widget = item.widget()
+            if widget is not None:
+                grid.addWidget(widget, row + 3, col, row_span, col_span)
+            else:
+                layout = item.layout()
+                if layout is not None:
+                    grid.addLayout(layout, row + 3, col, row_span, col_span)
 
     def _setup_proxy_model(self) -> None:
         from qtpy.QtCore import QSortFilterProxyModel

@@ -1,8 +1,20 @@
 from __future__ import annotations
 
+from typing import Callable
+
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QAction
-from qtpy.QtWidgets import QGridLayout, QGroupBox, QHBoxLayout, QMenu, QSizePolicy, QTabWidget, QToolButton, QVBoxLayout, QWidget
+from qtpy.QtWidgets import (
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QMenu,
+    QSizePolicy,
+    QTabWidget,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from utility.ui_libraries.qt.common.action_definitions import FileExplorerActions
 from utility.ui_libraries.qt.common.column_options_dialog import SetDefaultColumnsDialog
@@ -13,15 +25,18 @@ class RibbonsWidget(QWidget):
     def __init__(
         self,
         parent: QWidget | None = None,
-        flags: Qt.WindowFlags | Qt.WindowType | None = None,
+        flags: Qt.WindowFlags | Qt.WindowType | None = None,  # pyright: ignore[reportAttributeAccessIssue]
         menus: FileExplorerMenus | None = None,
+        columns_callback: Callable[[], None] | None = None,
     ):
         if flags is None:
             super().__init__(parent)
         else:
             super().__init__(parent, flags)
-        self.actions_definitions: FileExplorerActions = FileExplorerActions()
         self.menus: FileExplorerMenus = FileExplorerMenus() if menus is None else menus
+        # Reuse the same actions instance as the menus when provided so dispatcher wiring applies.
+        self.actions_definitions: FileExplorerActions = self.menus.actions if hasattr(self.menus, "actions") else FileExplorerActions()
+        self.columns_callback: Callable[[], None] | None = columns_callback
         self.setup_main_layout()
         self.set_stylesheet()
 
@@ -76,6 +91,7 @@ class RibbonsWidget(QWidget):
         layout.addWidget(self.create_layout_group())
         layout.addWidget(self.create_current_view_group())
         layout.addWidget(self.create_show_hide_group())
+        layout.addWidget(self.create_columns_group())
         layout.addStretch()
 
         tab.setLayout(layout)
@@ -275,87 +291,151 @@ class RibbonsWidget(QWidget):
         group.setLayout(layout)
         return group
 
+    def create_columns_group(self) -> QGroupBox:
+        group = QGroupBox("Columns")
+        layout = QVBoxLayout()
+        layout.setSpacing(2)
+        layout.setContentsMargins(2, 2, 2, 2)
+
+        choose_columns_action = QAction("Columns", self)
+        if self.columns_callback:
+            choose_columns_action.triggered.connect(self.columns_callback)
+        else:
+            choose_columns_action.triggered.connect(self._show_columns_dialog_default)
+
+        layout.addWidget(self.create_small_button("Columns...", choose_columns_action))
+        group.setLayout(layout)
+        return group
+
+    def _show_columns_dialog_default(self):
+        dialog = SetDefaultColumnsDialog(self)
+        dialog.exec()
+
     def create_large_button(self, text: str, action: QAction) -> QToolButton:
         button = QToolButton()
         button.setDefaultAction(action)
         button.setText(text)
-        button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         button.setFixedSize(80, 70)
         button.setIconSize(QSize(32, 32))
-        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         return button
 
     def create_small_button(self, text: str, action: QAction) -> QToolButton:
         button = QToolButton()
         button.setDefaultAction(action)
         button.setText(text)
-        button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         button.setFixedSize(80, 22)
         button.setIconSize(QSize(16, 16))
-        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         return button
 
     def create_checkbox_button(self, text: str, action: QAction) -> QToolButton:
         button = QToolButton()
         button.setDefaultAction(action)
         button.setText(text)
-        button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         button.setFixedSize(120, 22)
         button.setIconSize(QSize(16, 16))
-        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         button.setCheckable(True)
         return button
 
     def set_stylesheet(self):
-        self.setStyleSheet("""
-            QTabWidget::pane {
-                border-top: 1px solid #C0C0C0;
+        from qtpy.QtWidgets import QApplication
+        from qtpy.QtGui import QPalette
+
+        app = QApplication.instance()
+        assert isinstance(app, QApplication), "QApplication.instance() is not a QApplication"
+        palette = app.palette()
+
+        # Fallback colors if running out-of-context or for headless tests
+        def color_hex(
+            role: str,
+            group: str = "Active",
+            default: str = "#C0C0C0",
+        ) -> str:
+            if palette is not None:
+                try:
+                    color_role = getattr(QPalette, role, None)
+                    color_group = getattr(QPalette, group, QPalette.ColorGroup.Active)
+                    if color_role is not None:
+                        return palette.color(color_group, color_role).name()
+                except Exception:
+                    pass
+            return default
+
+        # Replace hardcoded colors beneath with palette-based ones
+        border_color        = color_hex("Mid",       default="#C0C0C0")
+        groupbox_border     = color_hex("Midlight",  default="#C0C0C0")
+        tab_bg              = color_hex("Base",      default="#F0F0F0")
+        tab_border          = color_hex("Midlight",  default="#C4C4C3")
+        tab_selected_border = color_hex("Shadow",    default="#9B9B9B")
+        tab_selected_bg     = color_hex("Light",     default="#fafafa")
+        button_hover_bg     = color_hex("Highlight", default="#E5F3FF")
+        button_checked_bg   = color_hex("Button",    default="#CCE8FF")
+        button_focus_border = color_hex("Highlight", default="#0078D7")
+        
+        tab_bar0_4 = color_hex("AlternateBase", default="#DEDEDE")
+        tab_bar0_5 = color_hex("Window",        default="#D8D8D8")
+        tab_bar1_0 = color_hex("Light",         default="#D3D3D3")
+        tab_hover_0_4 = color_hex("AlternateBase", default="#f4f4f4")
+        tab_hover_0_5 = color_hex("Window",        default="#e7e7e7")
+        tab_hover_1_0 = color_hex("Base",          default="#e0e0e0")
+        tab_selected_btm = color_hex("Dark",       default="#C2C7CB")
+
+        stylesheet = f"""
+            QTabWidget::pane {{
+                border-top: 1px solid {border_color};
                 position: absolute;
                 top: -1px;
-            }
-            QTabBar::tab {
+            }}
+            QTabBar::tab {{
                 background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                            stop: 0 #F0F0F0, stop: 0.4 #DEDEDE,
-                                            stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
-                border: 1px solid #C4C4C3;
-                border-bottom-color: #C2C7CB;
+                                            stop: 0 {tab_bg}, stop: 0.4 {tab_bar0_4},
+                                            stop: 0.5 {tab_bar0_5}, stop: 1.0 {tab_bar1_0});
+                border: 1px solid {tab_border};
+                border-bottom-color: {tab_selected_btm};
                 min-width: 8ex;
                 padding: 2px 8px;
-            }
-            QTabBar::tab:selected, QTabBar::tab:hover {
+            }}
+            QTabBar::tab:selected, QTabBar::tab:hover {{
                 background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                            stop: 0 #fafafa, stop: 0.4 #f4f4f4,
-                                            stop: 0.5 #e7e7e7, stop: 1.0 #e0e0e0);
-            }
-            QTabBar::tab:selected {
-                border-color: #9B9B9B;
-                border-bottom-color: #C2C7CB;
-            }
-            QGroupBox {
-                border: 1px solid #C0C0C0;
+                                            stop: 0 {tab_selected_bg}, stop: 0.4 {tab_hover_0_4},
+                                            stop: 0.5 {tab_hover_0_5}, stop: 1.0 {tab_hover_1_0});
+            }}
+            QTabBar::tab:selected {{
+                border-color: {tab_selected_border};
+                border-bottom-color: {tab_selected_btm};
+            }}
+            QGroupBox {{
+                border: 1px solid {groupbox_border};
                 border-radius: 4px;
                 margin-top: 0.5em;
                 font-weight: bold;
-            }
-            QGroupBox::title {
+            }}
+            QGroupBox::title {{
                 subcontrol-origin: margin;
                 left: 7px;
                 padding: 0 3px 0 3px;
-            }
-            QToolButton {
+            }}
+            QToolButton {{
                 border: 1px solid transparent;
                 border-radius: 2px;
                 background-color: transparent;
-            }
-            QToolButton:hover {
-                border: 1px solid #C0C0C0;
-                background-color: #E5F3FF;
-            }
-            QToolButton:pressed, QToolButton:checked {
-                border: 1px solid #0078D7;
-                background-color: #CCE8FF;
-            }
-        """)
+            }}
+            QToolButton:hover {{
+                border: 1px solid {border_color};
+                background-color: {button_hover_bg};
+            }}
+            QToolButton:pressed, QToolButton:checked {{
+                border: 1px solid {button_focus_border};
+                background-color: {button_checked_bg};
+            }}
+        """
+        self.setStyleSheet(stylesheet)
+
 
 if __name__ == "__main__":
     import sys
