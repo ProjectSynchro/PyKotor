@@ -16,7 +16,6 @@ from qtpy.QtCore import (
     QEvent,
     QUrl,
     Qt,
-    pyqtBoundSignal,
 )
 from qtpy.QtWidgets import QApplication, QLayoutItem, QWidget
 if TYPE_CHECKING:
@@ -154,8 +153,8 @@ class QFileDialogExtended(AdapterQFileDialog):
         cast("RobustTreeView", self.ui.treeView).setModel(self.model)
         self.ui.vboxlayout2.update()
 
-        cast(pyqtBoundSignal, self.ui.listModeButton.clicked).connect(self._q_showListView)
-        cast(pyqtBoundSignal, self.ui.detailModeButton.clicked).connect(self._q_showDetailsView)
+        self.ui.listModeButton.clicked.connect(self._q_showListView)
+        self.ui.detailModeButton.clicked.connect(self._q_showDetailsView)
 
     def currentView(self) -> QAbstractItemView | None:
         assert self.ui is not None, f"{self.__class__.__name__}.currentView: UI is None"
@@ -212,11 +211,11 @@ class QFileDialogExtended(AdapterQFileDialog):
                 assert viewport is not None, f"{self.__class__.__name__}._q_showContextMenu: viewport is None"
                 menu.exec(viewport.mapToGlobal(pos))
 
-        cast(pyqtBoundSignal, self.ui.treeView.customContextMenuRequested).disconnect()
-        cast(pyqtBoundSignal, self.ui.listView.customContextMenuRequested).disconnect()
+        self.ui.treeView.customContextMenuRequested.disconnect()
+        self.ui.listView.customContextMenuRequested.disconnect()
         self.ui.treeView.customContextMenuRequested.connect(lambda pos: show_context_menu(pos, self.ui.treeView))
         self.ui.listView.customContextMenuRequested.connect(lambda pos: show_context_menu(pos, self.ui.listView))
-        cast(pyqtBoundSignal, self.ui.treeView.doubleClicked).connect(self.dispatcher.on_open)
+        self.ui.treeView.doubleClicked.connect(self.dispatcher.on_open)
 
     def on_task_failed(self, task_id: str, error: Exception):
         RobustLogger().exception(f"Task {task_id} failed", exc_info=error)
@@ -242,8 +241,8 @@ class QFileDialogExtended(AdapterQFileDialog):
 
         self.search_filter: SearchFilterWidget = SearchFilterWidget(self)
         self.search_filter.setObjectName("searchFilter")
-        cast(pyqtBoundSignal, self.search_filter.textChanged).connect(self._on_search_text_changed)
-        cast(pyqtBoundSignal, self.search_filter.searchRequested).connect(self._on_search_requested)
+        self.search_filter.textChanged.connect(self._on_search_text_changed)
+        self.search_filter.searchRequested.connect(self._on_search_requested)
 
     def _setup_ribbons(self) -> None:
         """Set up ribbons UI, sharing the same actions/menus as the dispatcher."""

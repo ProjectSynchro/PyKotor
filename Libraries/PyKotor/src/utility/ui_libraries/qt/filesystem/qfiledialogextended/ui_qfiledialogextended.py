@@ -143,7 +143,7 @@ class Ui_QFileDialogExtended(QFileDialog):  # noqa: N801
         assert isinstance(vboxlayout2, QVBoxLayout)
         self.vboxlayout2: QVBoxLayout = vboxlayout2
 
-        hboxlayout: QLayout | None = self.gridlayout.itemAtPosition(0, 1).layout()
+        hboxlayout: QLayout | None = self.gridlayout.itemAtPosition(0, 1).layout()  # pyright: ignore[reportOptionalMemberAccess]
         assert isinstance(hboxlayout, QHBoxLayout)
         self.hboxlayout: QHBoxLayout = hboxlayout
 
