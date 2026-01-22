@@ -67,12 +67,20 @@ uv sync
 . .venv\Scripts\activate
 uv pip install -e Libraries/PyKotor -e Tools/HolocronToolset
 
-# Run tools quickly
-uvx holocrontoolset
-uvx holopatcher --help
+# Run tools quickly...
+# ...with uv
+uv --directory Tools/HoloPatcher/src run --active holopatcher/__main__.py
+$Env:QT_API="PyQt6"
+uv --directory Tools/HolocronToolset/src run --active toolset/__main__.py
+# ...with python directly
+./.venv/Scripts/python Tools/HoloPatcher/src/holopatcher/__main__.py
+$Env:QT_API="PyQt6"
+./.venv/Scripts/python Tools/HolocronToolset/src/toolset/__main__.py
 
 # Tests (TSLPatcher comprehensive suite)
-python tests/test_tslpatcher/test_diff_comprehensive.py -v
+./.venv/Scripts/python -m ensurepip
+./.venv/Scripts/python -m pip install -r requirements-dev.txt
+./.venv/Scripts/python -m pytest Libraries/PyKotor/src/pykotor/tests/test_tslpatcher/test_diff_comprehensive.py -v
 
 # Build via VS Code tasks (PyInstaller)
 # Use provided tasks; don’t add custom flags unless necessary.
@@ -85,9 +93,6 @@ python Tools\KotorDiff\src\__main__.py
 python Tools\BatchPatcher\src\__main__.py
 python Tools\MDLDecompile\src\__main__.py
 # Pattern (others): python Tools\<ToolName>\src\__main__.py
-
-# Example: Holocron Toolset (if needed)
-uvx holocrontoolset  # preferred; faster than local run
 ```
 
 **Preferred Smoke Tests**
