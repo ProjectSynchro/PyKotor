@@ -25,7 +25,7 @@ description = "A PyQt-backed program with a collection of tools and editors that
 version = "4.0.0b15"
 requires-python = ">=3.8"
 dependencies = [
-  "pykotor[all]>=2.0.5",
+  "pykotor[all]>=2.1.0",
   "certifi>=2021.10.8",
   "idna>=3.11",
   "Markdown>=3.4.4,<3.9; python_version<\"3.9\"",
@@ -139,7 +139,7 @@ packages = [{ include = "toolset", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^2.0.5"
+pykotor = "^2.1.0"
 idna = "*"
 urllib3 = ">=1.26,<2.7"
 Markdown = ">=3.3,<3.11"
