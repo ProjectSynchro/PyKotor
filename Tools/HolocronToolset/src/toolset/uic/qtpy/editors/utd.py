@@ -247,12 +247,12 @@ class Ui_MainWindow(object):
         self.label_3 = QtWidgets.QLabel(self.widget_4)
         self.label_3.setObjectName("label_3")
         self.statsLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label_3)
-        self.currenHpSpin = QtWidgets.QSpinBox(self.widget_4)
-        self.currenHpSpin.setMinimumSize(QtCore.QSize(30, 25))
-        self.currenHpSpin.setMinimum(-32768)
-        self.currenHpSpin.setMaximum(32767)
-        self.currenHpSpin.setObjectName("currenHpSpin")
-        self.statsLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.currenHpSpin)
+        self.currentHpSpin = QtWidgets.QSpinBox(self.widget_4)
+        self.currentHpSpin.setMinimumSize(QtCore.QSize(30, 25))
+        self.currentHpSpin.setMinimum(-32768)
+        self.currentHpSpin.setMaximum(32767)
+        self.currentHpSpin.setObjectName("currentHpSpin")
+        self.statsLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.currentHpSpin)
         self.label_26 = QtWidgets.QLabel(self.widget_4)
         self.label_26.setObjectName("label_26")
         self.statsLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.label_26)
@@ -548,6 +548,8 @@ class Ui_MainWindow(object):
         self.actionRevert.setText(_translate("MainWindow", "Revert"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
         self.actionShowPreview.setText(_translate("MainWindow", "Show Preview"))
+
+
 from toolset.gui.widgets.edit.combobox_2da import ComboBox2DA
 from toolset.gui.widgets.edit.locstring import LocalizedStringLineEdit
 from toolset.gui.widgets.renderer.model import ModelRenderer

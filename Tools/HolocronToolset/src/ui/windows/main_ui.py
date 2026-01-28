@@ -476,4 +476,6 @@ class Ui_MainWindow(object):
         self.actionTSLPatchDataEditor.setText(_translate("MainWindow", "TSLPatchData Editor"))
         self.actionLegacyLayout.setText(_translate("MainWindow", "Legacy Layout"))
         self.actionLegacyLayout.setToolTip(_translate("MainWindow", "Switch to the legacy resource list view"))
+
+
 from toolset.gui.widgets.main_widgets import ResourceList, TextureList
