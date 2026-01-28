@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,7 +15,7 @@ from toolset.gui.common.palette_helpers import wrap_html_with_palette_styles
 from utility.system.os_helper import is_frozen
 
 if TYPE_CHECKING:
-    from qtpy.QtWidgets import QWidget
+    from qtpy.QtWidgets import QWidget, QTextBrowser
 
 
 def get_wiki_path() -> tuple[Path, Path | None]:
@@ -24,8 +26,6 @@ def get_wiki_path() -> tuple[Path, Path | None]:
     """
     if is_frozen():
         # When frozen, wiki should be bundled in the same directory as the executable
-        import sys
-
         exe_path = Path(sys.executable).parent
         wiki_path = exe_path / "wiki"
         if wiki_path.exists():
@@ -64,6 +64,9 @@ class EditorHelpDialog(QDialog):
 
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
+
+        # Provide a stable, snake_case alias for tests and future refactors
+        self.text_browser: QTextBrowser = self.ui.textBrowser
 
         self.setWindowTitle(trf("Help - {filename}", filename=wiki_filename))
 

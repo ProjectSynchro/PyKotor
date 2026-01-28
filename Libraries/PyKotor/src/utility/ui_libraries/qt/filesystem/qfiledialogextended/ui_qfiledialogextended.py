@@ -32,61 +32,61 @@ class Ui_QFileDialogExtended(QFileDialog):  # noqa: N801
         # Main layout
         gridlayout: QLayout | None = dialog.layout()
         assert isinstance(gridlayout, QGridLayout)
-        self.gridlayout: QGridLayout = gridlayout
+        self.gridlayout: QGridLayout = gridlayout  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         # Look In label and combo
         look_in_label: QLabel | None = dialog.findChild(QLabel, "lookInLabel")
         assert isinstance(look_in_label, QLabel)
-        self.lookInLabel: QLabel = look_in_label
+        self.lookInLabel: QLabel = look_in_label  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         look_in_combo: QComboBox | None = dialog.findChild(QComboBox, "lookInCombo")
         assert isinstance(look_in_combo, QComboBox)
-        self.lookInCombo: QComboBox = look_in_combo
+        self.lookInCombo: QComboBox = look_in_combo  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         # Toolbar buttons
         back_button: QToolButton | None = dialog.findChild(QToolButton, "backButton")
         assert isinstance(back_button, QToolButton)
-        self.backButton: QToolButton = back_button
+        self.backButton: QToolButton = back_button  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         forward_button: QToolButton | None = dialog.findChild(QToolButton, "forwardButton")
         assert isinstance(forward_button, QToolButton)
-        self.forwardButton: QToolButton = forward_button
+        self.forwardButton: QToolButton = forward_button  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         to_parent_button: QToolButton | None = dialog.findChild(QToolButton, "toParentButton")
         assert isinstance(to_parent_button, QToolButton)
-        self.toParentButton: QToolButton = to_parent_button
+        self.toParentButton: QToolButton = to_parent_button  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         new_folder_button: QToolButton | None = dialog.findChild(QToolButton, "newFolderButton")
         assert isinstance(new_folder_button, QToolButton)
-        self.newFolderButton: QToolButton = new_folder_button
+        self.newFolderButton: QToolButton = new_folder_button  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         list_mode_button: QToolButton | None = dialog.findChild(QToolButton, "listModeButton")
         assert isinstance(list_mode_button, QToolButton)
-        self.listModeButton: QToolButton = list_mode_button
+        self.listModeButton: QToolButton = list_mode_button  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         detail_mode_button: QToolButton | None = dialog.findChild(QToolButton, "detailModeButton")
         assert isinstance(detail_mode_button, QToolButton)
-        self.detailModeButton: QToolButton = detail_mode_button
+        self.detailModeButton: QToolButton = detail_mode_button  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         # Splitter
         splitter: QSplitter | None = dialog.findChild(QSplitter, "splitter")
         assert isinstance(splitter, QSplitter)
-        self.splitter: QSplitter = splitter
+        self.splitter: QSplitter = splitter  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         # Sidebar
         sidebar: QFrame | None = dialog.findChild(QFrame, "sidebar")  # QFileDialogSidebar
         assert isinstance(sidebar, QFrame)
-        self.sidebar: QFrame = sidebar
+        self.sidebar: QFrame = sidebar  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         # Main frame
         frame: QFrame | None = dialog.findChild(QFrame, "frame")
         assert isinstance(frame, QFrame)
-        self.frame: QFrame = frame
+        self.frame: QFrame = frame  # pylint: disable=attribute-defined-outside-init,invalid-name
 
         # Stacked widget for list and tree views
         stacked_widget: QStackedWidget | None = dialog.findChild(QStackedWidget, "stackedWidget")
         assert isinstance(stacked_widget, QStackedWidget)
-        self.stackedWidget: QStackedWidget = stacked_widget
+        self.stackedWidget: QStackedWidget = stacked_widget  # pylint: disable=attribute-defined-outside-init,invalid-name
         assert self.stackedWidget.count() == 2, "StackedWidget should contain 2 pages"  # noqa: PLR2004
 
         # List view page

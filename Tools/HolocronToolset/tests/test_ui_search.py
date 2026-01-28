@@ -169,7 +169,7 @@ def test_search_dialog_query_construction_exhaustive(qtbot: QtBot, installation:
 
     # Test 1: All checkboxes checked
     dialog.ui.selectAllCheck.setChecked(True)
-    QtBot.wait(10)  # Ensure Qt processes the signal in headless mode
+    QApplication.processEvents()  # Ensure Qt processes the signal in headless mode
     dialog.ui.searchTextEdit.setText("test_search")
     dialog.ui.caseSensitiveRadio.setChecked(True)
     dialog.ui.filenamesOnlyCheck.setChecked(True)

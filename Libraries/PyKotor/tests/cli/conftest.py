@@ -33,25 +33,14 @@ def _load_dotenv_if_present() -> None:
 
 _load_dotenv_if_present()
 
-import cProfile
-import pstats
-import re
-import time
-from typing import Iterator
+# Import shared profiling and timeout utilities
+import sys
+_test_helpers_path = str(Path(__file__).resolve().parents[1])
+if _test_helpers_path not in sys.path:
+    sys.path.insert(0, _test_helpers_path)
 
-
-def _profile_threshold_ms() -> int:
-    raw = os.environ.get("PYKOTOR_PROFILE_SLOW_MS", "0").strip()
-    try:
-        return int(raw)
-    except ValueError:
-        return 0
-
-
-def _safe_name(nodeid: str) -> str:
-    s = nodeid.replace("::", "__")
-    s = re.sub(r"[^A-Za-z0-9_.-]+", "_", s)
-    return s[:180]
+from test_helpers.profiling_and_timeout import profile_if_enabled
+from typing import Iterator, Any
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -61,42 +50,13 @@ def pytest_runtest_call(item: pytest.Item) -> Iterator[None]:
     Set `PYKOTOR_PROFILE_SLOW_MS=5000` to profile any test taking >= 5s (call phase).
     Outputs go to `<repo_root>/profiling/`.
     """
-    threshold = _profile_threshold_ms()
-    if threshold <= 0:
+    with profile_if_enabled(item.nodeid, phase="call"):
         yield
-        return
-
-    profiler = cProfile.Profile()
-    profiler.enable()
-    yield
-    profiler.disable()
-
-    rep = getattr(item, "rep_call", None)
-    dur_ms = int(rep.duration * 1000) if rep is not None else None
-    if dur_ms is not None and dur_ms < threshold:
-        return
-
-    out_dir = Path(__file__).resolve().parents[3] / "profiling"
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    base = _safe_name(item.nodeid)
-    pstat_path = out_dir / f"{base}.pstat"
-    txt_path = out_dir / f"{base}.txt"
-
-    profiler.dump_stats(str(pstat_path))
-    with txt_path.open("w", encoding="utf-8") as f:
-        stats = pstats.Stats(profiler, stream=f)
-        stats.strip_dirs()
-        stats.sort_stats("cumulative")
-        f.write(f"nodeid: {item.nodeid}\n")
-        f.write(f"threshold_ms: {threshold}\n\n")
-        stats.print_stats(60)
-        f.write("\n\n---- callers (top 30) ----\n")
-        stats.print_callers(30)
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):  # type: ignore[no-untyped-def]  # noqa: ARG001
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> Iterator[Any]:  # type: ignore[type-arg]
+    """Capture test duration for profiling."""
     outcome = yield
     rep = outcome.get_result()
     if rep.when == "call":
@@ -111,39 +71,8 @@ def pytest_runtest_setup(item: pytest.Item) -> Iterator[None]:
     This is critical for our indoor/module roundtrip tests because the expensive work
     (extract/build) often happens in fixtures during setup.
     """
-    threshold = _profile_threshold_ms()
-    if threshold <= 0:
+    with profile_if_enabled(item.nodeid, phase="setup"):
         yield
-        return
-
-    profiler = cProfile.Profile()
-    start = time.perf_counter()
-    profiler.enable()
-    yield
-    profiler.disable()
-    dur_ms = int((time.perf_counter() - start) * 1000)
-    if dur_ms < threshold:
-        return
-
-    out_dir = Path(__file__).resolve().parents[3] / "profiling"
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    base = _safe_name(item.nodeid)
-    pstat_path = out_dir / f"{base}__setup.pstat"
-    txt_path = out_dir / f"{base}__setup.txt"
-
-    profiler.dump_stats(str(pstat_path))
-    with txt_path.open("w", encoding="utf-8") as f:
-        stats = pstats.Stats(profiler, stream=f)
-        stats.strip_dirs()
-        stats.sort_stats("cumulative")
-        f.write(f"nodeid: {item.nodeid}\n")
-        f.write(f"phase: setup\n")
-        f.write(f"threshold_ms: {threshold}\n")
-        f.write(f"duration_ms: {dur_ms}\n\n")
-        stats.print_stats(80)
-        f.write("\n\n---- callers (top 40) ----\n")
-        stats.print_callers(40)
 
 
 def _require_installation_path(env_var: str) -> Path:

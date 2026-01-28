@@ -1158,6 +1158,27 @@ def test_set_directory_invalid(qtbot, dialog_factory):
     # Should not crash, might use current directory
     dialog.setDirectory("/nonexistent/path/12345")
     current = dialog.directory()
+
+
+def test_open_dir_navigates_in_app(qtbot, dialog_factory, temp_test_dir):
+    """Right-click/Open and double-click on directories should navigate in the dialog (no external processes)."""
+    dialog = dialog_factory()
+
+    # Pick a subdirectory
+    subdir = temp_test_dir / "subdir1"
+    assert subdir.exists() and subdir.is_dir()
+
+    # Select the directory in the dialog
+    dialog.selectFile(str(subdir))
+
+    # Call the dispatcher 'open' handler (used by double-click and context menu 'Open')
+    dialog.dispatcher.on_open()
+
+    # Dialog should now be showing that directory
+    # QFileDialog.directory() returns a QDir; use absolutePath()/path() for string equality
+    current_dir = dialog.directory().absolutePath() if hasattr(dialog.directory(), 'absolutePath') else dialog.directory().path()
+    assert str(subdir) in current_dir
+
     assert current is not None
 
 def test_set_directory_url_invalid(qtbot, dialog_factory):

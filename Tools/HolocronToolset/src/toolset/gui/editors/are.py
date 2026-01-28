@@ -121,6 +121,10 @@ class AREEditor(Editor):
 
         self.ui.nameEdit.set_installation(installation)
 
+        # ARE Tag is a GFF string (not a ResRef) and can exceed 16 chars.
+        # Keep other ResRef-like fields (scripts, envmap) at 16.
+        self.ui.tagEdit.setMaxLength(32)
+
         cameras: TwoDA | None = installation.ht_get_cache_2da(HTInstallation.TwoDA_CAMERAS)
 
         self.ui.cameraStyleSelect.clear()

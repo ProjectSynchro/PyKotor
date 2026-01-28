@@ -55,7 +55,7 @@ def _drag_select(qtbot: QtBot, view_or_viewport: RobustTableView | QWidget, star
             view.scrollTo(start_idx, view.ScrollHint.EnsureVisible)
         if end_idx.isValid():
             view.scrollTo(end_idx, view.ScrollHint.EnsureVisible)
-        QtBot.wait(20)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         if start_idx.isValid():
@@ -67,7 +67,7 @@ def _drag_select(qtbot: QtBot, view_or_viewport: RobustTableView | QWidget, star
     assert viewport is not None
 
     qtbot.mousePress(viewport, Qt.MouseButton.LeftButton, pos=start_pos)
-    QtBot.wait(5)
+    QApplication.processEvents()
     QApplication.processEvents()
 
     steps = 12
@@ -96,11 +96,11 @@ def _drag_select(qtbot: QtBot, view_or_viewport: RobustTableView | QWidget, star
             )
 
         QApplication.sendEvent(viewport, move_ev)
-        QtBot.wait(1)
+        QApplication.processEvents()
 
     QApplication.processEvents()
     qtbot.mouseRelease(viewport, Qt.MouseButton.LeftButton, pos=end_pos)
-    QtBot.wait(20)
+    QApplication.processEvents()
     QApplication.processEvents()
 
 
@@ -217,7 +217,7 @@ def test_select_deselect_reselect_exact_cells(qtbot: QtBot):
     # Ensure all cells are visible by resizing columns and rows
     view.resizeColumnsToContents()
     view.resizeRowsToContents()
-    QtBot.wait(50)
+    QApplication.processEvents()
     QApplication.processEvents()
 
     # Step 1: Select cells (2,2) through (4,4) - a 3x3 block

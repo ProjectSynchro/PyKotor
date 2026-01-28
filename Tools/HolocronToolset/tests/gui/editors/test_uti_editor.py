@@ -308,22 +308,22 @@ def test_uti_editor_icon_updates(qtbot, installation: HTInstallation):
     if editor.ui.baseSelect.count() > 0:
         # Test icon updates when base changes
         editor.ui.baseSelect.setCurrentIndex(0)
-        QtBot.wait(100)  # Allow icon to load
+        QApplication.processEvents()  # Allow icon to load
         
         # Test icon updates when model variation changes
         for val in [0, 1, 2, 3]:
             editor.ui.modelVarSpin.setValue(val)
-            QtBot.wait(50)
+            QApplication.processEvents()
         
         # Test icon updates when body variation changes
         for val in [0, 1, 2]:
             editor.ui.bodyVarSpin.setValue(val)
-            QtBot.wait(50)
+            QApplication.processEvents()
         
         # Test icon updates when texture variation changes
         for val in [0, 1, 2]:
             editor.ui.textureVarSpin.setValue(val)
-            QtBot.wait(50)
+            QApplication.processEvents()
         
         # Verify icon label has tooltip
         assert editor.ui.iconLabel.toolTip()
@@ -435,7 +435,7 @@ def test_uti_editor_context_menu(qtbot, installation: HTInstallation):
     # Right-click icon label
     if editor.ui.baseSelect.count() > 0:
         editor.ui.baseSelect.setCurrentIndex(0)
-        QtBot.wait(100)
+        QApplication.processEvents()
         
         # Context menu should be available
         assert editor.ui.iconLabel.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
@@ -454,7 +454,7 @@ def test_utieditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Trigger help dialog with the correct file for UTIEditor
     editor._show_help_dialog("GFF-UTI.md")
-    QtBot.wait(200)  # Wait for dialog to be created
+    QApplication.processEvents()  # Wait for dialog to be created
     
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]

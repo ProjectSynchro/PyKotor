@@ -24,6 +24,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from utility.ui_libraries.qt.common.qt_event_utils import process_events_if_safe
+
 if TYPE_CHECKING:
     from qtpy.QtGui import QMouseEvent, QPaintEvent
 
@@ -268,7 +270,7 @@ class RobustAddressBar(QWidget):
             w.deleteLater()
 
         QTimer.singleShot(0, self.update_path_part2)
-        QApplication.processEvents()
+        process_events_if_safe()
         self.address_layout.update()
         self.address_layout.invalidate()
 

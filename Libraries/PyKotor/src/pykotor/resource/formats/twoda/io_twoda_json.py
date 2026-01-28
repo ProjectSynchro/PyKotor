@@ -28,7 +28,22 @@ class TwoDAJSONReader(ResourceReader):
         self._twoda = TwoDA()
         self._json = json.loads(decode_bytes_with_fallbacks(self._reader.read_bytes(self._reader.size())))
 
-        for row in self._json["rows"]:
+        # Support both legacy format (rows with "_id" and header keys) and the
+        # newer format (top-level "headers" list and rows containing "label" and "cells").
+        if isinstance(self._json, dict) and "headers" in self._json and "rows" in self._json:
+            headers = self._json.get("headers", [])
+            for header in headers:
+                self._twoda.add_column(header)
+
+            for row in self._json.get("rows", []):
+                label = row.get("label")
+                cells = row.get("cells", [])
+                cell_map = {h: (cells[i] if i < len(cells) else "") for i, h in enumerate(self._twoda.get_headers())}
+                self._twoda.add_row(str(label), cell_map)
+            return self._twoda
+
+        # Fallback to legacy behavior
+        for row in self._json.get("rows", []):
             row_label = row["_id"]
             del row["_id"]
 
@@ -53,11 +68,19 @@ class TwoDAJSONWriter(ResourceWriter):
 
     @autoclose
     def write(self, *, auto_close: bool = True) -> None:  # noqa: FBT001, FBT002, ARG002  # pyright: ignore[reportUnusedParameters]
+        # Write using the newer schema expected by the Toolset tests:
+        # {
+        #   "headers": [ ... ],
+        #   "rows": [ {"label": "0", "cells": [ ... ] }, ... ]
+        # }
+        headers = self._twoda.get_headers()
+        self._json["headers"] = headers
+
         for row in self._twoda:
-            json_row: dict[str, str] = {"_id": row.label()}
+            json_row: dict[str, list | str] = {"label": row.label(), "cells": []}
+            for header in headers:
+                json_row["cells"].append(row.get_string(header))
             self._json["rows"].append(json_row)
-            for header in self._twoda.get_headers():
-                json_row[header] = row.get_string(header)
 
         json_dump: str = json.dumps(self._json, indent=4)
         self._writer.write_bytes(json_dump.encode())

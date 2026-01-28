@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
 import traceback
 
-from enum import Enum
-from typing import TYPE_CHECKING, cast, overload
 from collections.abc import Iterable
+from enum import Enum
+from pathlib import Path
+from typing import TYPE_CHECKING, cast, overload
 
-from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtCore import (
     QAbstractItemModel,
     QByteArray,
@@ -17,16 +16,13 @@ from qtpy.QtCore import (
     QUrl,
     Qt,
 )
-from qtpy.QtWidgets import QApplication, QLayoutItem, QWidget
-if TYPE_CHECKING:
-    from qtpy.QtWidgets import QFileSystemModel, QMessageBox  # pyright: ignore[reportPrivateImportUsage]
-else:
-    from qtpy.QtWidgets import QFileSystemModel, QMessageBox  # pyright: ignore[reportPrivateImportUsage]
+from qtpy.QtWidgets import QApplication, QFileSystemModel, QLayoutItem, QMessageBox, QWidget  # pyright: ignore[reportPrivateImportUsage]
 
+from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as AdapterQFileDialog
 from utility.ui_libraries.qt.common.actions_dispatcher import ActionsDispatcher
-from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor
 from utility.ui_libraries.qt.common.ribbons_widget import RibbonsWidget
+from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor
 from utility.ui_libraries.qt.filesystem.qfiledialogextended.ui_qfiledialogextended import Ui_QFileDialogExtended
 from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
 from utility.ui_libraries.qt.widgets.widgets.stacked_view import DynamicStackedView
@@ -35,7 +31,6 @@ if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QAbstractProxyModel, QModelIndex, QObject, QPoint
     from qtpy.QtGui import QAbstractFileIconProvider
     from qtpy.QtWidgets import QAbstractItemDelegate, QAbstractItemView, QListView, QTreeView
-
 
 
 class ReplaceStrategy(Enum):
@@ -66,23 +61,24 @@ class QFileDialogExtended(AdapterQFileDialog):
         self._setup_ribbons()
         self._setup_address_bar()
         self._setup_search_filter()
+        self._setup_preview_pane()
         self._insert_extended_rows()
         self._setup_proxy_model()
         self.connect_signals()
         self._connect_extended_signals()
         self.setMouseTracking(True)
         self._apply_windows11_styling()
-        #self.installEventFilter(self)
-        #self.ui.listView.installEventFilter(self)
-        #self.ui.listView.setMouseTracking(True)
-        #self.ui.listView.viewport().installEventFilter(self)
-        #self.ui.listView.viewport().setMouseTracking(True)
-        #self.ui.treeView.installEventFilter(self)
-        #self.ui.treeView.setMouseTracking(True)
-        #self.ui.treeView.viewport().installEventFilter(self)
-        #self.ui.treeView.viewport().setMouseTracking(True)
-        #self.ui.stackedWidget.installEventFilter(self)
-        #self.ui.sidebar.installEventFilter(self)
+        # self.installEventFilter(self)
+        # self.ui.listView.installEventFilter(self)
+        # self.ui.listView.setMouseTracking(True)
+        # self.ui.listView.viewport().installEventFilter(self)
+        # self.ui.listView.viewport().setMouseTracking(True)
+        # self.ui.treeView.installEventFilter(self)
+        # self.ui.treeView.setMouseTracking(True)
+        # self.ui.treeView.viewport().installEventFilter(self)
+        # self.ui.treeView.viewport().setMouseTracking(True)
+        # self.ui.stackedWidget.installEventFilter(self)
+        # self.ui.sidebar.installEventFilter(self)
 
     def eventFilter(self, obj: QObject, event: QEvent) -> bool:
         return super().eventFilter(obj, event)
@@ -136,7 +132,6 @@ class QFileDialogExtended(AdapterQFileDialog):
         self.setViewMode(AdapterQFileDialog.ViewMode.Detail)
 
     def override_ui(self):
-
         # Replace treeView
         self.ui.stackedWidget.__class__ = DynamicStackedView
         DynamicStackedView.__init__(
@@ -197,6 +192,41 @@ class QFileDialogExtended(AdapterQFileDialog):
         assert fs_model is self.ui.listView.model(), f"{self.__class__.__name__}.model_setup: QFileSystemModel in treeView differs from listView's model?"
         self.model: QFileSystemModel = cast("QFileSystemModel", fs_model)
 
+        # Set up Windows 11-style item delegate with file size coloring
+        self._setup_item_delegate()
+
+    def _setup_item_delegate(self) -> None:
+        """Set up the Windows 11-style item delegate with file size coloring.
+
+        This tries a normal absolute import first. If that fails when the file is
+        executed directly (or due to a packaging/path issue), we attempt a
+        relative import and, as a last resort, log a warning and continue
+        without the enhanced delegate (so the dialog remains usable).
+        """
+        Windows11ItemDelegate = None
+        try:
+            # Preferred: absolute import (works when package is on sys.path)
+            from utility.ui_libraries.qt.widgets.itemviews.file_size_delegate import Windows11ItemDelegate  # type: ignore
+        except Exception:
+            try:
+                # Fallback: relative import (works when module is part of a package)
+                from ...widgets.itemviews.file_size_delegate import Windows11ItemDelegate  # type: ignore
+            except Exception:
+                # Be defensive: if the import fails, do not crash the dialog.
+                try:
+                    from loggerplus import RobustLogger
+                    RobustLogger.getLogger(__name__).warning("Windows11ItemDelegate not available; using default delegates", exc_info=True)
+                except Exception:
+                    # Last resort: ignore logging failures
+                    pass
+                self._item_delegate = None
+                return
+
+        # If we got here, Windows11ItemDelegate should be available
+        self._item_delegate = Windows11ItemDelegate(self)
+        self.ui.treeView.setItemDelegate(self._item_delegate)
+        self.ui.listView.setItemDelegate(self._item_delegate)
+
     def connect_signals(self):
         self.ui.treeView.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)  # pyright: ignore[reportArgumentType]
         self.ui.listView.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)  # pyright: ignore[reportArgumentType]
@@ -237,21 +267,196 @@ class QFileDialogExtended(AdapterQFileDialog):
         self.address_bar.update_path(Path(self.directory().absolutePath()))
 
     def _setup_search_filter(self) -> None:
-        from utility.ui_libraries.qt.widgets.widgets.search_filter import SearchFilterWidget
+        # Try to import the widget robustly; running the file directly can
+        # result in package resolution issues, so provide a fallback and
+        # degrade gracefully if unavailable.
+        SearchFilterWidget = None
+        try:
+            from utility.ui_libraries.qt.widgets.widgets.search_filter import SearchFilterWidget  # type: ignore
+        except Exception:
+            try:
+                from ...widgets.widgets.search_filter import SearchFilterWidget  # type: ignore
+            except Exception:
+                try:
+                    RobustLogger.getLogger(__name__).warning("SearchFilterWidget not available; continuing without search filter", exc_info=True)
+                except Exception:
+                    pass
+                self.search_filter = None
+                return
 
         self.search_filter: SearchFilterWidget = SearchFilterWidget(self)
         self.search_filter.setObjectName("searchFilter")
         self.search_filter.textChanged.connect(self._on_search_text_changed)
         self.search_filter.searchRequested.connect(self._on_search_requested)
 
+    def _setup_preview_pane(self) -> None:
+        """Set up the Windows 11-style preview pane on the right side of the splitter."""
+        EnhancedPreviewPane = None
+        try:
+            from utility.ui_libraries.qt.common.filesystem.enhanced_preview_pane import EnhancedPreviewPane  # type: ignore
+        except Exception:
+            try:
+                from ...common.filesystem.enhanced_preview_pane import EnhancedPreviewPane  # type: ignore
+            except Exception:
+                try:
+                    RobustLogger.getLogger(__name__).warning("EnhancedPreviewPane not available; preview pane disabled", exc_info=True)
+                except Exception:
+                    pass
+                self.preview_pane = None
+                self._preview_pane_visible = False
+                return
+
+        self.preview_pane: EnhancedPreviewPane = EnhancedPreviewPane(self)
+        self.preview_pane.setObjectName("previewPane")
+
+        # Add preview pane to the main splitter (after the file views frame)
+        self.ui.splitter.addWidget(self.preview_pane)
+
+        # Set initial splitter sizes: sidebar (200), file views (stretch), preview (300)
+        self.ui.splitter.setSizes([200, 500, 300])
+
+        # Initially hide the preview pane (user can toggle via View ribbon)
+        self._preview_pane_visible = False
+        self.preview_pane.hide()
+
+    def toggle_preview_pane(self, visible: bool | None = None) -> None:
+        """Toggle the preview pane visibility.
+
+        Args:
+            visible: If specified, set visibility to this value. Otherwise toggle.
+        """
+        if visible is None:
+            visible = not self._preview_pane_visible
+
+        self._preview_pane_visible = visible
+        if visible:
+            self.preview_pane.show()
+            # Update preview with current selection
+            self._update_preview_from_selection()
+        else:
+            self.preview_pane.hide()
+
+    def _update_preview_from_selection(self) -> None:
+        """Update the preview pane based on current selection."""
+        if not self._preview_pane_visible:
+            return
+
+        view = self.currentView()
+        if view is None:
+            self.preview_pane.set_file(None)
+            return
+
+        selection_model = view.selectionModel()
+        if selection_model is None:
+            self.preview_pane.set_file(None)
+            return
+
+        indexes = selection_model.selectedIndexes()
+        if not indexes:
+            # No selection - show current directory info
+            self.preview_pane.set_file(Path(self.directory().absolutePath()))
+            return
+
+        # Get the first selected index (column 0 for the file name)
+        index = indexes[0]
+        source_index = self.mapToSource(index)
+
+        file_path = Path(self.model.filePath(source_index))
+        self.preview_pane.set_file(file_path)
+
     def _setup_ribbons(self) -> None:
         """Set up ribbons UI, sharing the same actions/menus as the dispatcher."""
+        # Create the ribbons widget. Do not pass `columns_callback` as a keyword
+        # to avoid runtime TypeError if the imported RibbonsWidget signature does
+        # not accept it (some environments may import a different version).
         self.ribbons: RibbonsWidget = RibbonsWidget(
             self,
             menus=self.dispatcher.menus,
-            columns_callback=self.dispatcher.show_set_default_columns_dialog,
         )
+        # If the ribbons implementation supports a columns_callback attribute,
+        # set it after construction so the behaviour is preserved when available.
+        try:
+            setattr(self.ribbons, "columns_callback", self.dispatcher.show_set_default_columns_dialog)
+        except Exception:
+            pass
         self.ribbons.setObjectName("ribbonsWidget")
+
+        # Connect ribbon actions to dialog methods
+        self._connect_ribbon_actions()
+
+    def _connect_ribbon_actions(self) -> None:
+        """Connect ribbon toolbar actions to their corresponding dialog methods."""
+        actions = self.ribbons.actions_definitions
+
+        # Preview pane toggle
+        actions.actionPreviewPane.triggered.connect(self._on_preview_pane_action_triggered)
+
+        # Navigation pane toggle (sidebar)
+        actions.actionNavigationPane.triggered.connect(self._on_navigation_pane_action_triggered)
+
+        # View mode actions
+        actions.actionListView.triggered.connect(self._q_showListView)
+        actions.actionDetailView.triggered.connect(self._q_showDetailsView)
+        
+        # Icon size actions
+        actions.actionExtraLargeIcons.triggered.connect(self._set_extra_large_icons)
+        actions.actionLargeIcons.triggered.connect(self._set_large_icons)
+        actions.actionMediumIcons.triggered.connect(self._set_medium_icons)
+        actions.actionSmallIcons.triggered.connect(self._set_small_icons)
+
+    def _set_extra_large_icons(self) -> None:
+        """Set extra large icons (256px) and switch to list view mode."""
+        from utility.ui_libraries.qt.widgets.itemviews.thumbnail_list_view import IconSize
+        self._set_icon_size(IconSize.EXTRA_LARGE)
+
+    def _set_large_icons(self) -> None:
+        """Set large icons (128px) and switch to list view mode."""
+        from utility.ui_libraries.qt.widgets.itemviews.thumbnail_list_view import IconSize
+        self._set_icon_size(IconSize.LARGE)
+
+    def _set_medium_icons(self) -> None:
+        """Set medium icons (64px) and switch to list view mode."""
+        from utility.ui_libraries.qt.widgets.itemviews.thumbnail_list_view import IconSize
+        self._set_icon_size(IconSize.MEDIUM)
+
+    def _set_small_icons(self) -> None:
+        """Set small icons (32px) and switch to list view mode."""
+        from utility.ui_libraries.qt.widgets.itemviews.thumbnail_list_view import IconSize
+        self._set_icon_size(IconSize.SMALL)
+
+    def _set_icon_size(self, size: int) -> None:
+        """Set the icon size for the list view and switch to it."""
+        from qtpy.QtCore import QSize
+        from qtpy.QtWidgets import QListView
+        
+        # Switch to list view mode
+        self._q_showListView()
+        
+        # Set icon size
+        self.ui.listView.setIconSize(QSize(size, size))
+        
+        # Configure view mode based on size
+        if size >= 64:  # Medium and above
+            self.ui.listView.setViewMode(QListView.ViewMode.IconMode)
+            self.ui.listView.setFlow(QListView.Flow.LeftToRight)
+            self.ui.listView.setWrapping(True)
+            self.ui.listView.setGridSize(QSize(size + 20, size + 40))
+        else:
+            self.ui.listView.setViewMode(QListView.ViewMode.ListMode)
+            self.ui.listView.setFlow(QListView.Flow.TopToBottom)
+            self.ui.listView.setWrapping(False)
+            self.ui.listView.setGridSize(QSize())
+
+    def _on_preview_pane_action_triggered(self, checked: bool) -> None:
+        """Handle preview pane toggle action from ribbon."""
+        self.toggle_preview_pane(checked)
+
+    def _on_navigation_pane_action_triggered(self, checked: bool) -> None:
+        """Handle navigation pane (sidebar) toggle action from ribbon."""
+        if checked:
+            self.ui.sidebar.show()
+        else:
+            self.ui.sidebar.hide()
 
     def _insert_extended_rows(self) -> None:
         """Insert address bar + search above existing grid content."""
@@ -304,6 +509,9 @@ class QFileDialogExtended(AdapterQFileDialog):
         self.proxy_model.setFilterKeyColumn(0)
         self.proxy_model.setRecursiveFilteringEnabled(True)
 
+        # Make the proxy model visible via the public API so proxyModel() returns it
+        self.setProxyModel(self.proxy_model)
+
         self.ui.listView.setModel(self.proxy_model)
         self.ui.treeView.setModel(self.proxy_model)
 
@@ -315,9 +523,21 @@ class QFileDialogExtended(AdapterQFileDialog):
 
     def _on_search_text_changed(self, text: str) -> None:
         self.proxy_model.setFilterFixedString(text)
+        # Update search highlighting in the item delegate
+        if hasattr(self, "_item_delegate"):
+            self._item_delegate.search_text = text
+            # Force repaint to show highlighting
+            self.ui.listView.viewport().update()
+            self.ui.treeView.viewport().update()
 
     def _on_search_requested(self, text: str) -> None:
         self.proxy_model.setFilterFixedString(text)
+        # Update search highlighting in the item delegate
+        if hasattr(self, "_item_delegate"):
+            self._item_delegate.search_text = text
+            # Force repaint to show highlighting
+            self.ui.listView.viewport().update()
+            self.ui.treeView.viewport().update()
 
     def _on_directory_changed(self, directory: str) -> None:
         self.address_bar.update_path(Path(directory))
@@ -325,112 +545,240 @@ class QFileDialogExtended(AdapterQFileDialog):
     def _connect_extended_signals(self) -> None:
         self.directoryEntered.connect(self._on_directory_changed)
 
+        # Connect selection changes to update preview pane
+        self.currentChanged.connect(self._on_current_changed_for_preview)
+
+        # Connect view selection model changes
+        self.ui.listView.selectionModel().selectionChanged.connect(lambda: self._update_preview_from_selection())
+        self.ui.treeView.selectionModel().selectionChanged.connect(lambda: self._update_preview_from_selection())
+
+    def _on_current_changed_for_preview(self, path: str) -> None:
+        """Handle currentChanged signal for preview pane update."""
+        if self._preview_pane_visible and path:
+            self.preview_pane.set_file(Path(path))
+
     def _apply_windows11_styling(self) -> None:
         """Apply comprehensive Windows 11 Fluent Design styling to the entire dialog."""
-        from qtpy.QtWidgets import QApplication
         from qtpy.QtGui import QPalette
-        
+        from qtpy.QtWidgets import QApplication
+
         app = QApplication.instance()
         if not isinstance(app, QApplication):
             return
         palette = app.palette()
-        
+
         # Windows 11 Fluent Design Color Palette
-        is_dark = palette.color(
-            QPalette.ColorGroup.Active,  # pyright: ignore[reportArgumentType]
-            QPalette.ColorRole.Window,  # pyright: ignore[reportArgumentType]
-        ).lightness() < 128
-        
+        is_dark = (
+            palette.color(
+                QPalette.ColorGroup.Active,  # pyright: ignore[reportArgumentType]
+                QPalette.ColorRole.Window,  # pyright: ignore[reportArgumentType]
+            ).lightness()
+            < 128
+        )
+
         if is_dark:
-            win11_bg = "#202020"
-            win11_widget_bg = "#2D2D2D"
+            # Dark mode colors
+            win11_bg = "#1F1F1F"
+            win11_surface = "#2D2D2D"
+            win11_card = "#292929"
             win11_border = "#3D3D3D"
-            win11_text = "#E0E0E0"
-            win11_text_secondary = "#B0B0B0"
-            win11_hover = "#3A3A3A"
-            win11_button_bg = "#2D2D2D"
-            win11_button_hover = "#3A3A3A"
-            win11_input_bg = "#2D2D2D"
-            win11_selection = "#0066CC"
+            win11_border_subtle = "#333333"
+            win11_text = "#FFFFFF"
+            win11_text_secondary = "#9D9D9D"
+            win11_text_tertiary = "#717171"
+            win11_hover = "#383838"
+            win11_pressed = "#313131"
+            win11_accent = "#60CDFF"
+            win11_accent_hover = "#78D5FF"
+            win11_accent_pressed = "#4DBFFF"
+            win11_selection = "#0078D4"
+            win11_selection_text = "#FFFFFF"
+            win11_scrollbar = "#4A4A4A"
+            win11_scrollbar_hover = "#5A5A5A"
         else:
+            # Light mode colors (Windows 11 defaults)
             win11_bg = "#FFFFFF"
-            win11_widget_bg = "#F9F9F9"
-            win11_border = "#E1E1E1"
-            win11_text = "#202020"
-            win11_text_secondary = "#606060"
-            win11_hover = "#F0F0F0"
-            win11_button_bg = "#FFFFFF"
-            win11_button_hover = "#F0F0F0"
-            win11_input_bg = "#FFFFFF"
-            win11_selection = "#0066CC"
-            win11_selection_color = "#FFFFFF"
-        
+            win11_surface = "#F9F9F9"
+            win11_card = "#FFFFFF"
+            win11_border = "#E5E5E5"
+            win11_border_subtle = "#EBEBEB"
+            win11_text = "#1A1A1A"
+            win11_text_secondary = "#5C5C5C"
+            win11_text_tertiary = "#9E9E9E"
+            win11_hover = "#F5F5F5"
+            win11_pressed = "#EBEBEB"
+            win11_accent = "#005FB8"
+            win11_accent_hover = "#0067C0"
+            win11_accent_pressed = "#0058A8"
+            win11_selection = "#0078D4"
+            win11_selection_text = "#FFFFFF"
+            win11_scrollbar = "#C2C2C2"
+            win11_scrollbar_hover = "#9E9E9E"
+
         stylesheet = f"""
-            /* Windows 11 Fluent Design - Complete Dialog Styling */
+            /* Windows 11 Fluent Design - File Dialog */
             QFileDialog, QWidget {{
-                font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
-                font-size: 11pt;
+                font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+                font-size: 12px;
                 color: {win11_text};
                 background-color: {win11_bg};
             }}
             
-            /* Buttons - Windows 11 style */
+            /* Tab/Ribbon styling */
+            QTabWidget::pane {{
+                background-color: {win11_surface};
+                border: 1px solid {win11_border};
+                border-top: none;
+            }}
+            
+            QTabBar::tab {{
+                background-color: transparent;
+                color: {win11_text_secondary};
+                border: none;
+                padding: 8px 16px;
+            }}
+            
+            QTabBar::tab:hover {{
+                background-color: {win11_hover};
+                color: {win11_text};
+            }}
+            
+            QTabBar::tab:selected {{
+                background-color: {win11_surface};
+                color: {win11_text};
+                font-weight: 600;
+                border-bottom: 2px solid {win11_accent};
+            }}
+            
+            QGroupBox {{
+                background-color: transparent;
+                border: none;
+                margin-top: 8px;
+                font-weight: 600;
+                color: {win11_text_secondary};
+            }}
+            
+            QGroupBox::title {{
+                color: {win11_text_tertiary};
+                font-size: 11px;
+            }}
+            
+            /* Toolbar buttons */
+            QToolButton {{
+                background-color: transparent;
+                color: {win11_text};
+                border: none;
+                border-radius: 4px;
+                padding: 4px 8px;
+            }}
+            
+            QToolButton:hover {{
+                background-color: {win11_hover};
+            }}
+            
+            QToolButton:pressed {{
+                background-color: {win11_pressed};
+            }}
+            
+            QToolButton:checked {{
+                background-color: {win11_selection};
+                color: {win11_selection_text};
+            }}
+            
+            /* Push buttons */
             QPushButton {{
-                background-color: {win11_button_bg};
+                background-color: {win11_surface};
                 color: {win11_text};
                 border: 1px solid {win11_border};
                 border-radius: 4px;
-                padding: 6px 16px;
-                min-height: 28px;
-                font-size: 11pt;
-                font-weight: 400;
+                padding: 5px 12px;
+                min-height: 30px;
+                min-width: 80px;
             }}
             
             QPushButton:hover {{
-                background-color: {win11_button_hover};
-                border-color: {win11_border};
+                background-color: {win11_hover};
             }}
             
             QPushButton:pressed {{
-                background-color: {win11_hover};
-                border-color: {win11_selection};
+                background-color: {win11_pressed};
+            }}
+            
+            QPushButton:default {{
+                background-color: {win11_accent};
+                color: {win11_selection_text};
+                border-color: {win11_accent};
+            }}
+            
+            QPushButton:default:hover {{
+                background-color: {win11_accent_hover};
             }}
             
             QPushButton:disabled {{
-                color: {win11_text_secondary};
-                background-color: {win11_widget_bg};
-                border-color: {win11_border};
+                color: {win11_text_tertiary};
+                background-color: {win11_surface};
             }}
             
-            /* Input fields - Windows 11 style */
-            QLineEdit, QComboBox {{
-                background-color: {win11_input_bg};
+            /* Line edit */
+            QLineEdit {{
+                background-color: {win11_card};
+                color: {win11_text};
+                border: 1px solid {win11_border};
+                border-bottom: 2px solid {win11_border};
+                border-radius: 4px;
+                padding: 6px 10px;
+                min-height: 32px;
+                selection-background-color: {win11_selection};
+            }}
+            
+            QLineEdit:focus {{
+                border-bottom-color: {win11_accent};
+                background-color: {win11_bg};
+            }}
+            
+            /* Combobox */
+            QComboBox {{
+                background-color: {win11_card};
                 color: {win11_text};
                 border: 1px solid {win11_border};
                 border-radius: 4px;
                 padding: 6px 10px;
-                min-height: 28px;
-                font-size: 11pt;
+                min-height: 32px;
             }}
             
-            QLineEdit:focus, QComboBox:focus {{
-                border-color: {win11_selection};
-                background-color: {win11_input_bg};
+            QComboBox:hover {{
+                border-color: {win11_text_tertiary};
             }}
             
-            QLineEdit:hover, QComboBox:hover {{
-                border-color: {win11_border};
+            QComboBox:focus {{
+                border-color: {win11_accent};
             }}
             
-            /* List and Tree Views - Windows 11 style */
+            QComboBox::drop-down {{
+                border: none;
+                width: 24px;
+            }}
+            
+            QComboBox QAbstractItemView {{
+                background-color: {win11_card};
+                border: 1px solid {win11_border};
+                selection-background-color: {win11_hover};
+            }}
+            
+            /* List and tree views */
             QListView, QTreeView {{
                 background-color: {win11_bg};
+                alternate-background-color: {win11_surface};
                 color: {win11_text};
                 border: 1px solid {win11_border};
-                border-radius: 4px;
-                selection-background-color: {win11_selection};
-                selection-color: {win11_selection_color};
+                border-radius: 8px;
                 outline: none;
+            }}
+            
+            QListView::item, QTreeView::item {{
+                padding: 4px 8px;
+                border-radius: 4px;
+                margin: 1px 4px;
             }}
             
             QListView::item:hover, QTreeView::item:hover {{
@@ -439,58 +787,137 @@ class QFileDialogExtended(AdapterQFileDialog):
             
             QListView::item:selected, QTreeView::item:selected {{
                 background-color: {win11_selection};
-                color: {win11_selection_color};
+                color: {win11_selection_text};
             }}
             
-            /* Labels - Windows 11 style */
-            QLabel {{
-                color: {win11_text};
-                background-color: transparent;
-                font-size: 11pt;
-            }}
-            
-            /* Scrollbars - Windows 11 style */
-            QScrollBar:vertical {{
-                background-color: {win11_widget_bg};
-                width: 12px;
+            /* Sidebar */
+            #sidebar {{
+                background-color: {win11_surface};
                 border: none;
-                margin: 0px;
+                border-right: 1px solid {win11_border};
+            }}
+            
+            /* Splitter */
+            QSplitter::handle {{
+                background-color: {win11_border_subtle};
+                width: 1px;
+            }}
+            
+            QSplitter::handle:hover {{
+                background-color: {win11_accent};
+            }}
+            
+            /* Scrollbars */
+            QScrollBar:vertical {{
+                background-color: transparent;
+                width: 14px;
             }}
             
             QScrollBar::handle:vertical {{
-                background-color: {win11_border};
-                min-height: 20px;
-                border-radius: 6px;
-                margin: 2px;
+                background-color: {win11_scrollbar};
+                min-height: 30px;
+                border-radius: 7px;
+                margin: 3px;
             }}
             
             QScrollBar::handle:vertical:hover {{
-                background-color: {win11_text_secondary};
+                background-color: {win11_scrollbar_hover};
+            }}
+            
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0;
+            }}
+            
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+                background: transparent;
             }}
             
             QScrollBar:horizontal {{
-                background-color: {win11_widget_bg};
-                height: 12px;
-                border: none;
-                margin: 0px;
+                background-color: transparent;
+                height: 14px;
             }}
             
             QScrollBar::handle:horizontal {{
-                background-color: {win11_border};
-                min-width: 20px;
-                border-radius: 6px;
-                margin: 2px;
+                background-color: {win11_scrollbar};
+                min-width: 30px;
+                border-radius: 7px;
+                margin: 3px;
             }}
             
             QScrollBar::handle:horizontal:hover {{
-                background-color: {win11_text_secondary};
+                background-color: {win11_scrollbar_hover};
             }}
             
-            /* Frames and Panels */
-            QFrame {{
-                background-color: {win11_widget_bg};
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+                width: 0;
+            }}
+            
+            QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+                background: transparent;
+            }}
+            
+            /* Header view */
+            QHeaderView {{
+                background-color: {win11_surface};
+            }}
+            
+            QHeaderView::section {{
+                background-color: {win11_surface};
+                color: {win11_text_secondary};
+                border: none;
+                border-right: 1px solid {win11_border_subtle};
+                padding: 8px 12px;
+                font-weight: 600;
+            }}
+            
+            QHeaderView::section:hover {{
+                background-color: {win11_hover};
+                color: {win11_text};
+            }}
+            
+            /* Labels */
+            QLabel {{
+                color: {win11_text};
+                background-color: transparent;
+            }}
+            
+            /* Menus */
+            QMenu {{
+                background-color: {win11_card};
+                border: 1px solid {win11_border};
+                border-radius: 8px;
+                padding: 4px;
+            }}
+            
+            QMenu::item {{
+                padding: 8px 32px 8px 12px;
+                border-radius: 4px;
+                margin: 2px 4px;
+            }}
+            
+            QMenu::item:selected {{
+                background-color: {win11_hover};
+            }}
+            
+            QMenu::separator {{
+                height: 1px;
+                background-color: {win11_border_subtle};
+                margin: 4px 8px;
+            }}
+            
+            /* Tooltips */
+            QToolTip {{
+                background-color: {win11_card};
+                color: {win11_text};
                 border: 1px solid {win11_border};
                 border-radius: 4px;
+                padding: 4px 8px;
+            }}
+            
+            /* Frames */
+            QFrame {{
+                background-color: transparent;
+                border: none;
             }}
         """
         self.setStyleSheet(stylesheet)
@@ -514,7 +941,7 @@ class QFileDialogExtended(AdapterQFileDialog):
     def _none_to_empty(s: str | None) -> str:
         """Convert None to empty string for adapter method compatibility."""
         return s if s is not None else ""
-    
+
     @staticmethod
     def _filter_none_from_iterable(items: Iterable[str | None]) -> list[str]:
         """Filter None values from iterable for adapter method compatibility."""
@@ -529,7 +956,7 @@ class QFileDialogExtended(AdapterQFileDialog):
     def saveFileContent(fileContent: QByteArray | bytes | bytearray, fileNameHint: str | None = None, parent: QWidget | None = None) -> None: ...  # noqa: N803
     @staticmethod
     def saveFileContent(
-        fileContent: QByteArray | bytes | bytearray | memoryview ,
+        fileContent: QByteArray | bytes | bytearray | memoryview,
         fileNameHint: str | None = None,
         parent: QWidget | None = None,
     ) -> None:  # noqa: N803, ANN001
@@ -605,7 +1032,7 @@ class QFileDialogExtended(AdapterQFileDialog):
             QFileDialogExtended._none_to_empty(filter),
             QFileDialogExtended._none_to_empty(initialFilter),
             options,
-            QFileDialogExtended._filter_none_from_iterable(supportedSchemes)
+            QFileDialogExtended._filter_none_from_iterable(supportedSchemes),
         )
 
     def selectMimeTypeFilter(self, filter: str | None) -> None:  # noqa: A002
@@ -635,7 +1062,7 @@ class QFileDialogExtended(AdapterQFileDialog):
     def open(self, slot) -> None: ...  # noqa: ANN001
     def open(self, slot=None) -> None:  # noqa: ANN001
         """Show the dialog and connect the slot to the appropriate signal.
-        
+
         Matches all stub signatures (PyQt5 and PyQt6).
         """
         if slot is None:
@@ -678,14 +1105,14 @@ class QFileDialogExtended(AdapterQFileDialog):
 
     def proxyModel(self) -> "QAbstractProxyModel | None":
         """Returns the proxy model used by the file dialog.
-        
+
         Matches all stub signatures.
         """
         return super().proxyModel()
 
     def setProxyModel(self, model: "QAbstractProxyModel | None") -> None:
         """Sets the proxy model used by the file dialog.
-        
+
         Matches all stub signatures.
         """
         super().setProxyModel(model)
@@ -713,36 +1140,57 @@ class QFileDialogExtended(AdapterQFileDialog):
         super().done(result)
 
     @staticmethod
-    def getSaveFileName(parent: QWidget | None = None, caption: str | None = None, directory: str | None = None, filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog) -> tuple[str, str]:  # noqa: E501
+    def getSaveFileName(
+        parent: QWidget | None = None,
+        caption: str | None = None,
+        directory: str | None = None,
+        filter: str | None = None,
+        initialFilter: str | None = None,
+        options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog,
+    ) -> tuple[str, str]:  # noqa: E501
         return AdapterQFileDialog.getSaveFileName(
             parent,
             QFileDialogExtended._none_to_empty(caption),
             QFileDialogExtended._none_to_empty(directory),
             QFileDialogExtended._none_to_empty(filter),
             QFileDialogExtended._none_to_empty(initialFilter),
-            options
+            options,
         )
 
     @staticmethod
-    def getOpenFileNames(parent: QWidget | None = None, caption: str | None = None, directory: str | None = None, filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog) -> tuple[list[str], str]:  # noqa: E501
+    def getOpenFileNames(
+        parent: QWidget | None = None,
+        caption: str | None = None,
+        directory: str | None = None,
+        filter: str | None = None,
+        initialFilter: str | None = None,
+        options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog,
+    ) -> tuple[list[str], str]:  # noqa: E501
         return AdapterQFileDialog.getOpenFileNames(
             parent,
             QFileDialogExtended._none_to_empty(caption),
             QFileDialogExtended._none_to_empty(directory),
             QFileDialogExtended._none_to_empty(filter),
             QFileDialogExtended._none_to_empty(initialFilter),
-            options
+            options,
         )
 
     @staticmethod
-    def getOpenFileName(parent: QWidget | None = None, caption: str | None = None, directory: str | None = None, filter: str | None = None, initialFilter: str | None = None, options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog) -> tuple[str, str]:  # noqa: E501
+    def getOpenFileName(
+        parent: QWidget | None = None,
+        caption: str | None = None,
+        directory: str | None = None,
+        filter: str | None = None,
+        initialFilter: str | None = None,
+        options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog,
+    ) -> tuple[str, str]:  # noqa: E501
         return AdapterQFileDialog.getOpenFileName(
             parent,
             QFileDialogExtended._none_to_empty(caption),
             QFileDialogExtended._none_to_empty(directory),
             QFileDialogExtended._none_to_empty(filter),
             QFileDialogExtended._none_to_empty(initialFilter),
-            options
+            options,
         )
 
     @staticmethod
@@ -754,11 +1202,7 @@ class QFileDialogExtended(AdapterQFileDialog):
         supportedSchemes: Iterable[str | None] = (),
     ) -> QUrl:  # noqa: E501
         return AdapterQFileDialog.getExistingDirectoryUrl(
-            parent,
-            QFileDialogExtended._none_to_empty(caption),
-            directory,
-            options,
-            QFileDialogExtended._filter_none_from_iterable(supportedSchemes)
+            parent, QFileDialogExtended._none_to_empty(caption), directory, options, QFileDialogExtended._filter_none_from_iterable(supportedSchemes)
         )
 
     @staticmethod
@@ -768,12 +1212,7 @@ class QFileDialogExtended(AdapterQFileDialog):
         directory: str | None = None,
         options: AdapterQFileDialog.Option = AdapterQFileDialog.Option.DontUseNativeDialog,
     ) -> str:  # noqa: E501
-        return AdapterQFileDialog.getExistingDirectory(
-            parent,
-            QFileDialogExtended._none_to_empty(caption),
-            QFileDialogExtended._none_to_empty(directory),
-            options
-        )
+        return AdapterQFileDialog.getExistingDirectory(parent, QFileDialogExtended._none_to_empty(caption), QFileDialogExtended._none_to_empty(directory), options)
 
     def labelText(self, label: AdapterQFileDialog.DialogLabel) -> str:
         return super().labelText(label)
@@ -783,14 +1222,14 @@ class QFileDialogExtended(AdapterQFileDialog):
 
     def iconProvider(self) -> QAbstractFileIconProvider | None:
         """Returns the icon provider used by the file dialog.
-        
+
         Matches all stub signatures (PyQt5 returns QFileIconProvider, PyQt6 returns QAbstractFileIconProvider | None).
         """
         return super().iconProvider()
 
     def setIconProvider(self, provider: QAbstractFileIconProvider | None) -> None:
         """Sets the icon provider used by the file dialog.
-        
+
         Matches all stub signatures (PyQt5 returns QFileIconProvider, PyQt6 returns QAbstractFileIconProvider | None).
         """
         if provider is not None:
@@ -798,14 +1237,14 @@ class QFileDialogExtended(AdapterQFileDialog):
 
     def itemDelegate(self) -> QAbstractItemDelegate | None:
         """Returns the item delegate used to render items in the views.
-        
+
         Matches all stub signatures.
         """
         return super().itemDelegate()
 
     def setItemDelegate(self, delegate: QAbstractItemDelegate | None) -> None:
         """Sets the item delegate used to render items in the views.
-        
+
         Matches all stub signatures.
         """
         super().setItemDelegate(delegate)  # pyright: ignore[reportArgumentType]
@@ -854,6 +1293,22 @@ if __name__ == "__main__":
     import faulthandler
     import sys
     import traceback
+    from pathlib import Path
+
+    # Ensure the package "src" root is on sys.path so imports like
+    # "utility.ui_libraries.qt.widgets..." work when the file is run directly.
+    # The layout is: src/utility/.../qfiledialogextended/qfiledialogextended.py so
+    # parents[5] points at the project "src" directory for this file.
+    try:
+        src_root = Path(__file__).resolve().parents[5]
+        src_root_str = str(src_root)
+        if src_root_str not in sys.path:
+            sys.path.insert(0, src_root_str)
+    except Exception:
+        # Be defensive — if this fails we still try to run and any import
+        # failures will be reported normally to the user.
+        pass
+
     faulthandler.enable()
 
     app = QApplication(sys.argv)
@@ -862,7 +1317,7 @@ if __name__ == "__main__":
     file_dialog.setOption(AdapterQFileDialog.Option.DontUseNativeDialog, True)  # pyright: ignore[reportArgumentType]
     file_dialog.setFileMode(AdapterQFileDialog.FileMode.Directory)
     file_dialog.setOption(AdapterQFileDialog.Option.ShowDirsOnly, False)  # pyright: ignore[reportArgumentType]
-    #file_dialog.override_ui()
+    # file_dialog.override_ui()
 
     file_dialog.resize(800, 600)
     file_dialog.show()

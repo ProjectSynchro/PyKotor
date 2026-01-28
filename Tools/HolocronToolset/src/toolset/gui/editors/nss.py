@@ -570,25 +570,24 @@ class NSSEditor(Editor):
 
         # Replace the simple debug table with a tabbed interface
         # Check if debugTab exists and has a layout
-        if hasattr(self.ui, "debugTab") and hasattr(self.ui, "debugTable"):
-            # Get the existing layout
-            debug_layout = self.ui.debugTab.layout()
-            if debug_layout is not None:
-                # Remove the old table
-                old_table = self.ui.debugTable
-                if old_table is not None:
-                    old_table.setParent(None)  # type: ignore[arg-type, call-overload]  # pyright: ignore[reportArgumentType]
-                    old_table.deleteLater()
+        # Get the existing layout
+        debug_layout = self.ui.debugTab.layout()
+        if debug_layout is not None:
+            # Remove the old table
+            old_table = self.ui.debugTable
+            if old_table is not None:
+                old_table.setParent(None)  # type: ignore[arg-type, call-overload]  # pyright: ignore[reportArgumentType]
+                old_table.deleteLater()
 
-                # Create tab widget for debug panels
-                from qtpy.QtWidgets import QTabWidget
+            # Create tab widget for debug panels
+            from qtpy.QtWidgets import QTabWidget
 
-                debug_tabs = QTabWidget(self.ui.debugTab)
-                debug_tabs.addTab(self._debug_variables_widget, "Variables")
-                debug_tabs.addTab(self._debug_callstack_widget, "Call Stack")
-                debug_tabs.addTab(self._debug_watch_widget, "Watch")
+            debug_tabs = QTabWidget(self.ui.debugTab)
+            debug_tabs.addTab(self._debug_variables_widget, "Variables")
+            debug_tabs.addTab(self._debug_callstack_widget, "Call Stack")
+            debug_tabs.addTab(self._debug_watch_widget, "Watch")
 
-                debug_layout.addWidget(debug_tabs)
+            debug_layout.addWidget(debug_tabs)
 
         # Initially clear widgets
         self._debug_variables_widget.clear()
@@ -598,20 +597,18 @@ class NSSEditor(Editor):
     def _hide_test_ui(self):
         """Hide test/debug UI by default - only show during test runs."""
         # Hide debug tab
-        if hasattr(self.ui, "debugTab") and hasattr(self.ui, "panelTabs"):
-            debug_tab_index = self.ui.panelTabs.indexOf(self.ui.debugTab)
-            if debug_tab_index >= 0:
-                self.ui.panelTabs.removeTab(debug_tab_index)
+        debug_tab_index = self.ui.panelTabs.indexOf(self.ui.debugTab)
+        if debug_tab_index >= 0:
+            self.ui.panelTabs.removeTab(debug_tab_index)
 
     def _show_test_ui(self):
         """Show test/debug UI during a test run."""
-        if hasattr(self.ui, "debugTab") and hasattr(self.ui, "panelTabs"):
-            # Check if tab already exists
-            debug_tab_index = self.ui.panelTabs.indexOf(self.ui.debugTab)
-            if debug_tab_index < 0:
-                # Add debug tab back
-                debug_tab_index = self.ui.panelTabs.addTab(self.ui.debugTab, "Test")
-            self.ui.panelTabs.setCurrentIndex(debug_tab_index)
+        # Check if tab already exists
+        debug_tab_index = self.ui.panelTabs.indexOf(self.ui.debugTab)
+        if debug_tab_index < 0:
+            # Add debug tab back
+            debug_tab_index = self.ui.panelTabs.addTab(self.ui.debugTab, "Test")
+        self.ui.panelTabs.setCurrentIndex(debug_tab_index)
 
     def _setup_command_palette(self):
         """Set up the command palette with all available commands."""
@@ -2594,10 +2591,9 @@ class NSSEditor(Editor):
         self.ui.actionToggle_Wrap_Lines.triggered.connect(self._toggle_word_wrap)
 
         # Minimap toggle (if action exists)
-        if hasattr(self.ui, "actionToggle_Minimap"):
-            assert self.ui.actionToggle_Minimap is not None, "Toggle minimap action should not be None"
-            self.ui.actionToggle_Minimap.setShortcut(QKeySequence("Ctrl+Shift+M"))
-            self.ui.actionToggle_Minimap.triggered.connect(self._toggle_minimap)
+        assert self.ui.actionToggle_Minimap is not None, "Toggle minimap action should not be None"
+        self.ui.actionToggle_Minimap.setShortcut(QKeySequence("Ctrl+Shift+M"))
+        self.ui.actionToggle_Minimap.triggered.connect(self._toggle_minimap)
 
         # Command Palette (VS Code Ctrl+Shift+P)
         self._command_palette = CommandPalette(self)
@@ -2620,36 +2616,28 @@ class NSSEditor(Editor):
         self.ui.actionManage_Snippets.triggered.connect(self._manage_snippets)
 
         # Connect Analyze Code action if it exists
-        if hasattr(self.ui, "actionAnalyze_Code"):
-            assert self.ui.actionAnalyze_Code is not None, "Analyze code action should not be None"
-            self.ui.actionAnalyze_Code.triggered.connect(self._analyze_code)
+        assert self.ui.actionAnalyze_Code is not None, "Analyze code action should not be None"
+        self.ui.actionAnalyze_Code.triggered.connect(self._analyze_code)
 
         # Help
         self.ui.actionDocumentation.setShortcut(QKeySequence("F1"))
         self.ui.actionDocumentation.triggered.connect(self._show_documentation)
         self.ui.actionKeyboard_Shortcuts.setShortcut(QKeySequence("Ctrl+K, Ctrl+H"))
         self.ui.actionKeyboard_Shortcuts.triggered.connect(self._show_keyboard_shortcuts)
-        if hasattr(self.ui, "actionAbout"):
-            assert self.ui.actionAbout is not None, "About action should not be None"
-            self.ui.actionAbout.triggered.connect(self._show_about)
-        if hasattr(self.ui, "actionCheck_for_Updates"):
-            assert self.ui.actionCheck_for_Updates is not None, "Check for updates action should not be None"
-            self.ui.actionCheck_for_Updates.triggered.connect(self._check_for_updates)
+        assert self.ui.actionAbout is not None, "About action should not be None"
+        self.ui.actionAbout.triggered.connect(self._show_about)
+        assert self.ui.actionCheck_for_Updates is not None, "Check for updates action should not be None"
+        self.ui.actionCheck_for_Updates.triggered.connect(self._check_for_updates)
 
         # Debug menu actions (placeholders for future implementation)
-        if hasattr(self.ui, "actionStart_Debugging"):
-            assert self.ui.actionStart_Debugging is not None, "Start debugging action should not be None"
-            self.ui.actionStart_Debugging.triggered.connect(self._start_debugging)
-        if hasattr(self.ui, "actionStop_Debugging"):
-            assert self.ui.actionStop_Debugging is not None, "Stop debugging action should not be None"
-            self.ui.actionStop_Debugging.triggered.connect(self._stop_debugging)
-        if hasattr(self.ui, "actionToggle_Breakpoint"):
-            assert self.ui.actionToggle_Breakpoint is not None, "Toggle breakpoint action should not be None"
-            self.ui.actionToggle_Breakpoint.triggered.connect(self._toggle_breakpoint)
-        if hasattr(self.ui, "actionClear_All_Breakpoints"):
-            assert self.ui.actionClear_All_Breakpoints is not None, "Clear all breakpoints action should not be None"
-            self.ui.actionClear_All_Breakpoints.triggered.connect(self._clear_all_breakpoints)
-
+        assert self.ui.actionStart_Debugging is not None, "Start debugging action should not be None"
+        self.ui.actionStart_Debugging.triggered.connect(self._start_debugging)
+        assert self.ui.actionStop_Debugging is not None, "Stop debugging action should not be None"
+        self.ui.actionStop_Debugging.triggered.connect(self._stop_debugging)
+        assert self.ui.actionToggle_Breakpoint is not None, "Toggle breakpoint action should not be None"
+        self.ui.actionToggle_Breakpoint.triggered.connect(self._toggle_breakpoint)
+        assert self.ui.actionClear_All_Breakpoints is not None, "Clear all breakpoints action should not be None"
+        self.ui.actionClear_All_Breakpoints.triggered.connect(self._clear_all_breakpoints)
         # Game type toggle
         self.ui.actionK1.triggered.connect(lambda: self._on_game_changed(0))
         self.ui.actionTSL.triggered.connect(lambda: self._on_game_changed(1))
@@ -3495,7 +3483,7 @@ Code Operations:
   Ctrl+Space      - Trigger Suggest
   F12             - Go to Definition
   Shift+F12       - Find All References
-  Ctrl+K, Ctrl+B - Toggle Bookmark
+  Ctrl+K, Ctrl+B  - Toggle Bookmark
   Ctrl+K, Ctrl+N  - Next Bookmark
   Ctrl+K, Ctrl+P  - Previous Bookmark
         """
@@ -3593,16 +3581,16 @@ Code Operations:
             self._debugger.start(interpreter)
 
             # Update UI
-            if hasattr(self.ui, "actionStart_Debugging"):
-                self.ui.actionStart_Debugging.setEnabled(False)
-            if hasattr(self.ui, "actionStop_Debugging"):
-                self.ui.actionStop_Debugging.setEnabled(True)
-            if hasattr(self.ui, "actionStep_Over"):
-                self.ui.actionStep_Over.setEnabled(True)
-            if hasattr(self.ui, "actionStep_Into"):
-                self.ui.actionStep_Into.setEnabled(True)
-            if hasattr(self.ui, "actionStep_Out"):
-                self.ui.actionStep_Out.setEnabled(True)
+            assert self.ui.actionStart_Debugging is not None, "Start debugging action should not be None"
+            self.ui.actionStart_Debugging.setEnabled(False)
+            assert self.ui.actionStop_Debugging is not None, "Stop debugging action should not be None"
+            self.ui.actionStop_Debugging.setEnabled(True)
+            assert self.ui.actionStep_Over is not None, "Step over action should not be None"
+            self.ui.actionStep_Over.setEnabled(True)
+            assert self.ui.actionStep_Into is not None, "Step into action should not be None"
+            self.ui.actionStep_Into.setEnabled(True)
+            assert self.ui.actionStep_Out is not None, "Step out action should not be None"
+            self.ui.actionStep_Out.setEnabled(True)
 
             event_name = config_dialog.config_widget.event_combo.currentText()
             self._log_to_output(f"Test run started: {entry_point}() with event {event_name} (event number: {test_config['event_number']})")
@@ -3627,16 +3615,14 @@ Code Operations:
             self._hide_test_ui()
 
             # Update UI
-            if hasattr(self.ui, "actionStart_Debugging"):
-                self.ui.actionStart_Debugging.setEnabled(True)
-            if hasattr(self.ui, "actionStop_Debugging"):
-                self.ui.actionStop_Debugging.setEnabled(False)
-            if hasattr(self.ui, "actionStep_Over"):
-                self.ui.actionStep_Over.setEnabled(False)
-            if hasattr(self.ui, "actionStep_Into"):
-                self.ui.actionStep_Into.setEnabled(False)
-            if hasattr(self.ui, "actionStep_Out"):
-                self.ui.actionStep_Out.setEnabled(False)
+            self.ui.actionStart_Debugging.setEnabled(True)
+            self.ui.actionStop_Debugging.setEnabled(False)
+            assert self.ui.actionStep_Over is not None, "Step over action should not be None"
+            self.ui.actionStep_Over.setEnabled(False)
+            assert self.ui.actionStep_Into is not None, "Step into action should not be None"
+            self.ui.actionStep_Into.setEnabled(False)
+            assert self.ui.actionStep_Out is not None, "Step out action should not be None"
+            self.ui.actionStep_Out.setEnabled(False)
 
             self._log_to_output("Test run stopped")
             self._update_debug_visualization()
@@ -3769,16 +3755,16 @@ Code Operations:
         self._update_debug_visualization()
 
         # Re-enable start debugging
-        if hasattr(self.ui, "actionStart_Debugging"):
-            self.ui.actionStart_Debugging.setEnabled(True)
-        if hasattr(self.ui, "actionStop_Debugging"):
-            self.ui.actionStop_Debugging.setEnabled(False)
-        if hasattr(self.ui, "actionStep_Over"):
-            self.ui.actionStep_Over.setEnabled(False)
-        if hasattr(self.ui, "actionStep_Into"):
-            self.ui.actionStep_Into.setEnabled(False)
-        if hasattr(self.ui, "actionStep_Out"):
-            self.ui.actionStep_Out.setEnabled(False)
+        assert self.ui.actionStart_Debugging is not None, "Start debugging action should not be None"
+        self.ui.actionStart_Debugging.setEnabled(True)
+        assert self.ui.actionStop_Debugging is not None, "Stop debugging action should not be None"
+        self.ui.actionStop_Debugging.setEnabled(False)
+        assert self.ui.actionStep_Over is not None, "Step over action should not be None"
+        self.ui.actionStep_Over.setEnabled(False)
+        assert self.ui.actionStep_Into is not None, "Step into action should not be None"
+        self.ui.actionStep_Into.setEnabled(False)
+        assert self.ui.actionStep_Out is not None, "Step out action should not be None"
+        self.ui.actionStep_Out.setEnabled(False)
 
     def _on_debugger_error(self, error: Exception):
         """Handle debugger error."""
@@ -3874,10 +3860,8 @@ Code Operations:
                 self._ls_client = None
 
         # Stop timers
-        if hasattr(self, "_analysis_debounce_timer") and self._analysis_debounce_timer is not None:
-            self._analysis_debounce_timer.stop()
-        if hasattr(self, "_hover_debounce_timer") and self._hover_debounce_timer is not None:
-            self._hover_debounce_timer.stop()
+        self._analysis_debounce_timer.stop()
+        self._hover_debounce_timer.stop()
 
         # Call parent close
         super().closeEvent(event)

@@ -120,14 +120,13 @@ class SaveGameEditor(Editor):
         self._no_scroll_filter.setup_filter(parent_widget=self)
         
         # Setup screenshot label for proper display
-        if hasattr(self.ui, 'labelScreenshotPreview'):
-            # Install event filter for resize handling
-            self.ui.labelScreenshotPreview.installEventFilter(self)
-            # Ensure label is set up for proper image display
-            self.ui.labelScreenshotPreview.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.ui.labelScreenshotPreview.setScaledContents(False)  # We handle scaling manually
-            # Enable mouse tracking for tooltip updates
-            self.ui.labelScreenshotPreview.setMouseTracking(True)
+        # Install event filter for resize handling
+        self.ui.labelScreenshotPreview.installEventFilter(self)
+        # Ensure label is set up for proper image display
+        self.ui.labelScreenshotPreview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.ui.labelScreenshotPreview.setScaledContents(False)  # We handle scaling manually
+        # Enable mouse tracking for tooltip updates
+        self.ui.labelScreenshotPreview.setMouseTracking(True)
         
         self.new()
 
@@ -499,10 +498,9 @@ class SaveGameEditor(Editor):
         """Clear screenshot preview."""
         self._screenshot_original_pixmap = None
         self._screenshot_original_size = None
-        if hasattr(self.ui, 'labelScreenshotPreview'):
-            self.ui.labelScreenshotPreview.setText(tr("No screenshot available"))
-            self.ui.labelScreenshotPreview.setPixmap(QPixmap())
-            self.ui.labelScreenshotPreview.setToolTip("")
+        self.ui.labelScreenshotPreview.setText(tr("No screenshot available"))
+        self.ui.labelScreenshotPreview.setPixmap(QPixmap())
+        self.ui.labelScreenshotPreview.setToolTip("")
     
     def on_save_info_changed(self):
         """Handle Save Info changes."""
@@ -1509,13 +1507,12 @@ class SaveGameEditor(Editor):
         self.ui.spinBoxCharSoundset.setValue(char.soundset if hasattr(char, 'soundset') else 0)
         
         # Gender
-        if hasattr(self.ui, 'comboBoxCharGender'):
-            gender_id = char.gender if hasattr(char, 'gender') else 0
-            gender_names = ["None", "Male", "Female", "Other", "Both"]
-            self.ui.comboBoxCharGender.clear()
-            self.ui.comboBoxCharGender.addItems(gender_names)
-            if 0 <= gender_id < len(gender_names):
-                self.ui.comboBoxCharGender.setCurrentIndex(gender_id)
+        gender_id = char.gender if hasattr(char, 'gender') else 0
+        gender_names = ["None", "Male", "Female", "Other", "Both"]
+        self.ui.comboBoxCharGender.clear()
+        self.ui.comboBoxCharGender.addItems(gender_names)
+        if 0 <= gender_id < len(gender_names):
+            self.ui.comboBoxCharGender.setCurrentIndex(gender_id)
         
         # Classes
         self._populate_character_classes(char)
@@ -1537,16 +1534,15 @@ class SaveGameEditor(Editor):
             skills_label_text = f"Skills ({char_name})"
         
         # Set the label text - the label exists in the UI file
-        if hasattr(self.ui, 'labelSkillsCharacter'):
-            self.ui.labelSkillsCharacter.setText(skills_label_text)
-            # Make the label more prominent with a tooltip
-            self.ui.labelSkillsCharacter.setToolTip(
-                f"<b>Character Skills</b><br>"
-                f"<b>Character:</b> {char_name}<br>"
-                f"<b>Type:</b> {'Player Character' if is_pc else 'Companion/NPC'}<br>"
-                f"<b>Tag:</b> {char.tag or 'N/A'}<br>"
-                f"<b>ResRef:</b> {char.resref or 'N/A'}"
-            )
+        self.ui.labelSkillsCharacter.setText(skills_label_text)
+        # Make the label more prominent with a tooltip
+        self.ui.labelSkillsCharacter.setToolTip(
+            f"<b>Character Skills</b><br>"
+            f"<b>Character:</b> {char_name}<br>"
+            f"<b>Type:</b> {'Player Character' if is_pc else 'Companion/NPC'}<br>"
+            f"<b>Tag:</b> {char.tag or 'N/A'}<br>"
+            f"<b>ResRef:</b> {char.resref or 'N/A'}"
+        )
         
         for row, skill_name in enumerate(SKILL_NAMES):
             skill_item = QTableWidgetItem(skill_name)
@@ -1607,9 +1603,6 @@ class SaveGameEditor(Editor):
     
     def _populate_character_classes(self, char: UTC):
         """Populate character classes table."""
-        if not hasattr(self.ui, 'tableWidgetCharClasses'):
-            return
-        
         classes = char.classes if hasattr(char, 'classes') and char.classes else []
         self.ui.tableWidgetCharClasses.setRowCount(len(classes))
         
@@ -1633,10 +1626,7 @@ class SaveGameEditor(Editor):
             self.ui.tableWidgetCharClasses.setItem(row, 2, powers_item)
     
     def _populate_character_feats(self, char: UTC):
-        """Populate character feats list."""
-        if not hasattr(self.ui, 'listWidgetCharFeats'):
-            return
-        
+        """Populate character feats list."""        
         self.ui.listWidgetCharFeats.clear()
         
         feats = char.feats if hasattr(char, 'feats') and char.feats else []
@@ -1707,7 +1697,7 @@ class SaveGameEditor(Editor):
             self._current_character.soundset = self.ui.spinBoxCharSoundset.value()
         
         # Gender
-        if hasattr(self._current_character, 'gender') and hasattr(self.ui, 'comboBoxCharGender'):
+        if hasattr(self._current_character, 'gender'):
             self._current_character.gender = self.ui.comboBoxCharGender.currentIndex()
         
         # Update skills (individual attributes)
@@ -1722,7 +1712,7 @@ class SaveGameEditor(Editor):
                     pass
         
         # Update classes (level only - class ID and powers are read-only for now)
-        if hasattr(self._current_character, 'classes') and hasattr(self.ui, 'tableWidgetCharClasses'):
+        if hasattr(self._current_character, 'classes'):
             for row in range(min(len(self._current_character.classes), self.ui.tableWidgetCharClasses.rowCount())):
                 level_item = self.ui.tableWidgetCharClasses.item(row, 1)
                 if level_item:
@@ -1758,19 +1748,16 @@ class SaveGameEditor(Editor):
         self.ui.spinBoxCharPortraitId.setValue(0)
         self.ui.spinBoxCharAppearanceType.setValue(0)
         self.ui.spinBoxCharSoundset.setValue(0)
-        if hasattr(self.ui, 'comboBoxCharGender'):
-            self.ui.comboBoxCharGender.setCurrentIndex(0)
+        self.ui.comboBoxCharGender.setCurrentIndex(0)
         self.ui.tableWidgetSkills.setRowCount(0)
         self.ui.listWidgetEquipment.clear()
-        if hasattr(self.ui, 'tableWidgetCharClasses'):
-            self.ui.tableWidgetCharClasses.setRowCount(0)
-        if hasattr(self.ui, 'listWidgetCharFeats'):
-            self.ui.listWidgetCharFeats.clear()
+        self.ui.tableWidgetCharClasses.setRowCount(0)
+        self.ui.listWidgetCharFeats.clear()
+        self.ui.listWidgetCharFeats.clear()
         
         # Reset skills label
-        if hasattr(self.ui, 'labelSkillsCharacter'):
-            self.ui.labelSkillsCharacter.setText("Skills")
-            self.ui.labelSkillsCharacter.setToolTip("")
+        self.ui.labelSkillsCharacter.setText("Skills")
+        self.ui.labelSkillsCharacter.setToolTip("")
     
     def on_character_data_changed(self):
         """Handle character data changes."""
@@ -1792,7 +1779,7 @@ class SaveGameEditor(Editor):
             return
         
         data = item.data(Qt.ItemDataRole.UserRole)
-        if not data:
+        if data is None:
             return
         
         slot, current_item = data
@@ -1858,7 +1845,7 @@ class SaveGameEditor(Editor):
             return
         
         data = item.data(Qt.ItemDataRole.UserRole)
-        if not data:
+        if data is None:
             return
         
         slot, current_item = data
@@ -2017,7 +2004,7 @@ class SaveGameEditor(Editor):
         -------
             str: HTML-formatted tooltip text
         """
-        lines = []
+        lines: list[str] = []
         lines.append("<b>Inventory Item</b><br>")
         lines.append("<hr>")
         
@@ -2058,7 +2045,7 @@ class SaveGameEditor(Editor):
             lines.append(f"<b>Tag:</b> {item.tag}<br>")
         
         # Try to get additional info from UTI if available
-        if self._installation:
+        if self._installation is not None:
             try:
                 from pykotor.resource.generics.uti import read_uti
                 result = self._installation.resource(str(item.resref), ResourceType.UTI)
@@ -2089,7 +2076,7 @@ class SaveGameEditor(Editor):
             
             # Update stack size
             count_item = self.ui.tableWidgetInventory.item(row, 1)
-            if count_item:
+            if count_item is not None:
                 try:
                     stack_size = int(count_item.text())
                     if hasattr(item, 'stack_size'):
@@ -2099,7 +2086,7 @@ class SaveGameEditor(Editor):
             
             # Update charges
             charges_item = self.ui.tableWidgetInventory.item(row, 2)
-            if charges_item:
+            if charges_item is not None:
                 try:
                     charges_text = charges_item.text()
                     if '/' in charges_text:
@@ -2116,7 +2103,7 @@ class SaveGameEditor(Editor):
             
             # Update upgrades
             upgrades_item = self.ui.tableWidgetInventory.item(row, 4)
-            if upgrades_item:
+            if upgrades_item is not None:
                 try:
                     upgrades = int(upgrades_item.text())
                     if hasattr(item, 'upgrades'):
@@ -2166,14 +2153,14 @@ class SaveGameEditor(Editor):
         
         # Try to get plot names from installation if available
         plot_names = {}
-        if self._installation:
+        if self._installation is not None:
             try:
                 from toolset.data.installation import HTInstallation
                 plot_2da: TwoDA | None = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_PLOT)
-                if plot_2da:
+                if plot_2da is not None:
                     for i in range(plot_2da.get_height()):
                         label = plot_2da.get_cell(i, "label")
-                        if label:
+                        if label and label.strip():
                             plot_names[label.lower()] = label.replace("_", " ").title()
             except Exception:
                 pass
@@ -2255,10 +2242,6 @@ class SaveGameEditor(Editor):
             TGA file format specification (origin bit in descriptor byte)
             Tools/HolocronToolset/src/toolset/gui/editors/tpc.py:669-740 (aspect ratio handling)
         """
-        # Check if we have the screenshot preview label
-        if not hasattr(self.ui, 'labelScreenshotPreview'):
-            return
-        
         # Clear previous screenshot
         self._screenshot_original_pixmap = None
         self._screenshot_original_size = None
@@ -2370,9 +2353,6 @@ class SaveGameEditor(Editor):
         - Handles edge cases (zero sizes, invalid dimensions)
         - Updates tooltip with current display information
         """
-        if not hasattr(self.ui, 'labelScreenshotPreview'):
-            return
-        
         if not self._screenshot_original_pixmap or self._screenshot_original_pixmap.isNull():
             return
         
@@ -2470,9 +2450,6 @@ class SaveGameEditor(Editor):
             display_width: Current display width (if None, will be calculated)
             display_height: Current display height (if None, will be calculated)
         """
-        if not hasattr(self.ui, 'labelScreenshotPreview'):
-            return
-        
         if not self._screenshot_original_size:
             return
         

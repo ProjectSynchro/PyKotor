@@ -45,7 +45,6 @@ class Ui_Form(object):
         sizePolicy.setHeightForWidth(self.searchEdit.sizePolicy().hasHeightForWidth())
         self.searchEdit.setSizePolicy(sizePolicy)
         self.searchEdit.setText("")
-        self.searchEdit.setMaxLength(16)
         self.searchEdit.setObjectName("searchEdit")
         self.horizontalLayout_4.addWidget(self.searchEdit)
         self.reloadButton = QtWidgets.QPushButton(Form)

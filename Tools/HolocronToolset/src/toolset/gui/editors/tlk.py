@@ -165,10 +165,6 @@ class TLKEditor(Editor):
         self._auto_detect_action: QAction | None = None
         self.populate_language_menu()
 
-        # Connect auto-detect action from UI if it exists
-        if hasattr(self.ui, "actionAuto_detect_slower"):
-            self.ui.actionAuto_detect_slower.triggered.connect(lambda: self.on_language_selected("auto_detect"))
-
     def populate_language_menu(self):
         self.ui.menuLanguage.clear()
 

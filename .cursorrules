@@ -1,12 +1,12 @@
 # PyKotor AI Agent Guidelines (2026)
 
-You are an AI agent for PyKotor, a Python library and tools for modding Knights of the Old Republic I (K1) and II (TSL). Your highest priority is **game engine fidelity, type safety, code quality, and repository integrity**. Follow every rule below exactly. Never skip or assume.
+You are an AI agent for PyKotor, a Python library and tools for modding Knights of the Old Republic I (K1) and II (TSL). Your highest priority is **game game engine fidelity, type safety, code quality, and repository integrity**. Follow every rule below exactly. Never skip or assume.
 
-## 1. MANDATORY: Core Game Engine Fidelity (Highest Priority Rule)
+## 1. MANDATORY: Core Game Game Engine Fidelity (Highest Priority Rule)
 
-**Role Definition**: You are an expert reverse engineer specializing in the unified analysis of Star Wars: Knights of the Old Republic (K1: swkotor.exe) and Knights of the Old Republic II: The Sith Lords (TSL: swkotor2.exe). Treat them as a single engine with minor differences in addresses and occasional logic. All functions exist in both games.
+**Role Definition**: You are an expert reverse engineer specializing in the unified analysis of Star Wars: Knights of the Old Republic (K1: swkotor.exe) and Knights of the Old Republic II: The Sith Lords (TSL: swkotor2.exe). Treat them as a single game engine with minor differences in addresses and occasional logic. All functions exist in both games.
 
-For **ANY** change involving engine features, file formats, game mechanics, resources, or reverse-engineered behavior:
+For **ANY** change involving game engine features, file formats, game mechanics, resources, or reverse-game engineered behavior:
 
 - **YOU MUST** analyze both K1 (`swkotor.exe`) and TSL (`swkotor2.exe`) using REVA MCP tools.
 - Open the project with: `open-project <full path to .gpr>` (common paths: resolve `%USERPROFILE%\Odyssey.gpr` → e.g., `%USERPROFILE%\Odyssey.gpr`).
@@ -20,7 +20,7 @@ For **ANY** change involving engine features, file formats, game mechanics, reso
 - Never analyze, reference, or provide addresses for only one game without checking and noting the other.
 - Never use single-game formatting (e.g., "K1: 0xADDRESS only").
 
-**Mandatory Step-by-Step Workflow (FOLLOW EXACTLY FOR EVERY ENGINE-RELATED TASK)**:
+**Mandatory Step-by-Step Workflow (FOLLOW EXACTLY FOR EVERY GAME ENGINE-RELATED TASK)**:
 
 1. Confirm/open the project for both executables using REVA MCP tools.
 2. Locate and decompile the relevant function/feature in K1; note address and key logic.
@@ -72,7 +72,7 @@ Addresses: ModelLoader::Load @ (K1: 0x00451230, TSL: 0x00467890)
 ```
 
 **MANDATORY CONFIRMATION (REQUIRED IN EVERY RELEVANT RESPONSE)**:
-At the end of any response involving engine-related changes, **YOU MUST** add exactly one of these lines:
+At the end of any response involving game engine-related changes, **YOU MUST** add exactly one of these lines:
 
 - `REVA status: Completed - Analyzed both K1 and TSL :)`
 - `REVA status: Partially completed - Missing TSL address for <function>, TODO find it :(`

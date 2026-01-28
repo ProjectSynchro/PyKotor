@@ -36,7 +36,7 @@ class RibbonsWidget(QWidget):
             super().__init__(parent, flags)
         self.menus: FileExplorerMenus = FileExplorerMenus() if menus is None else menus
         # Reuse the same actions instance as the menus when provided so dispatcher wiring applies.
-        self.actions_definitions: FileExplorerActions = self.menus.actions if hasattr(self.menus, "actions") else FileExplorerActions()
+        self.actions_definitions: FileExplorerActions = self.menus.actions
         self.columns_callback: Callable[[], None] | None = columns_callback
         self.setup_main_layout()
         self.set_stylesheet()

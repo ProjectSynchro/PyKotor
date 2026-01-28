@@ -46,6 +46,10 @@
         "${workspaceFolder}/Tools/KotorCLI/src",
         "${workspaceFolder}/Tools/KotorDiff/src"
     ],
+    "python.linting.pylintEnabled": false,
+    "python.linting.enabled": true,
+    "python.languageServer": "None",
+    "python.analysis.typeCheckingMode": "basic",
     "cursorpyright.analysis.extraPaths": [
         "${workspaceFolder}/Engines/PyKotorEngine/src",
         "${workspaceFolder}/Libraries/PyKotor/src",
@@ -93,5 +97,6 @@
     "cmake.ignoreCMakeListsMissing": true,
     "files.associations": {
         "*.ui": "xml"
-    }
+    },
+    "pylint.enabled": false
 }

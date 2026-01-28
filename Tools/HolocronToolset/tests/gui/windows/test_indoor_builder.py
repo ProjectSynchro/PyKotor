@@ -238,12 +238,12 @@ def builder_with_real_kit(qtbot: QtBot, installation: HTInstallation, temp_work_
         builder = IndoorMapBuilder(None, installation)
         qtbot.addWidget(builder)
 
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Kits should be loaded automatically from ./kits directory
         # Wait a bit more for async loading if needed
-        QtBot.wait(200)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         if builder.ui.kitSelect.count() > 0:
@@ -300,7 +300,7 @@ def builder_no_kits(qtbot: QtBot, installation: HTInstallation, tmp_path):
         qtbot.addWidget(builder)
 
         # Wait for initialization to complete
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         yield builder
@@ -361,7 +361,7 @@ def builder_with_rooms(qtbot: QtBot, builder_no_kits: IndoorMapBuilder, real_kit
         builder._map.rooms.append(room)
 
     builder.ui.mapRenderer.mark_dirty()
-    QtBot.wait(10)
+    QApplication.processEvents()
     QApplication.processEvents()
 
     return builder
@@ -386,7 +386,7 @@ class TestIndoorBuilderInitialization:
             QApplication.processEvents()
             builder = IndoorMapBuilder(None, installation)
             qtbot.addWidget(builder)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             assert builder._map is not None
@@ -410,7 +410,7 @@ class TestIndoorBuilderInitialization:
             QApplication.processEvents()
             builder = IndoorMapBuilder(None, None)
             qtbot.addWidget(builder)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             assert builder._installation is None
@@ -852,7 +852,7 @@ class TestRoomSelection:
         builder = builder_with_rooms
 
         builder.ui.actionSelectAll.trigger()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         selected = builder.ui.mapRenderer.selected_rooms()
@@ -868,7 +868,7 @@ class TestRoomSelection:
             renderer.select_room(room, clear_existing=False)
 
         builder.ui.actionDeselectAll.trigger()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert len(renderer.selected_rooms()) == 0
@@ -902,7 +902,7 @@ class TestMenuActions:
         cmd = AddRoomCommand(builder._map, room)
         builder._undo_stack.push(cmd)
 
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert builder.ui.actionUndo.isEnabled()
@@ -918,7 +918,7 @@ class TestMenuActions:
         assert room in builder._map.rooms
 
         builder.ui.actionUndo.trigger()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert room not in builder._map.rooms
@@ -935,7 +935,7 @@ class TestMenuActions:
         assert room not in builder._map.rooms
 
         builder.ui.actionRedo.trigger()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert room in builder._map.rooms
@@ -951,7 +951,7 @@ class TestMenuActions:
             renderer.select_room(room, clear_existing=False)
 
         builder.ui.actionDeleteSelected.trigger()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert len(builder._map.rooms) == 3
@@ -968,7 +968,7 @@ class TestMenuActions:
         renderer.select_room(room, clear_existing=True)
 
         builder.ui.actionDuplicate.trigger()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert len(builder._map.rooms) == 2
@@ -990,13 +990,13 @@ class TestSnapFunctionality:
         assert renderer.snap_to_grid is False
 
         builder.ui.snapToGridCheck.setChecked(True)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert renderer.snap_to_grid is True
 
         builder.ui.snapToGridCheck.setChecked(False)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert renderer.snap_to_grid is False
@@ -1009,7 +1009,7 @@ class TestSnapFunctionality:
         assert renderer.snap_to_hooks is True  # Default is on
 
         builder.ui.snapToHooksCheck.setChecked(False)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert renderer.snap_to_hooks is False
@@ -1020,13 +1020,13 @@ class TestSnapFunctionality:
         renderer = builder.ui.mapRenderer
 
         builder.ui.gridSizeSpin.setValue(2.5)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert abs(renderer.grid_size - 2.5) < 0.001
 
         builder.ui.gridSizeSpin.setValue(5.0)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert abs(renderer.grid_size - 5.0) < 0.001
@@ -1037,13 +1037,13 @@ class TestSnapFunctionality:
         renderer = builder.ui.mapRenderer
 
         builder.ui.rotSnapSpin.setValue(30)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert renderer.rotation_snap == 30
 
         builder.ui.rotSnapSpin.setValue(45)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert renderer.rotation_snap == 45
@@ -1054,13 +1054,13 @@ class TestSnapFunctionality:
 
         # Try to set below minimum
         builder.ui.gridSizeSpin.setValue(0.1)
-        QtBot.wait(10)
+        QApplication.processEvents()
 
         assert builder.ui.gridSizeSpin.value() >= builder.ui.gridSizeSpin.minimum()
 
         # Try to set above maximum
         builder.ui.gridSizeSpin.setValue(100.0)
-        QtBot.wait(10)
+        QApplication.processEvents()
 
         assert builder.ui.gridSizeSpin.value() <= builder.ui.gridSizeSpin.maximum()
 
@@ -1161,7 +1161,7 @@ class TestCameraControls:
         initial_zoom = renderer.camera_zoom()
 
         builder.ui.actionZoomIn.trigger()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Zoom should have increased
@@ -1177,7 +1177,7 @@ class TestCameraControls:
         initial_zoom = renderer.camera_zoom()
 
         builder.ui.actionZoomOut.trigger()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Zoom should have decreased
@@ -1237,7 +1237,7 @@ class TestClipboardOperations:
 
         initial_count = len(builder._map.rooms)
         builder.paste()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Should have more rooms now
@@ -1253,7 +1253,7 @@ class TestClipboardOperations:
         renderer.select_room(room, clear_existing=True)
 
         builder.cut_selected()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert room not in builder._map.rooms
@@ -1274,7 +1274,7 @@ class TestClipboardOperations:
 
         builder.cut_selected()
         builder.paste()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Should have one room (pasted)
@@ -1315,13 +1315,13 @@ class TestCursorComponent:
         builder.ui.kitSelect.addItem(real_kit.name, real_kit)
         builder.ui.kitSelect.setCurrentIndex(builder.ui.kitSelect.count() - 1)
 
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # If componentList has items, select first
         if builder.ui.componentList.count() > 0:
             builder.ui.componentList.setCurrentRow(0)
-            QtBot.wait(10)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Cursor should be set
@@ -1457,7 +1457,7 @@ class TestModuleUI:
             pytest.skip("No modules available")
 
         builder.ui.moduleSelect.setCurrentIndex(0)
-        QtBot.wait(200)  # Wait for lazy loading
+        QApplication.processEvents()  # Wait for lazy loading
         QApplication.processEvents()
 
         # Just verify no crash - component list may or may not have items
@@ -1473,7 +1473,7 @@ class TestModuleUI:
             QApplication.processEvents()
             builder = IndoorMapBuilder(None, None)
             qtbot.addWidget(builder)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             assert builder._module_kit_manager is None
@@ -1508,13 +1508,13 @@ class TestCollapsibleGroupBox:
         qtbot.addWidget(groupbox)
 
         groupbox.setChecked(False)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert groupbox.isChecked() is False
 
         groupbox.setChecked(True)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert groupbox.isChecked() is True
@@ -1531,17 +1531,17 @@ class TestCollapsibleGroupBox:
         qtbot.addWidget(groupbox)
 
         groupbox.show()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Collapse
         groupbox.setChecked(False)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Expand
         groupbox.setChecked(True)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
 
@@ -1691,7 +1691,7 @@ class TestIntegration:
 
         # Paste
         builder.paste()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Should have 2 rooms now
@@ -1720,13 +1720,13 @@ class TestMouseInteractions:
 
         # Show widget to make it visible for mouse events
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Click in center of renderer
         center = QPoint(renderer.width() // 2, renderer.height() // 2)
         qtbot.mouseClick(renderer, Qt.MouseButton.LeftButton, pos=center)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Just verify no crash
@@ -1738,7 +1738,7 @@ class TestMouseInteractions:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Move mouse across renderer
@@ -1746,9 +1746,9 @@ class TestMouseInteractions:
         end = QPoint(renderer.width() - 10, renderer.height() - 10)
 
         qtbot.mouseMove(renderer, pos=start)
-        QtBot.wait(10)
+        QApplication.processEvents()
         qtbot.mouseMove(renderer, pos=end)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         builder.close()
@@ -1764,7 +1764,7 @@ class TestMouseInteractions:
         renderer.select_room(room, clear_existing=True)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Get screen position that corresponds to room position
@@ -1773,14 +1773,14 @@ class TestMouseInteractions:
 
         # Simulate drag: press, move, release
         qtbot.mousePress(renderer, Qt.MouseButton.LeftButton, pos=center)
-        QtBot.wait(10)
+        QApplication.processEvents()
 
         new_pos = QPoint(center.x() + 50, center.y() + 50)
         qtbot.mouseMove(renderer, pos=new_pos)
-        QtBot.wait(10)
+        QApplication.processEvents()
 
         qtbot.mouseRelease(renderer, Qt.MouseButton.LeftButton, pos=new_pos)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         builder.close()
@@ -1791,13 +1791,13 @@ class TestMouseInteractions:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Right click on renderer
         center = QPoint(renderer.width() // 2, renderer.height() // 2)
         qtbot.mouseClick(renderer, Qt.MouseButton.RightButton, pos=center)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Context menu handling is internal, just verify no crash
@@ -1809,12 +1809,12 @@ class TestMouseInteractions:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         center = QPoint(renderer.width() // 2, renderer.height() // 2)
         qtbot.mouseDClick(renderer, Qt.MouseButton.LeftButton, pos=center)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         builder.close()
@@ -1827,7 +1827,7 @@ class TestMouseInteractions:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         initial_zoom = renderer.camera_zoom()
@@ -1850,7 +1850,7 @@ class TestMouseInteractions:
 
         # Send the event
         QApplication.sendEvent(renderer, wheel_event)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Zoom should have changed (or at least no crash)
@@ -1871,16 +1871,16 @@ class TestKeyboardInteractions:
         renderer.select_room(room, clear_existing=True)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Focus the renderer
         renderer.setFocus()
-        QtBot.wait(10)
+        QApplication.processEvents()
 
         # Press Delete key
         qtbot.keyClick(renderer, Qt.Key.Key_Delete)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Room should be deleted (via undo command)
@@ -1898,14 +1898,14 @@ class TestKeyboardInteractions:
         renderer.select_room(room, clear_existing=True)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert len(renderer.selected_rooms()) == 1
 
         # Press Escape
         qtbot.keyClick(builder, Qt.Key.Key_Escape)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Selection should be cleared (if implemented)
@@ -1923,12 +1923,12 @@ class TestKeyboardInteractions:
         assert room in builder._map.rooms
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Press Ctrl+Z
         qtbot.keyClick(builder, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Room should be undone
@@ -1948,12 +1948,12 @@ class TestKeyboardInteractions:
         assert room not in builder._map.rooms
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Press Ctrl+Y
         qtbot.keyClick(builder, Qt.Key.Key_Y, Qt.KeyboardModifier.ControlModifier)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Room should be redone
@@ -1967,12 +1967,12 @@ class TestKeyboardInteractions:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Press Ctrl+A
         qtbot.keyClick(builder, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # All rooms should be selected
@@ -1990,12 +1990,12 @@ class TestKeyboardInteractions:
         renderer.select_room(room, clear_existing=True)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Press Ctrl+C
         qtbot.keyClick(builder, Qt.Key.Key_C, Qt.KeyboardModifier.ControlModifier)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Clipboard should have item
@@ -2019,7 +2019,7 @@ class TestKeyboardInteractions:
         builder.show()
         builder.activateWindow()
         builder.ui.mapRenderer.setFocus()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         initial_count = len(builder._map.rooms)
@@ -2028,7 +2028,7 @@ class TestKeyboardInteractions:
 
         # Trigger paste action directly (more reliable than keyboard shortcut in tests)
         builder.ui.actionPaste.trigger()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Should have more rooms (pasted room should be added)
@@ -2044,14 +2044,14 @@ class TestKeyboardInteractions:
         builder.show()
         builder.activateWindow()
         builder.setFocus()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         initial_state = renderer.snap_to_grid
 
         # Press G - builder handles this key
         qtbot.keyClick(builder, Qt.Key.Key_G)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # State should toggle (via checkbox)
@@ -2067,14 +2067,14 @@ class TestKeyboardInteractions:
         builder.show()
         builder.activateWindow()
         builder.setFocus()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         initial_state = renderer.snap_to_hooks
 
         # Press H - builder handles this key
         qtbot.keyClick(builder, Qt.Key.Key_H)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # State should toggle (via checkbox)
@@ -2099,14 +2099,14 @@ class TestRendererCoordinates:
         # Ensure renderer is properly initialized and visible with known size
         renderer.show()
         renderer.resize(800, 600)  # Set explicit size for testing
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Explicitly set camera to known position and zoom for testing
         renderer.set_camera_position(0, 0)
         renderer.set_camera_zoom(1.0)
         renderer.set_camera_rotation(0.0)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Get actual widget dimensions (should be 800x600 after resize)
@@ -2214,23 +2214,23 @@ class TestUIWidgetStates:
 
         # Snap to grid
         builder.ui.snapToGridCheck.setChecked(True)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
         assert renderer.snap_to_grid is True
 
         builder.ui.snapToGridCheck.setChecked(False)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
         assert renderer.snap_to_grid is False
 
         # Show hooks
         builder.ui.showHooksCheck.setChecked(False)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
         assert renderer.hide_magnets is True
 
         builder.ui.showHooksCheck.setChecked(True)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
         assert renderer.hide_magnets is False
 
@@ -2241,13 +2241,13 @@ class TestUIWidgetStates:
 
         # Grid size
         builder.ui.gridSizeSpin.setValue(3.5)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
         assert abs(renderer.grid_size - 3.5) < 0.001
 
         # Rotation snap
         builder.ui.rotSnapSpin.setValue(45)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
         assert renderer.rotation_snap == 45
 
@@ -2283,7 +2283,7 @@ class TestWindowTitle:
             QApplication.processEvents()
             builder = IndoorMapBuilder(None, None)
             qtbot.addWidget(builder)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             title = builder.windowTitle()
@@ -3787,12 +3787,12 @@ class TestModuleUIInteractions:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Select first module using qtbot
         builder.ui.moduleSelect.setCurrentIndex(0)
-        QtBot.wait(200)  # Wait for lazy loading
+        QApplication.processEvents()  # Wait for lazy loading
         QApplication.processEvents()
 
         # Verify selection changed
@@ -3808,13 +3808,13 @@ class TestModuleUIInteractions:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Try multiple modules to find one with components
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)  # Wait for lazy loading
+            QApplication.processEvents()  # Wait for lazy loading
             QApplication.processEvents()
 
             component_count = builder.ui.moduleComponentList.count()
@@ -3835,19 +3835,19 @@ class TestModuleUIInteractions:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Find a module with components
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() > 0:
                 # Select first component
                 builder.ui.moduleComponentList.setCurrentRow(0)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 # Cursor component should be set
@@ -3868,12 +3868,12 @@ class TestModuleUIInteractions:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() > 0:
@@ -3882,7 +3882,7 @@ class TestModuleUIInteractions:
 
                 # Select component
                 builder.ui.moduleComponentList.setCurrentRow(0)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 # Preview should be updated
@@ -3906,18 +3906,18 @@ class TestModuleUIInteractions:
             pytest.skip("Need at least 2 modules")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Select first module
         builder.ui.moduleSelect.setCurrentIndex(0)
-        QtBot.wait(200)
+        QApplication.processEvents()
         QApplication.processEvents()
         first_count = builder.ui.moduleComponentList.count()
 
         # Select second module
         builder.ui.moduleSelect.setCurrentIndex(1)
-        QtBot.wait(200)
+        QApplication.processEvents()
         QApplication.processEvents()
         second_count = builder.ui.moduleComponentList.count()
 
@@ -3939,7 +3939,7 @@ class TestModuleRoomPlacementWorkflow:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         initial_room_count = len(builder._map.rooms)
@@ -3947,13 +3947,13 @@ class TestModuleRoomPlacementWorkflow:
         # Find a module with components
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() > 0:
                 # Select component (sets cursor)
                 builder.ui.moduleComponentList.setCurrentRow(0)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 assert renderer.cursor_component is not None
@@ -3993,17 +3993,17 @@ class TestModuleRoomPlacementWorkflow:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() > 0:
                 builder.ui.moduleComponentList.setCurrentRow(0)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 component = renderer.cursor_component
@@ -4044,17 +4044,17 @@ class TestModuleRoomPlacementWorkflow:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() > 0:
                 builder.ui.moduleComponentList.setCurrentRow(0)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 # Place a room
@@ -4261,12 +4261,12 @@ class TestModulePerformance:
             pytest.skip("Need at least 2 modules")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Load first module
         builder.ui.moduleSelect.setCurrentIndex(0)
-        QtBot.wait(200)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         first_root = builder.ui.moduleSelect.currentData()
@@ -4274,12 +4274,12 @@ class TestModulePerformance:
 
         # Switch to second module
         builder.ui.moduleSelect.setCurrentIndex(1)
-        QtBot.wait(200)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Switch back to first
         builder.ui.moduleSelect.setCurrentIndex(0)
-        QtBot.wait(200)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Should use cached kit
@@ -4375,21 +4375,21 @@ class TestCollapsibleGroupBoxUI:
             pytest.skip("kitsGroupBox not available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         initial_state = builder.ui.kitsGroupBox.isChecked()
 
         # Toggle
         builder.ui.kitsGroupBox.setChecked(not initial_state)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert builder.ui.kitsGroupBox.isChecked() == (not initial_state)
 
         # Toggle back
         builder.ui.kitsGroupBox.setChecked(initial_state)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert builder.ui.kitsGroupBox.isChecked() == initial_state
@@ -4404,14 +4404,14 @@ class TestCollapsibleGroupBoxUI:
             pytest.skip("modulesGroupBox not available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         initial_state = builder.ui.modulesGroupBox.isChecked()
 
         # Toggle
         builder.ui.modulesGroupBox.setChecked(not initial_state)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert builder.ui.modulesGroupBox.isChecked() == (not initial_state)
@@ -4429,17 +4429,17 @@ class TestCollapsibleGroupBoxUI:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Expand modules group
         builder.ui.modulesGroupBox.setChecked(True)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Select a module
         builder.ui.moduleSelect.setCurrentIndex(0)
-        QtBot.wait(200)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Should be able to make selections while expanded
@@ -4460,17 +4460,17 @@ class TestModuleRendererIntegration:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() > 0:
                 builder.ui.moduleComponentList.setCurrentRow(0)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 component = renderer.cursor_component
@@ -4480,7 +4480,7 @@ class TestModuleRendererIntegration:
 
                 # Force repaint
                 renderer.update()
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 # Room should be in map
@@ -4507,17 +4507,17 @@ class TestModuleRendererIntegration:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() > 0:
                 builder.ui.moduleComponentList.setCurrentRow(0)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 component = renderer.cursor_component
@@ -4528,7 +4528,7 @@ class TestModuleRendererIntegration:
 
                 # Reset view to see origin
                 builder.reset_view()
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 # Get world to screen coordinates for room center
@@ -4542,7 +4542,7 @@ class TestModuleRendererIntegration:
 
                 # Click to select
                 qtbot.mouseClick(renderer, Qt.MouseButton.LeftButton, pos=QPoint(click_x, click_y))
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 # Check if any room is selected (click might or might not hit room bounds)
@@ -4568,12 +4568,12 @@ class TestModuleWorkflowEndToEnd:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() == 0:
@@ -4581,7 +4581,7 @@ class TestModuleWorkflowEndToEnd:
 
             # Step 1: Select component
             builder.ui.moduleComponentList.setCurrentRow(0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             assert renderer.cursor_component is not None
@@ -4659,7 +4659,7 @@ class TestModuleWorkflowEndToEnd:
             pytest.skip("Need at least 2 modules")
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         placed_rooms = 0
@@ -4668,12 +4668,12 @@ class TestModuleWorkflowEndToEnd:
         # Try to place rooms from different modules
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() > 0:
                 builder.ui.moduleComponentList.setCurrentRow(0)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 component = renderer.cursor_component
@@ -4732,7 +4732,7 @@ class TestFileOperations:
         builder._map.rooms.append(room)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Mock save_as to avoid actual file dialog
@@ -4773,7 +4773,7 @@ class TestFileOperations:
         test_file = tmp_path / "saved.indoor"
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Mock file dialog to return our test file
@@ -4796,7 +4796,7 @@ class TestFileOperations:
         builder._undo_stack.push(AddRoomCommand(builder._map, room1))
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Mock message box to return Discard
@@ -4820,7 +4820,7 @@ class TestFileOperations:
         builder._undo_stack.push(AddRoomCommand(builder._map, room))
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Mock message box
@@ -4856,7 +4856,7 @@ class TestFileOperations:
         builder._map.rooms.clear()
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Mock file dialog and missing rooms dialog
@@ -4884,12 +4884,12 @@ class TestStatusBarUpdates:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Move mouse
         qtbot.mouseMove(renderer, QPoint(100, 100))
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Status bar should have content (may show coordinates)
@@ -4915,18 +4915,18 @@ class TestStatusBarUpdates:
         builder._map.rooms.append(room)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Reset view to see origin
         builder.reset_view()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Move mouse over room
         center = renderer.to_render_coords(5.0, 5.0)
         qtbot.mouseMove(renderer, QPoint(int(center.x), int(center.y)))
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Status bar might show hover info (or may not, depending on implementation)
@@ -4953,18 +4953,18 @@ class TestStatusBarUpdates:
         builder._map.rooms.extend([room1, room2])
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Select rooms
         renderer.select_room(room1, clear_existing=True)
         renderer.select_room(room2, clear_existing=False)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Trigger status bar update by moving mouse
         qtbot.mouseMove(renderer, QPoint(100, 100))
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Status bar should show selection count
@@ -4982,12 +4982,12 @@ class TestStatusBarUpdates:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Enable grid snap
         renderer.snap_to_grid = True
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         status_bar = builder.statusBar()
@@ -5020,22 +5020,22 @@ class TestContextMenuOperations:
         builder._map.rooms.append(room)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         builder.reset_view()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Select room first
         renderer.select_room(room, clear_existing=True)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Right-click
         center = renderer.to_render_coords(5.0, 5.0)
         qtbot.mouseClick(renderer, Qt.MouseButton.RightButton, pos=QPoint(int(center.x), int(center.y)))
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Context menu should have been triggered
@@ -5058,12 +5058,12 @@ class TestContextMenuOperations:
         renderer.select_room(room, clear_existing=True)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Rotate via method (simulating context menu action)
         builder._rotate_selected(90.0)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert abs(room.rotation - 90.0) < 0.001
@@ -5085,12 +5085,12 @@ class TestContextMenuOperations:
         renderer.select_room(room, clear_existing=True)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Flip via method
         builder._flip_selected(flip_x=True, flip_y=False)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert room.flip_x is True
@@ -5113,11 +5113,11 @@ class TestContextMenuOperations:
         renderer.select_room(room, clear_existing=True)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         builder._flip_selected(flip_x=False, flip_y=True)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         assert room.flip_x is False
@@ -5142,12 +5142,12 @@ class TestCameraPanZoom:
         initial_pos = renderer.camera_position()
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Pan camera
         renderer.pan_camera(10.0, 20.0)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         new_pos = renderer.camera_position()
@@ -5164,11 +5164,11 @@ class TestCameraPanZoom:
         initial_zoom = renderer.camera_zoom()
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         renderer.zoom_in_camera(0.2)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         new_zoom = renderer.camera_zoom()
@@ -5184,11 +5184,11 @@ class TestCameraPanZoom:
         initial_zoom = renderer.camera_zoom()
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         renderer.zoom_in_camera(-0.2)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         new_zoom = renderer.camera_zoom()
@@ -5206,11 +5206,11 @@ class TestCameraPanZoom:
         initial_rot = renderer.camera_rotation()
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         renderer.rotate_camera(math.radians(45))
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         new_rot = renderer.camera_rotation()
@@ -5233,12 +5233,12 @@ class TestMarqueeSelection:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Start marquee
         renderer.start_marquee(Vector2(10, 10))
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Marquee should be active
@@ -5258,11 +5258,11 @@ class TestMarqueeSelection:
         builder._map.rooms.extend([room1, room2, room3])
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         builder.reset_view()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Start marquee at top-left
@@ -5298,14 +5298,14 @@ class TestCursorFlip:
         renderer.set_cursor_component(real_kit_component)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         initial_flip_x = renderer.cursor_flip_x
         initial_flip_y = renderer.cursor_flip_y
 
         renderer.toggle_cursor_flip()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Flip state should have changed
@@ -5329,7 +5329,7 @@ class TestConnectedRooms:
         builder._map.rebuild_room_connections()
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Select first room
@@ -5337,7 +5337,7 @@ class TestConnectedRooms:
 
         # Add connected rooms
         builder.add_connected_to_selection(room1)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Selection may include connected room
@@ -5364,12 +5364,12 @@ class TestRendererDrawing:
         renderer.grid_size = 1.0
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Force repaint
         renderer.update()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Grid should be drawn (no crash)
@@ -5389,11 +5389,11 @@ class TestRendererDrawing:
         )
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         renderer.update()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Snap indicator should be drawn (no crash)
@@ -5410,11 +5410,11 @@ class TestRendererDrawing:
         builder.set_warp_point(0.0, 0.0, 0.0)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         renderer.update()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Spawn point should be drawn (no crash)
@@ -5432,11 +5432,11 @@ class TestRendererDrawing:
         renderer.select_room(room, clear_existing=True)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         renderer.update()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Room should be highlighted (no crash)
@@ -5460,7 +5460,7 @@ class TestSettingsDialog:
         builder = builder_no_kits
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Mock the dialog to avoid actual UI
@@ -5487,7 +5487,7 @@ class TestHelpWindow:
             builder = builder_no_kits
 
             builder.show()
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Ensure help files can be found by changing CWD
@@ -5513,7 +5513,7 @@ class TestHelpWindow:
                 builder.show_help_window()
 
                 # Wait for window to open and load content
-                QtBot.wait(200)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 # Verify HelpWindow is open
@@ -5546,7 +5546,7 @@ class TestCoordinateTransformations:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Test transformation
@@ -5564,7 +5564,7 @@ class TestCoordinateTransformations:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Test delta transformation
@@ -5582,7 +5582,7 @@ class TestCoordinateTransformations:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Test round-trip using to_render_coords (world to screen)
@@ -5614,7 +5614,7 @@ class TestWarpPointAdvanced:
         builder.set_warp_point(10.0, 20.0, 0.0)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Check if over warp point
@@ -5631,12 +5631,12 @@ class TestWarpPointAdvanced:
         builder.set_warp_point(0.0, 0.0, 0.0)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Start warp drag
         renderer.start_warp_drag()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Should be in warp drag mode
@@ -5663,12 +5663,12 @@ class TestKeyboardShortcutsComprehensive:
         renderer.select_room(room, clear_existing=True)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Press Ctrl+X
         qtbot.keyClick(builder, Qt.Key.Key_X, modifier=Qt.KeyboardModifier.ControlModifier)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Room should be removed
@@ -5687,14 +5687,14 @@ class TestKeyboardShortcutsComprehensive:
         renderer.select_room(room, clear_existing=True)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         initial_count = len(builder._map.rooms)
 
         # Press Ctrl+D
         qtbot.keyClick(builder, Qt.Key.Key_D, modifier=Qt.KeyboardModifier.ControlModifier)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Should have duplicate
@@ -5720,12 +5720,12 @@ class TestRendererState:
         builder._map.rooms.append(room)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Invalidate cache
         renderer._invalidate_walkmesh_cache(room)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Cache should be invalidated (no crash)
@@ -5740,12 +5740,12 @@ class TestRendererState:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Mark dirty
         renderer.mark_dirty()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Should trigger repaint (no crash)
@@ -5774,7 +5774,7 @@ class TestComprehensiveWorkflows:
         builder._kits.append(real_kit_component.kit)
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # 1. Place rooms
@@ -5819,7 +5819,7 @@ class TestComprehensiveWorkflows:
         renderer = builder.ui.mapRenderer
 
         builder.show()
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Perform multiple operations
@@ -5836,7 +5836,7 @@ class TestComprehensiveWorkflows:
         # Undo all
         for _ in range(4):
             builder._undo_stack.undo()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Should be back to initial state
@@ -5847,7 +5847,7 @@ class TestComprehensiveWorkflows:
         # Redo all
         for _ in range(4):
             builder._undo_stack.redo()
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Should be at final state
@@ -8204,14 +8204,14 @@ class TestModuleKitMouseDragAndConnect:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Find a module with components
         module_found = False
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() == 0:
@@ -8221,7 +8221,7 @@ class TestModuleKitMouseDragAndConnect:
 
             # Select first component from module
             builder.ui.moduleComponentList.setCurrentRow(0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             component = renderer.cursor_component
@@ -8289,7 +8289,7 @@ class TestModuleKitMouseDragAndConnect:
             renderer.set_camera_position(0, 0)
             renderer.set_camera_zoom(1.0)
             renderer.set_camera_rotation(0.0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Set cursor point to origin (where we want to place)
@@ -8298,13 +8298,13 @@ class TestModuleKitMouseDragAndConnect:
             # Place room by clicking in renderer
             center_screen = QPoint(renderer.width() // 2, renderer.height() // 2)
             qtbot.mouseClick(renderer, Qt.MouseButton.LeftButton, pos=center_screen)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # If click didn't work, try direct placement (simulating what click should do)
             if len(builder._map.rooms) == 0:
                 builder._place_new_room(component)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
             # Verify room was placed
@@ -8332,12 +8332,12 @@ class TestModuleKitMouseDragAndConnect:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() == 0:
@@ -8345,7 +8345,7 @@ class TestModuleKitMouseDragAndConnect:
 
             # Select first component
             builder.ui.moduleComponentList.setCurrentRow(0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             component = renderer.cursor_component
@@ -8369,13 +8369,13 @@ class TestModuleKitMouseDragAndConnect:
             renderer.cursor_point = Vector3(0, 0, 0)
             center_screen = QPoint(renderer.width() // 2, renderer.height() // 2)
             qtbot.mouseClick(renderer, Qt.MouseButton.LeftButton, pos=center_screen)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # If click didn't work, try direct placement
             if len(builder._map.rooms) == 0:
                 builder._place_new_room(component)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
             assert len(builder._map.rooms) > 0, "Room should be placed"
@@ -8411,12 +8411,12 @@ class TestModuleKitMouseDragAndConnect:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() < 2:
@@ -8424,7 +8424,7 @@ class TestModuleKitMouseDragAndConnect:
 
             # Select first component and place it
             builder.ui.moduleComponentList.setCurrentRow(0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             component1 = renderer.cursor_component
@@ -8435,13 +8435,13 @@ class TestModuleKitMouseDragAndConnect:
             renderer.cursor_point = Vector3(0, 0, 0)
             center_screen = QPoint(renderer.width() // 2, renderer.height() // 2)
             qtbot.mouseClick(renderer, Qt.MouseButton.LeftButton, pos=center_screen)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # If click didn't work, try direct placement
             if len(builder._map.rooms) == 0:
                 builder._place_new_room(component1)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
             assert len(builder._map.rooms) > 0, "First room should be placed"
@@ -8450,7 +8450,7 @@ class TestModuleKitMouseDragAndConnect:
 
             # Now select a DIFFERENT component for preview
             builder.ui.moduleComponentList.setCurrentRow(1)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             preview_component = renderer.cursor_component
@@ -8496,7 +8496,7 @@ class TestModuleKitMouseDragAndConnect:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Enable snap to hooks
@@ -8505,7 +8505,7 @@ class TestModuleKitMouseDragAndConnect:
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() == 0:
@@ -8513,7 +8513,7 @@ class TestModuleKitMouseDragAndConnect:
 
             # Place first room
             builder.ui.moduleComponentList.setCurrentRow(0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             component1 = renderer.cursor_component
@@ -8529,19 +8529,19 @@ class TestModuleKitMouseDragAndConnect:
             renderer.set_camera_zoom(1.0)
             renderer.set_camera_rotation(0.0)
             renderer.cursor_point = Vector3(0, 0, 0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Place first room at origin
             center_screen = QPoint(renderer.width() // 2, renderer.height() // 2)
             qtbot.mouseClick(renderer, Qt.MouseButton.LeftButton, pos=center_screen)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # If click didn't work, try direct placement
             if len(builder._map.rooms) == 0:
                 builder._place_new_room(component1)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
             assert len(builder._map.rooms) == 1, "First room should be placed"
@@ -8557,7 +8557,7 @@ class TestModuleKitMouseDragAndConnect:
             else:
                 builder.ui.moduleComponentList.setCurrentRow(0)  # Use same component
 
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             component2 = renderer.cursor_component
@@ -8597,13 +8597,13 @@ class TestModuleKitMouseDragAndConnect:
 
             # Place second room at connection position
             qtbot.mouseClick(renderer, Qt.MouseButton.LeftButton, pos=target_screen_point)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # If click didn't work, try direct placement
             if len(builder._map.rooms) == 1:
                 builder._place_new_room(component2)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
             assert len(builder._map.rooms) == 2, "Second room should be placed"
@@ -8611,7 +8611,7 @@ class TestModuleKitMouseDragAndConnect:
 
             # Rebuild connections
             builder._map.rebuild_room_connections()
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Verify rooms are connected
@@ -8646,7 +8646,7 @@ class TestModuleKitMouseDragAndConnect:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Enable snap to hooks
@@ -8655,7 +8655,7 @@ class TestModuleKitMouseDragAndConnect:
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() == 0:
@@ -8663,7 +8663,7 @@ class TestModuleKitMouseDragAndConnect:
 
             # Place first room
             builder.ui.moduleComponentList.setCurrentRow(0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             component1 = renderer.cursor_component
@@ -8679,18 +8679,18 @@ class TestModuleKitMouseDragAndConnect:
             renderer.set_camera_zoom(1.0)
             renderer.set_camera_rotation(0.0)
             renderer.cursor_point = Vector3(0, 0, 0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             center_screen = QPoint(renderer.width() // 2, renderer.height() // 2)
             qtbot.mouseClick(renderer, Qt.MouseButton.LeftButton, pos=center_screen)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # If click didn't work, try direct placement
             if len(builder._map.rooms) == 0:
                 builder._place_new_room(component1)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
             assert len(builder._map.rooms) > 0, "First room should be placed"
@@ -8704,7 +8704,7 @@ class TestModuleKitMouseDragAndConnect:
             else:
                 builder.ui.moduleComponentList.setCurrentRow(0)
 
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             component2 = renderer.cursor_component
@@ -8734,7 +8734,7 @@ class TestModuleKitMouseDragAndConnect:
             # Move mouse to snap position
             renderer.cursor_point = snap_pos
             qtbot.mouseMove(renderer, pos=QPoint(snap_screen_x, snap_screen_y))
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # CRITICAL: Verify snap indicator is set (cyan/blue indicator)
@@ -8767,7 +8767,7 @@ class TestModuleKitMouseDragAndConnect:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Enable snap to hooks
@@ -8776,7 +8776,7 @@ class TestModuleKitMouseDragAndConnect:
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() == 0:
@@ -8784,7 +8784,7 @@ class TestModuleKitMouseDragAndConnect:
 
             # Place first room
             builder.ui.moduleComponentList.setCurrentRow(0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             component1 = renderer.cursor_component
@@ -8800,18 +8800,18 @@ class TestModuleKitMouseDragAndConnect:
             renderer.set_camera_zoom(1.0)
             renderer.set_camera_rotation(0.0)
             renderer.cursor_point = Vector3(0, 0, 0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             center_screen = QPoint(renderer.width() // 2, renderer.height() // 2)
             qtbot.mouseClick(renderer, Qt.MouseButton.LeftButton, pos=center_screen)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # If click didn't work, try direct placement
             if len(builder._map.rooms) == 0:
                 builder._place_new_room(component1)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
             assert len(builder._map.rooms) > 0, "First room should be placed"
@@ -8825,7 +8825,7 @@ class TestModuleKitMouseDragAndConnect:
             else:
                 builder.ui.moduleComponentList.setCurrentRow(0)
 
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             component2 = renderer.cursor_component
@@ -8866,7 +8866,7 @@ class TestModuleKitMouseDragAndConnect:
             # Move cursor to outside position
             # NOTE: mouseMove will update cursor_point to world coords of mouse position
             qtbot.mouseMove(renderer, pos=QPoint(outside_screen_x, outside_screen_y))
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Get the actual cursor position after mouse move (it's updated by mouseMoveEvent)
@@ -8913,7 +8913,7 @@ class TestModuleKitMouseDragAndConnect:
             # Move cursor to within-threshold position
             # NOTE: mouseMove will update cursor_point, and snap logic will run
             qtbot.mouseMove(renderer, pos=QPoint(within_screen_x, within_screen_y))
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Get actual cursor position after mouse move
@@ -8974,12 +8974,12 @@ class TestModuleKitMouseDragAndConnect:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() == 0:
@@ -8987,7 +8987,7 @@ class TestModuleKitMouseDragAndConnect:
 
             # Place first room
             builder.ui.moduleComponentList.setCurrentRow(0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             component = renderer.cursor_component
@@ -8997,19 +8997,19 @@ class TestModuleKitMouseDragAndConnect:
             renderer.set_camera_zoom(1.0)
             renderer.set_camera_rotation(0.0)
             renderer.cursor_point = Vector3(0, 0, 0)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Place room at origin
             center_screen = QPoint(renderer.width() // 2, renderer.height() // 2)
             qtbot.mouseClick(renderer, Qt.MouseButton.LeftButton, pos=center_screen)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # If click didn't work, try direct placement
             if len(builder._map.rooms) == 0:
                 builder._place_new_room(component)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
             assert len(builder._map.rooms) == 1
@@ -9019,12 +9019,12 @@ class TestModuleKitMouseDragAndConnect:
             # Clear cursor component so we're not in placement mode
             renderer.set_cursor_component(None)
             builder.ui.moduleComponentList.clearSelection()
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Select the room directly (ensures it's selected for dragging)
             renderer.select_room(room, clear_existing=True)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Verify room is selected
@@ -9083,7 +9083,7 @@ class TestModuleKitMouseDragAndConnect:
 
             # Move mouse to the valid walkmesh point
             qtbot.mouseMove(renderer, pos=click_point)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Manually trigger the room detection logic that happens in mouseMoveEvent
@@ -9117,19 +9117,19 @@ class TestModuleKitMouseDragAndConnect:
             # Initialize mouse tracking by moving to start position first
             # This ensures _mouse_prev is set correctly for delta calculation
             qtbot.mouseMove(renderer, pos=click_point)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Now start drag by pressing mouse on the room at the valid walkmesh point
             qtbot.mousePress(renderer, Qt.MouseButton.LeftButton, pos=click_point)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Verify drag started (either from mouse press or manual start)
             if not renderer._dragging:
                 # If drag didn't start from mouse press, manually start it
                 renderer.start_drag(room)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
             assert renderer._dragging, "Drag should have started"
@@ -9150,12 +9150,12 @@ class TestModuleKitMouseDragAndConnect:
             for step in range(1, steps + 1):
                 intermediate = QPoint(click_point.x() + (drag_end.x() - click_point.x()) * step // steps, click_point.y() + (drag_end.y() - click_point.y()) * step // steps)
                 qtbot.mouseMove(renderer, pos=intermediate)
-                QtBot.wait(10)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
             # Final move to end position
             qtbot.mouseMove(renderer, pos=drag_end)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Verify room position changed during drag
@@ -9178,12 +9178,12 @@ class TestModuleKitMouseDragAndConnect:
                     drag_room.position.y += world_delta.y
                     renderer._invalidate_walkmesh_cache(drag_room)
 
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
             # Release mouse to complete drag
             qtbot.mouseRelease(renderer, Qt.MouseButton.LeftButton, pos=drag_end)
-            QtBot.wait(100)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             # Verify room moved
@@ -9225,7 +9225,7 @@ class TestModuleKitMouseDragAndConnect:
             pytest.skip("No modules available")
 
         builder.show()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Find a module with components that have hooks
@@ -9234,7 +9234,7 @@ class TestModuleKitMouseDragAndConnect:
 
         for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
-            QtBot.wait(300)
+            QApplication.processEvents()
             QApplication.processEvents()
 
             if builder.ui.moduleComponentList.count() == 0:
@@ -9243,7 +9243,7 @@ class TestModuleKitMouseDragAndConnect:
             # Find a component with hooks
             for comp_idx in range(builder.ui.moduleComponentList.count()):
                 builder.ui.moduleComponentList.setCurrentRow(comp_idx)
-                QtBot.wait(50)
+                QApplication.processEvents()
                 QApplication.processEvents()
 
                 component = renderer.cursor_component
@@ -9272,13 +9272,13 @@ class TestModuleKitMouseDragAndConnect:
         renderer.set_camera_position(0, 0)
         renderer.set_camera_zoom(2.0)  # Zoom in to see geometry better
         renderer.set_camera_rotation(0.0)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Enable snap to hooks for connector testing
         renderer.snap_to_hooks = True
         builder.ui.snapToHooksCheck.setChecked(True)
-        QtBot.wait(10)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # STEP 1: Drag component from moduleComponentList to renderer
@@ -9298,7 +9298,7 @@ class TestModuleKitMouseDragAndConnect:
 
         # Start drag from component list
         qtbot.mousePress(component_list, Qt.MouseButton.LeftButton, pos=list_center)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Move mouse to renderer (simulating drag)
@@ -9311,12 +9311,12 @@ class TestModuleKitMouseDragAndConnect:
                 list_center.x() + (renderer_center.x() - list_center.x()) * step // steps, list_center.y() + (renderer_center.y() - list_center.y()) * step // steps
             )
             qtbot.mouseMove(component_list, pos=intermediate)
-            QtBot.wait(10)
+            QApplication.processEvents()
             QApplication.processEvents()
 
         # Move to renderer
         qtbot.mouseMove(renderer, pos=renderer_center)
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Set cursor point to origin (where we want to place)
@@ -9324,13 +9324,13 @@ class TestModuleKitMouseDragAndConnect:
 
         # Release mouse to drop
         qtbot.mouseRelease(renderer, Qt.MouseButton.LeftButton, pos=renderer_center)
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # If drop didn't work via drag, try direct placement
         if len(builder._map.rooms) == 0:
             builder._place_new_room(component_with_hooks)
-            QtBot.wait(50)
+            QApplication.processEvents()
             QApplication.processEvents()
 
         # Verify room was placed
@@ -9340,7 +9340,7 @@ class TestModuleKitMouseDragAndConnect:
 
         # STEP 2: Capture rendered image
         renderer.update()
-        QtBot.wait(100)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Capture the renderer widget as a pixmap
@@ -9503,7 +9503,7 @@ class TestModuleKitMouseDragAndConnect:
         # Move mouse near hook to test snap
         renderer.cursor_point = snap_test_pos
         qtbot.mouseMove(renderer, pos=QPoint(snap_screen_x, snap_screen_y))
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
 
         # Verify snap indicator is set (snap should occur within threshold)

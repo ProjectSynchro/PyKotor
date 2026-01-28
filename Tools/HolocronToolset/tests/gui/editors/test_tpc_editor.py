@@ -77,7 +77,7 @@ def test_tpc_editor_zoom_slider(qtbot: QtBot, installation: HTInstallation):
     test_zooms = [10, 50, 100, 200, 500]
     for zoom in test_zooms:
         editor.ui.zoomSlider.setValue(zoom)
-        QtBot.wait(10)
+        QApplication.processEvents()
 
         # Verify zoom factor was updated
         assert abs(editor._zoom_factor - (zoom / 100.0)) < 0.01
@@ -92,7 +92,7 @@ def test_tpc_editor_zoom_in(qtbot: QtBot, installation: HTInstallation):
 
     # Zoom in
     editor._zoom_in()
-    QtBot.wait(10)
+    QApplication.processEvents()
 
     # Verify zoom increased
     assert editor._zoom_factor > initial_zoom
@@ -110,7 +110,7 @@ def test_tpc_editor_zoom_out(qtbot: QtBot, installation: HTInstallation):
 
     # Zoom out
     editor._zoom_out()
-    QtBot.wait(10)
+    QApplication.processEvents()
 
     # Verify zoom decreased
     assert editor._zoom_factor < 2.0
@@ -128,7 +128,7 @@ def test_tpc_editor_zoom_fit(qtbot: QtBot, installation: HTInstallation):
 
     # Zoom fit
     editor._zoom_fit()
-    QtBot.wait(10)
+    QApplication.processEvents()
 
     # Verify fit to window is enabled
     assert editor._fit_to_window
@@ -145,7 +145,7 @@ def test_tpc_editor_zoom_reset(qtbot: QtBot, installation: HTInstallation):
 
     # Reset zoom
     editor._zoom_reset()
-    QtBot.wait(10)
+    QApplication.processEvents()
 
     # Verify zoom reset to 100%
     assert abs(editor._zoom_factor - 1.0) < 0.01
@@ -195,12 +195,12 @@ def test_tpc_editor_mipmap_navigation(qtbot: QtBot, installation: HTInstallation
 
     # Set mipmap index
     editor.ui.mipmapSpinBox.setValue(0)
-    QtBot.wait(10)
+    QApplication.processEvents()
     assert editor._current_mipmap == 0
 
     # Change mipmap
     editor.ui.mipmapSpinBox.setValue(1)
-    QtBot.wait(10)
+    QApplication.processEvents()
     assert editor._current_mipmap == 1
 
 
@@ -230,7 +230,7 @@ def test_tpc_editor_alpha_test_spinbox(qtbot: QtBot, installation: HTInstallatio
     test_values = [0, 50, 100, 150, 255]
     for val in test_values:
         editor.ui.alphaTestSpinBox.setValue(val)
-        QtBot.wait(10)
+        QApplication.processEvents()
 
         # Verify value was set (alpha test is visual, but value should update)
         assert editor.ui.alphaTestSpinBox.value() == val
@@ -412,14 +412,14 @@ def test_tpc_editor_toggle_txi_editor(qtbot: QtBot, installation: HTInstallation
 
     # Toggle
     editor._toggle_txi_editor(not initial_visible)
-    QtBot.wait(10)
+    QApplication.processEvents()
 
     # Verify visibility changed
     assert editor.ui.txiDockWidget.isVisible() != initial_visible
 
     # Toggle back
     editor._toggle_txi_editor(initial_visible)
-    QtBot.wait(10)
+    QApplication.processEvents()
     assert editor.ui.txiDockWidget.isVisible() == initial_visible
 
 
@@ -433,14 +433,14 @@ def test_tpc_editor_toggle_properties(qtbot: QtBot, installation: HTInstallation
 
     # Toggle
     editor._toggle_properties(not initial_visible)
-    QtBot.wait(10)
+    QApplication.processEvents()
 
     # Verify visibility changed
     assert editor.ui.propertiesDockWidget.isVisible() != initial_visible
 
     # Toggle back
     editor._toggle_properties(initial_visible)
-    QtBot.wait(10)
+    QApplication.processEvents()
     assert editor.ui.propertiesDockWidget.isVisible() == initial_visible
 
 
@@ -636,12 +636,12 @@ def test_tpc_editor_zoom_limits(qtbot: QtBot, installation: HTInstallation):
 
     # Try to set zoom below minimum
     editor.ui.zoomSlider.setValue(5)
-    QtBot.wait(10)
+    QApplication.processEvents()
     assert editor.ui.zoomSlider.value() >= editor.ui.zoomSlider.minimum()
 
     # Try to set zoom above maximum
     editor.ui.zoomSlider.setValue(600)
-    QtBot.wait(10)
+    QApplication.processEvents()
     assert editor.ui.zoomSlider.value() <= editor.ui.zoomSlider.maximum()
 
 
@@ -670,7 +670,7 @@ def test_tpc_editor_multiple_zoom_operations(qtbot: QtBot, installation: HTInsta
     # Perform multiple zoom operations
     for _ in range(5):
         editor._zoom_in()
-        QtBot.wait(10)
+        QApplication.processEvents()
 
     # Verify zoom increased
     assert editor._zoom_factor > 1.0
@@ -678,7 +678,7 @@ def test_tpc_editor_multiple_zoom_operations(qtbot: QtBot, installation: HTInsta
     # Zoom out multiple times
     for _ in range(5):
         editor._zoom_out()
-        QtBot.wait(10)
+        QApplication.processEvents()
 
     # Verify zoom decreased (may be at minimum)
     assert editor._zoom_factor >= editor.ui.zoomSlider.minimum() / 100.0
@@ -711,18 +711,18 @@ def test_tpc_editor_ui_state_persistence(qtbot: QtBot, installation: HTInstallat
 
     # Set zoom
     editor.ui.zoomSlider.setValue(150)
-    QtBot.wait(10)
+    QApplication.processEvents()
 
     # Perform other operation
     editor._zoom_fit()
-    QtBot.wait(10)
+    QApplication.processEvents()
 
     # Zoom should have changed (fit mode)
     assert editor._fit_to_window
 
     # Reset zoom
     editor._zoom_reset()
-    QtBot.wait(10)
+    QApplication.processEvents()
 
     # Verify reset to 100%
     assert editor.ui.zoomSlider.value() == 100
@@ -742,7 +742,7 @@ def test_tpceditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
 
     # Trigger help dialog with the correct file for TPCEditor
     editor._show_help_dialog("TPC-File-Format.md")
-    QtBot.wait(200)  # Wait for dialog to be created
+    QApplication.processEvents()  # Wait for dialog to be created
 
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]

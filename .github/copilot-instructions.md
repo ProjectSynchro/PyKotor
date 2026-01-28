@@ -24,6 +24,7 @@ Concise, actionable guidance to get an AI productive fast. Prefer small, surgica
 
 **Testing & Linting**
 - Tests: `pytest` or `uv run pytest`. TSLPatcher comprehensive suite lives under `tests/test_tslpatcher/` (see docs/QUICK_START.md for targeted commands).
+- Test assertions must be precise and strict: never simplify or weaken assertions. All tests should be asserting comprehensive data and contents at the strictest most meticulous level possible (20-30 assertions each) e.g. do not ever assert 'length' or greater/less than checks, assertion and tests must be checking absolutes and values. Not just 'has content' or 'is not empty'.
 - Static checks: `ruff` (style), `mypy` (types), `pylint` (analysis). Prefer targeted runs on changed modules.
 
 **Conventions & Patterns**

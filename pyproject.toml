@@ -537,6 +537,9 @@ markers = [
     "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
 ]
 addopts = "-ra -q -m \"not slow\""
+# Timeout configuration (pytest-timeout)
+timeout = 120  # 2 minutes per test
+timeout_method = "thread"  # Use thread-based timeout (works on Windows)
 # NOTE: GL/OpenGL tests require a real display
 # and most likely cannot be run in headless/offscreen mode.
 # Commented out due to uncertainty of how to use these.

@@ -635,7 +635,7 @@ def test_utweditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Trigger help dialog with the correct file for UTWEditor
     editor._show_help_dialog("GFF-UTW.md")
-    QtBot.wait(200)  # Wait for dialog to be created
+    QApplication.processEvents()  # Wait for dialog to be created
     
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]

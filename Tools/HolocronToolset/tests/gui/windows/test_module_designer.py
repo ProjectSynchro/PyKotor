@@ -117,7 +117,7 @@ def test_module_designer_free_cam_forward_movement(
 
     # Let the camera update timer process several frames while the key is "held"
     for _ in range(40):
-        QtBot.wait(16)  # ~25 frames over ~0.64s
+        QApplication.processEvents()  # ~25 frames over ~0.64s
         QApplication.processEvents()
 
     end_pos = (camera.x, camera.y, camera.z)
@@ -306,7 +306,7 @@ def module_designer(
 
     # Process events to ensure Qt can call initializeGL
     # QOpenGLWidget calls initializeGL() when the widget is first shown
-    QtBot.wait(100)  # Give Qt time to process the show event
+    QApplication.processEvents()  # Give Qt time to process the show event
 
     # Wait for OpenGL context to be initialized and valid
     # Qt calls initializeGL() automatically when the widget is shown and exposed
@@ -431,7 +431,7 @@ def _rotate_camera_360(designer: ModuleDesigner, qtbot, num_steps: int = 16) -> 
             QApplication.processEvents()
             designer.ui.mainRenderer.update()
             QApplication.processEvents()
-            QtBot.wait(32)  # ~30 FPS to allow more processing time
+            QApplication.processEvents()  # ~30 FPS to allow more processing time
         
         # Log progress every quarter turn
         if i % (num_steps // 4) == 0:
@@ -509,7 +509,7 @@ def _wait_for_designer_ready(qtbot, designer: ModuleDesigner, timeout: int = 120
         QApplication.processEvents()
         designer.ui.mainRenderer.update()
         QApplication.processEvents()
-        QtBot.wait(16)
+        QApplication.processEvents()
     
     # Phase 3: Wait for all async resources to finish loading
     print("[Test] Phase 3: Waiting for async resource loading to complete...")
@@ -569,7 +569,7 @@ def _wait_for_designer_ready(qtbot, designer: ModuleDesigner, timeout: int = 120
     # Phase 5: Process additional frames to ensure everything is rendered
     print("[Test] Phase 5: Processing final render frames...")
     for _ in range(30):
-        QtBot.wait(50)
+        QApplication.processEvents()
         QApplication.processEvents()
         designer.ui.mainRenderer.update()
         QApplication.processEvents()
@@ -625,7 +625,7 @@ def test_module_designer_baseline_fps(qtbot, module_designer: ModuleDesigner, mo
     warmup_frames = 0
     
     while True:
-        QtBot.wait(16)  # ~60 FPS timing
+        QApplication.processEvents()  # ~60 FPS timing
         QApplication.processEvents()
         renderer.update()
         QApplication.processEvents()

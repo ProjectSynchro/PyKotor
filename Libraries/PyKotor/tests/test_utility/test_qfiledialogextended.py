@@ -117,7 +117,7 @@ class TestQFileDialogExtended(unittest.TestCase):
         spy = QSignalSpy(self.dialog.directoryEntered)
         self.dialog.setDirectory(str(self.temp_path / "folder"))
         QTest.qWait(50)
-        self.assertEqual(len(spy), 0)
+        self.assertEqual(spy.count(), 0)
 
     def test_address_bar_path_changed_signal(self):
         # Test that pathChanged signal is emitted during navigation actions

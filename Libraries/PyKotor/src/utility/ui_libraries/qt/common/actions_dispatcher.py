@@ -1,3 +1,9 @@
+"""Utilities for preparing and dispatching file system-related UI actions.
+
+This module defines ActionsDispatcher which prepares actions (rename, delete, copy/paste,
+properties dialogs, open-in-terminal, etc.) and delegates execution to a FileActionsExecutor.
+"""
+
 from __future__ import annotations
 
 import contextlib
@@ -9,8 +15,17 @@ from enum import IntEnum
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Any, Union, cast
 
-from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
-from qtpy.QtCore import QAbstractProxyModel, QByteArray, QDataStream, QIODevice, QMimeData, QSortFilterProxyModel, QUrl, Qt
+from qtpy.QtCore import (
+    QAbstractProxyModel,
+    QByteArray,
+    QDataStream,
+    QDir,
+    QIODevice,
+    QMimeData,
+    QSortFilterProxyModel,
+    QUrl,
+    Qt,
+)
 from qtpy.QtGui import QClipboard, QColor, QPalette, QValidator
 from qtpy.QtWidgets import (
     QAbstractItemView,
@@ -29,10 +44,12 @@ from qtpy.QtWidgets import (
     QScrollArea,
     QStyledItemDelegate,
     QTableView,
+    QTreeView,
     QVBoxLayout,
     QWidget,
 )
 
+from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from utility.ui_libraries.qt.common.column_options_dialog import SetDefaultColumnsDialog
 from utility.ui_libraries.qt.common.filesystem.file_properties_dialog import FilePropertiesDialog
 from utility.ui_libraries.qt.common.filesystem.filename_validator import FileNameValidator
@@ -59,6 +76,15 @@ if TYPE_CHECKING:
 
 
 class DropEffect(IntEnum):
+    """Enumeration of drag-and-drop effects for UI actions.
+
+    Attributes:
+        NONE: No drop effect.
+        CUT: Cut operation effect.
+        LINK: Link operation effect.
+        COPY: Copy operation effect.
+    """
+
     NONE = 0
     CUT = 2
     LINK = 4
@@ -92,41 +118,42 @@ class ActionsDispatcher:
         self.setup_signals()
 
     def setup_signals(self):
-        self.menus.actions.actionOpen.triggered.connect(lambda: self.queue_task("open_item", self.get_selected_paths()))
-        self.menus.actions.actionOpenWith.triggered.connect(lambda: self.queue_task("open_with", self.get_selected_paths()))
-        self.menus.actions.actionProperties.triggered.connect(lambda: self.queue_task("get_properties", self.get_selected_paths()))
-        self.menus.actions.actionOpenTerminal.triggered.connect(lambda: self.queue_task("open_terminal", self.get_selected_paths()))
-        self.menus.actions.actionCut.triggered.connect(self.on_cut_items)
-        self.menus.actions.actionCopy.triggered.connect(self.on_copy_items)
-        self.menus.actions.actionPaste.triggered.connect(self.on_paste_items)
-        self.menus.actions.actionDelete.triggered.connect(lambda: self.queue_task("delete_items", self.get_selected_paths()))
-        self.menus.actions.actionRename.triggered.connect(lambda: self.queue_task("rename_item", self.get_selected_paths()))
-        self.menus.actions.actionSortByName.triggered.connect(lambda: self.prepare_sort("name"))
-        self.menus.actions.actionSortByDateModified.triggered.connect(lambda: self.prepare_sort("date_modified"))
-        self.menus.actions.actionSortByType.triggered.connect(lambda: self.prepare_sort("type"))
-        self.menus.actions.actionSortBySize.triggered.connect(lambda: self.prepare_sort("size"))
-        self.menus.actions.actionSortByDateCreated.triggered.connect(lambda: self.prepare_sort("date_created"))
-        self.menus.actions.actionSortByAuthor.triggered.connect(lambda: self.prepare_sort("author"))
-        self.menus.actions.actionSortByTitle.triggered.connect(lambda: self.prepare_sort("title"))
-        self.menus.actions.actionSortByTags.triggered.connect(lambda: self.prepare_sort("tags"))
-        self.menus.actions.actionToggleSortOrder.triggered.connect(self.toggle_sort_order)
-        self.menus.actions.actionShowFileOperations.triggered.connect(lambda: self.queue_task("show_file_operations"))
-        self.menus.actions.actionDuplicateFinder.triggered.connect(self.prepare_duplicate_finder)
-        self.menus.actions.actionHashGenerator.triggered.connect(self.prepare_hash_generator)
-        self.menus.actions.actionPermissionsEditor.triggered.connect(self.prepare_permissions_editor)
-        self.menus.actions.actionFileShredder.triggered.connect(self.prepare_file_shredder)
-        self.menus.actions.actionFileComparison.triggered.connect(self.prepare_file_comparison)
-        self.menus.actions.actionOpenInTerminal.triggered.connect(self.prepare_open_in_terminal)
-        self.menus.actions.actionCustomizeContextMenu.triggered.connect(self.prepare_customize_context_menu)
-        # self.menus.actions.actionAddColumns.triggered.connect(self.show_set_default_columns_dialog)
-        # self.menus.actions.actionSizeColumnsToFit.triggered.connect(self.size_columns_to_fit)
-        # self.menus.actions.actionItemCheckBoxes.triggered.connect(self.toggle_item_checkboxes)
+        """Set up signal connections for menu actions using declarative definitions."""
+        from utility.ui_libraries.qt.common.action_definitions import FileExplorerActions
+
+        actions = FileExplorerActions()
+        for action_key, definition in actions.ACTION_DEFINITIONS.items():
+            action = actions.actions[action_key]
+            action.triggered.connect(lambda checked=False, defn=definition: self._handle_action(defn, checked))
+
+    def _handle_action(self, definition, checked: bool = False):
+        """Handle action triggered from declarative definition."""
+        # Call prepare function if specified
+        if definition.prepare_func:
+            prepare_method = getattr(self, definition.prepare_func, None)
+            if prepare_method:
+                prepare_method(**definition.extra_kwargs)
+                return  # Prepare methods handle their own execution
+
+        # Call handler function if specified
+        if definition.handler_func:
+            handler_method = getattr(self, definition.handler_func, None)
+            if handler_method:
+                handler_method(**definition.extra_kwargs)
+                return
+
+        # Queue task if operation specified
+        if definition.operation:
+            paths = self.get_selected_paths() if definition.operation in ["open_file", "get_properties", "open_terminal", "delete_items", "rename_item"] else []
+            self.queue_task(definition.operation, *paths, **definition.extra_kwargs)
 
     def prepare_duplicate_finder(self):
+        """Prepare duplicate finding in the current directory."""
         directory = self.get_current_directory()
         self.queue_task("find_duplicates", directory)
 
     def prepare_hash_generator(self):
+        """Prepare hash generation for selected files."""
         selected_items = self.get_selected_paths()
         if not selected_items:
             return
@@ -137,6 +164,7 @@ class ActionsDispatcher:
             self.queue_task("generate_hashes", selected_items, algorithm)
 
     def prepare_permissions_editor(self):
+        """Prepare permissions editing for selected files."""
         selected_items = self.get_selected_paths()
         if not selected_items:
             return
@@ -144,6 +172,7 @@ class ActionsDispatcher:
         self.queue_task("edit_permissions", selected_items)
 
     def prepare_file_shredder(self):
+        """Prepare secure file deletion for selected files."""
         selected_items = self.get_selected_paths()
         if not selected_items:
             return
@@ -159,6 +188,7 @@ class ActionsDispatcher:
             self.queue_task("shred_files", selected_items)
 
     def prepare_file_comparison(self):
+        """Prepare file comparison for exactly two selected files."""
         selected_items = self.get_selected_paths()
         if len(selected_items) != 2:  # noqa: PLR2004
             QMessageBox.warning(self.dialog, "Invalid Selection", "Please select exactly two files for comparison.")
@@ -167,26 +197,32 @@ class ActionsDispatcher:
         self.queue_task("compare_files", selected_items)
 
     def prepare_open_in_terminal(self):
+        """Prepare opening the current directory in the system terminal."""
         current_dir = self.get_current_directory()
         self.queue_task("open_terminal", current_dir)
 
     def prepare_customize_context_menu(self):
+        """Prepare the context menu customization dialog."""
         # This would typically open a dialog to customize the context menu.
         # For now, we'll just show a message.
         QMessageBox.information(self.dialog, "Customize Context Menu", "Context menu customization feature is not implemented yet.")
 
     def show_set_default_columns_dialog(self):
+        """Show dialog to set default columns for the file dialog."""
         dialog = SetDefaultColumnsDialog(self.dialog)
         if dialog.exec():
             selected_columns = dialog.get_selected_columns()
             self.queue_task("set_default_columns", selected_columns)
 
     def size_columns_to_fit(self):
+        """Size columns to fit contents in the current view."""
         view = self.get_current_view()
         if isinstance(view, QTableView):
             view.resizeColumnsToContents()
         elif isinstance(view, QTreeView):
-            for column in range(view.header().count()):
+            view_header = view.header()
+            assert view_header is not None, "View header is None"
+            for column in range(view_header.count()):
                 view.resizeColumnToContents(column)
         elif isinstance(view, QHeaderView):
             view.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
@@ -194,27 +230,34 @@ class ActionsDispatcher:
             view.setSizeAdjustPolicy(QColumnView.SizeAdjustPolicy.AdjustToContents)
 
     def toggle_item_checkboxes(self):
+        """Toggle checkboxes in the current view's item delegate."""
         view: QAbstractItemView = self.get_current_view()
         delegate = view.itemDelegate()
         if not isinstance(delegate, QStyledItemDelegate):
             view.setItemDelegate(QStyledItemDelegate())
             delegate = view.itemDelegate()
+            assert isinstance(delegate, QStyledItemDelegate)
         # Check if delegate has hasCheckBoxes attribute using try/except for strict type checking
         try:
-            current_state = delegate.hasCheckBoxes  # type: ignore[attr-defined]
+            current_state = delegate.hasCheckBoxes
         except AttributeError:
             current_state = False
-        delegate.setCheckBoxes(not current_state)  # type: ignore[attr-defined]
-        view.viewport().update()
+        delegate.setCheckBoxes(not current_state)
+        view_viewport = view.viewport()
+        assert view_viewport is not None, "View viewport is None"
+        view_viewport.update()
 
     def get_current_directory(self) -> Path:
+        """Get the current directory as a Path object."""
         return Path(self.fs_model.rootPath()).absolute()
 
     def confirm_deletion(self, items: list[Path]) -> bool:
+        """Show a custom deletion confirmation dialog for the given items."""
         if not items:
             return False
 
         class CustomDeleteDialog(QDialog):
+            """Custom dialog to confirm deletion of files/folders."""
             def __init__(self, parent: QWidget, items: list[Path]):
                 super().__init__(parent)
                 self.setWindowTitle("Confirm Deletion")
@@ -234,7 +277,9 @@ class ActionsDispatcher:
 
                 for item in items:
                     item_label = QLabel(f'<a href="{item}">{item.name}</a>')
-                    item_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+                    item_label.setTextInteractionFlags(
+                        Qt.TextInteractionFlag.TextBrowserInteraction
+                    )
                     item_label.setOpenExternalLinks(True)
                     content_layout.addWidget(item_label)
 
@@ -248,9 +293,9 @@ class ActionsDispatcher:
                 palette.setColor(QPalette.ColorRole.Button, QColor(255, 77, 77))
                 palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
                 delete_button.setPalette(palette)
-                delete_button.clicked.connect(lambda: self.accept())
+                delete_button.clicked.connect(self.accept)
                 cancel_button = QPushButton("Cancel")
-                cancel_button.clicked.connect(lambda: self.reject())
+                cancel_button.clicked.connect(self.reject)
                 button_layout.addWidget(delete_button)
                 button_layout.addWidget(cancel_button)
                 layout.addLayout(button_layout)
@@ -260,21 +305,26 @@ class ActionsDispatcher:
         return result == QDialog.DialogCode.Accepted
 
     def get_selected_paths(self) -> list[Path]:
+        """Get the currently selected file paths as Path objects."""
         return [Path(file) for file in self.dialog.selectedFiles()]
 
     def get_menu(self, index: QModelIndex) -> QMenu:
+        """Get the context menu for a specific index."""
         shift_mod = Qt.KeyboardModifier.ShiftModifier
         shift_held = bool(QApplication.keyboardModifiers() & shift_mod) or bool(QApplication.queryKeyboardModifiers() & shift_mod)
         if not index.isValid():
             return self.menus.create_menu(context=MenuContext.EMPTY, shift=shift_held)
-        proxy_model: QAbstractProxyModel | None = cast("Union[None, QAbstractProxyModel]", self.dialog.proxyModel())
+        proxy_model: QAbstractProxyModel | None = cast(Union[None, QAbstractProxyModel], self.dialog.proxyModel())
         source_index: QModelIndex = index if proxy_model is None else proxy_model.mapToSource(index)
         if self.fs_model.isDir(source_index):
             return self.menus.create_menu(context=MenuContext.DIR, shift=shift_held)
         return self.menus.create_menu(context=MenuContext.FILE, shift=shift_held)
 
     def get_context_menu(self, view: QAbstractItemView, pos: QPoint) -> QMenu:
-        selected_indexes = view.selectionModel().selectedIndexes()
+        """Get the context menu for the given view at the specified position."""
+        view_selection_model = view.selectionModel()
+        assert view_selection_model is not None, "View selection model is None"
+        selected_indexes = view_selection_model.selectedIndexes()
         if not selected_indexes:
             return self.menus.create_menu(context=MenuContext.EMPTY)
         if len(selected_indexes) == 1:
@@ -305,9 +355,11 @@ class ActionsDispatcher:
         return self.menus.create_menu(context=context, shift=shift_held, multi=multi)
 
     def _handle_task_error(self, task_name: str, error: Exception):
+        """Handle task failure by logging the error."""
         RobustLogger().error(f"Task '{task_name}' failed with error: {error}")
 
     def prepare_sort(self, column_name):
+        """Prepare sorting by the given column name."""
         column_map: dict[str, int] = {}
         for column in range(self.fs_model.columnCount()):
             header = self.fs_model.headerData(column, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
@@ -321,14 +373,22 @@ class ActionsDispatcher:
             RobustLogger().warning(f"Unsupported sort column '{column_name}'")
 
     def get_current_view(self) -> QAbstractItemView:
-        for view in self.dialog.findChildren(QAbstractItemView):
-            if not isinstance(view, QAbstractItemView):
+        """Get the currently visible view (list or tree) in the file dialog."""
+        for this_view in self.dialog.findChildren(QAbstractItemView):
+            if not isinstance(this_view, QAbstractItemView):
                 continue
-            if view.isVisible() and view.isEnabled():
-                return view
+            if this_view.isVisible() and this_view.isEnabled():
+                return this_view
         raise RuntimeError("No visible view found")
 
     def toggle_sort_order(self):
+        """Toggle the sort order of the current view between ascending and descending.
+
+        Handles sorting for QSortFilterProxyModel, QTreeView, QTableView, and QHeaderView.
+        For proxy models, updates the sort order directly on the model.
+        For views, toggles the sort indicator and applies the new sort order to the view.
+        Does nothing if sorting is not enabled on the view.
+        """
         # stubs are wrong, cast it as correct type.
         proxy_model: QAbstractProxyModel | None = cast("Union[None, QAbstractProxyModel]", self.dialog.proxyModel())
         if isinstance(proxy_model, QSortFilterProxyModel):
@@ -338,31 +398,37 @@ class ActionsDispatcher:
             new_order = Qt.SortOrder.DescendingOrder if current_order == Qt.SortOrder.AscendingOrder else Qt.SortOrder.AscendingOrder
             proxy_model.sort(current_column, new_order)
         else:
-            view: QAbstractItemView = self.get_current_view()
-            if isinstance(view, QTreeView):
-                if not view.isSortingEnabled():
+            inner_view: QAbstractItemView = self.get_current_view()
+            if isinstance(inner_view, QTreeView):
+                assert isinstance(inner_view, QTreeView), "Inner view is not a QTreeView"
+                if not inner_view.isSortingEnabled():
                     return
-                current_column = view.header().sortIndicatorSection()
-                current_order = view.header().sortIndicatorOrder()
+                inner_view_header = inner_view.header()
+                assert inner_view_header is not None, "View header is None"
+                current_column = inner_view_header.sortIndicatorSection()
+                current_order = inner_view_header.sortIndicatorOrder()
 
                 new_order = Qt.SortOrder.DescendingOrder if current_order == Qt.SortOrder.AscendingOrder else Qt.SortOrder.AscendingOrder
-                view.sortByColumn(current_column, new_order)
-                view.header().setSortIndicator(current_column, new_order)
-            elif isinstance(view, QTableView):
-                if not view.isSortingEnabled():
+                inner_view.sortByColumn(current_column, new_order)
+                inner_view_header.setSortIndicator(current_column, new_order)
+            elif isinstance(inner_view, QTableView):
+                if not inner_view.isSortingEnabled():
                     return
-                current_column = view.horizontalHeader().sortIndicatorSection()
-                current_order = view.horizontalHeader().sortIndicatorOrder()
+                horizontal_header = inner_view.horizontalHeader()
+                assert horizontal_header is not None, "View horizontal header is None"
+                current_column = horizontal_header.sortIndicatorSection()
+                current_order = horizontal_header.sortIndicatorOrder()
                 new_order = Qt.SortOrder.DescendingOrder if current_order == Qt.SortOrder.AscendingOrder else Qt.SortOrder.AscendingOrder
-                view.sortByColumn(current_column, new_order)
-                view.horizontalHeader().setSortIndicator(current_column, new_order)
-            elif isinstance(view, QHeaderView):
-                current_order = view.sortIndicatorOrder()
-                current_column = view.sortIndicatorSection()
+                inner_view.sortByColumn(current_column, new_order)
+                horizontal_header.setSortIndicator(current_column, new_order)
+            elif isinstance(inner_view, QHeaderView):
+                current_order = inner_view.sortIndicatorOrder()
+                current_column = inner_view.sortIndicatorSection()
                 next_sort_order = Qt.SortOrder.DescendingOrder if current_order == Qt.SortOrder.AscendingOrder else Qt.SortOrder.AscendingOrder
-                view.setSortIndicator(current_column, next_sort_order)
+                inner_view.setSortIndicator(current_column, next_sort_order)
 
     def prepare_rename(self):
+        """Handle the 'Rename' action for selected items."""
         selected_items = self.get_selected_paths()
         if not selected_items:
             return
@@ -401,6 +467,7 @@ class ActionsDispatcher:
             self.queue_task("rename", old_path, new_path)
 
     def prepare_new_folder(self):
+        """Handle the 'New Folder' action."""
         current_dir = Path(self.fs_model.rootPath())
         name, ok = QInputDialog.getText(self.dialog, "New Folder", "Folder name:")
 
@@ -409,6 +476,7 @@ class ActionsDispatcher:
             self.queue_task("new_folder", new_folder_path)
 
     def prepare_new_file(self):
+        """Handle the 'New File' action."""
         current_dir = Path(self.fs_model.rootPath())
         validator = FileNameValidator(self.dialog)
         while True:
@@ -441,6 +509,7 @@ class ActionsDispatcher:
         self.queue_task("new_file", new_file_path)
 
     def prepare_delete(self):
+        """Handle the 'Delete' action for selected items."""
         paths = self.get_selected_paths()
         if not paths:
             return
@@ -448,6 +517,7 @@ class ActionsDispatcher:
             self.queue_task("delete", paths)
 
     def prepare_create_shortcut(self):
+        """Handle the 'Create Shortcut' action for selected items."""
         source_paths = self.get_selected_paths()
         if not source_paths:
             return
@@ -455,12 +525,14 @@ class ActionsDispatcher:
         self.queue_task("create_shortcut", source_paths, shortcut_path)
 
     def prepare_open_with(self):
+        """Handle the 'Open With' action for selected items."""
         paths = self.get_selected_paths()
         if not paths:
             return
         self.queue_task("open_with", paths)
 
     def prepare_open_terminal(self):
+        """Handle the 'Open Terminal' action for selected items."""
         paths = self.get_selected_paths()
         if not paths:
             return
@@ -470,6 +542,7 @@ class ActionsDispatcher:
         self.queue_task("open_terminal", path)
 
     def prepare_compress(self):
+        """Handle the 'Compress' action for selected items."""
         paths = self.get_selected_paths()
         if not paths:
             return
@@ -477,6 +550,7 @@ class ActionsDispatcher:
         self.queue_task("compress_items", paths, archive_path)
 
     def prepare_extract(self):
+        """Handle the 'Extract' action for selected archive files."""
         paths = self.get_selected_paths()
         if not paths:
             return
@@ -485,44 +559,47 @@ class ActionsDispatcher:
         self.queue_task("extract_items", archive_path, extract_path)
 
     def prepare_take_ownership(self):
+        """Handle the 'Take Ownership' action for selected items."""
         paths = self.get_selected_paths()
         if not paths:
             return
         self.queue_task("take_ownership", paths)
 
     def prepare_send_to(self, destination):
+        """Handle the 'Send To' action for selected items."""
         paths = self.get_selected_paths()
         if not paths:
             return
         self.queue_task("send_to", paths, destination)
 
     def prepare_open_as_admin(self):
+        """Handle the 'Open as Administrator' action for selected items."""
         paths = self.get_selected_paths()
         if not paths:
             return
         self.queue_task("open_as_admin", paths)
 
     def prepare_print(self):
+        """Handle the 'Print' action for selected items."""
         paths = self.get_selected_paths()
         if not paths:
             return
         self.queue_task("print_file", paths)
 
     def prepare_share(self):
+        """Handle the 'Share' action for selected items."""
         paths = self.get_selected_paths()
         if not paths:
             return
         self.queue_task("share", paths)
 
     def prepare_show_hidden_items(self, show: bool):  # noqa: FBT001
-        self.fs_model.setFilter(
-            self.fs_model.filter() | QDir.Filter.Hidden
-            if show
-            else self.fs_model.filter() & ~QDir.Filter.Hidden
-        )
+        """Handle the 'Show Hidden Items' action."""
+        self.fs_model.setFilter(self.fs_model.filter() | QDir.Filter.Hidden if show else self.fs_model.filter() & ~QDir.Filter.Hidden)
         self.queue_task("refresh_view")
 
     def prepare_show_file_extensions(self, show: bool):  # noqa: FBT001
+        """Handle the 'Show File Extensions' action."""
         # Check for Qt version-specific methods using try/except for strict type checking
         try:
             self.fs_model.setNameFilterDisables(not show)  # type: ignore[attr-defined]
@@ -535,60 +612,111 @@ class ActionsDispatcher:
         self.queue_task("refresh_view")
 
     def on_open_file(self):
+        """Handle the 'Open' action for selected files."""
         paths = self.get_selected_paths()
         self.queue_task("open_file", paths)
 
     def on_open_dir(self):
+        """Handle the 'Open' action for selected directories."""
+        # Prefer in-app navigation instead of launching external explorers.
         paths = self.get_selected_paths()
-        self.queue_task("open_dir", paths)
+        if not paths:
+            return
+        for path in paths:
+            if path.is_dir():
+                try:
+                    # Prefer using the dialog API so the directory opens inside the app
+                    self.dialog.setDirectory(str(path))
+                except Exception:
+                    # Fallback to the external/open_dir operation if needed
+                    self.queue_task("open_dir", [path])
 
     def on_open(self):
+        """Handle the 'Open' action for selected items."""
+        # Handles both double-click and context menu 'Open'. For directories,
+        # navigate inside the dialog. For files, fall back to existing behaviour
+        # (which may open the file externally).
         paths = self.get_selected_paths()
         for path in paths:
             if path.is_dir():
-                self.queue_task("open_dir", [path])
+                try:
+                    self.dialog.setDirectory(str(path))
+                except Exception:
+                    self.queue_task("open_dir", [path])
             else:
                 self.queue_task("open_file", [path])
 
     def on_open_with_file(self):
+        """Retrieve and queue the open with task for the selected file."""
         paths = self.get_selected_paths()
         self.queue_task("open_with", paths)
 
     def on_properties_file(self):
+        """Retrieve and queue the properties task for the selected file."""
         paths = self.get_selected_paths()
         self.queue_task("get_properties", paths[0])
 
     def on_properties_dir(self):
+        """Retrieve and queue the properties task for the selected directory."""
         paths = self.get_selected_paths()
         self.queue_task("get_properties", paths[0])
 
     def on_open_terminal_file(self):
+        """Open a terminal window at the parent directory of the selected file path."""
         paths = self.get_selected_paths()
         self.queue_task("open_terminal", paths[0].parent)
 
     def on_open_terminal_dir(self):
+        """Open a terminal window at the selected directory path."""
         paths = self.get_selected_paths()
         self.queue_task("open_terminal", paths[0])
 
     def on_rename_item(self):
+        """Rename the selected item."""
         paths = self.get_selected_paths()
         self.queue_task("rename_item", paths[0])
 
     def on_copy_items(self):
+        """Copy the selected items to the clipboard."""
         self._prepare_clipboard_data(is_cut=False)
 
     def on_cut_items(self):
+        """Cut the selected items to the clipboard."""
         self._prepare_clipboard_data(is_cut=True)
 
     def on_delete_items(self):
+        """Delete the selected items after confirmation."""
         paths = self.get_selected_paths()
         self.queue_task("delete_items", paths)
 
     def on_paste_items(self):
+        """Paste items from the clipboard to the current directory."""
         print("on_paste_items")
         self._handle_paste()
 
     def _prepare_clipboard_data(self, *, is_cut: bool):
+        """Prepare and set clipboard data for file operations (copy/cut).
+
+        This method handles platform-specific clipboard formatting to ensure
+        compatibility with native file managers across Windows, macOS, and Linux.
+
+        Args:
+            is_cut (bool): If True, prepares data for cut operation; if False, for copy operation.
+
+        Returns:
+            None
+
+        Raises:
+            AssertionError: If clipboard is not available on the system.
+
+        Note:
+            - Sets standard MIME URLs for file paths
+            - Sets "Preferred DropEffect" with appropriate drop action
+            - Windows: Uses "FileGroupDescriptorW" format with absolute paths
+            - macOS: Uses "com.apple.NSFilePromiseContent" plist format
+            - Linux/Unix: Uses "x-special/gnome-copied-files" format with action prefix
+            - Stores copied items and cut status in instance variables for later reference
+        """
         paths = self.get_selected_paths()
         if not paths:
             return
@@ -612,20 +740,25 @@ class ActionsDispatcher:
             mime_data.setData("FileGroupDescriptorW", QByteArray(file_contents.encode("utf-16-le")))
         elif platform.system() == "Darwin":
             import plistlib
+
             plist_data = {"NSFilenamesPboardType": [str(item) for item in paths]}
             mime_data.setData("com.apple.NSFilePromiseContent", QByteArray(plistlib.dumps(plist_data)))
         else:  # Linux and other Unix-like
             action = "cut" if is_cut else "copy"
             mime_data.setData("x-special/gnome-copied-files", QByteArray(f"{action}\n".encode() + b"\n".join(str(item).encode() for item in paths)))
 
-        QApplication.clipboard().setMimeData(mime_data, QClipboard.Mode.Clipboard)
+        clipboard = QApplication.clipboard()
+        assert clipboard is not None, "Clipboard is not available"
+        clipboard.setMimeData(mime_data, QClipboard.Mode.Clipboard)
         self.copied_items = paths
         self.is_cut = is_cut
 
     def _handle_paste(self):
         destination_folder = self.get_current_directory()
         clipboard = QApplication.clipboard()
+        assert clipboard is not None, "Clipboard is not available"
         mime_data = clipboard.mimeData()
+        assert mime_data is not None, "Clipboard mime data is not available"
 
         if mime_data.hasUrls():
             urls = mime_data.urls()
@@ -659,7 +792,7 @@ class ActionsDispatcher:
     def _get_preferred_drop_effect(self, mime_data: QMimeData) -> int:
         effect_data = mime_data.data("Preferred DropEffect")
         if effect_data:
-            return int.from_bytes(effect_data, byteorder="little")
+            return int.from_bytes(effect_data, byteorder="little")  # pyright: ignore[reportArgumentType]
         return DropEffect.COPY.value
 
     def _handle_task_result(self, task_id: str, result: Any):
@@ -673,12 +806,30 @@ class ActionsDispatcher:
         self.task_operations.pop(task_id)
 
     def show_properties_dialog(self, properties: list[FileProperties]):
+        """Display properties dialogs for the given file properties.
+
+        Opens a non-blocking FilePropertiesDialog for each property in the list,
+        allowing the user to view and edit file information.
+
+        Args:
+            properties: A list of FileProperties objects to display in dialogs.
+        """
         for prop in properties:
             RobustLogger().debug(f"Showing properties dialog for: {prop.name}")
             dialog = FilePropertiesDialog(prop, self.dialog)
             dialog.show()  # don't block
 
     def queue_task(self, operation: str, *args, **kwargs) -> str:
+        """Queue a task for execution with the specified operation and arguments.
+
+        Args:
+            operation: The name of the operation to queue.
+            *args: Variable length argument list to pass to the operation.
+            **kwargs: Arbitrary keyword arguments to pass to the operation.
+
+        Returns:
+            str: A unique task identifier for the queued task.
+        """
         task_id = self.file_actions_executor.queue_task(operation, args=args, kwargs=kwargs)
         self.task_operations[task_id] = operation
         RobustLogger().debug(f"Queued task: {task_id} for operation: {operation}")
@@ -689,24 +840,28 @@ if __name__ == "__main__":
     import sys
     import traceback
 
-    from qtpy.QtCore import QDir, Qt
-    from qtpy.QtWidgets import QApplication, QFileDialog, QMessageBox, QTreeView
+    test_app = QApplication(sys.argv)
 
-    app = QApplication(sys.argv)
+    test_file_dialog = QFileDialog()
+    test_file_dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)  # noqa: FBT003
+    test_file_dialog.setFileMode(QFileDialog.FileMode.Directory)
+    test_file_dialog.setOption(QFileDialog.Option.ShowDirsOnly, False)  # noqa: FBT003
 
-    file_dialog = QFileDialog()
-    file_dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)  # noqa: FBT003
-    file_dialog.setFileMode(QFileDialog.FileMode.Directory)
-    file_dialog.setOption(QFileDialog.Option.ShowDirsOnly, False)  # noqa: FBT003
-
-    tree_view = file_dialog.findChild(QTreeView)
-    assert isinstance(tree_view, QTreeView)
-    fs_model = tree_view.model()
-    assert isinstance(fs_model, QFileSystemModel)
-    file_actions_executor = FileActionsExecutor()
-    menu_actions_dispatcher = ActionsDispatcher(fs_model, file_dialog, file_actions_executor)
+    test_tree_view = test_file_dialog.findChild(QTreeView)
+    assert isinstance(test_tree_view, QTreeView)
+    test_fs_model = test_tree_view.model()
+    assert isinstance(test_fs_model, QFileSystemModel)
+    test_file_actions_executor = FileActionsExecutor()
+    test_menu_actions_dispatcher = ActionsDispatcher(test_fs_model, test_file_dialog, test_file_actions_executor)
 
     def on_task_failed(task_id: str, error: Exception):
+        """
+        Handle task failure by logging the error and displaying an error dialog.
+
+        Args:
+            task_id: The unique identifier of the failed task.
+            error: The exception that caused the task to fail.
+        """
         RobustLogger().exception(f"Task {task_id} failed", exc_info=error)
         error_msg = QMessageBox()
         error_msg.setIcon(QMessageBox.Icon.Critical)
@@ -716,28 +871,39 @@ if __name__ == "__main__":
         error_msg.setWindowTitle("Task Failed")
         error_msg.exec()
 
-    file_actions_executor.TaskFailed.connect(on_task_failed)
-    views = file_dialog.findChildren(QAbstractItemView)
+    test_file_actions_executor.TaskFailed.connect(on_task_failed)
+    test_views = test_file_dialog.findChildren(QAbstractItemView)
 
-    for view in views:
-        if not isinstance(view, QAbstractItemView):
+    for test_view in test_views:
+        if not isinstance(test_view, QAbstractItemView):
             continue
-        print("Setting context menu policy for view:", view.objectName(), "of type:", type(view).__name__)
+        print("Setting context menu policy for view:", test_view.objectName(), "of type:", type(test_view).__name__)
 
-        def show_context_menu(pos: QPoint, view: QAbstractItemView = view):
-            index = view.indexAt(pos)
+        def show_context_menu(
+            pos: QPoint,
+            inner_view: QAbstractItemView = test_view,
+        ):
+            """Display a context menu at the specified position within the item view.
+
+            Args:
+                pos: The position where the context menu should be displayed.
+                inner_view: The QAbstractItemView instance to display the context menu for.
+                           Defaults to the view parameter from the enclosing scope.
+            """
+            index = inner_view.indexAt(pos)
             if not index.isValid():
-                view.clearSelection()
-            menu = menu_actions_dispatcher.get_context_menu(view, pos)
+                inner_view.clearSelection()
+            menu = test_menu_actions_dispatcher.get_context_menu(inner_view, pos)
             if menu:
-                menu.exec(view.viewport().mapToGlobal(pos))
+                viewport = inner_view.viewport()
+                assert viewport is not None, "Viewport is not available"
+                menu.exec(viewport.mapToGlobal(pos))
 
-        view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        test_view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         with contextlib.suppress(TypeError):  # TypeError: disconnect() failed between 'customContextMenuRequested' and all its connections
-            view.customContextMenuRequested.disconnect()
-        view.customContextMenuRequested.connect(show_context_menu)
+            test_view.customContextMenuRequested.disconnect()
+        test_view.customContextMenuRequested.connect(show_context_menu)
 
-    file_dialog.resize(800, 600)
-    file_dialog.show()
-
-    sys.exit(app.exec())
+    test_file_dialog.resize(800, 600)
+    test_file_dialog.show()
+    sys.exit(test_app.exec())

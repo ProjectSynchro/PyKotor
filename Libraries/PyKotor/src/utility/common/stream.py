@@ -850,16 +850,16 @@ class RawBinaryReader:
 
 
 class RawBinaryWriter(ABC):
-    @abstractmethod
-    def __enter__(self) -> Self: ...
+    def __enter__(self) -> Self:
+        return self
 
-    @abstractmethod
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
-    ): ...
+    ):
+        ...
 
     @classmethod
     def to_file(
@@ -958,7 +958,6 @@ class RawBinaryWriter(ABC):
         with Path(path).open("wb") as file:
             file.write(data)
 
-    @abstractmethod
     def close(self):
         """Closes the stream."""
 
@@ -1286,13 +1285,10 @@ class RawBinaryWriterFile(RawBinaryWriter):
         offset: int = 0,
     ):
         self._stream: io.BufferedIOBase | io.RawIOBase = stream
-        self._offset: int = offset  # FIXME(th3w1zard1): rename to _offset like all the other classes in this file.
+        self._offset: int = offset
         self.auto_close: bool = True
 
         self._stream.seek(offset)
-
-    def __enter__(self) -> Self:
-        return self
 
     def __exit__(
         self,
@@ -1691,26 +1687,13 @@ class RawBinaryWriterFile(RawBinaryWriter):
 class RawBinaryWriterBytearray(RawBinaryWriter):
     def __init__(
         self,
-        ba: bytearray,
+        ba: bytes | bytearray,
         offset: int = 0,
     ):
-        self._ba: bytearray = ba
+        self._ba: bytearray = ba if isinstance(ba, bytearray) else bytearray(ba)
         self._offset: int = offset
         self._position: int = 0
         self._initial_size: int = len(ba)  # Track initial size to distinguish fixed-size from growable buffers
-
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ): ...
-
-    def close(self):
-        """Closes the stream."""
 
     def size(self) -> int:
         """Returns the total file size.

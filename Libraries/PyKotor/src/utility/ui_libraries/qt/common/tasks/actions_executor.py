@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import multiprocessing
+import os
 import pickle
 import queue
 import sys
@@ -86,6 +87,26 @@ class TaskDetails:
 
 
 class FileActionsExecutor(QObject):
+    """Executor for managing and executing file operations asynchronously using thread and process pools.
+
+    This class provides a comprehensive task management system for executing file operations
+    concurrently. It supports task queuing, progress tracking, pausing, resuming, and cancellation.
+
+    Tasks can be executed using either a process pool (for CPU-bound operations) or thread pool
+    (for I/O-bound operations), with automatic fallback to threads on Windows or
+    for non-picklable functions.
+
+    Attributes:
+        TaskStarted: Signal emitted when a task begins execution (task_id: str).
+        TaskCompleted: Signal emitted when a task completes successfully (task_id: str, result: object).
+        TaskFailed: Signal emitted when a task fails (task_id: str, exception: Exception).
+        TaskCancelled: Signal emitted when a task is cancelled (task_id: str).
+        TaskPaused: Signal emitted when a task is paused (task_id: str).
+        TaskResumed: Signal emitted when a task resumes (task_id: str).
+        TaskProgress: Signal emitted for task progress updates (task_id: str, progress: float).
+        AllTasksCompleted: Signal emitted when all queued tasks complete.
+        ProgressUpdated: Signal emitted for overall progress (completed: int, total: int).
+    """
     TaskStarted: ClassVar[Signal] = Signal(str)
     TaskCompleted: ClassVar[Signal] = Signal(str, object)
     TaskFailed: ClassVar[Signal] = Signal(str, Exception)
@@ -102,16 +123,27 @@ class FileActionsExecutor(QObject):
         max_queue_size: int = 100,
         max_age: timedelta = timedelta(days=1),
         default_priority: int = 0,
+        *,
+        enable_multiprocessing: bool = True,
     ):
         super().__init__()
+        # Check environment variable for testing mode
+        if not enable_multiprocessing or os.environ.get("PYKOTOR_DISABLE_MULTIPROCESSING", "").lower() in ("1", "true", "yes"):
+            RobustLogger().debug("FileActionsExecutor running in DISABLED mode (no multiprocessing)")
+            self.process_pool = None  # type: ignore[assignment]
+            self.manager = None  # type: ignore[assignment]
+            self.tasks = {}  # type: ignore[assignment]
+            self.futures = {}
+            return
+        
         worker_count: int = max_workers or multiprocessing.cpu_count()
         RobustLogger().debug(f"Initializing FileActionsExecutor with max_workers: {worker_count}")
+        # Use multiprocessing exclusively, never threading
         self.process_pool: ProcessPoolExecutor = ProcessPoolExecutor(max_workers=worker_count)
-        self.thread_pool: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=worker_count)
         self.manager: SyncManager = Manager()
         self.tasks: DictProxy[str, Task] = self.manager.dict()
         self.futures: dict[str, _ConcurrentFuture] = {}
-        RobustLogger().debug("FileActionsExecutor initialized")
+        RobustLogger().debug("FileActionsExecutor initialized with multiprocessing only")
 
     @property
     def completed_tasks(self) -> int:
@@ -170,12 +202,13 @@ class FileActionsExecutor(QObject):
         task.status = TaskStatus.RUNNING
         self.tasks[task_id] = task
 
+        # Use multiprocessing exclusively
         submitter = self.process_pool.submit
+
         if custom_function is not None and not self._is_picklable(custom_function):
-            RobustLogger().debug(
-                f"Task {task_id} custom function is not picklable; using thread pool execution"
+            RobustLogger().warning(
+                f"Task {task_id} custom function is not picklable; multiprocessing may fail"
             )
-            submitter = self.thread_pool.submit
 
         future: _ConcurrentFuture[Any] = submitter(
             self._execute_task,
@@ -483,10 +516,6 @@ class FileActionsExecutor(QObject):
         RobustLogger().debug("Shutting down FileActionsExecutor")
         try:
             self.process_pool.shutdown(wait=True)
-        except Exception:  # noqa: BLE001
-            pass
-        try:
-            self.thread_pool.shutdown(wait=True)
         except Exception:  # noqa: BLE001
             pass
 

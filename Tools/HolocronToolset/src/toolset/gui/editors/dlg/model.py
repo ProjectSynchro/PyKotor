@@ -1085,7 +1085,6 @@ class DLGStandardItemModel(QStandardItemModel):
             palette = app.palette()
         else:
             # Use default palette for fallback
-            from qtpy.QtGui import QPalette
             palette = QPalette()
         
         link_color = palette.color(QPalette.ColorRole.Link)

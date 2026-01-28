@@ -69,9 +69,6 @@
                             <property name="placeholderText">
                                 <string>filter...</string>
                             </property>
-                            <property name="maxLength">
-                                <number>16</number>
-                            </property>
                         </widget>
                     </item>
                     <item>

@@ -26,6 +26,8 @@ from qtpy.QtCore import (
     QUrl,  # pyright: ignore[reportAttributeAccessIssue]
     Qt,  # pyright: ignore[reportAttributeAccessIssue]
     Signal,  # pyright: ignore[reportPrivateImportUsage]
+)
+from PyQt6.QtCore import (
     pyqtBoundSignal,  # pyright: ignore[reportPrivateImportUsage]
 )
 from qtpy.QtWidgets import (
@@ -41,6 +43,7 @@ from qtpy.QtWidgets import (
 
 from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qfiledialog_p import HistoryItem, QFileDialogOptionsPrivate, QFileDialogPrivate, qt_make_filter_list
 from utility.ui_libraries.qt.adapters.kernel.qplatformdialoghelper.qplatformdialoghelper import QPlatformFileDialogHelper
+from utility.ui_libraries.qt.common.qt_event_utils import process_events_if_safe
 from utility.ui_libraries.qt.tools.unifiers import sip_enum_to_int
 
 if TYPE_CHECKING:
@@ -332,7 +335,8 @@ class QFileDialogOptions(QObject):
         dialog_label_count: int = len(d.labelTexts)
         int_label: int = sip_enum_to_int(label)
         if int_label < dialog_label_count:
-            return bool(d.labelTexts[label])
+            # Use the canonical RealQFileDialog.DialogLabel key to avoid cross-binding enum mismatches
+            return bool(d.labelTexts[RealQFileDialog.DialogLabel(int_label)])
         return False
 
     def initialDirectory(self) -> QUrl:
@@ -414,6 +418,7 @@ class QFileDialogOptions(QObject):
     @staticmethod
     def defaultNameFilterString() -> str:
         r"""Since 5.6
+
         Internal.
 
         Return the translated default name filter string (\gui{All Files (*)}).
@@ -426,7 +431,6 @@ class QFileDialogOptions(QObject):
         return app.tr("All Files (*)", "QFileDialog")
 
     def nameFilters(self) -> list[str]:
-        """Return name filters. Matches C++ QFileDialogOptions::nameFilters() implementation."""
         d: QFileDialogOptionsPrivate = self._private
         # Match C++: return d->useDefaultNameFilters ? QStringList(QFileDialogOptions::defaultNameFilterString()) : d->nameFilters;
         if d.useDefaultNameFilters:
@@ -437,7 +441,6 @@ class QFileDialogOptions(QObject):
         self,
         filters: Iterable[str],
     ) -> None:
-        """Set name filters. Matches C++ QFileDialogOptions::setNameFilters() implementation."""
         d: QFileDialogOptionsPrivate = self._private
         filter_list = list(filters)
         # Match C++: d->useDefaultNameFilters = filters.size() == 1 && filters.first() == QFileDialogOptions::defaultNameFilterString();
@@ -843,9 +846,15 @@ class QFileDialog(RealQFileDialog if TYPE_CHECKING else QDialog):  # pyright: ig
         # Match C++: files.reserve(userSelectedFiles.size());
         # Match C++: for (const QUrl &file : userSelectedFiles) files.append(file.toString(QUrl::PreferLocalFile));
         for file in user_selected_files:
-            # Match C++: file.toString(QUrl::PreferLocalFile)
-            # For local files, toString(PreferLocalFile) is equivalent to toLocalFile()
-            files.append(file.toString(QUrl.UrlFormattingOption.PreferLocalFile))
+            # Prefer to return local file paths for local URLs; otherwise fall back to string form.
+            try:
+                if file.isLocalFile():
+                    files.append(file.toLocalFile())
+                else:
+                    files.append(file.toString())
+            except Exception:
+                # Some bindings expose slightly different QUrl methods; fall back to str()
+                files.append(str(file))
         
         # Match C++: if (files.isEmpty() && d->usingWidgets()) {
         if not files and d.usingWidgets():
@@ -1153,9 +1162,9 @@ class QFileDialog(RealQFileDialog if TYPE_CHECKING else QDialog):  # pyright: ig
             if bool(changed & hide_name_filter_details):
                 # Update the combo box items when HideNameFilterDetails option changes
                 self.setNameFilters(self._private.options.nameFilters())
-                # Process events to ensure UI updates
+                # Avoid re-entrant event processing under pytest-qt.
                 if d.usingWidgets():
-                    QApplication.processEvents()
+                    process_events_if_safe()
 
         show_dirs_only: int = sip_enum_to_int(RealQFileDialog.Option.ShowDirsOnly)
         if bool(changed & show_dirs_only):

@@ -12,10 +12,11 @@ if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
 
 try:
+    from qtpy.QtCore import Qt
     from qtpy.QtTest import QTest
     from qtpy.QtWidgets import QApplication
 except (ImportError, ModuleNotFoundError):
-    QTest, QApplication = object, object  # type: ignore[misc, assignment]
+    Qt, QTest, QApplication = object, object, object  # type: ignore[misc, assignment]
 
 absolute_file_path = pathlib.Path(__file__).resolve()
 TESTS_FILES_PATH = next(f for f in absolute_file_path.parents if f.name == "tests") / "test_files"
@@ -642,14 +643,14 @@ def test_bwm_editor_headless_ui_load_build(qtbot: QtBot, installation: HTInstall
         first_bwm_resource: ResourceResult | None = bwm_resources[0]
         if first_bwm_resource is None:
             pytest.fail("BWM not found on second pass, after lookup with resources()...???")
-        bwm_data = installation.resource(first_bwm_resource.resname, first_bwm_resource.restype)
-        if not bwm_data:
+        bwm_resource = installation.resource(first_bwm_resource.resname, first_bwm_resource.restype)
+        if not bwm_resource:
             pytest.skip(f"Could not load BWM data for {first_bwm_resource.resname}")
         editor.load(
             first_bwm_resource.filepath if hasattr(first_bwm_resource, 'filepath') else pathlib.Path("module.wok"),
             first_bwm_resource.resname,
             first_bwm_resource.restype,
-            bwm_data,
+            bwm_resource.data,
         )
     else:
         original_data = bwm_file.read_bytes()
@@ -1022,26 +1023,22 @@ def test_bwm_editor_load_from_installation(qtbot: QtBot, installation: HTInstall
     editor.show()
     QApplication.processEvents()
     
-    # Try to find a BWM resource in installation
-    bwm_resources = list(installation.resources((ResourceType.WOK,)).values())[:1]
-    if not bwm_resources:
-        bwm_resources = list(installation.resources((ResourceType.DWK,)).values())[:1]
-    if not bwm_resources:
-        pytest.skip("No BWM resources found in installation")
-    
-    bwm_resource = bwm_resources[0]
-    assert bwm_resource is not None
-    
-    bwm_data = installation.resource(bwm_resource.resname, bwm_resource.restype)
-    if not bwm_data:
-        pytest.skip(f"Could not load BWM data for {bwm_resource.resname}")
+    # Try to find any walkmesh resource in the installation by enumerating known resources.
+    # (Installation.resources() expects explicit name+type queries, not a tuple of types.)
+    file_res = next((r for r in installation if r.restype in (ResourceType.WOK, ResourceType.DWK)), None)
+    if file_res is None:
+        pytest.skip("No WOK/DWK resources found in installation")
+
+    bwm_resource = installation.resource(file_res.resname, file_res.restype)
+    if bwm_resource is None:
+        pytest.skip(f"Could not load BWM data for {file_res.resname}")
     
     # Load from installation
     editor.load(
         bwm_resource.filepath if hasattr(bwm_resource, 'filepath') else pathlib.Path("module.wok"),
         bwm_resource.resname,
         bwm_resource.restype,
-        bwm_data.data
+        bwm_resource.data,
     )
     QApplication.processEvents()
     

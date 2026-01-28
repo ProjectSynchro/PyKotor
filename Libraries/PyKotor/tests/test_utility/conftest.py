@@ -23,6 +23,9 @@ if _pythonpath:
 if "QT_API" not in os.environ:
     os.environ["QT_API"] = "PyQt5"
 
+# Disable multiprocessing for tests to avoid hanging
+os.environ["PYKOTOR_DISABLE_MULTIPROCESSING"] = "1"
+
 # Force offscreen (headless) mode for Qt
 # This ensures tests don't fail if no display is available (e.g. CI/CD)
 # Must be set before any QApplication is instantiated.
@@ -42,3 +45,36 @@ TOOLSET_SRC = TOOLS_PATH / "HolocronToolset" / "src"
 for path in [PYKOTOR_PATH, UTILITY_PATH, PYKOTORGL_PATH, TOOLSET_SRC]:
     if str(path) not in sys.path:
         sys.path.append(str(path))
+
+# Import shared profiling and timeout utilities
+import pytest
+_test_helpers_path = str(Path(__file__).resolve().parents[1])
+if _test_helpers_path not in sys.path:
+    sys.path.insert(0, _test_helpers_path)
+
+from test_helpers.profiling_and_timeout import profile_if_enabled
+from typing import Iterator, Any
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item: pytest.Item) -> Iterator[None]:
+    """Profile slow tests if PYKOTOR_PROFILE_SLOW_MS is set."""
+    with profile_if_enabled(item.nodeid, phase="call"):
+        yield
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> Iterator[Any]:  # type: ignore[type-arg]
+    """Capture test duration for profiling."""
+    outcome = yield
+    rep = outcome.get_result()
+    if rep.when == "call":
+        item.rep_call = rep  # type: ignore[attr-defined]
+    return rep
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_setup(item: pytest.Item) -> Iterator[None]:
+    """Profile slow setup phases if PYKOTOR_PROFILE_SLOW_MS is set."""
+    with profile_if_enabled(item.nodeid, phase="setup"):
+        yield

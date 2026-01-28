@@ -122,13 +122,9 @@ class FACEditor(Editor):
         self.ui.reputationTree.selectionChanged = self.on_reputation_selection_changed  # type: ignore[assignment]
         self.ui.reputationTree.customContextMenuRequested.connect(self.on_reputation_context_menu)
 
-        if hasattr(self.ui, "factionNameEdit"):
-            self.ui.factionNameEdit.editingFinished.connect(self.on_faction_value_updated)
-        if hasattr(self.ui, "globalEffectCheck"):
-            if hasattr(self.ui.globalEffectCheck, "clicked"):
-                self.ui.globalEffectCheck.clicked.connect(self.on_faction_value_updated)
-        if hasattr(self.ui, "parentIdSpin"):
-            self.ui.parentIdSpin.valueChanged.connect(self.on_faction_value_updated)
+        self.ui.factionNameEdit.editingFinished.connect(self.on_faction_value_updated)
+        self.ui.globalEffectCheck.clicked.connect(self.on_faction_value_updated)
+        self.ui.parentIdSpin.valueChanged.connect(self.on_faction_value_updated)
 
         QShortcut("Del", self).activated.connect(self.on_delete_shortcut)
 
@@ -210,35 +206,30 @@ class FACEditor(Editor):
         """Handle faction tree selection change."""
         QTreeView.selectionChanged(self.ui.factionTree, selection, deselected)  # type: ignore[call-overload]
 
-        if hasattr(self.ui, "factionNameEdit") and selection.indexes():
-            index = selection.indexes()[0]
-            item = self._faction_model.itemFromIndex(index)
-            if item is not None:
-                faction: FACFaction = item.data()
-                self.ui.factionNameEdit.blockSignals(True)
-                self.ui.factionNameEdit.setText(faction.name)
-                self.ui.factionNameEdit.blockSignals(False)
-                if hasattr(self.ui, "globalEffectCheck"):
-                    if hasattr(self.ui.globalEffectCheck, "setChecked"):
-                        self.ui.globalEffectCheck.setChecked(faction.global_effect)
-                if hasattr(self.ui, "parentIdSpin"):
-                    self.ui.parentIdSpin.blockSignals(True)
-                    self.ui.parentIdSpin.setValue(faction.parent_id if faction.parent_id != 0xFFFFFFFF else 0)
-                    self.ui.parentIdSpin.blockSignals(False)
+        index = selection.indexes()[0]
+        item = self._faction_model.itemFromIndex(index)
+        if item is not None:
+            faction: FACFaction = item.data()
+            self.ui.factionNameEdit.blockSignals(True)
+            self.ui.factionNameEdit.setText(faction.name)
+            self.ui.factionNameEdit.blockSignals(False)
+            self.ui.globalEffectCheck.setChecked(faction.global_effect)
+            self.ui.parentIdSpin.blockSignals(True)
+            self.ui.parentIdSpin.setValue(faction.parent_id if faction.parent_id != 0xFFFFFFFF else 0)
+            self.ui.parentIdSpin.blockSignals(False)
 
     def on_reputation_selection_changed(self, selection: QItemSelection, deselected: QItemSelection):
         """Handle reputation tree selection change."""
         QTreeView.selectionChanged(self.ui.reputationTree, selection, deselected)  # type: ignore[call-overload]
 
         # Update reputation editing controls if they exist
-        if selection.indexes() and hasattr(self.ui, "reputationValueSpin"):
-            index = selection.indexes()[0]
-            item = self._reputation_model.itemFromIndex(index)
-            if item is not None:
-                rep: FACReputation = item.data()
-                self.ui.reputationValueSpin.blockSignals(True)
-                self.ui.reputationValueSpin.setValue(rep.reputation)
-                self.ui.reputationValueSpin.blockSignals(False)
+        index = selection.indexes()[0]
+        item = self._reputation_model.itemFromIndex(index)
+        if item is not None:
+            rep: FACReputation = item.data()
+            self.ui.reputationValueSpin.blockSignals(True)
+            self.ui.reputationValueSpin.setValue(rep.reputation)
+            self.ui.reputationValueSpin.blockSignals(False)
 
     def on_faction_value_updated(self):
         """Update the selected faction when values change."""
@@ -251,14 +242,10 @@ class FACEditor(Editor):
             return
 
         faction: FACFaction = item.data()
-        if hasattr(self.ui, "factionNameEdit"):
-            faction.name = self.ui.factionNameEdit.text()
-        if hasattr(self.ui, "globalEffectCheck"):
-            if hasattr(self.ui.globalEffectCheck, "isChecked"):
-                faction.global_effect = self.ui.globalEffectCheck.isChecked()
-        if hasattr(self.ui, "parentIdSpin"):
-            parent_id = self.ui.parentIdSpin.value()
-            faction.parent_id = 0xFFFFFFFF if parent_id == 0 else parent_id
+        faction.name = self.ui.factionNameEdit.text()
+        faction.global_effect = self.ui.globalEffectCheck.isChecked()
+        parent_id = self.ui.parentIdSpin.value()
+        faction.parent_id = 0xFFFFFFFF if parent_id == 0 else parent_id
 
         self.refresh_faction_item(item)
 
@@ -273,8 +260,7 @@ class FACEditor(Editor):
             return
 
         rep: FACReputation = item.data()
-        if hasattr(self.ui, "reputationValueSpin"):
-            rep.reputation = self.ui.reputationValueSpin.value()
+        rep.reputation = self.ui.reputationValueSpin.value()
 
         self.refresh_reputation_item(item)
 

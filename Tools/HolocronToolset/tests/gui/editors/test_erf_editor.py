@@ -788,7 +788,7 @@ def test_erf_editor_extract_single_resource_headless(qtbot: QtBot, installation:
     editor.extract_selected()
     
     # Wait for extraction to complete
-    QtBot.wait(1000)
+    QApplication.processEvents()
     QApplication.processEvents()
 
     # Check if file was extracted

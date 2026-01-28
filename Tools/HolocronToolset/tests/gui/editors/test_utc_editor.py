@@ -2422,7 +2422,7 @@ def test_utc_editor_all_widgets_build_verification(qtbot: QtBot, installation: H
     editor.ui.plotCheckbox.setChecked(True)
     editor.ui.isPcCheckbox.setChecked(True)
     editor.ui.noReorientateCheckbox.setChecked(True)
-    QtBot.wait(10)  # Ensure Qt processes checkbox state changes in headless mode
+    QApplication.processEvents()  # Ensure Qt processes checkbox state changes in headless mode
     if editor.ui.raceSelect.count() > 0:
         editor.ui.raceSelect.setCurrentIndex(0)
     if editor.ui.subraceSelect.count() > 0:
@@ -2542,14 +2542,14 @@ def test_utc_editor_menu_actions(qtbot: QtBot, installation: HTInstallation):
 
     # Test setting to True
     editor.ui.actionSaveUnusedFields.setChecked(True)
-    QtBot.wait(10)  # Ensure Qt processes the setChecked() call
+    QApplication.processEvents()  # Ensure Qt processes the setChecked() call
     # Manually update settings to match the action state (simulating what the signal would do)
     editor.settings.saveUnusedFields = editor.ui.actionSaveUnusedFields.isChecked()
     assert editor.settings.saveUnusedFields is True
 
     # Test setting to False
     editor.ui.actionSaveUnusedFields.setChecked(False)
-    QtBot.wait(10)  # Ensure Qt processes the setChecked() call
+    QApplication.processEvents()  # Ensure Qt processes the setChecked() call
     # Manually update settings to match the action state (simulating what the signal would do)
     editor.settings.saveUnusedFields = editor.ui.actionSaveUnusedFields.isChecked()
     assert editor.settings.saveUnusedFields is False
@@ -2559,14 +2559,14 @@ def test_utc_editor_menu_actions(qtbot: QtBot, installation: HTInstallation):
 
     # Test setting to True
     editor.ui.actionAlwaysSaveK2Fields.setChecked(True)
-    QtBot.wait(10)  # Ensure Qt processes the setChecked() call
+    QApplication.processEvents()  # Ensure Qt processes the setChecked() call
     # Manually update settings to match the action state (simulating what the signal would do)
     editor.settings.alwaysSaveK2Fields = editor.ui.actionAlwaysSaveK2Fields.isChecked()
     assert editor.settings.alwaysSaveK2Fields is True
 
     # Test setting to False
     editor.ui.actionAlwaysSaveK2Fields.setChecked(False)
-    QtBot.wait(10)  # Ensure Qt processes the setChecked() call
+    QApplication.processEvents()  # Ensure Qt processes the setChecked() call
     # Manually update settings to match the action state (simulating what the signal would do)
     editor.settings.alwaysSaveK2Fields = editor.ui.actionAlwaysSaveK2Fields.isChecked()
     assert editor.settings.alwaysSaveK2Fields is False
@@ -2577,7 +2577,7 @@ def test_utc_editor_menu_actions(qtbot: QtBot, installation: HTInstallation):
     initial_visible = editor.ui.previewRenderer.isVisible()
     initial_preview_setting = editor.global_settings.showPreviewUTC
     editor.ui.actionShowPreview.trigger()
-    QtBot.wait(10)  # Ensure Qt processes the signal
+    QApplication.processEvents()  # Ensure Qt processes the signal
     # Verify the global setting was toggled
     assert editor.global_settings.showPreviewUTC != initial_preview_setting
     # The visibility might not change in headless mode, so we accept either state
@@ -2608,7 +2608,7 @@ def test_utceditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
 
     # Trigger help dialog with the correct file for UTCEditor
     editor._show_help_dialog("GFF-UTC.md")
-    QtBot.wait(200)  # Wait for dialog to be created
+    QApplication.processEvents()  # Wait for dialog to be created
 
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
@@ -2666,7 +2666,7 @@ def test_utc_editor_reference_search_context_menu_script_field(qtbot: QtBot, ins
     if menu is None:
         # Try custom context menu
         editor.ui.onHeartbeatSelect.customContextMenuRequested.emit(QPoint(0, 0))
-        QtBot.wait(100)
+        QApplication.processEvents()
 
     # Verify menu exists (context menu setup happens in setup_file_context_menu)
     assert editor.ui.onHeartbeatSelect.toolTip() is not None, f"Script field tooltip should not be None, but got '{editor.ui.onHeartbeatSelect.toolTip()}'"

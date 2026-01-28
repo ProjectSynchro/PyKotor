@@ -1,24 +1,15 @@
 {
     "recommendations": [
-        "ms-python.mypy-type-checker",
-        "ms-python.vscode-pylance",
-        "ms-python.python",
         "charliermarsh.ruff",
-        "tamasfe.even-better-toml",
-        "ms-python.debugpy",
-        "tylerleonhardt.vscode-inline-values-powershell",
-        "formulahendry.github-actions",
-        "me-dutour-mathieu.vscode-github-actions",
-        "ms-vscode-remote.remote-wsl",
-        "redhat.vscode-yaml",
-        "shakram02.bash-beautify",
-        "be5invis.toml",
         "donjayamanne.githistory",
         "huizhou.githd",
-        "visualstudioexptteam.vscodeintellicode",
-        "visualstudioexptteam.intellicode-api-usage-examples",
-        "hyesun.py-paste-indent",
+        "ms-python.debugpy",
+        "ms-python.mypy-type-checker",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
         "redhat.vscode-xml",
-        "siddharthverma.python-super-debugger-mode"
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml",
+        "tylerleonhardt.vscode-inline-values-powershell"
     ]
 }

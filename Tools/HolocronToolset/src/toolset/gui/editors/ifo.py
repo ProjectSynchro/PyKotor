@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QMessageBox
+from qtpy.QtWidgets import QComboBox, QTableWidgetItem
 
 from pykotor.common.misc import ResRef
 from pykotor.resource.formats.gff import write_gff
@@ -13,7 +12,6 @@ from pykotor.resource.generics.ifo import IFO, dismantle_ifo, read_ifo
 from pykotor.resource.type import ResourceType
 from toolset.gui.common.filters import NoScrollEventFilter
 from toolset.gui.common.localization import translate as tr
-from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.editor import Editor
 
 if TYPE_CHECKING:
@@ -64,10 +62,8 @@ class IFOEditor(Editor):
         self.ui.versionSpin.valueChanged.connect(self.on_value_changed)
 
         # Module name and description - connect to editing finished signal
-        if hasattr(self.ui, "modNameEdit"):
-            self.ui.modNameEdit.sig_editing_finished.connect(self.on_mod_name_changed)
-        if hasattr(self.ui, "descriptionEdit"):
-            self.ui.descriptionEdit.sig_editing_finished.connect(self.on_description_changed)
+        self.ui.modNameEdit.sig_editing_finished.connect(self.on_mod_name_changed)
+        self.ui.descriptionEdit.sig_editing_finished.connect(self.on_description_changed)
 
         # Entry point fields
         self.ui.entryAreaEdit.textChanged.connect(self.on_value_changed)
@@ -106,37 +102,52 @@ class IFOEditor(Editor):
         }
 
         for ui_name, ifo_attr in self._script_field_mapping.items():
-            if hasattr(self.ui, ui_name):
-                widget = getattr(self.ui, ui_name)
-                if hasattr(widget, "currentTextChanged"):
-                    widget.currentTextChanged.connect(self.on_value_changed)
-                elif hasattr(widget, "textChanged"):
-                    widget.textChanged.connect(self.on_value_changed)
+            widget = getattr(self.ui, ui_name)
+            if hasattr(widget, "currentTextChanged"):
+                widget.currentTextChanged.connect(self.on_value_changed)
+            elif hasattr(widget, "textChanged"):
+                widget.textChanged.connect(self.on_value_changed)
 
         # Advanced settings
-        if hasattr(self.ui, "expansionPackSpin"):
-            self.ui.expansionPackSpin.valueChanged.connect(self.on_value_changed)
-        if hasattr(self.ui, "minGameVerEdit"):
-            self.ui.minGameVerEdit.textChanged.connect(self.on_value_changed)
-        if hasattr(self.ui, "cacheNSSDataCheck"):
-            self.ui.cacheNSSDataCheck.stateChanged.connect(self.on_value_changed)
+        self.ui.expansionPackSpin.valueChanged.connect(self.on_value_changed)
+        self.ui.minGameVerEdit.textChanged.connect(self.on_value_changed)
+        self.ui.cacheNSSDataCheck.stateChanged.connect(self.on_value_changed)
 
         # Area list management (if implemented)
-        if hasattr(self.ui, "addAreaButton"):
-            self.ui.addAreaButton.clicked.connect(self.add_area)
-        if hasattr(self.ui, "removeAreaButton"):
-            self.ui.removeAreaButton.clicked.connect(self.remove_area)
+        self.ui.addAreaButton.clicked.connect(self.add_area)
+        self.ui.removeAreaButton.clicked.connect(self.remove_area)
+
+    def add_area(self):
+        """Add an area to the module's area list."""
+        # TODO: Implement area addition logic
+        pass
+
+    def remove_area(self):
+        """Remove an area from the module's area list."""
+        # TODO: Implement area removal logic
+
+    def on_mod_name_changed(self):
+        """Handle changes to the module name localized string."""
+        if self.ifo is None:
+            return
+        self.ifo.mod_name = self.ui.modNameEdit.locstring()
+        self.on_value_changed()
+
+    def on_description_changed(self):
+        """Handle changes to the module description localized string."""
+        if self.ifo is None:
+            return
+        self.ifo.description = self.ui.descriptionEdit.locstring()
+        self.on_value_changed()
 
     def _setup_installation(self, installation: HTInstallation):
         """Setup installation-specific features."""
         # Setup localized string editors
-        if hasattr(self.ui, "modNameEdit"):
-            self.ui.modNameEdit.set_installation(installation)
-        if hasattr(self.ui, "descriptionEdit"):
-            self.ui.descriptionEdit.set_installation(installation)
+        self.ui.modNameEdit.set_installation(installation)
+        self.ui.descriptionEdit.set_installation(installation)
 
         # Setup script field context menus and reference search
-        script_field_names = [
+        script_field_names: list[str] = [
             "onHeartbeatEdit",
             "onLoadEdit",
             "onStartEdit",
@@ -154,30 +165,31 @@ class IFOEditor(Editor):
             "startMovieEdit",
         ]
         
-        script_fields = [getattr(self.ui, name, None) for name in script_field_names]
+        script_fields: list[QComboBox | None] = [getattr(self.ui, name, None) for name in script_field_names]
         
         for field in script_fields:
-            if field is not None:
-                installation.setup_file_context_menu(
-                    field,
-                    [ResourceType.NSS, ResourceType.NCS],
-                    enable_reference_search=True,
-                    reference_search_type="script",
+            if field is None:
+                continue
+            installation.setup_file_context_menu(
+                field,
+                [ResourceType.NSS, ResourceType.NCS],
+                enable_reference_search=True,
+                reference_search_type="script",
+            )
+            tooltip = field.toolTip() or ""
+            if "Right-click" not in tooltip:
+                field.setToolTip(
+                    tr("Right-click to find references to this script in the installation.")
+                    if not tooltip
+                    else f"{tooltip}\n\n{tr('Right-click to find references to this script in the installation.')}",
                 )
-                tooltip = field.toolTip() or ""
-                if "Right-click" not in tooltip:
-                    field.setToolTip(
-                        tr("Right-click to find references to this script in the installation.")
-                        if not tooltip
-                        else f"{tooltip}\n\n{tr('Right-click to find references to this script in the installation.')}",
-                    )
-                # Set maxLength for FilterComboBox script fields (ResRefs are max 16 characters)
-                line_edit = field.lineEdit() if hasattr(field, "lineEdit") else None
-                if line_edit is not None:
-                    line_edit.setMaxLength(16)
+            # Set maxLength for FilterComboBox script fields (ResRefs are max 16 characters)
+            line_edit = field.lineEdit() if hasattr(field, "lineEdit") else None
+            if line_edit is not None:
+                line_edit.setMaxLength(16)
 
         # Populate script combo boxes with available scripts
-        relevant_scripts = sorted(
+        relevant_scripts: list[str] = sorted(
             iter(
                 {
                     res.resname().lower()
@@ -186,45 +198,44 @@ class IFOEditor(Editor):
             ),
         )
 
+        from toolset.gui.common.widgets.combobox import FilterComboBox
         for ui_name in self._script_field_mapping.keys():
-            if hasattr(self.ui, ui_name):
-                widget = getattr(self.ui, ui_name)
-                if hasattr(widget, "populate_combo_box"):
-                    widget.populate_combo_box(relevant_scripts)
-                elif hasattr(widget, "addItems"):
-                    widget.clear()
-                    widget.addItems([""] + relevant_scripts)
+            widget = getattr(self.ui, ui_name)
+            if isinstance(widget, FilterComboBox):
+                widget.populate_combo_box(relevant_scripts)
+            elif isinstance(widget, (QComboBox,)):
+                widget.clear()
+                widget.addItems([""] + relevant_scripts)
 
     def generate_tag(self):
         """Generate tag from module name/resref."""
-        if not self.ifo:
+        if self.ifo is None:
             return
 
         # Try to generate tag from module name or resref
-        if hasattr(self.ui, "modNameEdit"):
-            locstring = self.ui.modNameEdit.locstring()
-            if locstring and locstring.stringref != -1:
-                # Try to get English text
-                from pykotor.common.language import Language, Gender
-                name = locstring.get(Language.ENGLISH, Gender.MALE) or ""
-                if not name and self._installation:
-                    name = self._installation.string(locstring) or ""
-                if name:
-                    # Generate tag from name (remove spaces, special chars)
-                    tag = "".join(c.lower() if c.isalnum() else "_" for c in name[:32])
-                    tag = tag.strip("_")
-                    if tag and hasattr(self.ui, "tagEdit"):
-                        self.ui.tagEdit.setText(tag)
-                        return
+        locstring = self.ui.modNameEdit.locstring()
+        if locstring and locstring.stringref != -1:
+            # Try to get English text
+            from pykotor.common.language import Language, Gender
+            name = locstring.get(Language.ENGLISH, Gender.MALE) or ""
+            if not name and self._installation:
+                name = self._installation.string(locstring) or ""
+            if name:
+                # Generate tag from name (remove spaces, special chars)
+                tag = "".join(c.lower() if c.isalnum() else "_" for c in name[:32])
+                tag = tag.strip("_")
+                if tag:
+                    self.ui.tagEdit.setText(tag)
+                    return
 
         # Fallback to resref
         resref = self._resname
-        if resref and hasattr(self.ui, "tagEdit"):
+        if resref:
             self.ui.tagEdit.setText(resref.lower())
 
     def on_entry_direction_changed(self):
         """Handle entry direction changes, converting degrees to radians."""
-        if not self.ifo:
+        if self.ifo is None:
             return
 
         # Convert degrees to radians
@@ -233,9 +244,13 @@ class IFOEditor(Editor):
         self.ifo.entry_direction = radians
         self.on_value_changed()
 
-
-
-    def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes) -> None:
+    def load(
+        self,
+        filepath: os.PathLike | str,
+        resref: str,
+        restype: ResourceType,
+        data: bytes | bytearray,
+    ) -> None:
         """Load an IFO file."""
         super().load(filepath, resref, restype, data)
         self.ifo = read_ifo(data)
@@ -258,95 +273,62 @@ class IFOEditor(Editor):
 
     def update_ui_from_ifo(self) -> None:
         """Update UI elements from IFO data."""
-        if not self.ifo or not self._installation:
+        if self.ifo is None or self._installation is None:
             return
 
         # Basic Info
-        if hasattr(self.ui, "modNameEdit"):
-            self.ui.modNameEdit.set_locstring(self.ifo.mod_name)
-        if hasattr(self.ui, "tagEdit"):
-            self.ui.tagEdit.setText(self.ifo.tag)
-        if hasattr(self.ui, "voIdEdit"):
-            self.ui.voIdEdit.setText(self.ifo.vo_id)
-        if hasattr(self.ui, "hakEdit"):
-            self.ui.hakEdit.setText(self.ifo.hak)
-        if hasattr(self.ui, "descriptionEdit"):
-            self.ui.descriptionEdit.set_locstring(self.ifo.description)
+        self.ui.modNameEdit.set_locstring(self.ifo.mod_name)
+        self.ui.tagEdit.setText(self.ifo.tag)
+        self.ui.voIdEdit.setText(self.ifo.vo_id)
+        self.ui.hakEdit.setText(self.ifo.hak)
+        self.ui.descriptionEdit.set_locstring(self.ifo.description)
 
         # Module ID (read-only, display as hex)
-        if hasattr(self.ui, "modIdEdit"):
-            mod_id_str = " ".join(f"{b:02x}" for b in self.ifo.mod_id[:16]) if self.ifo.mod_id else ""
-            self.ui.modIdEdit.setText(mod_id_str)
+        mod_id_str = " ".join(f"{b:02x}" for b in self.ifo.mod_id[:16]) if self.ifo.mod_id else ""
+        self.ui.modIdEdit.setText(mod_id_str)
 
         # Creator ID and Version (deprecated)
-        if hasattr(self.ui, "creatorIdSpin"):
-            self.ui.creatorIdSpin.setValue(self.ifo.creator_id)
-        if hasattr(self.ui, "versionSpin"):
-            self.ui.versionSpin.setValue(self.ifo.version)
+        self.ui.creatorIdSpin.setValue(self.ifo.creator_id)
+        self.ui.versionSpin.setValue(self.ifo.version)
 
         # Entry Point
-        if hasattr(self.ui, "entryAreaEdit"):
-            self.ui.entryAreaEdit.setText(str(self.ifo.resref))
-        if hasattr(self.ui, "entryXSpin"):
-            self.ui.entryXSpin.setValue(self.ifo.entry_position.x)
-        if hasattr(self.ui, "entryYSpin"):
-            self.ui.entryYSpin.setValue(self.ifo.entry_position.y)
-        if hasattr(self.ui, "entryZSpin"):
-            self.ui.entryZSpin.setValue(self.ifo.entry_position.z)
+        self.ui.entryAreaEdit.setText(str(self.ifo.resref))
+        self.ui.entryXSpin.setValue(self.ifo.entry_position.x)
+        self.ui.entryYSpin.setValue(self.ifo.entry_position.y)
+        self.ui.entryZSpin.setValue(self.ifo.entry_position.z)
 
         # Convert radians to degrees for display
-        if hasattr(self.ui, "entryDirectionSpin"):
-            degrees = self.ifo.entry_direction * 180.0 / 3.141592653589793
-            if degrees < 0:
-                degrees += 360.0
-            degrees = degrees % 360.0
-            self.ui.entryDirectionSpin.setValue(degrees)
+        degrees = self.ifo.entry_direction * 180.0 / 3.141592653589793
+        if degrees < 0:
+            degrees += 360.0
+        degrees = degrees % 360.0
+        self.ui.entryDirectionSpin.setValue(degrees)
 
         # Area name (first area from list, read-only)
-        if hasattr(self.ui, "areaNameEdit"):
-            area_name = str(self.ifo.area_name) if hasattr(self.ifo, "area_name") else ""
-            self.ui.areaNameEdit.setText(area_name)
+        area_name = str(self.ifo.area_name) if hasattr(self.ifo, "area_name") else ""
+        self.ui.areaNameEdit.setText(area_name)
 
         # Time Settings (deprecated)
-        if hasattr(self.ui, "dawnHourSpin"):
-            self.ui.dawnHourSpin.setValue(self.ifo.dawn_hour)
-        if hasattr(self.ui, "duskHourSpin"):
-            self.ui.duskHourSpin.setValue(self.ifo.dusk_hour)
-        if hasattr(self.ui, "timeScaleSpin"):
-            self.ui.timeScaleSpin.setValue(self.ifo.time_scale)
-        if hasattr(self.ui, "startMonthSpin"):
-            self.ui.startMonthSpin.setValue(self.ifo.start_month)
-        if hasattr(self.ui, "startDaySpin"):
-            self.ui.startDaySpin.setValue(self.ifo.start_day)
-        if hasattr(self.ui, "startHourSpin"):
-            self.ui.startHourSpin.setValue(self.ifo.start_hour)
-        if hasattr(self.ui, "startYearSpin"):
-            self.ui.startYearSpin.setValue(self.ifo.start_year)
-        if hasattr(self.ui, "xpScaleSpin"):
-            self.ui.xpScaleSpin.setValue(self.ifo.xp_scale)
+        self.ui.dawnHourSpin.setValue(self.ifo.dawn_hour)
+        self.ui.duskHourSpin.setValue(self.ifo.dusk_hour)
+        self.ui.timeScaleSpin.setValue(self.ifo.time_scale)
+        self.ui.startMonthSpin.setValue(self.ifo.start_month)
+        self.ui.startDaySpin.setValue(self.ifo.start_day)
+        self.ui.startHourSpin.setValue(self.ifo.start_hour)
+        self.ui.startYearSpin.setValue(self.ifo.start_year)
+        self.ui.xpScaleSpin.setValue(self.ifo.xp_scale)
 
         # Scripts - update from IFO attributes to UI widgets
         for ui_name, ifo_attr in self._script_field_mapping.items():
-            if hasattr(self.ui, ui_name):
-                widget = getattr(self.ui, ui_name)
-                script_value = str(getattr(self.ifo, ifo_attr))
-                if hasattr(widget, "setCurrentText"):
-                    widget.setCurrentText(script_value)
-                elif hasattr(widget, "setText"):
-                    widget.setText(script_value)
+            widget = getattr(self.ui, ui_name)
+            script_value = str(getattr(self.ifo, ifo_attr))
+            if hasattr(widget, "setCurrentText"):
+                widget.setCurrentText(script_value)
+            elif hasattr(widget, "setText"):
+                widget.setText(script_value)
 
         # Advanced settings
-        if hasattr(self.ui, "expansionPackSpin"):
-            self.ui.expansionPackSpin.setValue(self.ifo.expansion_id)
-        if hasattr(self.ui, "minGameVerEdit"):
-            # MinGameVer is not directly exposed in IFO class, may need to add it
-            pass
-        if hasattr(self.ui, "cacheNSSDataCheck"):
-            # CacheNSSData is not directly exposed in IFO class, may need to add it
-            pass
-        if hasattr(self.ui, "isSaveGameCheck"):
-            # IsSaveGame is read-only and managed by engine
-            pass
+        self.ui.expansionPackSpin.setValue(self.ifo.expansion_id)
 
     def on_value_changed(self) -> None:
         """Handle UI value changes."""
@@ -359,10 +341,8 @@ class IFOEditor(Editor):
         self.ifo.hak = self.ui.hakEdit.text()
 
         # Creator ID and Version (deprecated)
-        if hasattr(self.ui, "creatorIdSpin"):
-            self.ifo.creator_id = self.ui.creatorIdSpin.value()
-        if hasattr(self.ui, "versionSpin"):
-            self.ifo.version = self.ui.versionSpin.value()
+        self.ifo.creator_id = self.ui.creatorIdSpin.value()
+        self.ifo.version = self.ui.versionSpin.value()
 
         # Entry Point
         try:
@@ -389,26 +369,25 @@ class IFOEditor(Editor):
 
         # Scripts - update from UI widgets to IFO attributes
         for ui_name, ifo_attr in self._script_field_mapping.items():
-            if hasattr(self.ui, ui_name):
-                widget = getattr(self.ui, ui_name)
-                try:
-                    if hasattr(widget, "currentText"):
-                        script_text = widget.currentText()
-                    elif hasattr(widget, "text"):
-                        script_text = widget.text()
-                    else:
-                        continue
+            widget = getattr(self.ui, ui_name)
+            try:
+                if hasattr(widget, "currentText"):
+                    script_text = widget.currentText()
+                elif hasattr(widget, "text"):
+                    script_text = widget.text()
+                else:
+                    continue
 
-                    if script_text:
-                        setattr(self.ifo, ifo_attr, ResRef(script_text))
-                    else:
-                        setattr(self.ifo, ifo_attr, ResRef.from_blank())
-                except ResRef.ExceedsMaxLengthError:
-                    # Skip invalid ResRef values to prevent teardown errors
-                    pass
+                if script_text and script_text.strip():
+                    setattr(self.ifo, ifo_attr, ResRef(script_text))
+                else:
+                    setattr(self.ifo, ifo_attr, ResRef.from_blank())
+            except ResRef.ExceedsMaxLengthError:
+                # Skip invalid ResRef values to prevent teardown errors
+                pass
 
         # Advanced settings
-        if hasattr(self.ui, "expansionPackSpin"):
-            self.ifo.expansion_id = self.ui.expansionPackSpin.value()
+        self.ifo.expansion_id = self.ui.expansionPackSpin.value()
 
-        self.signal_modified.emit()
+        # TODO: determine if this is needed
+        #self.signal_modified.emit()

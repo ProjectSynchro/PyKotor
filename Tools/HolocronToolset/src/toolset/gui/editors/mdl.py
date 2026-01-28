@@ -74,8 +74,10 @@ class MDLEditor(Editor):
 
         if restype is ResourceType.MDL:
             mdl_data = data
-            if p_filepath.suffix.lower() == ".mdl":
-                mdx_data = p_filepath.with_suffix(".mdx").read_bytes()
+            mdl_filepath = p_filepath.with_suffix(".mdl")
+            mdx_filepath = p_filepath.with_suffix(".mdx")
+            if p_filepath.suffix.lower() == ".mdl" and mdx_filepath.exists() and mdx_filepath.is_file():
+                mdx_data = mdx_filepath.read_bytes()
             elif is_any_erf_type_file(p_filepath.name):
                 erf = read_erf(filepath)
                 mdx_data = erf.get(resref, ResourceType.MDX)
@@ -86,8 +88,8 @@ class MDLEditor(Editor):
                 mdx_data = self._installation.resource(resref, ResourceType.MDX, [SearchLocation.CHITIN]).data
         elif restype is ResourceType.MDX:
             mdx_data = data
-            if p_filepath.suffix.lower() == ".mdx":
-                mdl_data = p_filepath.with_suffix(".mdl").read_bytes()
+            if p_filepath.suffix.lower() == ".mdx" and mdl_filepath.exists() and mdl_filepath.is_file():
+                mdl_data = mdl_filepath.read_bytes()
             elif is_any_erf_type_file(p_filepath.name):
                 erf = read_erf(filepath)
                 mdl_data = erf.get(resref, ResourceType.MDL)

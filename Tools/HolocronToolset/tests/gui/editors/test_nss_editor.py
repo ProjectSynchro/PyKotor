@@ -386,7 +386,7 @@ def test_nss_editor_bookmark_persistence(qtbot: QtBot, installation: HTInstallat
         editor.ui.codeEdit.setTextCursor(cursor)
         editor.add_bookmark()
         # Wait for Qt to process the bookmark addition and editItem
-        QtBot.wait(50)
+        QApplication.processEvents()
 
     # Verify bookmarks were added
     assert editor.ui.bookmarkTree.topLevelItemCount() >= 2, "Bookmarks should be added to tree"
@@ -406,7 +406,7 @@ def test_nss_editor_bookmark_persistence(qtbot: QtBot, installation: HTInstallat
     # Save bookmarks (add_bookmark already calls _save_bookmarks, but call it again to ensure)
     editor._save_bookmarks()
     # Wait for QSettings to persist
-    QtBot.wait(50)
+    QApplication.processEvents()
 
     # Verify resname hasn't changed
     assert editor._resname == resname_before, f"resname changed from {resname_before} to {editor._resname}"
@@ -428,7 +428,7 @@ def test_nss_editor_bookmark_persistence(qtbot: QtBot, installation: HTInstallat
 
     editor.load_bookmarks()
     # Wait for Qt to process the bookmark loading
-    QtBot.wait(50)
+    QApplication.processEvents()
 
     # Verify bookmarks were restored
     assert editor.ui.bookmarkTree.topLevelItemCount() >= 2, "Bookmarks should be restored after load"
@@ -754,14 +754,14 @@ def test_nss_editor_game_selector_ui(qtbot: QtBot, installation: HTInstallation)
     if editor.ui.gameSelector.count() >= 2:
         # Switch to TSL (index 1)
         editor.ui.gameSelector.setCurrentIndex(1)
-        QtBot.wait(100)
+        QApplication.processEvents()
 
         # Verify switch occurred
         assert editor._is_tsl == True
 
         # Switch back to K1 (index 0)
         editor.ui.gameSelector.setCurrentIndex(0)
-        QtBot.wait(100)
+        QApplication.processEvents()
 
         # Verify switch back
         assert editor._is_tsl == False
@@ -877,7 +877,7 @@ def test_nss_editor_error_reporting(qtbot: QtBot, installation: HTInstallation):
     initial_count = editor._error_count
     editor.report_error("Test error message")
     # Wait for Qt to process the visibility change in headless mode
-    QtBot.wait(50)
+    QApplication.processEvents()
 
     # Error count should increase
     assert editor._error_count > initial_count
@@ -1309,7 +1309,7 @@ def test_nss_editor_foldable_regions_detection(qtbot: QtBot, installation: HTIns
     # Manually trigger foldable regions update (QTimer might not fire reliably in headless mode)
     editor.ui.codeEdit._update_foldable_regions()
     # Wait for Qt to process any updates
-    QtBot.wait(50)
+    QApplication.processEvents()
 
     # Check that foldable regions exist
     assert hasattr(editor.ui.codeEdit, "_foldable_regions")
@@ -1334,7 +1334,7 @@ def test_nss_editor_fold_region(qtbot: QtBot, installation: HTInstallation, fold
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
     # Manually trigger foldable regions update (QTimer might not fire reliably in headless mode)
     editor.ui.codeEdit._update_foldable_regions()
-    QtBot.wait(50)  # Wait for Qt to process updates
+    QApplication.processEvents()  # Wait for Qt to process updates
 
     # Verify foldable regions were detected
     assert len(editor.ui.codeEdit._foldable_regions) > 0, "Foldable regions should be detected"
@@ -1350,11 +1350,11 @@ def test_nss_editor_fold_region(qtbot: QtBot, installation: HTInstallation, fold
     assert block.isValid(), "Block should be valid"
     cursor.setPosition(block.position())
     editor.ui.codeEdit.setTextCursor(cursor)
-    QtBot.wait(10)  # Wait for cursor to be set
+    QApplication.processEvents()  # Wait for cursor to be set
 
     # Fold the region
     editor.ui.codeEdit.fold_region()
-    QtBot.wait(50)  # Wait for Qt to process the fold operation
+    QApplication.processEvents()  # Wait for Qt to process the fold operation
 
     # Check that blocks are folded
     assert hasattr(editor.ui.codeEdit, "_folded_block_numbers")
@@ -1370,7 +1370,7 @@ def test_nss_editor_unfold_region(qtbot: QtBot, installation: HTInstallation, fo
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
     # Manually trigger foldable regions update (QTimer might not fire reliably in headless mode)
     editor.ui.codeEdit._update_foldable_regions()
-    QtBot.wait(50)  # Wait for Qt to process updates
+    QApplication.processEvents()  # Wait for Qt to process updates
 
     # Verify foldable regions were detected
     assert len(editor.ui.codeEdit._foldable_regions) > 0, "Foldable regions should be detected"
@@ -1386,16 +1386,16 @@ def test_nss_editor_unfold_region(qtbot: QtBot, installation: HTInstallation, fo
     assert block.isValid(), "Block should be valid"
     cursor.setPosition(block.position())
     editor.ui.codeEdit.setTextCursor(cursor)
-    QtBot.wait(10)  # Wait for cursor to be set
+    QApplication.processEvents()  # Wait for cursor to be set
 
     editor.ui.codeEdit.fold_region()
-    QtBot.wait(50)  # Wait for Qt to process the fold operation
+    QApplication.processEvents()  # Wait for Qt to process the fold operation
     folded_count = len(editor.ui.codeEdit._folded_block_numbers)
     assert folded_count > 0, f"Expected folded blocks, got {editor.ui.codeEdit._folded_block_numbers}"
 
     # Unfold
     editor.ui.codeEdit.unfold_region()
-    QtBot.wait(50)  # Wait for Qt to process the unfold operation
+    QApplication.processEvents()  # Wait for Qt to process the unfold operation
     unfolded_count = len(editor.ui.codeEdit._folded_block_numbers)
     assert unfolded_count < folded_count, f"Expected fewer folded blocks after unfold, got {unfolded_count} (was {folded_count})"
 
@@ -1409,14 +1409,14 @@ def test_nss_editor_fold_all(qtbot: QtBot, installation: HTInstallation, foldabl
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
     # Manually trigger foldable regions update (QTimer might not fire reliably in headless mode)
     editor.ui.codeEdit._update_foldable_regions()
-    QtBot.wait(50)  # Wait for Qt to process updates
+    QApplication.processEvents()  # Wait for Qt to process updates
 
     # Verify foldable regions were detected
     assert len(editor.ui.codeEdit._foldable_regions) > 0, "Foldable regions should be detected"
 
     # Fold all
     editor.ui.codeEdit.fold_all()
-    QtBot.wait(50)  # Wait for Qt to process the fold operation
+    QApplication.processEvents()  # Wait for Qt to process the fold operation
 
     # Multiple regions should be folded
     assert hasattr(editor.ui.codeEdit, "_folded_block_numbers")
@@ -1432,14 +1432,14 @@ def test_nss_editor_unfold_all(qtbot: QtBot, installation: HTInstallation, folda
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
     # Manually trigger foldable regions update (QTimer might not fire reliably in headless mode)
     editor.ui.codeEdit._update_foldable_regions()
-    QtBot.wait(50)  # Wait for Qt to process updates
+    QApplication.processEvents()  # Wait for Qt to process updates
 
     # Verify foldable regions were detected
     assert len(editor.ui.codeEdit._foldable_regions) > 0, "Foldable regions should be detected"
 
     # Fold all first
     editor.ui.codeEdit.fold_all()
-    QtBot.wait(50)  # Wait for Qt to process the fold operation
+    QApplication.processEvents()  # Wait for Qt to process the fold operation
     folded_count = len(editor.ui.codeEdit._folded_block_numbers)
     assert folded_count > 0, f"Expected folded blocks, got {editor.ui.codeEdit._folded_block_numbers}"
 
@@ -1456,7 +1456,7 @@ def test_nss_editor_folding_preserved_on_edit(qtbot: QtBot, installation: HTInst
     editor.new()
 
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
-    QtBot.wait(200)
+    QApplication.processEvents()
 
     # Fold a region
     lines = foldable_nss_script.split("\n")
@@ -1478,7 +1478,7 @@ def test_nss_editor_folding_preserved_on_edit(qtbot: QtBot, installation: HTInst
             editor.ui.codeEdit.insertPlainText("// Test comment\n")
 
             # Wait for update
-            QtBot.wait(300)
+            QApplication.processEvents()
 
             # Folding should be preserved (at least for existing blocks)
             assert hasattr(editor.ui.codeEdit, "_folded_block_numbers")
@@ -1493,7 +1493,7 @@ def test_nss_editor_folding_visual_indicators(qtbot: QtBot, installation: HTInst
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
     # Manually trigger foldable regions update (QTimer might not fire reliably in headless mode)
     editor.ui.codeEdit._update_foldable_regions()
-    QtBot.wait(50)  # Wait for Qt to process updates
+    QApplication.processEvents()  # Wait for Qt to process updates
 
     # Check that foldable regions exist
     assert hasattr(editor.ui.codeEdit, "_foldable_regions")
@@ -1502,7 +1502,7 @@ def test_nss_editor_folding_visual_indicators(qtbot: QtBot, installation: HTInst
     # Line number area should be updated
     assert hasattr(editor.ui.codeEdit, "_line_number_area")
     editor.ui.codeEdit._line_number_area.update()
-    QtBot.wait(100)
+    QApplication.processEvents()
 
 
 # ============================================================================
@@ -1531,12 +1531,12 @@ def test_nss_editor_breadcrumbs_update_on_cursor_move(qtbot: QtBot, installation
     editor.new()
 
     editor.ui.codeEdit.setPlainText(complex_nss_script)
-    QtBot.wait(200)  # Wait for parsing
+    QApplication.processEvents()  # Wait for parsing
 
     # Manually trigger breadcrumb update (language server may not be available in tests)
     # _update_breadcrumbs_from_symbols always adds at least the filename
     editor._update_breadcrumbs_from_symbols([])  # Empty symbols list, but still adds filename
-    QtBot.wait(50)  # Wait for Qt to process updates
+    QApplication.processEvents()  # Wait for Qt to process updates
 
     # Move cursor to different positions
     cursor = editor.ui.codeEdit.textCursor()
@@ -1548,7 +1548,7 @@ def test_nss_editor_breadcrumbs_update_on_cursor_move(qtbot: QtBot, installation
     if block.isValid():
         cursor.setPosition(block.position())
         editor.ui.codeEdit.setTextCursor(cursor)
-        QtBot.wait(200)
+        QApplication.processEvents()
 
         # Breadcrumbs should update
         assert editor._breadcrumbs is not None
@@ -1563,7 +1563,7 @@ def test_nss_editor_breadcrumbs_navigation(qtbot: QtBot, installation: HTInstall
     editor.new()
 
     editor.ui.codeEdit.setPlainText(complex_nss_script)
-    QtBot.wait(200)
+    QApplication.processEvents()
 
     # Set up breadcrumbs path
     editor._breadcrumbs.set_path(["test.nss", "Function: main"])
@@ -1588,7 +1588,7 @@ def test_nss_editor_navigate_to_symbol_function(qtbot: QtBot, installation: HTIn
     editor.new()
 
     editor.ui.codeEdit.setPlainText(complex_nss_script)
-    QtBot.wait(200)
+    QApplication.processEvents()
 
     # Find the actual line number of "void main()" in the script
     lines = complex_nss_script.split("\n")
@@ -1628,7 +1628,7 @@ def test_nss_editor_breadcrumb_click_navigates_to_function(qtbot: QtBot, install
     editor.new()
 
     editor.ui.codeEdit.setPlainText(complex_nss_script)
-    QtBot.wait(200)
+    QApplication.processEvents()
 
     # Click on "Function: main" breadcrumb
     # This calls _on_breadcrumb_clicked which calls _navigate_to_symbol
@@ -1652,12 +1652,12 @@ def test_nss_editor_breadcrumbs_context_detection(qtbot: QtBot, installation: HT
     editor.new()
 
     editor.ui.codeEdit.setPlainText(complex_nss_script)
-    QtBot.wait(300)  # Wait for parsing
+    QApplication.processEvents()  # Wait for parsing
 
     # Manually trigger breadcrumb update (language server may not be available in tests)
     # _update_breadcrumbs_from_symbols always adds at least the filename
     editor._update_breadcrumbs_from_symbols([])  # Empty symbols list, but still adds filename
-    QtBot.wait(50)  # Wait for Qt to process updates
+    QApplication.processEvents()  # Wait for Qt to process updates
 
     # Breadcrumbs should have path
     assert editor._breadcrumbs is not None
@@ -1803,7 +1803,7 @@ def test_nss_editor_code_folding_shortcuts(qtbot: QtBot, installation: HTInstall
     editor.new()
 
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
-    QtBot.wait(200)
+    QApplication.processEvents()
 
     # Move cursor to foldable region
     cursor = editor.ui.codeEdit.textCursor()
@@ -2002,7 +2002,7 @@ def test_nss_editor_folding_and_breadcrumbs_together(qtbot: QtBot, installation:
     editor.new()
 
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
-    QtBot.wait(300)
+    QApplication.processEvents()
 
     # Fold a region
     cursor = editor.ui.codeEdit.textCursor()
@@ -2028,7 +2028,7 @@ def test_nss_editor_multiple_features_integration(qtbot: QtBot, installation: HT
     editor.new()
 
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
-    QtBot.wait(300)
+    QApplication.processEvents()
 
     # Add bookmark
     cursor = editor.ui.codeEdit.textCursor()
@@ -2065,7 +2065,7 @@ def test_nss_editor_fold_empty_block(qtbot: QtBot, installation: HTInstallation)
 
     script = "void test() {\n}"
     editor.ui.codeEdit.setPlainText(script)
-    QtBot.wait(200)
+    QApplication.processEvents()
 
     # Try to fold (should handle gracefully)
     cursor = editor.ui.codeEdit.textCursor()
@@ -2088,7 +2088,7 @@ def test_nss_editor_fold_nested_blocks(qtbot: QtBot, installation: HTInstallatio
     }
 }"""
     editor.ui.codeEdit.setPlainText(script)
-    QtBot.wait(200)
+    QApplication.processEvents()
 
     # Fold outer block
     cursor = editor.ui.codeEdit.textCursor()
@@ -2157,7 +2157,7 @@ def test_nss_editor_fold_malformed_code(qtbot: QtBot, installation: HTInstallati
 
     script = "void test() {\n    // Missing closing brace"
     editor.ui.codeEdit.setPlainText(script)
-    QtBot.wait(200)
+    QApplication.processEvents()
 
     # Should handle gracefully
     cursor = editor.ui.codeEdit.textCursor()
@@ -2178,7 +2178,7 @@ def test_nss_editor_breadcrumbs_multiple_functions(qtbot: QtBot, installation: H
 void func2() {
 }"""
     editor.ui.codeEdit.setPlainText(script)
-    QtBot.wait(200)
+    QApplication.processEvents()
 
     # Move cursor to second function
     cursor = editor.ui.codeEdit.textCursor()
@@ -2188,7 +2188,7 @@ void func2() {
     if block.isValid():
         cursor.setPosition(block.position())
         editor.ui.codeEdit.setTextCursor(cursor)
-        QtBot.wait(200)
+        QApplication.processEvents()
 
         # Update breadcrumbs
         editor._update_breadcrumbs()
@@ -2222,7 +2222,7 @@ def test_nss_editor_foldable_regions_large_file(qtbot: QtBot, installation: HTIn
     editor.ui.codeEdit.setPlainText(large_script)
     # Manually trigger foldable regions update (QTimer might not fire reliably in headless mode)
     editor.ui.codeEdit._update_foldable_regions()
-    QtBot.wait(50)  # Wait for Qt to process updates
+    QApplication.processEvents()  # Wait for Qt to process updates
 
     # Should detect foldable regions
     assert hasattr(editor.ui.codeEdit, "_foldable_regions")
@@ -2238,7 +2238,7 @@ def test_nsseditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
 
     # Trigger help dialog with the correct file for NSSEditor
     editor._show_help_dialog("NSS-File-Format.md")
-    QtBot.wait(200)  # Wait for dialog to be created
+    QApplication.processEvents()  # Wait for dialog to be created
 
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
@@ -2264,7 +2264,7 @@ def test_nsseditor_breadcrumbs_update_performance(qtbot: QtBot, installation: HT
     editor.new()
 
     editor.ui.codeEdit.setPlainText(complex_nss_script)
-    QtBot.wait(200)
+    QApplication.processEvents()
 
     # Rapidly move cursor
     for line in range(5):
@@ -2276,7 +2276,7 @@ def test_nsseditor_breadcrumbs_update_performance(qtbot: QtBot, installation: HT
             cursor.setPosition(block.position())
             editor.ui.codeEdit.setTextCursor(cursor)
             editor._update_breadcrumbs()
-            QtBot.wait(10)
+            QApplication.processEvents()
 
     # Should not crash
     assert editor._breadcrumbs is not None

@@ -332,7 +332,7 @@ def set_text_via_ui_dialog(qtbot: QtBot, editor: DLGEditor, item: DLGStandardIte
     assert item.link is not None, "item.link should not be None"
     # Call edit_text to open the dialog
     editor.edit_text(indexes=[item.index()], source_widget=editor.ui.dialogTree)
-    QtBot.wait(50)  # Wait for dialog to appear
+    QApplication.processEvents()  # Wait for dialog to appear
     
     # Find and interact with the dialog
     dialogs = [w for w in QApplication.topLevelWidgets() if isinstance(w, LocalizedStringDialog)]
@@ -340,10 +340,10 @@ def set_text_via_ui_dialog(qtbot: QtBot, editor: DLGEditor, item: DLGStandardIte
         dialog = dialogs[0]
         # Set to no TLK string (stringref = -1) to enable direct text editing
         qtbot.mouseClick(dialog.ui.stringrefNoneButton, Qt.MouseButton.LeftButton)
-        QtBot.wait(10)
+        QApplication.processEvents()
         # Set the text in the dialog
         dialog.ui.stringEdit.setPlainText(text)
-        QtBot.wait(10)
+        QApplication.processEvents()
         # Accept the dialog
         ok_button = dialog.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok)
         if ok_button:
@@ -351,7 +351,7 @@ def set_text_via_ui_dialog(qtbot: QtBot, editor: DLGEditor, item: DLGStandardIte
         else:
             # Fallback: use accept() directly
             dialog.accept()
-        qtbot.wait(10)
+        QApplication.processEvents()
 
 
 # ============================================================================

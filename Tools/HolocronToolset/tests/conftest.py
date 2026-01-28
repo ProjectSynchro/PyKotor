@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import faulthandler
 import os
 import pytest
 import sys
@@ -5,9 +8,78 @@ import cProfile
 import logging
 import pstats
 import signal
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
+
+# Load repository .env early so K1_PATH/K2_PATH are available for module-level imports
+def _load_dotenv_if_available() -> Path | None:
+    try:
+        from dotenv import load_dotenv  # type: ignore
+
+        # tests/conftest.py -> tests -> HolocronToolset -> Tools -> PyKotor (repo root)
+        repo_root = Path(__file__).resolve().parents[3]
+        env_path = repo_root / ".env"
+        if env_path.exists():
+            load_dotenv(dotenv_path=env_path, override=False)
+            return env_path
+    except ImportError:
+        # Fall back to minimal manual parsing to honor existing .env without dependency
+        repo_root = Path(__file__).resolve().parents[3]
+        env_path = repo_root / ".env"
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                os.environ.setdefault(key, value)
+            return env_path
+    return None
+
+
+def _ensure_kotor_env_paths() -> None:
+    """Populate K1_PATH/K2_PATH env vars using .env or default discovery.
+
+    If the vars are missing or point to non-existent directories, fall back to
+    auto-detection via pykotor.tools.path.find_kotor_paths_from_default.
+    """
+
+    def _valid(path_str: str | None) -> bool:
+        return bool(path_str) and Path(path_str).is_dir()
+
+    # Try to preserve any already-valid env values
+    k1_env = os.environ.get("K1_PATH")
+    k2_env = os.environ.get("K2_PATH")
+
+    if _valid(k1_env) and _valid(k2_env):
+        return
+
+    try:
+        from pykotor.tools.path import find_kotor_paths_from_default  # type: ignore
+        from pykotor.common.misc import Game  # type: ignore
+
+        discovered = find_kotor_paths_from_default()
+        if not _valid(k1_env):
+            for path in discovered.get(Game.K1, []):
+                if path.is_dir():
+                    os.environ["K1_PATH"] = str(path)
+                    break
+        if not _valid(k2_env):
+            for path in discovered.get(Game.K2, []):
+                if path.is_dir():
+                    os.environ["K2_PATH"] = str(path)
+                    break
+    except (ImportError, AttributeError, KeyError):
+        # Best effort: leave env as-is if discovery fails
+        pass
+
+
+_load_dotenv_if_available()
+_ensure_kotor_env_paths()
 
 # Normalize PYTHONPATH for cross-platform compatibility
 # This ensures PYTHONPATH works on Windows (semicolons) and Unix/Linux/macOS (colons)
@@ -480,8 +552,15 @@ def _prewarm_installation(installation: HTInstallation, skip_streams: bool = Tru
 
 
 @pytest.fixture(scope="session")
-def installation(k1_path):
+def installation(k1_path: str):
     """Creates a shared HTInstallation instance for K1 (session-scoped singleton)."""
+    # Skip if path doesn't exist
+    if not os.path.exists(k1_path) or not os.path.isdir(k1_path):
+        pytest.skip(f"K1 installation path not found: {k1_path}")
+    # Check if chitin.key exists
+    if not os.path.exists(os.path.join(k1_path, "chitin.key")):
+        pytest.skip(f"K1 installation incomplete (no chitin.key): {k1_path}")
+    
     inst = HTInstallation(k1_path, "Test Installation", tsl=False)
     # Skip stream loading for most tests - saves ~45 seconds
     _prewarm_installation(inst, skip_streams=True)
@@ -489,8 +568,15 @@ def installation(k1_path):
 
 
 @pytest.fixture(scope="session")
-def tsl_installation(k2_path):
+def tsl_installation(k2_path: str):
     """Creates a shared HTInstallation instance for K2/TSL (session-scoped singleton, lazy-loaded)."""
+    # Skip if path doesn't exist
+    if not os.path.exists(k2_path) or not os.path.isdir(k2_path):
+        pytest.skip(f"K2 installation path not found: {k2_path}")
+    # Check if chitin.key exists
+    if not os.path.exists(os.path.join(k2_path, "chitin.key")):
+        pytest.skip(f"K2 installation incomplete (no chitin.key): {k2_path}")
+    
     inst = HTInstallation(k2_path, "Test TSL Installation", tsl=True)
     # Skip stream loading for most tests - saves ~45 seconds
     _prewarm_installation(inst, skip_streams=True)
@@ -626,6 +712,28 @@ def pytest_runtest_protocol(item, nextitem):
     profiler = cProfile.Profile()
     start_time = time.time()
 
+    # Hard per-test timeout: some GUI tests can hang indefinitely (e.g. Qt event loop waits).
+    # We enforce an upper bound here without relying on external plugins.
+    # If a test exceeds this limit, the entire pytest process is forcibly terminated.
+    test_timeout_seconds = 120
+
+    def timeout_handler():
+        try:
+            duration = time.time() - start_time
+            print(f"\nERROR: Test '{item.nodeid}' exceeded {test_timeout_seconds}s (duration: {duration:.2f}s). Forcibly terminating...")
+            # Dump all thread stacks to help diagnose hangs.
+            try:
+                faulthandler.dump_traceback(all_threads=True)
+            except Exception as e:  # pragma: no cover
+                print(f"Failed to dump tracebacks: {e!r}")
+        finally:
+            # Hard-exit to ensure hung tests cannot stall CI or local runs.
+            os._exit(1)
+
+    timeout_timer = threading.Timer(test_timeout_seconds, timeout_handler)
+    timeout_timer.daemon = True
+    timeout_timer.start()
+
     def signal_handler(sig, frame):
         print(f"\nCaught signal {sig}, dumping profile stats...")
         profiler.disable()
@@ -659,6 +767,11 @@ def pytest_runtest_protocol(item, nextitem):
         yield
     finally:
         profiler.disable()
+        # Cancel the timeout watchdog for this test.
+        try:
+            timeout_timer.cancel()
+        except Exception:
+            pass
         signal.signal(signal.SIGINT, original_handler)
 
         duration = time.time() - start_time

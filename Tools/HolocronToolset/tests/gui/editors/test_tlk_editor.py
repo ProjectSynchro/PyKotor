@@ -409,7 +409,7 @@ def test_tlk_editor_load_real_file(qtbot: QtBot, installation: HTInstallation, t
     index = editor.proxy_model.index(0, 0)
     assert index.isValid(), "First index should be valid"
     editor.ui.talkTable.setCurrentIndex(index)
-    QtBot.wait(50)  # Wait for selection to update
+    QApplication.processEvents()  # Wait for selection to update
 
     # Verify text edit is populated with actual entry text
     loaded_text = editor.ui.textEdit.toPlainText()
@@ -444,7 +444,7 @@ def test_tlk_editor_table_selection(qtbot: QtBot, installation: HTInstallation):
         editor.ui.talkTable.setCurrentIndex(proxy_index)
         # Manually trigger selection_changed to ensure widgets update
         editor.selection_changed()
-        QtBot.wait(50)  # Wait for any async updates
+        QApplication.processEvents()  # Wait for any async updates
 
         # Widgets should update with entry text
         current_text = editor.ui.textEdit.toPlainText()
@@ -668,7 +668,7 @@ def test_tlk_editor_language_change_via_menu(qtbot: QtBot, installation: HTInsta
     # Trigger French language action
     french_action = editor._language_actions[Language.FRENCH]
     french_action.trigger()
-    QtBot.wait(100)  # Wait for signal processing
+    QApplication.processEvents()  # Wait for signal processing
 
     # Verify language changed
     assert editor.language == Language.FRENCH, "Language should be French after triggering action"
@@ -889,7 +889,7 @@ def test_tlk_editor_language_menu_actions_triggerable(qtbot: QtBot, installation
         if lang in editor._language_actions:
             action = editor._language_actions[lang]
             action.trigger()
-            QtBot.wait(50)  # Wait for signal processing
+            QApplication.processEvents()  # Wait for signal processing
 
             # Verify language changed
             assert editor.language == lang, f"Language should be {lang.name} after triggering action"
@@ -930,7 +930,7 @@ def test_tlkeditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
 
     # Trigger help dialog with the correct file for TLKEditor
     editor._show_help_dialog("TLK-File-Format.md")
-    QtBot.wait(200)  # Wait for dialog to be created
+    QApplication.processEvents()  # Wait for dialog to be created
 
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
@@ -966,7 +966,7 @@ def test_tlk_editor_table_selection_modes(qtbot: QtBot, installation: HTInstalla
     index = editor.proxy_model.index(2, 0)
     assert index.isValid(), "Index 2 should be valid"
     editor.ui.talkTable.setCurrentIndex(index)
-    QtBot.wait(50)  # Wait for selection to update
+    QApplication.processEvents()  # Wait for selection to update
 
     current = editor.ui.talkTable.currentIndex()
     assert current.isValid(), "Current index should be valid"

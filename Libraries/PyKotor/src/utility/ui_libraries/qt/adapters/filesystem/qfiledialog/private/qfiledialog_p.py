@@ -980,13 +980,34 @@ class QFileDialogPrivate:
 
         Ensures that both views are synchronized and showing the same directory.
 
-        If this function is removed, the tree and list views might become desynchronized,
-        leading to inconsistent directory views and potential user confusion.
+        This implementation guards against transient model mismatches. If the mapped
+        index does not belong to a view's current model, we avoid calling
+        setRootIndex with a mismatched index (which emits Qt warnings) and instead
+        clear the root to keep the view consistent.
         """
         idx: QModelIndex = self.mapFromSource(index)
         assert self.qFileDialogUi is not None, f"{self.__class__.__name__}.setRootIndex: UI is None"
-        self.qFileDialogUi.treeView.setRootIndex(idx)
-        self.qFileDialogUi.listView.setRootIndex(idx)
+
+        tree = self.qFileDialogUi.treeView
+        listv = self.qFileDialogUi.listView
+
+        # Only set root index if the mapped index belongs to the view's model
+        try:
+            if idx.isValid() and tree.model() == idx.model():
+                tree.setRootIndex(idx)
+            else:
+                tree.setRootIndex(QModelIndex())
+        except Exception:
+            # Be defensive — do not raise from UI helper
+            tree.setRootIndex(QModelIndex())
+
+        try:
+            if idx.isValid() and listv.model() == idx.model():
+                listv.setRootIndex(idx)
+            else:
+                listv.setRootIndex(QModelIndex())
+        except Exception:
+            listv.setRootIndex(QModelIndex())
 
     def currentView(self) -> QAbstractItemView | None:
         """Returns the currently active view. Matches C++ QFileDialogPrivate::currentView() implementation."""
@@ -2571,9 +2592,26 @@ class QFileDialogPrivate:
         self,
         index: QModelIndex,
     ) -> QModelIndex:
-        """Map index from proxy model to source model. Matches C++ QFileDialogPrivate::mapToSource() implementation."""
-        # Match C++: return proxyModel ? proxyModel->mapToSource(index) : index;
-        return self.proxyModel.mapToSource(index) if self.proxyModel else index
+        """Map index from proxy model to source model. Matches C++ QFileDialogPrivate::mapToSource() implementation.
+
+        Only attempt to call the proxy's mapToSource if the provided index actually
+        belongs to the proxy model. Passing an index from a different model into
+        QSortFilterProxyModel.mapToSource() can trigger Qt warnings and lead to
+        undefined behaviour. If the check fails, the original index is returned
+        unchanged.
+        """
+        if not self.proxyModel:
+            return index
+
+        # Only map if the index belongs to this proxy model; otherwise return the
+        # index unchanged. Guard against unexpected exceptions just in case.
+        try:
+            if index.model() == self.proxyModel:
+                return self.proxyModel.mapToSource(index)
+        except Exception:
+            pass
+
+        return index
 
     def mapFromSource(
         self,
