@@ -402,7 +402,7 @@ class LIPEditor(Editor):
 
     def setup_ui(self):
         """Set up the UI elements."""
-        from toolset.uic.qtpy.editors.lip_editor import Ui_Form
+        from toolset.uic.qtpy.editors.lip import Ui_Form
 
         self.ui = Ui_Form()
         self.ui.setupUi(self.central_widget)

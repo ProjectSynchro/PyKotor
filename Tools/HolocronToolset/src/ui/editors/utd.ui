@@ -451,7 +451,7 @@
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QSpinBox" name="currenHpSpin">
+            <widget class="QSpinBox" name="currentHpSpin">
              <property name="minimumSize">
               <size>
                <width>30</width>
