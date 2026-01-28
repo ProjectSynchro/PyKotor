@@ -126,3 +126,6 @@ Tools/*/.github/
 !.vscode
 !.pre-commit-config.yaml
 _tmp*
+vendor/**/
+test_output.txt
+.cursor/plans/*.md
