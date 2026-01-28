@@ -1,17 +1,17 @@
 {
   "config": {
-    "MD013": false,
-    "MD012": false,
-    "MD040": false,
-    "MD060": false,
-    "MD041": false,
-    "MD033": false,
-    "MD024": false,
-    "MD051": false,
-    "MD036": false,
-    "MD003": false,
     "MD001": false,
+    "MD003": false,
+    "MD012": false,
+    "MD013": false,
+    "MD024": false,
     "MD025": false,
-    "MD035": false
+    "MD033": false,
+    "MD035": false,
+    "MD036": false,
+    "MD040": false,
+    "MD041": false,
+    "MD051": false,
+    "MD060": false
   }
 }

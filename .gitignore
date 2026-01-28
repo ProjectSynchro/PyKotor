@@ -130,3 +130,4 @@ vendor/**/
 test_output.txt
 .cursor/plans/*.md
 Tools/HolocronToolset/src/ui/**/*_ui.py
+Tools/tests/

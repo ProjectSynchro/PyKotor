@@ -1,8 +1,4 @@
--r Libraries/PyKotor/requirements.txt
--r Tools/HolocronToolset/requirements.txt
--r Tools/HoloPatcher/requirements.txt
--r Tools/KotorDiff/requirements.txt
-#-r Tools/BatchPatcher/requirements.txt
+-r ./requirements.txt
 autoflake
 mypy
 pylint
