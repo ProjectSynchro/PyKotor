@@ -1,4 +1,4 @@
-"""Comprehensive tests for Qt adapter stubs to ensure 1:1 API compatibility.
+"""Unit Tests for Qt adapter stubs to ensure 1:1 API compatibility.
 
 This test suite validates that all Qt adapter classes properly implement
 the Qt API with correct method signatures, return types, and behavior.

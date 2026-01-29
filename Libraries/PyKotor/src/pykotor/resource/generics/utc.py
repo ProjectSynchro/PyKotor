@@ -501,7 +501,6 @@ def construct_utc(
         - CSWSCreature::LoadCreature @ 0x00500350 - Loads creature template
         - CSWSCreatureStats::ReadStatsFromGff @ 0x00560e60 - Reads creature stats from GFF
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorUTC/UTCCompiler.cs (UTC compilation from GFF)
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/module/ModuleCreature.ts (UTC loading via ResourceLoader)
 

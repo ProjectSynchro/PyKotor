@@ -43,7 +43,6 @@ class InbuiltNCSCompiler(NCSCompiler):
           * Initializes script for virtual machine
         - InitializeScript @ 0x005d461b - Initializes script execution context
         - CVirtualMachineInternal - NWScript virtual machine implementation
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Note: PyKotor implements its own NSS compiler that produces NCS bytecode compatible
         with the game engine's virtual machine. The compiler follows NWScript language specification

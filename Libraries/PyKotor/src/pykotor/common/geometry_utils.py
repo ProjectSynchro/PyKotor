@@ -9,11 +9,10 @@ References:
         Based on swkotor.exe GFF structure:
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
         - Vector3/Vector4 structures used in GFF fields
-        Original BioWare engine binaries
-        Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py:1448-1577 - Tangent space calculation
-        Derivations and Other Implementations:
-        ----------
-        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5470-5596
+        - Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py:1448-1577 - Tangent space calculation
+    Derivations and Other Implementations:
+    ----------
+        - https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5470-5596
 
 
 """
@@ -29,7 +28,7 @@ from utility.common.geometry import Matrix4, Vector3, Vector4
 if TYPE_CHECKING:
     from numpy import ndarray
 
-    from pykotor.resource.formats.mdl.mdl_data import MDLMesh, MDLSkin
+    from pykotor.resource.formats.mdl import MDLMesh, MDLSkin
 
 
 def compute_per_vertex_tangent_space(
@@ -55,13 +54,8 @@ def compute_per_vertex_tangent_space(
         Based on swkotor.exe GFF structure:
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
         - Vector3/Vector4 structures used in GFF fields
-        Original BioWare engine binaries
-        Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py:1449-1578
-        Derivations and Other Implementations:
-        ----------
-        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5470-5596
-
-
+        - Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py:1448-1577 - Tangent space calculation
+        - https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5470-5596
     """
     from pykotor.resource.formats.mdl.io_mdl import _calculate_face_normal, _calculate_tangent_space
     
@@ -147,9 +141,9 @@ def determine_vertex_format_requirements(mesh: MDLMesh) -> dict[str, bool]:
         Based on swkotor.exe GFF structure:
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
         - Vector3/Vector4 structures used in GFF fields
-        Original BioWare engine binaries
-        Derivations and Other Implementations:
-        ----------
+
+    Derivations and Other Implementations:
+    ----------
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1169-1197
 
 

@@ -14,7 +14,6 @@ References:
         - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
         - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
         - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - ERF/RIM file handling
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         Tools/BatchPatcher/src/batchpatcher/__main__.py - Original implementation
 
 

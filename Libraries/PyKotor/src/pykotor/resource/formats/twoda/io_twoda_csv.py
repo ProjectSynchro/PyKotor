@@ -34,7 +34,6 @@ class TwoDACSVReader(ResourceReader):
           * "CSWClass::LoadFeatTable: Can't load feat.2da" @ 0x0074b3c8
           * "CSWClass::LoadSkillsTable: Can't load skills.2da" @ 0x0074b454
           * "CSWClass::LoadSpellsTable: Can't load spells.2da" @ 0x0074b5c0
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Note: CSV format is PyKotor-specific, not a standard game format.
         The engine uses binary 2DA format exclusively. CSV conversion allows easier editing

@@ -33,7 +33,6 @@ class TPCBMPWriter(ResourceWriter):
         - ReadTextureHeader @ 0x0070ece0, @ 0x00710430, @ 0x00710810 - Reads texture headers
         - CreateProcessedTexture @ 0x00424dd0 - Creates processed texture (1131 bytes, 7 callees)
         - Standard BMP file format specification (Windows Bitmap)
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Note: BMP is a standard format, but TPC conversion uses engine's texture loading functions
     

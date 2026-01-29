@@ -4,13 +4,6 @@ This module provides abstract base classes for game objects that can be used
 by any engine implementation. These classes define the interface and common
 functionality for creatures, items, doors, placeables, and other game objects.
 
-References:
-----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries (Game object system from swkotor.exe, swkotor2.exe)
-
-    Note: Game objects are the fundamental entities in KotOR modules
-
 Derivations and Other Implementations:
 ----------
     https://github.com/th3w1zard1/KotOR.js/tree/master/src/engine/GameObject.ts (TypeScript game object)
@@ -69,12 +62,6 @@ class GameObject(ABC):
 
     This class defines the common interface and functionality for all game objects
     in KotOR modules, including creatures, items, doors, placeables, etc.
-
-    References:
-    ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries (Game object base class from swkotor.exe, swkotor2.exe)
-
     """
 
     def __init__(self, object_type: ObjectType, state: GameObjectState | None = None) -> None:

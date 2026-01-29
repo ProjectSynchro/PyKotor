@@ -1,5 +1,5 @@
 """
-Comprehensive tests for GFF Editor - testing EVERY possible manipulation.
+Unit Tests for GFF Editor - testing EVERY possible manipulation.
 
 Each test focuses on a specific manipulation and validates save/load roundtrips.
 The GFF Editor is a generic editor that supports all GFF field types and operations.

@@ -21,49 +21,35 @@ All tests use real widget instances without mocking to ensure actual behavior.
 
 from __future__ import annotations
 
-import platform
-import sys
 import tempfile
 import time
 import unittest
-from dataclasses import dataclass
+
 from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Final, NamedTuple, Sequence
 
-from qtpy.QtCore import QCoreApplication, QDir, QMimeData, QModelIndex, QPoint, QRect, QSize, Qt, QUrl
-from qtpy.QtGui import QColor, QDrag, QFont, QFontMetrics, QPalette, QPixmap
-from qtpy.QtTest import QSignalSpy, QTest
+from qtpy.QtCore import QCoreApplication, Qt
+from qtpy.QtGui import QPalette
+from qtpy.QtTest import QTest
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QApplication,
-    QComboBox,
-    QFrame,
-    QGridLayout,
-    QHBoxLayout,
     QHeaderView,
     QLabel,
     QLineEdit,
     QListView,
     QMainWindow,
-    QMenu,
     QMenuBar,
-    QPushButton,
-    QSizePolicy,
     QSplitter,
-    QStackedWidget,
     QStatusBar,
-    QStyle,
-    QTabWidget,
     QToolBar,
     QToolButton,
     QTreeView,
-    QVBoxLayout,
-    QWidget,
 )
 
 if TYPE_CHECKING:
-    from qtpy.QtWidgets import QAbstractButton
+    pass
 
 
 # =============================================================================

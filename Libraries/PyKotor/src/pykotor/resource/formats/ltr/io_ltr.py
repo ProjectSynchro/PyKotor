@@ -30,7 +30,6 @@ class LTRBinaryReader(ResourceReader):
         - Double-letter probabilities: 28 blocks of start[28], middle[28], end[28] arrays
         - Triple-letter probabilities: 28x28 blocks of start[28], middle[28], end[28] arrays
         - Used for random name generation during character creation
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------

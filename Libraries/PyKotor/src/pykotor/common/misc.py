@@ -26,10 +26,11 @@ class ResRef(str):
     They serve as identifiers for game resources stored in archives (BIF, ERF, RIM)
     or as standalone files in the Override folder.
 
+    NOTE: ResRef Case-INSensitivity is critical for cross-platform compatibility
+
     Used in:
     -------
-        - Encapsulated Resource Files (ERF/MOD/SAV)
-        - RIM/BIF archives
+        - BioWare Archive/Container Files (BIF/ERF/MOD/RIM/SAV)
         - Filenames in the Override folder
         - GFF field values (ResRef field type)
         - Resource lookups and references throughout the engine
@@ -38,10 +39,9 @@ class ResRef(str):
     ----------
         Based on swkotor.exe GFF structure:
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
-        Original BioWare engine binaries
-        Original BioWare Odyssey Engine (ResRef format specification)
-        Derivations and Other Implementations:
-        ----------
+
+    Derivations and Other Implementations:
+    ----------
         https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Common/Data/ResRef.cs:9-72 (ResRef class, max length 16)
         https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/TSLPatcher.Core/Common/ResRef.cs:12-132 (ResRef class with validation)
         https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/TSLPatcher.Core/Common/ResRef.cs:15 (MaxLength constant = 16)
@@ -49,8 +49,6 @@ class ResRef(str):
         https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File (ResRef GFF field type)
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/ResourceTypes.ts (Resource type definitions)
         https://github.com/th3w1zard1/KotOR-dotNET/tree/master/AuroraFile.cs (ResRef in C#)
-
-        Note: ResRef case-insensitivity is critical for cross-platform compatibility
 
     Restrictions:
     ------------

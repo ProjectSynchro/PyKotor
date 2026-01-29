@@ -40,7 +40,6 @@ class KEYBinaryReader(ResourceReader):
         - "CExoKeyTable::DestroyTable: Resource %s still in demand during table deletion" @ 0x0073e0d8 - Error message
         - "CExoKeyTable::AddKey: Duplicate Resource " @ 0x0073e184 - Duplicate resource error
         - KEY file format: "KEY " type, "V1.0" version, BIF count, key count, file table offset, key table offset
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Missing Features:
         ----------------

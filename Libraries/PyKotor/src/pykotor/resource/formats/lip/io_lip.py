@@ -28,7 +28,6 @@ class LIPBinaryReader(ResourceReader):
         - "LIPS:" path prefix @ 0x00745898, @ 0x007458ac - LIP file path prefixes
         - "FLIPSTYLE" string @ 0x0073e424 - Flip style identifier
         - "FlipAxisX" @ 0x00752940, "FlipAxisY" @ 0x00752934 - Flip axis identifiers
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
 
 
     """

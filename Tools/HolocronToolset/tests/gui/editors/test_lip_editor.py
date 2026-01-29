@@ -1,5 +1,5 @@
 """
-Comprehensive tests for LIP Editor - testing EVERY possible manipulation.
+Unit Tests for LIP Editor - testing EVERY possible manipulation.
 
 Each test focuses on a specific manipulation and validates save/load roundtrips.
 Following the ARE and ERF editor test patterns for comprehensive coverage.
@@ -2326,7 +2326,7 @@ def test_lip_editor_time_input_precision(qtbot: QtBot, installation: HTInstallat
         assert abs(editor.time_input.value() - value) < 0.0001
 
 # ============================================================================
-# SHAPE SELECTION COMPREHENSIVE TESTS
+# SHAPE SELECTION UNIT TESTS
 # ============================================================================
 
 def test_lip_editor_shape_select_all_items(qtbot: QtBot, installation: HTInstallation):
@@ -2352,7 +2352,7 @@ def test_lip_editor_shape_select_set_each_shape(qtbot: QtBot, installation: HTIn
         assert editor.shape_select.currentText() == shape.name
 
 # ============================================================================
-# PREVIEW LIST COMPREHENSIVE TESTS
+# PREVIEW LIST UNIT TESTS
 # ============================================================================
 
 def test_lip_editor_preview_list_initial_state(qtbot: QtBot, installation: HTInstallation):
@@ -2414,7 +2414,7 @@ def test_lip_editor_preview_list_multiple_selections(qtbot: QtBot, installation:
         assert abs(editor.time_input.value() - float(i)) < 0.001
 
 # ============================================================================
-# DURATION COMPREHENSIVE TESTS
+# DURATION UNIT TESTS
 # ============================================================================
 
 def test_lip_editor_duration_various_values(qtbot: QtBot, installation: HTInstallation):
@@ -2600,7 +2600,7 @@ def test_lip_editor_load_binary_format(qtbot: QtBot, installation: HTInstallatio
     assert abs(editor.lip.length - 10.0) < 0.001
 
 # ============================================================================
-# PHONEME MAPPING COMPREHENSIVE TESTS
+# PHONEME MAPPING UNIT TESTS
 # ============================================================================
 
 def test_lip_editor_phoneme_map_completeness(qtbot: QtBot, installation: HTInstallation):
@@ -2671,7 +2671,7 @@ def test_lip_editor_play_preview_without_lip(qtbot: QtBot, installation: HTInsta
         mock_warning.assert_called_once()
 
 # ============================================================================
-# CONTEXT MENU COMPREHENSIVE TESTS
+# CONTEXT MENU UNIT TESTS
 # ============================================================================
 
 def test_lip_editor_context_menu_add_action(qtbot: QtBot, installation: HTInstallation):

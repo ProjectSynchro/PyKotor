@@ -56,15 +56,11 @@ jobs:
         run: |
           uv pip install --upgrade pip setuptools wheel build
           uv pip install -e Libraries/PyKotor
-          uv pip install -e Libraries/PyKotorGL
-          uv pip install -e Libraries/PyKotorFont
           uv pip install -e .[dev]
 
       - name: Verify imports
         run: |
           python -c "import pykotor; print('PyKotor imported successfully')"
-          python -c "import pykotor.gl; print('PyKotorGL imported successfully')"
-          python -c "import pykotor.font; print('PyKotorFont imported successfully')"
 
       - name: Run tests
         run: |
@@ -89,8 +85,6 @@ jobs:
       matrix:
         package:
           - Libraries/PyKotor
-          - Libraries/PyKotorGL
-          - Libraries/PyKotorFont
           - Tools/HolocronToolset
           - Tools/HoloPatcher
           - Tools/BatchPatcher
@@ -185,13 +179,11 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install -e Libraries/PyKotor
-          uv pip install -e Libraries/PyKotorGL
-          uv pip install -e Libraries/PyKotorFont
           uv pip install mypy types-all
 
       - name: Run mypy
         run: |
-          mypy Libraries/PyKotor/src Libraries/PyKotorGL/src Libraries/PyKotorFont/src --config-file pyproject.toml || true
+          mypy Libraries/PyKotor/src --config-file pyproject.toml || true
         continue-on-error: true
 """
 
@@ -234,16 +226,12 @@ jobs:
         run: |
           uv pip install --upgrade pip setuptools wheel
           uv pip install -e Libraries/PyKotor
-          uv pip install -e Libraries/PyKotorGL
-          uv pip install -e Libraries/PyKotorFont
           uv pip install pytest pytest-cov pytest-xdist pytest-html
 
       - name: Run tests with coverage
         run: |
           pytest tests/ \\
             --cov=Libraries/PyKotor/src/pykotor \\
-            --cov=Libraries/PyKotorGL/src/pykotor \\
-            --cov=Libraries/PyKotorFont/src/pykotor \\
             --cov-report=xml \\
             --cov-report=html \\
             --cov-report=term \\
@@ -320,16 +308,6 @@ jobs:
         run: |
           python -m build
 
-      - name: Build PyKotorGL
-        working-directory: Libraries/PyKotorGL
-        run: |
-          python -m build
-
-      - name: Build PyKotorFont
-        working-directory: Libraries/PyKotorFont
-        run: |
-          python -m build
-
       - name: Build HolocronToolset
         working-directory: Tools/HolocronToolset
         run: |
@@ -357,18 +335,6 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: Libraries/PyKotor/dist/
-          print-hash: true
-
-      - name: Publish PyKotorGL to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: Libraries/PyKotorGL/dist/
-          print-hash: true
-
-      - name: Publish PyKotorFont to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: Libraries/PyKotorFont/dist/
           print-hash: true
 
       - name: Upload release artifacts
@@ -486,26 +452,6 @@ updates:
 
   - package-ecosystem: "pip"
     directory: "/Libraries/PyKotor"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "chore(pykotor)"
-      include: "scope"
-
-  - package-ecosystem: "pip"
-    directory: "/Libraries/PyKotorGL"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "chore(pykotorgl)"
-      include: "scope"
-
-  - package-ecosystem: "pip"
-    directory: "/Libraries/PyKotorFont"
     schedule:
       interval: "weekly"
       day: "monday"

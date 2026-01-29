@@ -1,5 +1,5 @@
 """
-Comprehensive tests for Save Game Editor - testing REAL functionality.
+Unit Tests for Save Game Editor - testing REAL functionality.
 
 Tests all 8 tasks completed:
 1. Screenshot image dimensions (aspect ratio preservation)
@@ -12,7 +12,7 @@ Tests all 8 tasks completed:
 8. Journal tab redesign
 
 All tests use REAL save game structures and test actual UI interactions.
-Comprehensive tests for save game resource detection and field preservation.
+Unit Tests for save game resource detection and field preservation.
 
 Tests that:
 1. Resources from save games are properly detected

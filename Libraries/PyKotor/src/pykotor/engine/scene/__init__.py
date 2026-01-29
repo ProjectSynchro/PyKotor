@@ -8,7 +8,6 @@ References:
         Based on swkotor.exe scene graph:
         - Scene management and rendering pipeline
         - Area loading and room visibility (VIS files)
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
 
 
 """

@@ -22,7 +22,6 @@ References:
           * Writes field_data, field_indices, list_indices
         - GFFVersion string "V3.2" @ 0x0073e2c8 - Hardcoded GFF version identifier
         - "gff" string @ 0x0074dd00 - GFF format identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Note: GFF is used for all structured game data; critical to understand for modding.
         All game resources (UTM, GUI, UTI, UTP, UTC, UTD, UTW, UTT, UTS, UTE, PTH, JRL, IFO, ARE, FAC, DLG)
@@ -531,7 +530,6 @@ class GFFStruct(ComparableMixin, dict):
         - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
         - CResGFF::WriteGFFData @ 0x004113d0 - Writes GFF header and data sections
         - GFFVersion string "V3.2" @ 0x0073e2c8 - Hardcoded GFF version identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         GFF struct format specification
 
 

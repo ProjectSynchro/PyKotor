@@ -34,7 +34,6 @@ References:
 ----------
         Based on swkotor.exe NWScript structure:
         - NCS (NWScript Compiled Script) bytecode format
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         - Language Server Protocol specification
         
         Note: This is a language server for NSS (NWScript Source) files, providing

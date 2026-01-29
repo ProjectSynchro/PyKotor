@@ -13,55 +13,26 @@ Tests verify exact conformance to Windows IFileOpenDialog/IFileSaveDialog behavi
 
 from __future__ import annotations
 
-import os
-import sys
 import tempfile
 import unittest
+
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Final
+from typing import ClassVar, Final
 
 from qtpy.QtCore import (
     QCoreApplication,
-    QDir,
-    QMimeData,
-    QModelIndex,
-    QPoint,
-    QRect,
-    QSize,
     Qt,
-    QTimer,
-    QUrl,
 )
-from qtpy.QtGui import QColor, QDragEnterEvent, QDropEvent, QFont, QKeyEvent, QPalette
-from qtpy.QtTest import QSignalSpy, QTest
+from qtpy.QtTest import QTest
 from qtpy.QtWidgets import (
-    QAbstractItemView,
     QApplication,
-    QCompleter,
     QFileDialog,
-    QFileSystemModel,
-    QHBoxLayout,
-    QHeaderView,
-    QLabel,
     QLineEdit,
     QListView,
-    QMainWindow,
-    QMenu,
-    QProgressBar,
     QPushButton,
-    QScrollBar,
-    QSizePolicy,
-    QSplitter,
-    QStackedWidget,
-    QStatusBar,
-    QStyle,
-    QToolBar,
-    QToolButton,
     QTreeView,
-    QVBoxLayout,
     QWidget,
 )
-
 
 # =============================================================================
 # TEST CONSTANTS

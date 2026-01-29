@@ -1,5 +1,5 @@
 """
-Comprehensive tests for reference search UI components - testing ALL functionality.
+Unit Tests for reference search UI components - testing ALL functionality.
 
 Each test uses real installation data and pytest-qt for headless testing.
 Tests cover dialogs, editor context menus, and FileResults display.

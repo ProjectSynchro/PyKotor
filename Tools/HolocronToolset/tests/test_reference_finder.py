@@ -1,5 +1,5 @@
 """
-Comprehensive tests for reference_finder.py - testing ALL functionality.
+Unit Tests for reference_finder.py - testing ALL functionality.
 
 Each test uses real installation data - no mocking allowed.
 Tests use pytest-qt for headless testing.

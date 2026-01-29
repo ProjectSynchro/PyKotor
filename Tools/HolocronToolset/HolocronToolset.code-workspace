@@ -18,7 +18,6 @@
 		],
 		"cursorpyright.analysis.extraPaths": [
 			"${workspaceFolder}/../../Libraries/PyKotor/src",
-			"${workspaceFolder}/../../Engines/PyKotorEngine/src",
 			"${workspaceFolder}/src"
 		]
     }

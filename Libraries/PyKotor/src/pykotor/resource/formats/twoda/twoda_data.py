@@ -21,7 +21,6 @@ References:
           * "CSWClass::LoadFeatTable: Can't load feat.2da" @ 0x0074b3c8
           * "CSWClass::LoadSkillsTable: Can't load skills.2da" @ 0x0074b454
           * "CSWClass::LoadSpellsTable: Can't load spells.2da" @ 0x0074b5c0
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         2DA file format specification
         Binary Format (Version 2.b):
         ----------------------------
@@ -97,7 +96,6 @@ class TwoDA(ComparableMixin):
         - C2DA::GetINTEntry @ 0x00414a50 - Gets integer cell value
         - C2DA::GetFLOATEntry @ 0x00414b20 - Gets float cell value
         - C2DA::GetCExoStringEntry @ 0x00414bf0 - Gets string cell value
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         2DA file format specification
 
@@ -924,7 +922,6 @@ class TwoDARow(ComparableMixin):
         - C2DA::GetINTEntry @ 0x00414a50 - Gets integer cell value
         - C2DA::GetFLOATEntry @ 0x00414b20 - Gets float cell value
         - C2DA::GetCExoStringEntry @ 0x00414bf0 - Gets string cell value
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------

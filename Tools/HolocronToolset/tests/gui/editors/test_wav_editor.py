@@ -1,5 +1,5 @@
 """
-Comprehensive tests for WAV/Audio Editor - testing EVERY possible manipulation.
+Unit Tests for WAV/Audio Editor - testing EVERY possible manipulation.
 
 Each test focuses on a specific manipulation and validates save/load roundtrips.
 Tests cover:

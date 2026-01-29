@@ -19,7 +19,6 @@ References:
         - ".\\streamwaves" @ 0x0074df40, "d:\\streamwaves" @ 0x0074df50 - Stream waves paths
         - SFX format: 470-byte obfuscation header starting with 0xFF 0xF3 0x60 0xC4
         - MP3-in-WAV: RIFF header with size == 50, 58-byte header before MP3 data
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------
@@ -80,7 +79,6 @@ class WAVBinaryReader(ResourceReader):
         - "HD0:STREAMMUSIC\\%s" @ 0x0074c304 - Stream music path format
         - SFX format: 470-byte obfuscation header starting with 0xFF 0xF3 0x60 0xC4
         - MP3-in-WAV: RIFF header with size == 50, 58-byte header before MP3 data
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------

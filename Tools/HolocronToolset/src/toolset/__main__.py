@@ -18,7 +18,6 @@ def setup_paths():
         file_path.parent.parent,  # ./Tools/HolocronToolset/src/
         repo_root / "Tools" / "KotorDiff" / "src",  # ./Tools/KotorDiff/src/
         repo_root / "Libraries" / "PyKotor" / "src",  # ./Libraries/PyKotor/src/ (contains both pykotor and utility namespaces)
-        repo_root / "Libraries" / "PyKotorGL" / "src",  # ./Libraries/PyKotorGL/src/
     ]
 
     for path in paths_to_add:

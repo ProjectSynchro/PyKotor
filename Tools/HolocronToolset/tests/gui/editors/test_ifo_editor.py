@@ -1,5 +1,5 @@
 """
-EXHAUSTIVE and COMPREHENSIVE tests for IFO Editor - testing EVERY possible manipulation and user interaction.
+EXHAUSTIVE and Unit Tests for IFO Editor - testing EVERY possible manipulation and user interaction.
 
 The IFO (module info) format is responsible for:
 - Module identity (name, tag, VO ID, description, HAK files)

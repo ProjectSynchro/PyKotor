@@ -39,8 +39,6 @@ python -m pip install --upgrade pip setuptools wheel
 # Install development dependencies
 Write-Host "`nInstalling development dependencies..." -ForegroundColor Yellow
 pip install -e Libraries/PyKotor
-pip install -e Libraries/PyKotorGL
-pip install -e Libraries/PyKotorFont
 pip install -e .[dev]
 
 # Install pre-commit hooks

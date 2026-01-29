@@ -2079,7 +2079,7 @@ class TestMDLAsciiBinaryIntegration(unittest.TestCase):
 
 
 class TestMDLAsciiComprehensive(unittest.TestCase):
-    """Comprehensive tests combining multiple features."""
+    """Unit Tests combining multiple features."""
 
     def test_complex_model_all_features(self):
         """Test model with all features combined."""

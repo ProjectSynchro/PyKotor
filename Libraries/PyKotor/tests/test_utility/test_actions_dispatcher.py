@@ -1,4 +1,4 @@
-"""Comprehensive tests for ActionsDispatcher with declarative action definitions.
+"""Unit Tests for ActionsDispatcher with declarative action definitions.
 
 This test suite validates that ActionsDispatcher works correctly with declarative
 action definitions, multiprocessing execution, error handling, and integration scenarios.
@@ -8,14 +8,12 @@ from __future__ import annotations
 
 import os
 import tempfile
-import time
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator
 
 import pytest
 
-from qtpy.QtCore import QDir, Qt
 from qtpy.QtWidgets import QApplication
 
 if TYPE_CHECKING:

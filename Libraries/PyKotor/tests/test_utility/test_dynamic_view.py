@@ -4,9 +4,9 @@ import sys
 import unittest
 
 from typing import cast
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
-from qtpy.QtCore import QModelIndex, QRect, QSize, Qt
+from qtpy.QtCore import QModelIndex
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QAbstractItemView, QApplication, QColumnView, QListView, QTableView, QTreeView
 

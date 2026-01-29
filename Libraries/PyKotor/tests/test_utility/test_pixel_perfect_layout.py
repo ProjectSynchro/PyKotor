@@ -20,45 +20,22 @@ Tolerance levels:
 
 from __future__ import annotations
 
-import platform
 import unittest
-from enum import Enum, IntEnum
-from typing import TYPE_CHECKING, ClassVar, Final
 
-from qtpy.QtCore import QCoreApplication, QMargins, QPoint, QRect, QSize, Qt
-from qtpy.QtGui import QColor, QFont, QPalette, QRegion
-from qtpy.QtTest import QTest
+from enum import IntEnum
+from typing import ClassVar, Final
+
+from qtpy.QtCore import QCoreApplication, QMargins, QRect
 from qtpy.QtWidgets import (
     QApplication,
     QComboBox,
-    QFrame,
-    QGroupBox,
-    QHBoxLayout,
-    QHeaderView,
-    QLabel,
     QLayout,
     QLineEdit,
-    QListView,
-    QMainWindow,
-    QMenuBar,
     QPushButton,
-    QScrollArea,
-    QScrollBar,
-    QSizePolicy,
-    QSplitter,
-    QStackedWidget,
-    QStatusBar,
-    QStyle,
-    QStyleOption,
-    QTabBar,
-    QTabWidget,
     QToolBar,
     QToolButton,
-    QTreeView,
-    QVBoxLayout,
     QWidget,
 )
-
 
 # =============================================================================
 # TOLERANCE LEVELS

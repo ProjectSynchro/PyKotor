@@ -46,13 +46,6 @@ SETUPS = [
         "description": "Read, modify and write files used by KotOR's game engine.",
         "extra": "",
     },
-    {
-        "path": Path("Libraries/PyKotorGL/setup.py"),
-        "name": "pykotorgl",
-        "version": "2.0.2",
-        "description": "OpenGL rendering module for PyKotor - renders KotOR modules and scenes.",
-        "extra": "",
-    },
 ]
 
 for setup_info in SETUPS:

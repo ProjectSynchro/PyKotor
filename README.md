@@ -1,23 +1,29 @@
 # PyKotor
 
-A comprehensive Python library for reading and modifying file formats used by the game [Knights of the Old Republic](https://en.wikipedia.org/wiki/Star_Wars:_Knights_of_the_Old_Republic_(video_game)) and its [sequel](https://en.wikipedia.org/wiki/Star_Wars_Knights_of_the_Old_Republic_II:_The_Sith_Lords).
+A Python library for reading and modifying file formats used by the game [Knights of the Old Republic](https://en.wikipedia.org/wiki/Star_Wars:_Knights_of_the_Old_Republic_(video_game)) and its [sequel](https://en.wikipedia.org/wiki/Star_Wars_Knights_of_the_Old_Republic_II:_The_Sith_Lords).
 
 ## Table of Contents
 
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Available Tools](#available-tools)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-- [License](#license)
+- [PyKotor](#pykotor)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+    - [Quick Install](#quick-install)
+    - [Standard Install](#standard-install)
+  - [Quick Start](#quick-start)
+    - [Using the Library](#using-the-library)
+    - [Using the Tools](#using-the-tools)
+  - [Available Tools](#available-tools)
+  - [Documentation](#documentation)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Features
 
 - **Complete file format support** for KotOR and TSL game files
 - **Cross-platform** (Windows, macOS, Linux)
-- **Comprehensive toolset** for modding and development
+- **Holocron Toolset** for modding and development
 - **Modern Python** (3.8+)
 - **Type-annotated** API with extensive documentation
 

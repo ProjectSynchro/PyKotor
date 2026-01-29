@@ -1,4 +1,4 @@
-"""Comprehensive tests for WAV file handling.
+"""Unit Tests for WAV file handling.
 
 Tests cover:
 - Reading standard and obfuscated WAV files

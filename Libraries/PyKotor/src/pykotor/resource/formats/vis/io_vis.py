@@ -23,7 +23,6 @@ class VISAsciiReader(ResourceReader):
         - LoadVisibility @ 0x004568d0 - Loads VIS file for area visibility culling
         - "%s/%s.VIS" format string @ 0x007415e8 - VIS file path format
         - ".vis" extension @ 0x00741604 - VIS file extension identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Note: VIS files define which rooms are visible from other rooms, used for occlusion culling
         and level-of-detail management in KotOR modules. VIS files are ASCII text files with a

@@ -17,49 +17,29 @@ All tests match the corresponding Qt6 C++ tests in relevant_qt_src/tests/ to ens
 from __future__ import annotations
 
 import os
-import sys
-import tempfile
 import time
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
 from qtpy.QtCore import (
-    QAbstractItemModel,
-    QByteArray,
-    QCollator,
     QDateTime,
     QDir,
-    QElapsedTimer,
-    QEventLoop,
     QFile,
     QFileDevice,
     QFileInfo,
-    QMutex,
-    QMutexLocker,
     QModelIndex,
-    QObject,
-    QStandardPaths,
-    QThread,
     QTimeZone,
-    QTimer,
-    QUrl,
-    QVariant,
-    QWaitCondition,
-    Qt,
-    Signal,  # pyright: ignore[reportPrivateImportUsage]
+    Qt,  # pyright: ignore[reportPrivateImportUsage]
 )
 from qtpy.QtGui import QIcon
 from qtpy.QtTest import QSignalSpy, QTest
 from qtpy.QtWidgets import (
-    QAbstractItemModelTester,
     QApplication,
     QFileIconProvider,
     QFileSystemModel,
-    QFileSystemWatcher,
-    QStyle,
-    QWidget,
 )
 
 from utility.ui_libraries.qt.adapters.filesystem.pyextendedinformation import PyQExtendedInformation
@@ -71,7 +51,7 @@ from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemwatcher import PyFi
 from utility.ui_libraries.qt.adapters.filesystem.qfilesystemmodelnodekey import PyQFileSystemModelNodePathKey
 
 if TYPE_CHECKING:
-    from pytestqt.qtbot import QtBot  # type: ignore[import-untyped]
+    pass  # type: ignore[import-untyped]
 
 # Constants matching C++ tests
 WAITTIME = 1000  # milliseconds
@@ -101,7 +81,7 @@ def try_wait(expr, timeout_ms: int = 5000) -> tuple[bool, bool]:
 # ============================================================================
 
 class TestPyQExtendedInformation:
-    """Comprehensive tests for PyQExtendedInformation matching Qt6 C++ QExtendedInformation."""
+    """Unit Tests for PyQExtendedInformation matching Qt6 C++ QExtendedInformation."""
     
     def test_extended_information_constructor_default(self, temp_test_dir):
         """Test default constructor."""
@@ -255,7 +235,7 @@ class TestPyQExtendedInformation:
 # ============================================================================
 
 class TestPyFileSystemNode:
-    """Comprehensive tests for PyFileSystemNode matching Qt6 C++ QFileSystemNode."""
+    """Unit Tests for PyFileSystemNode matching Qt6 C++ QFileSystemNode."""
     
     def test_node_constructor_default(self):
         """Test default constructor."""
@@ -445,7 +425,7 @@ class TestPyFileSystemNode:
 # ============================================================================
 
 class TestPyFileSystemModelSorter:
-    """Comprehensive tests for PyFileSystemModelSorter matching Qt6 C++ QFileSystemModelSorter."""
+    """Unit Tests for PyFileSystemModelSorter matching Qt6 C++ QFileSystemModelSorter."""
     
     def test_sorter_constructor(self):
         """Test constructor."""
@@ -594,7 +574,7 @@ class TestPyFileSystemModelSorter:
 # ============================================================================
 
 class TestPyFileSystemWatcher:
-    """Comprehensive tests for PyFileSystemWatcher matching Qt6 C++ QFileSystemWatcher."""
+    """Unit Tests for PyFileSystemWatcher matching Qt6 C++ QFileSystemWatcher."""
     
     @pytest.fixture
     def watcher(self, qtbot):
@@ -708,7 +688,7 @@ class TestPyFileSystemWatcher:
 # ============================================================================
 
 class TestPyFileInfoGatherer:
-    """Comprehensive tests for PyFileInfoGatherer matching Qt6 C++ QFileInfoGatherer."""
+    """Unit Tests for PyFileInfoGatherer matching Qt6 C++ QFileInfoGatherer."""
     
     @pytest.fixture
     def gatherer(self, qtbot):
@@ -809,7 +789,7 @@ class TestPyFileInfoGatherer:
 # ============================================================================
 
 class TestPyFileSystemModel:
-    """Comprehensive tests for PyFileSystemModel matching Qt6 C++ tst_qfilesystemmodel.cpp."""
+    """Unit Tests for PyFileSystemModel matching Qt6 C++ tst_qfilesystemmodel.cpp."""
     
     @pytest.fixture
     def model(self, qtbot):
@@ -1280,10 +1260,10 @@ class TestComponentPerformance:
         assert len(files) >= len(paths) or isinstance(files, list)
 
 
-# Continue with more comprehensive tests...
+# Continue with more unit tests...
 
 # ============================================================================
-# ADDITIONAL COMPREHENSIVE TESTS MATCHING C++ TESTS
+# ADDITIONAL UNIT TESTS MATCHING C++ TESTS
 # ============================================================================
 
 class TestPyFileSystemModelAdvanced:
@@ -1976,5 +1956,5 @@ class TestComponentBehavior:
 
 
 # ============================================================================
-# END OF COMPREHENSIVE TESTS
+# END OF UNIT TESTS
 # ============================================================================

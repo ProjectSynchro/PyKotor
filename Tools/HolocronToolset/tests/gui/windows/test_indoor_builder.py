@@ -1,5 +1,5 @@
 """
-Comprehensive tests for Indoor Map Builder - testing ALL functionality.
+Unit Tests for Indoor Map Builder - testing ALL functionality.
 
 Each test focuses on a specific feature and validates proper behavior.
 Tests use real file system operations - no mocking allowed.
@@ -5651,7 +5651,7 @@ class TestWarpPointAdvanced:
 
 
 class TestKeyboardShortcutsComprehensive:
-    """Comprehensive tests for all keyboard shortcuts."""
+    """Unit Tests for all keyboard shortcuts."""
 
     def test_ctrl_x_cut(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, real_kit_component: KitComponent):
         """Test Ctrl+X cut shortcut."""
@@ -5859,7 +5859,7 @@ class TestComprehensiveWorkflows:
 
 
 class TestModuleKitManagerComprehensive:
-    """Comprehensive tests for ModuleKitManager functionality from test_indoor_diff.py."""
+    """Unit Tests for ModuleKitManager functionality from test_indoor_diff.py."""
 
     def test_module_kit_manager_functionality(self, installation: HTInstallation):
         """Test ModuleKitManager basic functionality."""
@@ -8182,7 +8182,7 @@ class TestKitModuleEquivalence:
 
 
 class TestModuleKitMouseDragAndConnect:
-    """Comprehensive tests for dragging ModuleKit rooms with mouse and connecting them.
+    """Unit Tests for dragging ModuleKit rooms with mouse and connecting them.
 
     These tests verify:
     - Mouse-based dragging of rooms from ModuleKit component list

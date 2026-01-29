@@ -11,7 +11,6 @@ References:
         Based on swkotor.exe resource validation:
         - CExoResMan::GetResRef - Resource reference lookup
         - CResGFF, CRes2DA, CResTPC - Resource format validators
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         scripts/kotor/check_txi_files.py - TXI file checking
         scripts/kotor/check_missing_resources.py - Missing resource checking

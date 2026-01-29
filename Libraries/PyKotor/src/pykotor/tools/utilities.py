@@ -11,7 +11,6 @@ References:
         - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
         - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
         - Load2DArray @ 0x004143b0 - Loads 2DA array data
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         Tools/diff operations/ - File diffing implementation
         Libraries/PyKotor/src/pykotor/tslpatcher/diff/ - Structured diff engine
 
@@ -55,7 +54,6 @@ def diff_files(
         Based on swkotor.exe GFF structure:
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
         - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         Tools/diff operations/src/kotordiff/differ.py
         Libraries/PyKotor/src/pykotor/tslpatcher/diff/structured.py
 
@@ -231,7 +229,6 @@ def grep_in_file(
         Based on swkotor.exe GFF structure:
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
         - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
 
 
     """
@@ -349,7 +346,6 @@ def get_file_stats(file_path: Path) -> dict[str, int | str]:
         Based on swkotor.exe GFF structure:
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
         - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
 
 
     """
@@ -407,7 +403,6 @@ def validate_file(file_path: Path) -> tuple[bool, str]:
         Based on swkotor.exe GFF structure:
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
         - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
 
 
     """

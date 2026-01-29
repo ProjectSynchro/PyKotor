@@ -66,8 +66,6 @@ python -m pip install --upgrade pip setuptools wheel
 echo ""
 echo "Installing development dependencies..."
 pip install -e Libraries/PyKotor
-pip install -e Libraries/PyKotorGL
-pip install -e Libraries/PyKotorFont
 pip install -e .[dev]
 
 # Install pre-commit hooks

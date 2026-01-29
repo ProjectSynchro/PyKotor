@@ -17,11 +17,10 @@ Tests cover:
 
 from __future__ import annotations
 
-import os
 import tempfile
 import unittest
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Final
+from typing import ClassVar, Final
 
 from qtpy.QtCore import (
     QCoreApplication,
@@ -32,22 +31,16 @@ from qtpy.QtCore import (
     QUrl,
 )
 from qtpy.QtGui import (
-    QDrag,
     QDragEnterEvent,
     QDragMoveEvent,
     QDropEvent,
-    QPainter,
-    QPixmap,
 )
-from qtpy.QtTest import QSignalSpy, QTest
+from qtpy.QtTest import QTest
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QApplication,
-    QFileSystemModel,
     QListView,
-    QMainWindow,
     QTreeView,
-    QWidget,
 )
 
 

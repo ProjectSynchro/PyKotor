@@ -35,7 +35,6 @@ class LYTAsciiReader(ResourceReader):
         - "lyt" resource type string @ 0x0074dc9c - LYT resource type identifier
         - "beginlayout" string @ 0x0074d384 - Layout loading start marker
         - "donelayout" string @ 0x0074d370 - Layout loading completion marker
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
 
 
     """

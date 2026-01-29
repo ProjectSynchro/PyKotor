@@ -31,23 +31,16 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from qtpy.QtCore import (
-    QCoreApplication,
-    QEventLoop,
-    QModelIndex,
-    QSize,
-    QTimer,
     Qt,
 )
 from qtpy.QtTest import QSignalSpy, QTest
 from qtpy.QtWidgets import (
     QApplication,
-    QFileDialog as RealQFileDialog,
-    QListView,
-    QTreeView,
 )
 
 from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import (
@@ -58,7 +51,7 @@ from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended 
 )
 
 if TYPE_CHECKING:
-    from pathlib import Path as PathType
+    pass
 
 
 class TestQFileDialogExtendedComprehensive(unittest.TestCase):

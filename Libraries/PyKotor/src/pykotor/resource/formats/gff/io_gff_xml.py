@@ -41,7 +41,6 @@ class GFFXMLReader(ResourceReader):
         - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
         - CResGFF::WriteGFFData @ 0x004113d0 - Writes GFF header and data sections
         - GFFVersion string "V3.2" @ 0x0073e2c8 - Hardcoded GFF version identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Note: XML format is PyKotor-specific conversion format, not a standard game format.
         The engine uses binary GFF format exclusively. XML conversion allows easier editing

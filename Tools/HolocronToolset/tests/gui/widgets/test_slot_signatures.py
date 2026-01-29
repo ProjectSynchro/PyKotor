@@ -1,4 +1,4 @@
-"""Comprehensive tests for slot method signatures in widget classes.
+"""Unit Tests for slot method signatures in widget classes.
 
 This test suite ensures all slot methods properly accept the arguments
 emitted by Qt signals, preventing TypeError exceptions at runtime.

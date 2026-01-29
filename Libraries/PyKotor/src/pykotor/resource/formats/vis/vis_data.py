@@ -11,7 +11,6 @@ References:
         - LoadVisibility @ 0x004568d0 - Loads VIS file for area visibility culling
         - "%s/%s.VIS" format string @ 0x007415e8 - VIS file path format
         - ".vis" extension @ 0x00741604 - VIS file extension identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         Derivations and Other Implementations:
         ----------
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/VISObject.ts:33-276
@@ -68,7 +67,6 @@ class VIS(ComparableMixin):
           * Stores parent-child room relationships
         - "%s/%s.VIS" format string @ 0x007415e8 - VIS file path format
         - ".vis" extension @ 0x00741604 - VIS file extension identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------

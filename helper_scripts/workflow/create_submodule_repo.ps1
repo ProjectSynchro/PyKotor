@@ -41,8 +41,8 @@
     Creates a repo for Tools/HolocronToolset and adds it as a submodule.
 
 .EXAMPLE
-    .\create_submodule_repo.ps1 -Library PyKotorGL -RepoName pykotorgl-lib
-    Creates a repo named 'pykotorgl-lib' for Libraries/PyKotorGL.
+    .\create_submodule_repo.ps1 -Library PyKotor -RepoName pykotor-lib
+    Creates a repo named 'pykotor-lib' for Libraries/PyKotor.
 
 .EXAMPLE
     .\create_submodule_repo.ps1 -Tool KotorCLI -DryRun

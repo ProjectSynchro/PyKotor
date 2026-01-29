@@ -25,7 +25,6 @@ References:
         - ".txi" extension string @ 0x0073f09c - TXI file extension
         - "txi" resource type string @ 0x0074dd94 - TXI resource type identifier
         - "TXI" string @ 0x0075fb40 - TXI format identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         https://nwn.wiki/display/NWN1/TXI - NWN TXI documentation (similar format)
         Derivations and Other Implementations:
         ----------

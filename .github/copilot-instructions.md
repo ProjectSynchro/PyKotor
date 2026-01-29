@@ -3,12 +3,12 @@
 Concise, actionable guidance to get an AI productive fast. Prefer small, surgical changes that respect existing architecture.
 
 ## Core idea 🔧
-- Core vs Tools: Libraries under `Libraries/` (PyKotor, PyKotorGL, PyKotorFont); Tools under `Tools/` (HolocronToolset, HoloPatcher, KotorDiff, BatchPatcher).
+- Core vs Tools: Libraries under `Libraries/` (e.g. PyKotor); Tools under `Tools/` (HolocronToolset, HoloPatcher, KotorDiff, BatchPatcher).
 - Tools sit atop the core library. Keep library APIs stable; UI/tool code depends on them.
 - Priorities: game game engine fidelity, type-safety, reproducible builds. See essentials below.
 
 **Workspace Layout**
-- Libraries: `Libraries/PyKotor/src`, `Libraries/PyKotorGL/src`, `Libraries/PyKotorFont/src`.
+- Libraries: `Libraries/PyKotor/src`
 - Tools: `Tools/HolocronToolset`, `Tools/HoloPatcher`, `Tools/KotorDiff`, `Tools/BatchPatcher`.
 - Scripts & docs: `compile/` (build helpers), `docs/` (setup, tests), `wiki/` (format references).
 
@@ -23,8 +23,8 @@ Concise, actionable guidance to get an AI productive fast. Prefer small, surgica
 - Respect excludes (numpy, PyQt5, PIL, matplotlib, multiprocessing, PyOpenGL, PyGLM, dl_translate, torch) as defined in tasks.
 
 **Testing & Linting**
-- Tests: `pytest` or `uv run pytest`. TSLPatcher comprehensive suite lives under `tests/test_tslpatcher/` (see docs/QUICK_START.md for targeted commands).
-- Test assertions must be precise and strict: never simplify or weaken assertions. All tests should be asserting comprehensive data and contents at the strictest most meticulous level possible (20-30 assertions each) e.g. do not ever assert 'length' or greater/less than checks, assertion and tests must be checking absolutes and values. Not just 'has content' or 'is not empty'.
+- Tests: `pytest` or `uv run pytest`. TSLPatcher unit testing suite lives under `tests/test_tslpatcher/`.
+- Test assertions must be precise and strict: never simplify or weaken assertions. All tests should be asserting data and contents at the strictest most meticulous level possible (20-30 assertions each) e.g. do not ever assert 'length' or greater/less than checks, assertion and tests must be checking absolutes and values. Not just 'has content' or 'is not empty'.
 - Static checks: `ruff` (style), `mypy` (types), `pylint` (analysis). Prefer targeted runs on changed modules.
 
 **Conventions & Patterns**
@@ -65,26 +65,11 @@ Concise, actionable guidance to get an AI productive fast. Prefer small, surgica
 ```powershell
 # Setup (Windows)
 uv sync
-. .venv\Scripts\activate
-uv pip install -e Libraries/PyKotor -e Tools/HolocronToolset
+.venv\Scripts\Activate.ps1
 
-# Run tools quickly...
-# ...with uv
 uv --directory Tools/HoloPatcher/src run --active holopatcher/__main__.py
 $Env:QT_API="PyQt6"
 uv --directory Tools/HolocronToolset/src run --active toolset/__main__.py
-# ...with python directly
-./.venv/Scripts/python Tools/HoloPatcher/src/holopatcher/__main__.py
-$Env:QT_API="PyQt6"
-./.venv/Scripts/python Tools/HolocronToolset/src/toolset/__main__.py
-
-# Tests (TSLPatcher comprehensive suite)
-./.venv/Scripts/python -m ensurepip
-./.venv/Scripts/python -m pip install -r requirements-dev.txt
-./.venv/Scripts/python -m pytest Libraries/PyKotor/src/pykotor/tests/test_tslpatcher/test_diff_comprehensive.py -v
-
-# Build via VS Code tasks (PyInstaller)
-# Use provided tasks; don’t add custom flags unless necessary.
 ```
 
 **Quick Dev Runs (src/__main__.py)**
@@ -94,17 +79,6 @@ python Tools\KotorDiff\src\__main__.py
 python Tools\BatchPatcher\src\__main__.py
 python Tools\MDLDecompile\src\__main__.py
 # Pattern (others): python Tools\<ToolName>\src\__main__.py
-```
-
-**Preferred Smoke Tests**
-```powershell
-# Fast, targeted tests
-python tests/test_tslpatcher/test_diff_comprehensive.py Test2DAMemoryComprehensive.test_addrow_stores_row_index -v
-python tests/test_tslpatcher/test_diff_comprehensive.py Test2DAMemoryComprehensive.test_2damemory_cross_reference_chain -v
-
-# Quick suite loops
-python tests/test_tslpatcher/test_diff_comprehensive.py TestGFFComprehensive -v
-python tests/test_tslpatcher/test_diff_comprehensive.py TestIntegrationComprehensive -v
 ```
 
 **VS Code Build Tasks (labels)**

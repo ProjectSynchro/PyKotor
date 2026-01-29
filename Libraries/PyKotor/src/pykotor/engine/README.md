@@ -34,8 +34,8 @@ A complete game engine implementation using Panda3D for rendering Knights of the
 ## Architecture
 
 ```
-PyKotorEngine/
-├── src/pykotorengine/
+src/
+├── engine/
 │   ├── engine.py          # Main engine class (ShowBase wrapper)
 │   ├── loaders/           # Resource loaders
 │   │   └── mdl_loader.py  # MDL → Panda3D converter
@@ -55,27 +55,6 @@ PyKotorEngine/
 - Python 3.11+
 - Panda3D 1.10.13+
 - PyKotor (from `Libraries/PyKotor/`)
-
-### Install Dependencies
-
-```bash
-# From PyKotorEngine directory
-pip install -r requirements.txt
-
-# Install Panda3D if not already installed
-pip install panda3d>=1.10.13
-
-# Ensure PyKotor is installed
-cd ../../Libraries/PyKotor
-pip install -e .
-```
-
-### Install PyKotorEngine
-
-```bash
-cd Engines/PyKotorEngine
-pip install -e .
-```
 
 ## Usage
 
@@ -175,8 +154,7 @@ This implementation follows patterns from:
 
 Follows PyKotor conventions:
 
-- `Engines/PyKotorEngine/` - Main engine directory
-- `src/pykotorengine/` - Python package namespace
+- `pykotor/engine/` - Main engine directory
 - `examples/` - Example applications
 - `tests/` - Unit tests (pytest)
 

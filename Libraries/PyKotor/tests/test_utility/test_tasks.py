@@ -3,12 +3,12 @@ from __future__ import annotations
 import sys
 import unittest
 
-import pytest
-
 from concurrent.futures import Future
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
+
+import pytest
 
 from qtpy.QtWidgets import QApplication
 from typing_extensions import Literal

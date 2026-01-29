@@ -190,11 +190,8 @@ exclude = [
   "**/__pycache__/**",
 ]
 extraPaths = [
-  "Engines/PyKotorEngine/src",
   "Libraries/PyKotor/src",
   "Libraries/PyKotor/src",
-  "Libraries/PyKotorFont/src",
-  "Libraries/PyKotorGL/src",
   "Tools/BatchPatcher/src",
   "Tools/HolocronAI/src",
   "Tools/HolocronToolset/src",

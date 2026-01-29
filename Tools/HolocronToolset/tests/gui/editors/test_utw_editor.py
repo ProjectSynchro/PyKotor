@@ -1,5 +1,5 @@
 """
-Comprehensive tests for UTW Editor - testing EVERY possible manipulation.
+Unit Tests for UTW Editor - testing EVERY possible manipulation.
 
 Each test focuses on a specific manipulation and validates save/load roundtrips.
 Following the ARE editor test pattern for comprehensive coverage.

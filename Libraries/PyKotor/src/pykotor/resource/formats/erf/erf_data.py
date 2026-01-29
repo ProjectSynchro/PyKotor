@@ -14,7 +14,6 @@ References:
           * Opens file with "rb" mode
           * Reads header and resource entries
         - "MOD V1.0" string @ 0x0074539c - MOD file version identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         ERF file format specification
         Binary Format:
         -------------
@@ -86,7 +85,6 @@ class ERFResource(ArchiveResource):
         - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
         - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
         - "MOD V1.0" string @ 0x0074539c - MOD file version identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs - Key and Resource entries
         https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File Formats/ERF.cs - Key and Resource classes
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/interface/resource/IERFKeyEntry.ts - Key entry interface
@@ -124,7 +122,6 @@ class ERFType(Enum):
         - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
         - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
         - "MOD V1.0" string @ 0x0074539c - MOD file version identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs - FileType field
         https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File Formats/ERF.cs - FileType reading
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/ERFObject.ts - File type default
@@ -159,7 +156,6 @@ class ERF(BiowareArchive):
         - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
         - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
         - "MOD V1.0" string @ 0x0074539c - MOD file version identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs - FileRoot class
         https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File Formats/ERF.cs - Complete ERF implementation
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/ERFObject.ts - ERFObject class

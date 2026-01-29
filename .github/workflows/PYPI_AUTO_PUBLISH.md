@@ -273,7 +273,6 @@ Detailed logs show:
 2. Workflow detects default branch: main ✓
 3. Discovers packages:
    - pykotor: 2.0.1 (PyPI: 2.0.0) → Publish ✓
-   - pykotorgl: 2.0.0 (PyPI: 2.0.0) → Skip
    - holocrontoolset: 4.0.0a7 (PyPI: 4.0.0a6) → Publish ✓
 4. Builds pykotor and holocrontoolset
 5. Publishes both to PyPI

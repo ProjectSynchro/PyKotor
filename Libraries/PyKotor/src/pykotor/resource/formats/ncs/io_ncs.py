@@ -32,7 +32,6 @@ class NCSBinaryReader(ResourceReader):
         - LoadScripts @ 0x0066c420, @ 0x0066c740, @ 0x0066d180 - Loads scripts from various sources
         - ExecuteCommandExecuteScript @ 0x00535b70 - Executes NCS scripts
         - NCS file format: "NCS " type, "V1.0" version, magic byte 0x42
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Note: NCS files contain compiled NWScript bytecode. The engine loads NCS files
         as resources and executes them through the NWScript virtual machine.

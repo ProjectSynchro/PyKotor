@@ -150,7 +150,7 @@ class MDLLoader:
         node_np: NodePath | None = None
         
         # Determine node type using abstract converter
-        # Reference: Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py
+        # Reference: Libraries/PyKotor/src/pykotor/gl/models/mdl_converter.py
         converter_type = get_node_converter_type(mdl_node)
         
         # Convert based on type
@@ -701,7 +701,7 @@ class MDLLoader:
         model_name = reference.model_name
         
         # Resolve MDL and MDX resources from installation
-        # Reference: Engines/PyKotorEngine/src/pykotor/engine/panda3d/module_loader.py:231-256
+        # Reference: Libraries/PyKotor/src/pykotor/engine/panda3d/module_loader.py:231-256
         from pykotor.extract.installation import SearchLocation  # pyright: ignore[reportMissingImports]
         from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
         
@@ -765,12 +765,12 @@ class MDLLoader:
         ----------
         Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
         Original BioWare engine binaries
-        Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py - Format requirements
+        Libraries/PyKotor/src/pykotor/gl/models/mdl_converter.py - Format requirements
         /panda3d/panda3d-docs - GeomVertexArrayFormat.addColumn()
 
         """
         # Determine format requirements using abstract utility
-        # Reference: Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py
+        # Reference: Libraries/PyKotor/src/pykotor/gl/models/mdl_converter.py
         from pykotor.gl.models.mdl_converter import VertexFormatRequirements
         reqs = VertexFormatRequirements.from_mesh(mesh)
         
@@ -823,7 +823,7 @@ class MDLLoader:
 
         """
         # Determine format requirements first to ensure writer creation matches column existence
-        # Reference: Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py
+        # Reference: Libraries/PyKotor/src/pykotor/gl/models/mdl_converter.py
         from pykotor.gl.models.mdl_converter import VertexFormatRequirements
         reqs = VertexFormatRequirements.from_mesh(mesh)
         
@@ -936,7 +936,7 @@ class MDLLoader:
         prim = GeomTriangles(Geom.UHStatic)
         
         # Add face indices
-        # Reference: Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py
+        # Reference: Libraries/PyKotor/src/pykotor/gl/models/mdl_converter.py
         from pykotor.gl.models.mdl_converter import should_reverse_winding_order
         reverse_winding = should_reverse_winding_order("panda3d")
         

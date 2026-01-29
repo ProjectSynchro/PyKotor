@@ -1,4 +1,4 @@
-"""Comprehensive tests for the filesystem view with archive-as-folder support.
+"""Unit Tests for the filesystem view with archive-as-folder support.
 
 This test suite exhaustively tests the ResourceFileSystemModel and ResourceFileSystemWidget
 to ensure stability, proper functionality, and support for all operations including:

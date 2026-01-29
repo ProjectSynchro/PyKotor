@@ -24,7 +24,6 @@ class ERFBinaryReader(ResourceReader):
           * Opens file with "rb" mode
           * Reads header and resource entries
         - "MOD V1.0" string @ 0x0074539c - MOD file version identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Note: ERF files are container formats that store multiple game resources. Used for MOD files,
         save games, and other resource collections.

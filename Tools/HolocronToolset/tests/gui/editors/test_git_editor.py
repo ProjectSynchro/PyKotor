@@ -1,5 +1,5 @@
 """
-Comprehensive tests for GIT Editor - testing EVERY possible manipulation.
+Unit Tests for GIT Editor - testing EVERY possible manipulation.
 
 Each test focuses on a specific manipulation and validates save/load roundtrips.
 """

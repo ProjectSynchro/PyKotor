@@ -1,4 +1,4 @@
-"""Comprehensive tests for the unified diff command.
+"""Unit Tests for the unified diff command.
 
 Tests cover all path type combinations:
 - File vs File (GFF, 2DA, TLK, text, binary)
@@ -861,7 +861,7 @@ class TestInstallationErrorHandling:
 
 
 class TestComprehensivePathCombinations:
-    """Comprehensive tests for all path type combinations."""
+    """Unit Tests for all path type combinations."""
 
     def test_file_vs_folder(self, tmp_path: Path, capsys):
         """Test file vs folder comparison."""

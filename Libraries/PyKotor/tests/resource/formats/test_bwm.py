@@ -1,4 +1,4 @@
-"""Comprehensive tests for BWM/WOK/DWK/PWK file format.
+"""Unit Tests for BWM/WOK/DWK/PWK file format.
 
 Tests cover:
 - Header validation and version checking

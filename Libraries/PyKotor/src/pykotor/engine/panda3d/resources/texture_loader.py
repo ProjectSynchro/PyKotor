@@ -8,7 +8,6 @@ References:
         - CResTPC::CResTPC @ 0x00712ea0 - TPC resource constructor
         - GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes
         - TPC texture loading and format conversion functions
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Libraries/PyKotor/src/pykotor/resource/formats/tpc - TPC format
 
@@ -44,7 +43,6 @@ def load_tpc(tpc: TPC) -> Texture:
         - CResTPC::CResTPC @ 0x00712ea0 - TPC resource constructor
         - GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes
         - TPC texture loading and format conversion functions
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Libraries/PyKotor/src/pykotor/resource/formats/tpc - TPC format
 

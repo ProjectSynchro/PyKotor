@@ -1,5 +1,5 @@
 """
-Comprehensive tests for UTC Editor - testing EVERY possible manipulation.
+Unit Tests for UTC Editor - testing EVERY possible manipulation.
 
 Each test focuses on a specific manipulation and validates save/load roundtrips.
 Uses pytest-qt and follows the pattern from test_are_editor.py

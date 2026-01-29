@@ -3,8 +3,8 @@ from __future__ import annotations
 import pathlib
 import sys
 import unittest
+
 from tempfile import NamedTemporaryFile
-from typing import cast
 from unittest.mock import MagicMock, Mock, patch
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
@@ -27,8 +27,8 @@ if UTILITY_PATH.joinpath("utility").exists():
 from pathlib import Path
 
 from pykotor.extract.capsule import Capsule
-from pykotor.tslpatcher.patcher import ModInstaller
 from pykotor.tools.path import CaseAwarePath
+from pykotor.tslpatcher.patcher import ModInstaller
 
 
 class TestLookupResourceFunction(unittest.TestCase):

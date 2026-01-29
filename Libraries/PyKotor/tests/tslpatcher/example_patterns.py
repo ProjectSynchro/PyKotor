@@ -8,6 +8,7 @@ quick reference for common modding patterns.
 # ============================================================================
 # PATTERN 1: Simple 2DA Row Addition
 # ============================================================================
+from __future__ import annotations
 
 PATTERN_ADDROW_BASIC = """
 Real-world use case: Adding a new spell to spells.2da

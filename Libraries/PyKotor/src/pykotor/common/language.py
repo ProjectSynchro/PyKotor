@@ -15,15 +15,14 @@ class Language(IntEnum):
 
     Found in the TalkTable header, and CExoLocStrings (LocalizedStrings) within GFFs.
 
+    Note: Official releases support English, French, German, Italian, Spanish, Polish
+            Custom language support added for localization beyond official releases
+
     References:
     ----------
         Based on swkotor.exe TLK structure:
         - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
         - CTlkFile::CTlkFile @ 0x0041d810 - Constructor for TLK file reader
-        Original BioWare engine binaries (Language ID definitions from swkotor.exe, swkotor2.exe)
-
-        Note: Official releases support English, French, German, Italian, Spanish, Polish
-              Custom language support added for localization beyond official releases
 
     Derivations and Other Implementations:
     ----------

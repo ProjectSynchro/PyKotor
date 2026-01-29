@@ -20,15 +20,7 @@ from pykotor.tools.resources import (
 
 
 def cmd_texture_convert(args: Namespace, logger: Logger) -> int:
-    """Convert texture files (TPC<->TGA).
-
-    References:
-    ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-
-
-    """
+    """Convert texture files (TPC<->TGA)."""
     input_path = pathlib.Path(args.input)
 
     try:
@@ -65,7 +57,6 @@ def cmd_sound_convert(args: Namespace, logger: Logger) -> int:
         - WAV file loading with SFX header deobfuscation
         - "RIFF" format identifier @ 0x0074d324
         - "STREAMWAVES" directory @ 0x0074df34
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
 
 
     """
@@ -97,7 +88,6 @@ def cmd_model_convert(args: Namespace, logger: Logger) -> int:
         Based on swkotor.exe model format:
         - LoadModel @ 0x00464200, @ 0x0061b380, @ 0x006823f0, @ 0x006842e0, @ 0x006903d0, @ 0x006910d0 - Model loading functions
         - UnloadModel @ 0x0060c8e0, @ 0x00646650, @ 0x006825f0 - Model unloading functions
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------

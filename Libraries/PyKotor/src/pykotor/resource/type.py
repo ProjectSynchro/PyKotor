@@ -176,7 +176,6 @@ class ResourceTuple(NamedTuple):
         - ".mdl" string @ 0x00740ca8 - MDL file extension
         - ".wav" string @ 0x0074d308 - WAV file extension
         - "_s.rim" string @ 0x00752ff0 - RIM file extension pattern
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
     """
 
     type_id: int
@@ -226,7 +225,6 @@ class ResourceType(Enum):
         - GetResTypeFromExtension @ 0x005e6670, @ 0x005e7a40 - Gets resource type from extension string
         - CExoResRef - Resource reference structure used throughout engine
         - Resource type IDs defined in engine's resource system
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         wiki/Bioware-Aurora-KeyBIF.md (Aurora engine documentation)
     """
 

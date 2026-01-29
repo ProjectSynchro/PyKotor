@@ -239,7 +239,7 @@ pytest test_diff_comprehensive.py::Test2DAMemoryComprehensive -v
 
 ## ✅ Completeness Checklist
 
-- ✅ 30+ comprehensive tests
+- ✅ 30+ unit tests
 - ✅ 9 test categories covering all TSLPatcher features
 - ✅ Real-world mod pattern analysis
 - ✅ 500+ lines of explanation code

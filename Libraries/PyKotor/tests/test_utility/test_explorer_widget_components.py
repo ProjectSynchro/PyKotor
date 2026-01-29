@@ -13,50 +13,31 @@ Tests verify exact conformance to Windows 11 Explorer behavior.
 
 from __future__ import annotations
 
-import os
 import tempfile
 import unittest
+
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Final
+from typing import ClassVar, Final
 
 from qtpy.QtCore import (
     QCoreApplication,
-    QDir,
-    QModelIndex,
-    QPoint,
-    QRect,
-    QSize,
     Qt,
-    QTimer,
 )
-from qtpy.QtGui import QAction, QColor, QDragEnterEvent, QFont, QKeySequence, QPalette
-from qtpy.QtTest import QSignalSpy, QTest
+from qtpy.QtTest import QTest
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QApplication,
-    QFileSystemModel,
-    QHBoxLayout,
-    QHeaderView,
     QLabel,
-    QLineEdit,
     QListView,
     QMainWindow,
-    QMenu,
     QMenuBar,
-    QPushButton,
-    QScrollBar,
-    QSizePolicy,
-    QSplitter,
-    QStackedWidget,
     QStatusBar,
     QTabWidget,
     QToolBar,
     QToolButton,
     QTreeView,
-    QVBoxLayout,
     QWidget,
 )
-
 
 # =============================================================================
 # TEST CONSTANTS

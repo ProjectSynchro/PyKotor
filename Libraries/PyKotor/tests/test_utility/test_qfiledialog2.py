@@ -8,20 +8,42 @@ import unittest
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from qtpy.QtCore import QAbstractItemModel, QItemSelectionModel, QSize
-from qtpy.QtWidgets import QAbstractItemView, QCompleter, QHeaderView, QLayout
 import qtpy
 
-from qtpy.QtCore import QAbstractProxyModel, QCoreApplication, QDataStream, QDir, QFile, QFileInfo, QIODevice, QModelIndex, QPoint, QRandomGenerator, QSettings, QSortFilterProxyModel, QStandardPaths, QTemporaryFile, QTimer, QUrl, Qt
-
+from qtpy.QtCore import (
+    QAbstractItemModel,
+    QAbstractProxyModel,
+    QCoreApplication,
+    QDataStream,
+    QDir,
+    QFile,
+    QFileInfo,
+    QIODevice,
+    QItemSelectionModel,
+    QModelIndex,
+    QPoint,
+    QRandomGenerator,
+    QSettings,
+    QSize,
+    QSortFilterProxyModel,
+    QStandardPaths,
+    QTemporaryFile,
+    QTimer,
+    QUrl,
+    Qt,
+)
 from qtpy.QtGui import QCursor
-from qtpy.QtTest import QSignalSpy, QTest
+from qtpy.QtTest import QTest
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QAction,  # pyright: ignore[reportPrivateImportUsage]
     QApplication,
     QComboBox,
+    QCompleter,
     QDialogButtonBox,
     QFileSystemModel,  # pyright: ignore[reportPrivateImportUsage]
+    QHeaderView,
+    QLayout,
     QLineEdit,
     QListView,
     QPushButton,

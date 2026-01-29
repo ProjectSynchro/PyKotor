@@ -60,7 +60,6 @@ class GIT:
           * Calls CResGFF::CreateGFFFile with "GIT " type and "V2.0" version
           * Writes area properties, creatures, doors, placeables, triggers, waypoints, stores, encounters, sounds, cameras
         - "GIT " resource type @ 0x00747b70 - GIT format identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs (GIT class and AreaProperties class)
         https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File Formats/GFF FileTypes/GIT.cs (GIT class)
 
@@ -387,7 +386,6 @@ class GITCamera(GITInstance):
         - CSWSArea::LoadGIT @ 0x0050dd80 - Loads GIT file for area instances
         - CSWSArea::SaveGIT @ 0x0050ba00 - Saves GIT file for area instances
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs (CameraInfo class)
 
     """
@@ -501,7 +499,6 @@ class GITCreature(GITInstance):
         - CSWSArea::LoadGIT @ 0x0050dd80 - Loads GIT file for area instances
         - CSWSArea::SaveGIT @ 0x0050ba00 - Saves GIT file for area instances
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs (CreatureInfo class)
 
     """
@@ -585,7 +582,6 @@ class GITDoor(GITInstance):
         - CSWSArea::LoadGIT @ 0x0050dd80 - Loads GIT file for area instances
         - CSWSArea::SaveGIT @ 0x0050ba00 - Saves GIT file for area instances
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs (DoorInfo class)
 
     """

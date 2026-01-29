@@ -25,7 +25,6 @@ class TwoDABinaryReader(ResourceReader):
           * Reads row labels and cell data
           * Supports binary format (V2.b) and ASCII format (V2.0)
         - C2DA::Unload2DArray @ 0x004139e0 - Unloads 2DA data
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         Algorithm Differences:
         ---------------------
         - Cell reading: PyKotor uses read_terminated_string, reone uses readCStringAt with limit

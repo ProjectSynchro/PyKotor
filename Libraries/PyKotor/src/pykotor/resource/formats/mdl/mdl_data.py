@@ -1393,7 +1393,7 @@ class MDL(ComparableMixin):
         self.headlink: str = ""
         self.compress_quaternions: int = 0
 
-    # Back-compat aliases (used by Engines/PyKotorEngine tests/tooling)
+    # Back-compat aliases (used by Libraries/PyKotor/src/pykotor/engine tests/tooling)
     @property
     def animations(self) -> list[MDLAnimation]:
         return self.anims
@@ -1799,7 +1799,7 @@ class MDLAnimation(ComparableMixin):
         # Animation node hierarchy with controller keyframes
         self.root: MDLNode = MDLNode()
 
-    # Back-compat aliases (used by Engines/PyKotorEngine tests/tooling)
+    # Back-compat aliases (used by Libraries/PyKotor/src/pykotor/engine tests/tooling)
     @property
     def length(self) -> float:
         return float(self.anim_length)

@@ -51,28 +51,6 @@
             "problemMatcher": []
         },
         {
-            "label": "gl_requirements",
-            "type": "shell",
-            "command": "${command:python.interpreterPath}",
-            "args": [
-                "-m",
-                "pip",
-                "install",
-                "-r",
-                "Libraries${pathSeparator}PyKotorGL${pathSeparator}requirements.txt"
-            ],
-            "presentation": {
-                "echo": true,
-                "showReuseMessage": true,
-                "revealProblems": "never",
-                "reveal": "always",
-                "panel": "shared",
-                "focus": false,
-                "close": false
-            },
-            "problemMatcher": []
-        },
-        {
             "label": "toolset_requirements",
             "type": "shell",
             "command": "${command:python.interpreterPath}",
@@ -350,7 +328,6 @@
             "dependsOn": [
                 "install_mypy",
                 "pykotor_requirements",
-                "gl_requirements",
                 "toolset_requirements"
             ],
             "type": "shell",
@@ -551,7 +528,6 @@
             "type": "shell",
             "dependsOn": [
                 "pykotor_requirements",
-                "gl_requirements",
                 "toolset_requirements",
                 "install_pyinstaller"
             ],
@@ -602,7 +578,6 @@
             "type": "shell",
             "dependsOn": [
                 "pykotor_requirements",
-                "gl_requirements",
                 "toolset_requirements",
                 "install_nuitka"
             ],
@@ -632,7 +607,7 @@
             "problemMatcher": [],
             "options": {
                 "env": {
-                    "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotor${pathSeparator}src;${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotorGL${pathSeparator}src;${workspaceFolder}${pathSeparator}Libraries${pathSeparator}Utility${pathSeparator}src"
+                    "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotor${pathSeparator}src;${workspaceFolder}${pathSeparator}Libraries${pathSeparator}Utility${pathSeparator}src"
                 },
                 "cwd": "${workspaceFolder}${pathSeparator}Tools${pathSeparator}HolocronToolset${pathSeparator}src"
             }

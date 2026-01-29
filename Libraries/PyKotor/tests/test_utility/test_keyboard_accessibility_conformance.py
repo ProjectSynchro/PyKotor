@@ -20,36 +20,22 @@ from __future__ import annotations
 
 import tempfile
 import unittest
-from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Final
 
-from qtpy.QtCore import QCoreApplication, QEvent, Qt
-from qtpy.QtGui import QAccessible, QColor, QFont, QKeyEvent, QPalette
+from pathlib import Path
+from typing import ClassVar, Final
+
+from qtpy.QtCore import QCoreApplication, Qt
 from qtpy.QtTest import QSignalSpy, QTest
 from qtpy.QtWidgets import (
-    QAbstractItemView,
-    QAccessibleWidget,
     QApplication,
     QComboBox,
-    QFileDialog,
-    QFocusFrame,
-    QLabel,
     QLineEdit,
     QListView,
-    QMainWindow,
-    QMenu,
-    QMenuBar,
     QPushButton,
-    QScrollArea,
-    QSplitter,
-    QStatusBar,
-    QTabWidget,
-    QToolBar,
     QToolButton,
     QTreeView,
     QWidget,
 )
-
 
 # =============================================================================
 # WINDOWS 11 KEYBOARD SPECIFICATIONS
@@ -624,7 +610,7 @@ class TestFileDialogAccessibility(KeyboardAccessibilityTestBase):
                 )
                 self.assertTrue(
                     has_label,
-                    f"Button should have text or accessible name",
+                    "Button should have text or accessible name",
                 )
     
     def test_inputs_have_accessible_descriptions(self) -> None:

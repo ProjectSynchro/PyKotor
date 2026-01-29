@@ -11,7 +11,7 @@ def read_requirements() -> list[str]:
     if not requirements_path.exists():
         return []
     
-    requirements = []
+    requirements: list[str] = []
     with open(requirements_path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()

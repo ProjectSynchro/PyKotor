@@ -1,5 +1,5 @@
 """
-Comprehensive tests for MDL Editor - testing EVERY possible manipulation.
+Unit Tests for MDL Editor - testing EVERY possible manipulation.
 
 MDL Editor is primarily a viewer, so tests focus on initialization, loading, and basic functionality.
 Following the ARE editor test pattern for comprehensive coverage.

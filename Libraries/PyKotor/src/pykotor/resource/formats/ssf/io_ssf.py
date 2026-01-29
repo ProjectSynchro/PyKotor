@@ -64,7 +64,6 @@ class SSFBinaryReader(ResourceReader):
         - CResSSF::CResSSF @ 0x006db650 - Constructor for SSF resource
         - CResSSF::~CResSSF @ 0x006db670, @ 0x006db6b0 - Destructors for SSF resource
         - SSF file format: "SSF " type, "V1.1" version
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Note: SSF files map sound event types (BattleCry, Attack, Pain, etc.) to sound
         resource IDs. Used for creature sound sets that define battle cries, grunts,

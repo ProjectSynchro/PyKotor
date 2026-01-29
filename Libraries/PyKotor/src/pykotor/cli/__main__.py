@@ -23,11 +23,6 @@ def setup_paths() -> None:
         repo_root / "Libraries" / "PyKotor" / "src",  # ./Libraries/PyKotor/src/ (contains both pykotor and utility namespaces)
     ]
 
-    # Optionally add Utility if it exists as a separate library
-    utility_path = repo_root / "Libraries" / "Utility" / "src"
-    if utility_path.exists():
-        paths_to_add.append(utility_path)
-
     for path in paths_to_add:
         path_str = str(path)
         if path.exists() and path_str not in sys.path:

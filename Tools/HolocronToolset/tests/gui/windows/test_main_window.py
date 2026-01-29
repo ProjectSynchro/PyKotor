@@ -1,5 +1,5 @@
 """
-Comprehensive tests for ToolWindow - testing EVERY possible manipulation and behavior.
+Unit Tests for ToolWindow - testing EVERY possible manipulation and behavior.
 
 Each test focuses on a specific functionality and validates it thoroughly.
 Tests are extremely granular and numerous to ensure comprehensive coverage.

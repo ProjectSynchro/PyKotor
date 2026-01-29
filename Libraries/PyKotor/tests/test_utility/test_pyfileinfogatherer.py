@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from ctypes import c_bool
 import os
 import sys
 import tempfile
 
 from unittest.mock import MagicMock, patch
 
-from qtpy.QtCore import QCoreApplication
 import pytest
 
-from qtpy.QtCore import QDir, QFileInfo
-from qtpy.QtWidgets import QApplication, QFileIconProvider
+from qtpy.QtCore import QCoreApplication, QDir, QFileInfo
+from qtpy.QtWidgets import QApplication
 
 from utility.ui_libraries.qt.adapters.filesystem.pyfileinfogatherer import PyFileInfoGatherer
 
@@ -157,7 +155,6 @@ def test_fetch_extended_information(gatherer: PyFileInfoGatherer):
 
         # Use a real signal connection to capture emitted data
         from qtpy.QtCore import QEventLoop, QTimer
-        from qtpy.QtWidgets import QApplication
         updates_data = []
         
         def capture_updates(path, files):

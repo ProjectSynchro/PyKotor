@@ -2574,7 +2574,6 @@ def _calculate_face_area(v1: Vector3, v2: Vector3, v3: Vector3) -> float:
         Based on swkotor.exe geometry calculations:
         - Triangle area calculation uses standard Heron's formula
         - Used in mesh processing and collision detection
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------
@@ -2632,7 +2631,6 @@ def _decompress_quaternion(compressed: int) -> Vector4:
         - slerp @ (K1: 0x004a9e00, TSL: 0x004d8c80) - Spherical linear interpolation for quaternions
         - quaternionScalarMult @ (K1: 0x004a9b80, TSL: N/A - likely inlined) - Quaternion scalar multiplication (47 bytes)
         - quaternionDotProduct @ (K1: 0x004a9d30, TSL: N/A - likely inlined in slerp) - Quaternion dot product (37 bytes)
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------
@@ -2857,7 +2855,6 @@ class MDLBinaryReader:
           * Different from CSWCCreature::UnloadModel (uses vtable offset 0x74 vs 0x78)
         - UnloadModel call site @ (K1: 0x006825f0, TSL: 0x006d9721) (within CSWCPlaceable::LoadModel) - Additional unload function call
         - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: 0x004501d0) - Converts node to trimesh type
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------
@@ -3669,7 +3666,6 @@ class MDLBinaryWriter:
         - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: N/A - likely inlined) - Unloads creature models (42 bytes, 19 lines)
         - CSWCObject::UnloadModel @ (K1: 0x00646650, TSL: N/A - likely inlined), @ (K1: 0x006825f0, TSL: 0x006d9721) (call site within CSWCPlaceable::LoadModel) - Additional unload functions
         - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: 0x004501d0) - Converts node to trimesh type
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------

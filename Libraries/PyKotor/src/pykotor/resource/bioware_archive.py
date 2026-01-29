@@ -50,7 +50,6 @@ class ArchiveResource:
           * Used when loading module archives and override files
           * Handles both NWM (Neverwinter Nights) and MOD (KotOR) formats
         - CExoKeyTable::LocateBifFile @ 0x0040d200 - Locates BIF file for resource lookup
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         BioWare archive format specification
 
 
@@ -220,7 +219,6 @@ class BiowareArchive(ComparableMixin, ABC):
           * Used when loading module archives and override files
           * Handles both NWM (Neverwinter Nights) and MOD (KotOR) formats
         - CExoKeyTable::LocateBifFile @ 0x0040d200 - Locates BIF file for resource lookup
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         BioWare archive format specification
     """
 

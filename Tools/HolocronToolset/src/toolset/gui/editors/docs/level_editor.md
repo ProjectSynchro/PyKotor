@@ -70,8 +70,8 @@ Relevant files:
 @Tools/HolocronToolset/src/toolset/gui/widgets/renderer/lyt_editor.py
 @Tools/HolocronToolset/src/toolset/gui/widgets/renderer/module.py
 @Tools/HolocronToolset/src/toolset/gui/widgets/renderer/texture_browser.py
-@Libraries/PyKotorGL/src/pykotor/gl/scene.py
-@Libraries/PyKotorGL/src/pykotor/gl/shader.py
+@Libraries/PyKotor/src/pykotor/gl/scene.py
+@Libraries/PyKotor/src/pykotor/gl/shader.py
 @Tools/HolocronToolset/src/toolset/kits/blackvulkar.json
 @Libraries/PyKotor/src/pykotor/common/module.py
 @Tools/HolocronToolset/src/toolset/gui/widgets/renderer/lyt_editor_widget.py

@@ -63,42 +63,27 @@ matches expectations. Each test has a 120-second timeout.
 
 from __future__ import annotations
 
-import platform
-import sys
 import tempfile
 import time
 import unittest
-from dataclasses import dataclass
-from enum import Enum, auto
+
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Final, NamedTuple
 
-from qtpy.QtCore import QCoreApplication, QDir, QModelIndex, QPoint, QRect, QSize, Qt
-from qtpy.QtGui import QColor, QFont, QFontMetrics, QPalette
+from qtpy.QtCore import QCoreApplication, QModelIndex, Qt
+from qtpy.QtGui import QColor, QPalette
 from qtpy.QtTest import QSignalSpy, QTest
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QApplication,
-    QComboBox,
     QDialogButtonBox,
-    QFileSystemModel,
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QHeaderView,
-    QLabel,
-    QLineEdit,
-    QListView,
     QMenu,
-    QPushButton,
     QSizePolicy,
-    QSplitter,
-    QStackedWidget,
-    QStyle,
-    QStyleOptionViewItem,
     QToolButton,
-    QTreeView,
-    QVBoxLayout,
     QWidget,
 )
 

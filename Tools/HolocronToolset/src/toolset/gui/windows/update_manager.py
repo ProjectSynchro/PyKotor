@@ -213,7 +213,6 @@ class UpdateManager:
         if self.edge_info is None or self.master_info is None:
             RobustLogger().error("Edge and master info are None")
             return
-        print("Master info is not None")
         if isinstance(self.master_info, Exception):
             RobustLogger().exception("Failed to fetch master update info")
             if not self.silent:
@@ -225,7 +224,6 @@ class UpdateManager:
                     QMessageBox.StandardButton.Ok,
                 ).exec()
             return
-        print("Edge info is not None")
         if isinstance(self.edge_info, Exception):
             print("Edge info is an exception")
             RobustLogger().exception("Failed to fetch edge update info")
@@ -244,7 +242,7 @@ class UpdateManager:
         toolset_latest_notes = remote_info.get("toolsetLatestNotes", "") if release_version_checked else remote_info.get("toolsetBetaLatestNotes", "")
         toolset_download_link = remote_info["toolsetDownloadLink"] if release_version_checked else remote_info["toolsetBetaDownloadLink"]
         version_check = is_remote_version_newer(CURRENT_VERSION, greatest_available_version)
-        print("Version check: ", version_check)
+        print("is_remote_version_newer? ", version_check)
         cur_version_beta_release_str = ""
         if remote_info["toolsetLatestVersion"] == CURRENT_VERSION:
             cur_version_beta_release_str = "release "

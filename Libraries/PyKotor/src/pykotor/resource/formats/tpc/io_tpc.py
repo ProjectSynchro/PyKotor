@@ -94,7 +94,6 @@ class TPCBinaryReader(ResourceReader):
         - CResTPC::CResTPC @ 0x00712ea0 - Constructor for TPC resource
         - CResTPC::~CResTPC @ 0x00712ee0 - Destructor for TPC resource
         - GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         - TPC file format specification
         
         Note: TPC (Texture Pack Container) files store texture data with mipmaps, compression,
@@ -318,7 +317,6 @@ class TPCBinaryWriter(ResourceWriter):
         - CResTPC::CResTPC @ 0x00712ea0 - Constructor for TPC resource
         - CResTPC::~CResTPC @ 0x00712ee0 - Destructor for TPC resource
         - GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         - TPC file format specification
 
 

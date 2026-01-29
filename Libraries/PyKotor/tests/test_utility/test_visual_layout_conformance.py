@@ -29,30 +29,26 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QCoreApplication, QSize, Qt
+from qtpy.QtCore import QCoreApplication, Qt
 from qtpy.QtTest import QTest
 from qtpy.QtWidgets import (
     QApplication,
-    QFrame,
     QGridLayout,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QListView,
     QSizePolicy,
     QSplitter,
-    QStackedWidget,
     QToolButton,
     QTreeView,
-    QVBoxLayout,
-    QWidget,
 )
 
 if TYPE_CHECKING:
-    from qtpy.QtWidgets import QLayout
+    pass
 
 
 class TestQFileDialogExtendedLayout(unittest.TestCase):

@@ -1,5 +1,5 @@
 """
-Comprehensive tests for Find References functionality in specific editors.
+Unit Tests for Find References functionality in specific editors.
 
 Tests cover NSS, DLG, TLK editors and ComboBox2DA widget.
 Each test uses real installation data and pytest-qt for headless testing.

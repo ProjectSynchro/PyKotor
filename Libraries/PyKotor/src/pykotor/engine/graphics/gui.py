@@ -10,7 +10,6 @@ References:
         - CSWGuiExtent::Load @ 0x00409dc0 - Loads GUI extent (position/size) from GFF
         - CSWGuiLabel::Load @ 0x0041b960 - Loads GUI label from GFF structure
         - CSWGuiListBox::Load @ 0x0041d5b0 - Loads GUI listbox from GFF structure
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         Derivations and Other Implementations:
         ----------
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/gui/

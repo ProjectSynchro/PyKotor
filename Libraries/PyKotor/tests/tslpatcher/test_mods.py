@@ -3,6 +3,7 @@ from __future__ import annotations
 import pathlib
 import sys
 import unittest
+
 from pathlib import PureWindowsPath
 from typing import TYPE_CHECKING, cast
 from unittest import TestCase
@@ -23,7 +24,6 @@ if PYKOTOR_PATH.joinpath("pykotor").exists():
 if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
-from utility.common.geometry import Vector3, Vector4  # pyright: ignore[reportMissingImports]  # noqa: E402
 from pykotor.common.language import LocalizedString  # pyright: ignore[reportMissingImports]  # noqa: E402
 from pykotor.common.misc import Game, ResRef  # pyright: ignore[reportMissingImports]  # noqa: E402
 from pykotor.resource.formats.gff.gff_auto import bytes_gff, read_gff  # pyright: ignore[reportMissingImports]  # noqa: E402
@@ -68,6 +68,7 @@ from pykotor.tslpatcher.mods.twoda import (  # pyright: ignore[reportMissingImpo
     Target,
     TargetType,
 )
+from utility.common.geometry import Vector3, Vector4  # pyright: ignore[reportMissingImports]  # noqa: E402
 
 if TYPE_CHECKING:
     from pykotor.tslpatcher.mods.gff import (  # pyright: ignore[reportMissingImports]  # noqa: E402

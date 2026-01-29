@@ -1,4 +1,4 @@
-"""Comprehensive tests for the DLG Editor.
+"""Unit Tests for the DLG Editor.
 
 This module tests all UI controls, context menus, dialogs, and interactions
 in the DLG Editor to ensure complete coverage of user-editable functionality.
@@ -449,7 +449,7 @@ def test_dlg_editor_add_child_node(qtbot: QtBot, installation: HTInstallation):
 
 
 # ============================================================================
-# FILE-LEVEL WIDGETS (TOP DOCK) - Comprehensive Tests
+# FILE-LEVEL WIDGETS (TOP DOCK) - Unit Tests
 # ============================================================================
 
 def test_dlg_editor_manipulate_conversation_type(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
@@ -727,7 +727,7 @@ def test_dlg_editor_manipulate_file_level_checkboxes(qtbot: QtBot, installation:
 
 
 # ============================================================================
-# NODE-LEVEL WIDGETS (RIGHT DOCK) - Comprehensive Tests
+# NODE-LEVEL WIDGETS (RIGHT DOCK) - Unit Tests
 # ============================================================================
 
 def test_dlg_editor_all_node_widgets_interactions(qtbot: QtBot, installation: HTInstallation):

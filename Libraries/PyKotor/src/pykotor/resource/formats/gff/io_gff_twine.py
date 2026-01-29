@@ -25,7 +25,6 @@ class GFFTwineReader(ResourceReader):
         - CSWSDialog::LoadDialog @ 0x005a2ae0 - Loads dialog from GFF structure
         - CSWSDialog::LoadDialogBase @ 0x0059f5f0 - Loads dialog base properties
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         - Twine 2 format specification (twinejs.com)
         
         Note: Twine conversion is PyKotor-specific functionality, not a standard game format.

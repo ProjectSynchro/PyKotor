@@ -31,7 +31,6 @@ class TLKBinaryReader(ResourceReader):
         - CTlkFile::CTlkFile @ 0x0041d810 - Constructor for TLK file reader
         - TLK resource type "TLK " @ 0x0073ecb0 - Resource type identifier
         - "tlk" extension string @ 0x0074dd40 - File extension identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         Missing Features:
         ----------------
         - ResRef lowercasing (reone lowercases sound resrefs)

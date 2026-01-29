@@ -1,5 +1,5 @@
 """
-Comprehensive tests for Blender integration module.
+Unit Tests for Blender integration module.
 
 Each test focuses on specific functionality and validates serialization,
 IPC communication, detection, and integration components.
@@ -29,7 +29,7 @@ from utility.common.geometry import Vector3
 
 
 class TestBlenderDetection:
-    """Comprehensive tests for Blender detection functionality."""
+    """Unit Tests for Blender detection functionality."""
 
     def test_blender_info_dataclass_basic(self):
         """Test BlenderInfo dataclass basic properties."""
@@ -399,7 +399,7 @@ class TestBlenderDetection:
 
 
 class TestIPCSerialization:
-    """Comprehensive tests for IPC protocol serialization."""
+    """Unit Tests for IPC protocol serialization."""
 
     def test_serialize_vector3_all_values(self):
         """Test Vector3 serialization with various values."""
@@ -924,7 +924,7 @@ class TestIPCSerialization:
 
 
 class TestIPCClient:
-    """Comprehensive tests for IPC client functionality."""
+    """Unit Tests for IPC client functionality."""
 
     def test_ipc_response_success_all_fields(self):
         """Test IPCResponse with success and all fields."""
@@ -1138,7 +1138,7 @@ class TestIPCClient:
 
 
 class TestBlenderCommands:
-    """Comprehensive tests for BlenderCommands wrapper."""
+    """Unit Tests for BlenderCommands wrapper."""
 
     def test_commands_ping_not_connected(self):
         """Test ping when not connected."""
@@ -1236,7 +1236,7 @@ class TestBlenderCommands:
 
 
 class TestBlenderEditorController:
-    """Comprehensive tests for BlenderEditorController."""
+    """Unit Tests for BlenderEditorController."""
 
     def test_controller_initial_state_all_properties(self):
         """Test BlenderEditorController initial state all properties."""
@@ -1447,7 +1447,7 @@ class TestBlenderEditorController:
 
 
 class TestBlenderEditorMixin:
-    """Comprehensive tests for BlenderEditorMixin."""
+    """Unit Tests for BlenderEditorMixin."""
 
     def test_mixin_initialization_all_modes(self):
         """Test BlenderEditorMixin initialization with all modes."""
@@ -1562,7 +1562,7 @@ class TestBlenderEditorMixin:
 
 
 class TestMockIPCServer:
-    """Comprehensive tests using a mock IPC server."""
+    """Unit Tests using a mock IPC server."""
 
     @pytest.fixture
     def mock_server(self):

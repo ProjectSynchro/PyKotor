@@ -24,7 +24,6 @@ References:
         - CResNCS::~CResNCS @ 0x005d4c50, @ 0x005d4c90 - Destructors for NCS resource
         - HandleBNCSMessage @ 0x005d5180 - Handles NCS bytecode messages
         - "ncs" resource type @ 0x0074dd68 - NCS file extension identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         - DeNCS - Original NCS decompiler implementation
         
         Note: NCS is compiled NWScript bytecode. This converter translates NCS instructions

@@ -212,7 +212,6 @@ def construct_uti(gff: GFF) -> UTI:
         - CSWSItem::LoadDataFromGff @ 0x0055fcd0 - Loads item data from GFF
         - CSWSItem::LoadItem @ 0x00560970 - Loads item template
         - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
     """
     uti = UTI()
 

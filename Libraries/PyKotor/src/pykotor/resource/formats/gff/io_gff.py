@@ -50,7 +50,6 @@ class GFFBinaryReader(ResourceReader):
           * Writes field_data, field_indices, list_indices
         - GFFVersion string "V3.2" @ 0x0073e2c8 - Hardcoded GFF version identifier
         - "gff" string @ 0x0074dd00 - GFF format identifier
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
 
     Missing Features:
     ----------------

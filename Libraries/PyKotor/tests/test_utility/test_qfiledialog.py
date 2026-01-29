@@ -9,68 +9,40 @@ complete API compatibility and identical functionality.
 
 from __future__ import annotations
 
-import os
-import sys
-import tempfile
-import unittest
-from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
 
 import pytest
 
 from qtpy.QtCore import (
-    QAbstractItemModel,
     QByteArray,
     QDir,
-    QEventLoop,
     QEvent,
-    QItemSelectionModel,
-    QModelIndex,
-    QObject,
-    QSettings,
     QSortFilterProxyModel,
-    QStandardPaths,
-    QTemporaryDir,
-    QTemporaryFile,
-    QTime,
     QTimer,
     QUrl,
-    Qt,
-    Slot,  # pyright: ignore[reportPrivateImportUsage]
+    Qt,  # pyright: ignore[reportPrivateImportUsage]
 )
-from qtpy.QtGui import QAction, QCursor, QGuiApplication
-from qtpy.QtTest import QSignalSpy, QTest
+from qtpy.QtTest import QSignalSpy
 from qtpy.QtWidgets import (
-    QAbstractItemView,
     QApplication,
     QComboBox,
     QDialog,
     QDialogButtonBox,
     QFileDialog as RealQFileDialog,
     QFileIconProvider,
-    QFileSystemModel,  # pyright: ignore[reportPrivateImportUsage]
     QItemDelegate,
     QLineEdit,
     QListView,
-    QPushButton,
-    QToolButton,
-    QTreeView,
     QWidget,
 )
 
-from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qsidebar_p import QSidebar, QUrlModel
 from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as PythonQFileDialog
 from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
 
 if TYPE_CHECKING:
-    from qtpy.QtCore import QAbstractItemModel, QModelIndex, QUrl
-    from qtpy.QtGui import QWindow
-    from qtpy.QtWidgets import QCompleter
-    from typing_extensions import Literal
+    from qtpy.QtCore import QUrl
 
-    from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qsidebar_p import QUrlModel
-    from pytestqt.qtbot import QtBot  # type: ignore[import-untyped]
 
 @pytest.fixture(scope="function", params=[
     "adapter",
@@ -1634,10 +1606,10 @@ def test_static_method_parameter_combinations(qtbot, dialog_class, parent, capti
     assert isinstance(result, str)
     assert isinstance(selected, str)
 
-# Continue with more comprehensive tests...
+# Continue with more unit tests...
 
 # ============================================================================
-# END OF COMPREHENSIVE TESTS
+# END OF UNIT TESTS
 # ============================================================================
 
 # Keep existing run_tests function at the end

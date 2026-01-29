@@ -132,7 +132,7 @@ class ReactiveModel(QAbstractItemModel):
 2. Implement `ReactiveProperty` descriptor
 3. Implement auto-connect utilities
 4. Create base classes for reactive models
-5. Write comprehensive tests
+5. Write unit tests
 6. Document patterns and examples
 
 **Files Created:**

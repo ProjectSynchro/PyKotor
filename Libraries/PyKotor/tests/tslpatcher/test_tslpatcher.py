@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import pathlib
 import shutil
 import sys
@@ -9,7 +8,6 @@ import unittest
 
 from configparser import ConfigParser
 from typing import TYPE_CHECKING, Callable, cast
-
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "PyKotor", "src")
@@ -27,7 +25,9 @@ if PYKOTOR_PATH.joinpath("pykotor").exists():
 if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
-from pykotor.common.language import LocalizedString, Gender, Language
+from pathlib import Path
+
+from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.common.misc import Game, ResRef
 from pykotor.resource.formats.gff.gff_auto import bytes_gff, read_gff
 from pykotor.resource.formats.gff.gff_data import GFF, GFFFieldType, GFFStruct
@@ -39,8 +39,13 @@ from pykotor.resource.type import ResourceType
 from pykotor.tslpatcher.config import PatcherConfig
 from pykotor.tslpatcher.logger import PatchLogger
 from pykotor.tslpatcher.memory import PatcherMemory
-from pykotor.tslpatcher.mods.tlk import ModificationsTLK
-from pykotor.tslpatcher.mods.tlk import ModifyTLK
+from pykotor.tslpatcher.mods.gff import (
+    AddFieldGFF,
+    FieldValue2DAMemory,
+    FieldValueConstant,
+    LocalizedStringDelta,
+)
+from pykotor.tslpatcher.mods.tlk import ModificationsTLK, ModifyTLK
 from pykotor.tslpatcher.mods.twoda import (
     AddColumn2DA,
     AddRow2DA,
@@ -48,23 +53,10 @@ from pykotor.tslpatcher.mods.twoda import (
     CopyRow2DA,
     RowValue2DAMemory,
     RowValueConstant,
-    RowValueHigh,
-    RowValueRowCell,
-    RowValueRowIndex,
-    RowValueRowLabel,
     RowValueTLKMemory,
-    Target,
     TargetType,
 )
 from pykotor.tslpatcher.reader import ConfigReader
-from pykotor.tslpatcher.mods.gff import (
-    AddFieldGFF,
-    FieldValue2DAMemory,
-    FieldValueConstant,
-    LocalizedStringDelta,
-)
-from pathlib import Path
-
 
 if TYPE_CHECKING:
     from pykotor.tslpatcher.mods.twoda import CopyRow2DA
@@ -2878,7 +2870,7 @@ class TestTSLPatcher(unittest.TestCase):
             """
         )
         mod_0 = config.patches_gff[0].modifiers[0]
-        from pykotor.tslpatcher.mods.gff import ModifyFieldGFF, FieldValueTLKMemory
+        from pykotor.tslpatcher.mods.gff import FieldValueTLKMemory, ModifyFieldGFF
         self.assertIsInstance(mod_0, ModifyFieldGFF)
         assert isinstance(mod_0, ModifyFieldGFF), "mod_0 is not an instance of ModifyFieldGFF"
         self.assertIsInstance(mod_0.value, FieldValueConstant)

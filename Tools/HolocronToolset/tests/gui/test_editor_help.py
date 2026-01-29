@@ -1,5 +1,5 @@
 """
-Comprehensive tests for editor help system.
+Unit Tests for editor help system.
 
 Tests EditorHelpDialog, help menu integration, and wiki path resolution.
 """

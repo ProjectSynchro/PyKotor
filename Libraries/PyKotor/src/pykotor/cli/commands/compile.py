@@ -37,7 +37,6 @@ def find_nss_compiler() -> Path | None:
         Based on swkotor.exe NCS compilation:
         - CResNCS::CResNCS @ 0x005d4c30 - NCS resource constructor
         - NWScript compilation and execution within game engine
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Libraries/PyKotor/src/pykotor/resource/formats/ncs/compilers.py - PyKotor compiler implementations
 
@@ -84,13 +83,11 @@ def use_builtin_compiler(
         - CResNCS::CResNCS @ 0x005d4c30 - NCS resource constructor
         - HandleBNCSMessage @ 0x005d5180 - NCS bytecode execution
         - NWScript compilation and execution within game engine
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------
-        https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript/NWScriptCompiler.ts
-        Libraries/PyKotor/src/pykotor/resource/formats/ncs/compiler/ - PyKotor compiler implementation
-
+            - https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript/NWScriptCompiler.ts
+            - Libraries/PyKotor/src/pykotor/resource/formats/ncs/compiler/
     """
     compiler = InbuiltNCSCompiler()
     compiled_count: int = 0

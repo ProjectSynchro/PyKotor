@@ -1,5 +1,5 @@
 """
-Comprehensive tests for NSS Editor - testing EVERY possible manipulation.
+Unit Tests for NSS Editor - testing EVERY possible manipulation.
 
 Each test focuses on a specific feature and validates save/load roundtrips, UI interactions,
 and actual functionality. All tests use REAL data structures and REAL UI interactions - NO MOCKS.

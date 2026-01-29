@@ -152,8 +152,6 @@ def _ensure_tests_namespace() -> None:
     repo_root = _find_repo_root()
     test_roots = [
         repo_root / "Libraries" / "PyKotor" / "tests",
-        repo_root / "Libraries" / "PyKotorGL" / "tests",
-        repo_root / "Libraries" / "PyKotorFont" / "tests",
         repo_root / "Tools" / "HolocronToolset" / "tests",
     ]
 
