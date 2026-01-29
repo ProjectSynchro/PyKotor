@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import sys
+
 from pathlib import Path
 from unittest import TestCase
-
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
 PYKOTOR_SRC = REPO_ROOT / "Libraries" / "PyKotor" / "src"
@@ -23,8 +23,9 @@ from pykotor.tslpatcher.mods.twoda import (
     CopyRow2DA,
     RowValueConstant,
     RowValueRowIndex,
+    Target,
+    TargetType,
 )
-from pykotor.tslpatcher.mods.twoda import Target, TargetType
 
 
 def _base_twoda() -> TwoDA:
