@@ -121,9 +121,6 @@ pytest
 
 # Run with coverage
 pytest --cov=pykotor --cov-report=html
-
-# Run specific test file
-pytest tests/test_specific.py
 ```
 
 ### 4. Check Code Quality
