@@ -16,4 +16,4 @@
 
 ## Texture resolution metadata for UI (no extra lookups)
 
-- The renderer can expose “where a texture came from” to the UI without additional `Installation.location(...)` calls by recording the result of the existing async location resolver. `SceneBase` stores per-texture resolution metadata in `texture_lookup_info` and request names in `requested_texture_names`; these are populated during async resolution and updated on async completion (`Libraries/PyKotor/src/pykotor/gl/scene/scene_base.py`: `_resolve_texture_location`, `texture()`, `poll_async_resources()`).
+- The renderer can expose "where a texture came from” to the UI without additional `Installation.location(...)` calls by recording the result of the existing async location resolver. `SceneBase` stores per-texture resolution metadata in `texture_lookup_info` and request names in `requested_texture_names`; these are populated during async resolution and updated on async completion (`Libraries/PyKotor/src/pykotor/gl/scene/scene_base.py`: `_resolve_texture_location`, `texture()`, `poll_async_resources()`).

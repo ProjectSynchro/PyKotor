@@ -49,7 +49,7 @@ help with matching these names to the areas you visit in-game, I
 recommend looking , and .
 
 You’re going to need to expand the module name which is not followed by
-an “\_s” (without the quotes, of course). I’m editing Manaan Ahto West
+an "\_s” (without the quotes, of course). I’m editing Manaan Ahto West
 for this tutorial so I expanded manm26aa.rim.
 
 From there you want to expand Dynamic Area Info. There you’ll see a GIT
@@ -60,7 +60,7 @@ Extract it to a directory of your choice (I recommend a folder titled
 Module GIT File).
 
 Next, you’re going to want to create a folder in the directory where the
-extracted GIT file is. Name this folder “Original Module Files.”
+extracted GIT file is. Name this folder "Original Module Files."
 
 Once that is done, you’ll want to select the .rim and extract the entire
 RIM file to your newly created Original Module Files folder. Repeat this
@@ -140,7 +140,7 @@ layout, let’s move onto actually creating a camera.
 To start off you, you’re going to want to get all the information
 necessary from the game, so fire up whichever KotOR you’re modding. When
 you first get into the area you want a camera, make sure to enter in
-this cheat “giveitem sa_ori_arm” minus the quotes, of course. This will
+this cheat "giveitem sa_ori_arm" minus the quotes, of course. This will
 give you the orientation armband. When activated, this armband gives you
 tons of information about the playing character’s position, angle
 orientation, bearing, X and Y orientation, distance from other objects,
@@ -250,14 +250,14 @@ properly. When you’re done setting up your dialogue save it.
 Now open up stoffe’s ERF editor.
 
 We’re going to use stoffe’s ERF editor to create a .MOD file. .MOD files
-are used to “override” the original information for the module that was
+are used to "override" the original information for the module that was
 found within your module’s two .RIM files (in my case, manm26aa.rim and
 manm26aa_s.rim) with your newly modified information. I put override in
 quotes because the two original files themselves are never actually
 replaced (and they never should be). The game uses a .MOD file above a
 .RIM file to load a module when you’re playing the game. If a .MOD
 exists, it ignores the two .RIM files, essentially. This allows you to
-“override” the original game without actually deleting or replacing the
+"override" the original game without actually deleting or replacing the
 game’s original files.
 
 So, on to creating your .MOD.

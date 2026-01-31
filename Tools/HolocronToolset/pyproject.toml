@@ -1,7 +1,6 @@
 [build-system]
 requires = ["setuptools>=67.8.0", "wheel"]
 build-backend = "setuptools.build_meta"
-# Note: setup.py provides custom build hook to copy wiki directory for PyPI distribution
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -16,7 +15,7 @@ exclude = ["plugin*", "*.plugin*", "*plugin*", "plugin"]
 toolset = [
   "help/**/*.xml",
   "help/**/*.md",
-  "wiki/**/*.md",  # Wiki files copied during build by setup.py
+  "wiki/**/*.md",  # Wiki files copied during build from ../../wiki/ to src/toolset/help/wiki/
 ]
 
 [project]

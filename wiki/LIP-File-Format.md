@@ -77,21 +77,21 @@ KotOR reuses the 16-shape Preston Blair [phoneme](https://en.wikipedia.org/wiki/
 | value | Shape | Description |
 | ----- | ----- | ----------- |
 | 0 | NEUTRAL | Rest/closed mouth |
-| 1 | EE | Teeth apart, wide smile (long “ee”) |
-| 2 | EH | Relaxed mouth (“eh”) |
-| 3 | AH | Mouth open (“ah/aa”) |
-| 4 | OH | Rounded lips (“oh”) |
-| 5 | OOH | Pursed lips (“oo”, “w”) |
-| 6 | Y | Slight smile (“y”) |
-| 7 | STS | Teeth touching (“s”, “z”, “ts”) |
-| 8 | FV | Lower LIP touches teeth (“f”, “v”) |
-| 9 | NG | Tongue raised (“n”, “ng”) |
-| 10 | TH | Tongue between teeth (“th”) |
-| 11 | MPB | Lips closed (“m”, “p”, “b”) |
-| 12 | TD | Tongue up (“t”, “d”) |
-| 13 | SH | Rounded relaxed (“sh”, “ch”, “j”) |
-| 14 | L | Tongue forward (“l”, “r”) |
-| 15 | KG | Back of tongue raised (“k”, “g”, “h”) |
+| 1 | EE | Teeth apart, wide smile (long "ee”) |
+| 2 | EH | Relaxed mouth ("eh") |
+| 3 | AH | Mouth open ("ah/aa") |
+| 4 | OH | Rounded lips ("oh") |
+| 5 | OOH | Pursed lips ("oo", "w") |
+| 6 | Y | Slight smile ("y") |
+| 7 | STS | Teeth touching ("s", "z", "ts") |
+| 8 | FV | Lower LIP touches teeth ("f", "v") |
+| 9 | NG | Tongue raised ("n", "ng") |
+| 10 | TH | Tongue between teeth ("th") |
+| 11 | MPB | Lips closed ("m", "p", "b") |
+| 12 | TD | Tongue up ("t", "d") |
+| 13 | SH | Rounded relaxed ("sh", "ch", "j") |
+| 14 | L | Tongue forward ("l", "r") |
+| 15 | KG | Back of tongue raised ("k", "g", "h") |
 
 **Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/lip/lip_data.py:50-169`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/lip/lip_data.py#L50-L169)
 

@@ -224,9 +224,9 @@ A dynamically-generated kit from a game module.
 **Build-time WOK export (critical runtime detail):**
 
 - When *building* a `.mod` from an `.indoor`, the builder bakes the LYT room transform into each exported room WOK so the engine consumes the walkmesh in world space.
-- After baking translation into vertices, the builder must set the walkmesh header flag at offset `0x08` (`world_coords`) to `1` (world-space / WOK / `BWMType.AreaModel`). Leaving this as `0` can cause the engine to treat vertices as local-space and apply transforms again, resulting in the player spawning with no walkable face underfoot (appearing “stuck”).
+- After baking translation into vertices, the builder must set the walkmesh header flag at offset `0x08` (`world_coords`) to `1` (world-space / WOK / `BWMType.AreaModel`). Leaving this as `0` can cause the engine to treat vertices as local-space and apply transforms again, resulting in the player spawning with no walkable face underfoot (appearing "stuck”).
 
-**Area lighting (why “pitch black” can happen):**
+**Area lighting (why "pitch black" can happen):**
 
 - `ARE.DynAmbientColor` alone is not sufficient for usable lighting in-game.
 - The builder should set `ARE.SunAmbientColor` and `ARE.SunDiffuseColor` (and can mirror the same `IndoorMap.lighting` value into all three fields for a sane default).

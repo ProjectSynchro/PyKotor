@@ -414,7 +414,7 @@ This filename is relative to the the "drive" where the BIF
 is located (as specified in the Drives portion of the BIF
 File Entry).
 Each Filename must be unique.
-e.g., “data\2da.bif”
+e.g., "data\2da.bif”
 2.5. Key Table
 The Key Table is a list of all the resources in all the BIFs associated with this key file.
 The number of elements in the Key Table is equal to the KeyCount specified in the Header.

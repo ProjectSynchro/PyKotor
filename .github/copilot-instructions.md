@@ -19,7 +19,7 @@ Concise, actionable guidance to get an AI productive fast. Prefer small, surgica
 
 **Builds & Packaging**
 - Use VS Code tasks / `compile/` scripts; don’t reinvent pipelines.
-- PyInstaller one-file builds: tasks like “Build KotorDiff”, “Build K-BatchPatcher”, “Build GUI Creator”, “Build Model ASCII Compiler”, “Build Toolset - PyInstaller”.
+- PyInstaller one-file builds: tasks like "Build KotorDiff”, "Build K-BatchPatcher”, "Build GUI Creator”, "Build Model ASCII Compiler”, "Build Toolset - PyInstaller”.
 - Respect excludes (numpy, PyQt5, PIL, matplotlib, multiprocessing, PyOpenGL, PyGLM, dl_translate, torch) as defined in tasks.
 
 **Testing & Linting**
