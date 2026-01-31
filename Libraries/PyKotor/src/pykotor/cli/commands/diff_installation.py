@@ -10,7 +10,7 @@ from loggerplus import RobustLogger as Logger  # type: ignore[import-untyped]
 def cmd_diff_installation(args: Namespace, logger: Logger) -> int:
     """Run the diff operations tool via the kotordiff package.
 
-    This command delegates to the `kotor-diff` package if installed.
+    This command delegates to the `kotordiff` package if installed.
     If not available, provides a helpful error message.
 
     Args:
@@ -76,8 +76,8 @@ def cmd_diff_installation(args: Namespace, logger: Logger) -> int:
         return kotordiff_main(argv)
     except ImportError:
         logger.error(
-            "diff operations functionality requires the 'kotor-diff' package to be installed.\n"
-            "Install it with: pip install kotor-diff\n"
+            "diff operations functionality requires the 'kotordiff' package to be installed.\n"
+            "Install it with: pip install kotordiff\n"
             "Or use the standalone kotordiff tool."
         )
         return 1

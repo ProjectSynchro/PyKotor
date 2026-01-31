@@ -124,7 +124,7 @@ pykotor pack
 uvx kotordiff
 # or if installed via pip/pipx
 kotordiff
-kotor-diff  # alternative name
+kotordiff  # alternative name
 ```
 
 See individual tool documentation for detailed usage.

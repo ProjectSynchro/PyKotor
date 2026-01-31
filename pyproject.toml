@@ -23,27 +23,13 @@ dependencies = [
 holocron-toolset = "toolset.__main__:main"
 
 [project.optional-dependencies]
-# Extension libraries (now part of pykotor package)
-all-extensions = ["pykotor>=2.1.0"]
-
 # Tools (lowercase PyPI names)
 holocrontoolset = ["holocrontoolset"]
 holopatcher = ["holopatcher"]
-kotor-diff = ["kotor-diff"]
+kotordiff = ["kotordiff"]
 batchpatcher = ["batchpatcher"]
 kotorcli = ["kotorcli"]
 holopazaak = ["holopazaak"]
-
-# Everything
-all = [
-    "pykotor>=2.1.0",
-    "holocrontoolset",
-    "holopatcher",
-    "kotor-diff",
-    "batchpatcher",
-    "kotorcli",
-    "holopazaak",
-]
 
 # Development dependencies
 dev = [
@@ -101,25 +87,6 @@ kotordiff = ["kotordiff"]
 batchpatcher = ["batchpatcher"]
 kotorcli = ["kotorcli"]
 holopazaak = ["holopazaak"]
-all-tools = [
-    "holocrontoolset",
-    "holopatcher",
-    "kotordiff",
-    "batchpatcher",
-    "kotorcli",
-    "holopazaak",
-]
-
-# Everything
-all = [
-    "pykotor>=2.1.0",
-    "holocrontoolset",
-    "holopatcher",
-    "kotordiff",
-    "batchpatcher",
-    "kotorcli",
-    "holopazaak",
-]
 
 # Development dependencies
 dev = [
@@ -139,7 +106,7 @@ dev = [
     "types-pillow>=10.2.0.20240822; python_version>=\"3.8\"",
     "types-send2trash>=1.8.2.7; python_version>=\"3.8\"",
     "typing-extensions>=4.5.0,<4.9.0; python_version<\"3.9\"",
-    "typing-extensions>=4.5.0; python_version>=\"3.9\"",
+    "typing-extensions>=4.5.0; python_version>=\"3.9\""
 ]
 
 [project.urls]
@@ -161,23 +128,20 @@ members = [
     "Libraries/PyKotor",
     "Tools/BatchPatcher",
     "Tools/HolocronToolset",
-    "Tools/HoloGenerator",
     "Tools/HoloPatcher",
     "Tools/HoloPazaak",
     "Tools/KotorCLI",
-    "Tools/KotorDiff",
+    "Tools/KotorDiff"
 ]
 
 [tool.uv.sources]
 # Use workspace members instead of PyPI
 pykotor = { workspace = true }
 batchpatcher = { workspace = true }
-holocron-ai = { workspace = true }
 holocrontoolset = { workspace = true }
-hologenerator = { workspace = true }
 holopatcher = { workspace = true }
 holopazaak = { workspace = true }
-kotor-diff = { workspace = true }
+kotordiff = { workspace = true }
 
 ########################################################
 ## define only linter configurations below this point ##
@@ -228,13 +192,10 @@ exclude = [
 extraPaths = [
     "Libraries/PyKotor/src",
     "Tools/BatchPatcher/src",
-    "Tools/HolocronAI/src",
     "Tools/HolocronToolset/src",
-    "Tools/HoloGenerator/src",
     "Tools/HoloPatcher/src",
     "Tools/HoloPazaak/src",
-    "Tools/KotorCLI/src",
-    "Tools/KotorDiff/src",
+    "Tools/KotorDiff/src"
 ]
 typeCheckingMode = "basic"
 reportMissingImports = true
@@ -285,14 +246,10 @@ respect-gitignore = false
 
 src = [
     "Libraries/PyKotor/src",
-    "Libraries/PyKotor/src",
     "Tools/BatchPatcher/src",
-    "Tools/HolocronAI/src",
     "Tools/HolocronToolset/src",
-    "Tools/HoloGenerator/src",
     "Tools/HoloPatcher/src",
     "Tools/HoloPazaak/src",
-    "Tools/KotorCLI/src",
     "Tools/KotorDiff/src"
 ]
 
@@ -386,12 +343,12 @@ ignore = [
 #    "Q003",     # avoidable-escaped-quote
 #    "COM812",   # missing-trailing-comma
 #    "COM819",   # prohibited-trailing-comma
-    "ISC001",
+    "ISC001"
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "*.pyi" = [
-    "I002", # from __future__ import annotations
+    "I002"  # from __future__ import annotations
 ]
 #"tests/*.py" = ["ALL"]
 ".github/*py" = ["INP001"]
@@ -402,7 +359,7 @@ ignore = [
     "N802",
     "N803",
     "N806",
-    "A001",
+    "A001"
 ]
 "Tools/HolocronToolset/src/toolset/uic/*.py" = ["ALL"]
 "resources_rc.py" = ["ALL"]
@@ -494,16 +451,12 @@ explicit_package_bases = true
 namespace_packages = true
 mypy_path = [
     "Libraries/PyKotor/src",
-    "Libraries/PyKotor/src",
     "tests",
     "Tools/BatchPatcher/src",
-    "Tools/HolocronAI/src",
     "Tools/HolocronToolset/src",
-    "Tools/HoloGenerator/src",
     "Tools/HoloPatcher/src",
     "Tools/HoloPazaak/src",
-    "Tools/KotorCLI/src",
-    "Tools/KotorDiff/src",
+    "Tools/KotorDiff/src"
 ]
 exclude = [
     "\\.venv",
@@ -512,7 +465,7 @@ exclude = [
     "build",
     "dist",
     "__pycache__",
-    "tests/results",
+    "tests/results"
 ]
 
 [tool.pytest.ini_options]
@@ -520,13 +473,10 @@ testpaths = [
     "Libraries/PyKotor/tests",
     "tests",
     "Tools/BatchPatcher/tests",
-    "Tools/HolocronAI/tests",
     "Tools/HolocronToolset/tests",
-    "Tools/HoloGenerator/tests",
     "Tools/HoloPatcher/tests",
     "Tools/HoloPazaak/tests",
-    "Tools/KotorCLI/tests",
-    "Tools/KotorDiff/tests",
+    "Tools/KotorDiff/tests"
 ]
 # qt_api = "pyqt5"  # Default, can be overridden by PYTEST_QT_API environment variable (moved to conftest.py)
 markers = [

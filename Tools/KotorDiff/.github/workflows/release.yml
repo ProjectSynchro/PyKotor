@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/project/kotor-diff/
+      url: https://pypi.org/project/kotordiff/
     permissions:
       id-token: write
 

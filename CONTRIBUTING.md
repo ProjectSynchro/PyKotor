@@ -83,7 +83,7 @@ python -c "import pykotor; print('PyKotor installed successfully')"
 # Check tools (if installed via pip/pipx)
 holocrontoolset --version
 holopatcher --version
-kotordiff --version  # or kotor-diff --version
+kotordiff --version  # or kotordiff --version
 
 # PyKotor CLI (included with pykotor package)
 pykotor --help

@@ -6,7 +6,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kotor-diff"
+name = "kotordiff"
 version = "1.0.1"
 description = "KotOR Diff Tool - generates TSLPatcher patch data from file differences (shim package, functionality now in pykotor.diff_tool)"
 authors = [{name = "NickHugi"}]
@@ -40,7 +40,7 @@ dependencies = [
 ]
 
 [project.scripts]
-kotor-diff = "kotordiff.__main__:main"
+kotordiff = "kotordiff.__main__:main"
 kotordiff = "kotordiff.__main__:main"
 
 [project.optional-dependencies]
@@ -58,7 +58,7 @@ Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 
 # Poetry configuration
 [tool.poetry]
-name = "kotor-diff"
+name = "kotordiff"
 version = "1.0.1"
 description = "KotOR Diff Tool - generates TSLPatcher patch data from file differences"
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
@@ -72,7 +72,7 @@ python = "^3.8"
 pykotor = "^2.0.2"
 
 [tool.poetry.scripts]
-kotor-diff = "kotordiff.__main__:main"
+kotordiff = "kotordiff.__main__:main"
 kotordiff = "kotordiff.__main__:main"
 
 [tool.poetry.urls]

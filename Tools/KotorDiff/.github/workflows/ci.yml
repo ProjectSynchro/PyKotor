@@ -40,7 +40,7 @@ jobs:
 
       - name: Verify import
         run: |
-          python -c "import kotor-diff; print('KotorDiff imported successfully')"
+          python -c "import kotordiff; print('KotorDiff imported successfully')"
 
       - name: Run tests
         run: |

@@ -5,7 +5,7 @@ The standalone KotorDiff tool now ships inside PyKotor CLI and follows the same 
 ## Behavior
 
 - Supplying any diff paths keeps execution headless; omitting paths or passing `--gui` launches the Tkinter UI (`Libraries/PyKotor/src/pykotor/diff_tool/__main__.py` L20-L120).
-- CLI arguments are shared between the dedicated scripts (`kotordiff`, `kotor-diff`, `diff`) and the `pykotorcli diff` subcommand (`Libraries/PyKotor/src/pykotor/diff_tool/cli.py` L26-L147).
+- CLI arguments are shared between the dedicated scripts (`kotordiff`, `kotordiff`, `diff`) and the `pykotorcli diff` subcommand (`Libraries/PyKotor/src/pykotor/diff_tool/cli.py` L26-L147).
 - Headless execution builds a `KotorDiffConfig` and routes to the n-way differ (`Libraries/PyKotor/src/pykotor/diff_tool/cli.py` L168-L238).
 
 ## CLI Usage

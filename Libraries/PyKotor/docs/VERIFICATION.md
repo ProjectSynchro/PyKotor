@@ -95,7 +95,7 @@ This document verifies that PyKotorCLI achieves 1:1 syntax compatibility with cl
 - ✅ Supports multi-path (`--path1/--path2/--path3/--path`) comparisons, filters, and logging controls
 - ✅ TSLPatcher generation via `--tslpatchdata`/`--ini`, with optional `--incremental` writer
 - ✅ Hash toggles (`--compare-hashes/--no-compare-hashes`) and `--output-mode` (`full`, `normal`, `quiet`)
-- ✅ Script entrypoints registered (`kotordiff`, `kotor-diff`, `diff`)
+- ✅ Script entrypoints registered (`kotordiff`, `kotordiff`, `diff`)
 - **Implementation**: `diff_tool/cli.py`, `diff_tool/app.py`, `diff_tool/__main__.py`
 
 ## ✅ Configuration File Compatibility

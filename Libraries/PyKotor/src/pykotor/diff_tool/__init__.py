@@ -4,7 +4,7 @@ This package provides diffing functionality for KOTOR files.
 The tool can be invoked via:
 - `python -m pykotor.diff_tool` (module entrypoint)
 - `python -m kotordiff` (shim package)
-- `kotordiff` (console script from kotor-diff package)
+- `kotordiff` (console script from kotordiff package)
 """
 
 from __future__ import annotations

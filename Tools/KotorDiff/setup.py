@@ -22,7 +22,7 @@ def read_requirements() -> list[str]:
 
 
 setup(
-    name="kotor-diff",
+    name="kotordiff",
     version="1.0.0",
     description="KotOR Diff Tool - generates TSLPatcher patch data from file differences",
     packages=find_packages(where="src"),

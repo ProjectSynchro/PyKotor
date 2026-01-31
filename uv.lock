@@ -55,7 +55,7 @@ members = [
     "holocrontoolset",
     "holopatcher",
     "holopazaak",
-    "kotor-diff",
+    "kotordiff",
     "pykotor",
     "pykotor-workspace",
 ]
@@ -1751,7 +1751,7 @@ wheels = [
 ]
 
 [[package]]
-name = "kotor-diff"
+name = "kotordiff"
 version = "1.0.1"
 source = { editable = "Tools/KotorDiff" }
 dependencies = [
@@ -3090,7 +3090,7 @@ all = [
     { name = "holocrontoolset" },
     { name = "holopatcher" },
     { name = "holopazaak" },
-    { name = "kotor-diff" },
+    { name = "kotordiff" },
     { name = "kotorcli" },
     { name = "pykotor" },
 ]
@@ -3133,8 +3133,8 @@ holopatcher = [
 holopazaak = [
     { name = "holopazaak" },
 ]
-kotor-diff = [
-    { name = "kotor-diff" },
+kotordiff = [
+    { name = "kotordiff" },
 ]
 kotorcli = [
     { name = "kotorcli" },
@@ -3153,8 +3153,8 @@ requires-dist = [
     { name = "holopazaak", marker = "extra == 'all'", editable = "Tools/HoloPazaak" },
     { name = "holopazaak", marker = "extra == 'holopazaak'", editable = "Tools/HoloPazaak" },
     { name = "iniconfig", marker = "python_full_version >= '3.8' and extra == 'dev'", specifier = ">=2.1.0" },
-    { name = "kotor-diff", marker = "extra == 'all'", editable = "Tools/KotorDiff" },
-    { name = "kotor-diff", marker = "extra == 'kotor-diff'", editable = "Tools/KotorDiff" },
+    { name = "kotordiff", marker = "extra == 'all'", editable = "Tools/KotorDiff" },
+    { name = "kotordiff", marker = "extra == 'kotordiff'", editable = "Tools/KotorDiff" },
     { name = "kotorcli", marker = "extra == 'all'" },
     { name = "kotorcli", marker = "extra == 'kotorcli'" },
     { name = "mypy", marker = "python_full_version >= '3.8' and extra == 'dev'", specifier = ">=1.0.0,<1.10.0" },
@@ -3175,7 +3175,7 @@ requires-dist = [
     { name = "typing-extensions", marker = "python_full_version >= '3.9' and extra == 'dev'", specifier = ">=4.5.0" },
     { name = "typing-extensions", marker = "python_full_version < '3.9' and extra == 'dev'", specifier = ">=4.5.0,<4.9.0" },
 ]
-provides-extras = ["all-extensions", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "kotorcli", "holopazaak", "all", "dev"]
+provides-extras = ["all-extensions", "holocrontoolset", "holopatcher", "kotordiff", "batchpatcher", "kotorcli", "holopazaak", "all", "dev"]
 
 [package.metadata.requires-dev]
 dev = []
