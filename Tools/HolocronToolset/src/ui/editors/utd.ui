@@ -927,7 +927,7 @@
   <customwidget>
    <class>FilterComboBox</class>
    <extends>QComboBox</extends>
-   <header location="global">utility.ui_libraries.qt.widgets.widgets.combobox</header>
+   <header location="global">utility.gui.qt.widgets.widgets.combobox</header>
   </customwidget>
   <customwidget>
    <class>ModelRenderer</class>

@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING, Any, Callable
 from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QDialog, QFormLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout
 
-from utility.ui_libraries.qt.common.tasks.actions_executor import TaskStatus
+from utility.gui.qt.common.tasks.actions_executor import TaskStatus
 
 if TYPE_CHECKING:
     from qtpy.QtGui import QCloseEvent
     from qtpy.QtWidgets import QWidget
 
-    from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor
+    from utility.gui.qt.common.tasks.actions_executor import FileActionsExecutor
 
 
 class TaskDetailsDialog(QDialog):
@@ -174,7 +174,7 @@ if __name__ == "__main__":
 
     from qtpy.QtWidgets import QApplication
 
-    from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor, TaskStatus
+    from utility.gui.qt.common.tasks.actions_executor import FileActionsExecutor, TaskStatus
 
     class MockFileActionsExecutor(FileActionsExecutor):
         def __init__(self):

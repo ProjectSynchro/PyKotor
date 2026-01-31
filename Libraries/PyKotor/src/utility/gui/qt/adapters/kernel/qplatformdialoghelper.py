@@ -8,7 +8,7 @@ from enum import Enum, auto
 
 from qtpy.QtCore import QDir
 
-from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog
+from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog
 
 
 class FileMode(Enum):

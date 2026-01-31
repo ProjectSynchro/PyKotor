@@ -19,13 +19,13 @@ from qtpy.QtCore import (
 from qtpy.QtWidgets import QApplication, QFileSystemModel, QLayoutItem, QMessageBox, QWidget  # pyright: ignore[reportPrivateImportUsage]
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
-from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as AdapterQFileDialog
-from utility.ui_libraries.qt.common.actions_dispatcher import ActionsDispatcher
-from utility.ui_libraries.qt.common.ribbons_widget import RibbonsWidget
-from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor
-from utility.ui_libraries.qt.filesystem.qfiledialogextended.ui_qfiledialogextended import Ui_QFileDialogExtended
-from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
-from utility.ui_libraries.qt.widgets.widgets.stacked_view import DynamicStackedView
+from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as AdapterQFileDialog
+from utility.gui.qt.common.actions_dispatcher import ActionsDispatcher
+from utility.gui.qt.common.ribbons_widget import RibbonsWidget
+from utility.gui.qt.common.tasks.actions_executor import FileActionsExecutor
+from utility.gui.qt.filesystem.qfiledialogextended.ui_qfiledialogextended import Ui_QFileDialogExtended
+from utility.gui.qt.widgets.itemviews.treeview import RobustTreeView
+from utility.gui.qt.widgets.widgets.stacked_view import DynamicStackedView
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QAbstractProxyModel, QModelIndex, QObject, QPoint
@@ -206,7 +206,7 @@ class QFileDialogExtended(AdapterQFileDialog):
         Windows11ItemDelegate = None
         try:
             # Preferred: absolute import (works when package is on sys.path)
-            from utility.ui_libraries.qt.widgets.itemviews.file_size_delegate import Windows11ItemDelegate  # type: ignore
+            from utility.gui.qt.widgets.itemviews.file_size_delegate import Windows11ItemDelegate  # type: ignore
         except Exception:
             try:
                 # Fallback: relative import (works when module is part of a package)
@@ -258,7 +258,7 @@ class QFileDialogExtended(AdapterQFileDialog):
         error_msg.exec()
 
     def _setup_address_bar(self) -> None:
-        from utility.ui_libraries.qt.common.filesystem.address_bar import RobustAddressBar
+        from utility.gui.qt.common.filesystem.address_bar import RobustAddressBar
 
         self.address_bar: RobustAddressBar = RobustAddressBar(self)
         self.address_bar.setObjectName("addressBar")
@@ -272,7 +272,7 @@ class QFileDialogExtended(AdapterQFileDialog):
         # degrade gracefully if unavailable.
         SearchFilterWidget = None
         try:
-            from utility.ui_libraries.qt.widgets.widgets.search_filter import SearchFilterWidget  # type: ignore
+            from utility.gui.qt.widgets.widgets.search_filter import SearchFilterWidget  # type: ignore
         except Exception:
             try:
                 from ...widgets.widgets.search_filter import SearchFilterWidget  # type: ignore
@@ -293,7 +293,7 @@ class QFileDialogExtended(AdapterQFileDialog):
         """Set up the Windows 11-style preview pane on the right side of the splitter."""
         EnhancedPreviewPane = None
         try:
-            from utility.ui_libraries.qt.common.filesystem.enhanced_preview_pane import EnhancedPreviewPane  # type: ignore
+            from utility.gui.qt.common.filesystem.enhanced_preview_pane import EnhancedPreviewPane  # type: ignore
         except Exception:
             try:
                 from ...common.filesystem.enhanced_preview_pane import EnhancedPreviewPane  # type: ignore
@@ -406,22 +406,22 @@ class QFileDialogExtended(AdapterQFileDialog):
 
     def _set_extra_large_icons(self) -> None:
         """Set extra large icons (256px) and switch to list view mode."""
-        from utility.ui_libraries.qt.widgets.itemviews.thumbnail_list_view import IconSize
+        from utility.gui.qt.widgets.itemviews.thumbnail_list_view import IconSize
         self._set_icon_size(IconSize.EXTRA_LARGE)
 
     def _set_large_icons(self) -> None:
         """Set large icons (128px) and switch to list view mode."""
-        from utility.ui_libraries.qt.widgets.itemviews.thumbnail_list_view import IconSize
+        from utility.gui.qt.widgets.itemviews.thumbnail_list_view import IconSize
         self._set_icon_size(IconSize.LARGE)
 
     def _set_medium_icons(self) -> None:
         """Set medium icons (64px) and switch to list view mode."""
-        from utility.ui_libraries.qt.widgets.itemviews.thumbnail_list_view import IconSize
+        from utility.gui.qt.widgets.itemviews.thumbnail_list_view import IconSize
         self._set_icon_size(IconSize.MEDIUM)
 
     def _set_small_icons(self) -> None:
         """Set small icons (32px) and switch to list view mode."""
-        from utility.ui_libraries.qt.widgets.itemviews.thumbnail_list_view import IconSize
+        from utility.gui.qt.widgets.itemviews.thumbnail_list_view import IconSize
         self._set_icon_size(IconSize.SMALL)
 
     def _set_icon_size(self, size: int) -> None:
@@ -1296,7 +1296,7 @@ if __name__ == "__main__":
     from pathlib import Path
 
     # Ensure the package "src" root is on sys.path so imports like
-    # "utility.ui_libraries.qt.widgets..." work when the file is run directly.
+    # "utility.gui.qt.widgets..." work when the file is run directly.
     # The layout is: src/utility/.../qfiledialogextended/qfiledialogextended.py so
     # parents[5] points at the project "src" directory for this file.
     try:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from utility.ui_libraries.qt.kernel.qplatformdialoghelper.qplatformdialoghelper import QFileDialogPlatformHelper
+from utility.gui.qt.kernel.qplatformdialoghelper.qplatformdialoghelper import QFileDialogPlatformHelper
 
 
 class MacFileDialogHelper(QFileDialogPlatformHelper):

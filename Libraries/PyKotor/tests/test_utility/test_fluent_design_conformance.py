@@ -556,7 +556,7 @@ class TestRibbonVisualConformance(FluentDesignConformanceTestBase):
     
     def setUp(self) -> None:
         """Set up ribbon for testing."""
-        from utility.ui_libraries.qt.common.ribbons_widget import RibbonsWidget
+        from utility.gui.qt.common.ribbons_widget import RibbonsWidget
         
         self.ribbon = RibbonsWidget()
         self.ribbon.show()

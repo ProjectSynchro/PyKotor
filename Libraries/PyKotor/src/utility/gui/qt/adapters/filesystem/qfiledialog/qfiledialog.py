@@ -41,10 +41,10 @@ from qtpy.QtWidgets import (
     QFileSystemModel,  # pyright: ignore[reportPrivateImportUsage]
 )
 
-from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qfiledialog_p import HistoryItem, QFileDialogOptionsPrivate, QFileDialogPrivate, qt_make_filter_list
-from utility.ui_libraries.qt.adapters.kernel.qplatformdialoghelper.qplatformdialoghelper import QPlatformFileDialogHelper
-from utility.ui_libraries.qt.common.qt_event_utils import process_events_if_safe
-from utility.ui_libraries.qt.tools.unifiers import sip_enum_to_int
+from utility.gui.qt.adapters.filesystem.qfiledialog.private.qfiledialog_p import HistoryItem, QFileDialogOptionsPrivate, QFileDialogPrivate, qt_make_filter_list
+from utility.gui.qt.adapters.kernel.qplatformdialoghelper.qplatformdialoghelper import QPlatformFileDialogHelper
+from utility.gui.qt.common.qt_event_utils import process_events_if_safe
+from utility.gui.qt.tools.unifiers import sip_enum_to_int
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

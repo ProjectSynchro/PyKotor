@@ -9,7 +9,7 @@ from qtpy.QtGui import QColor, QFont
 from qtpy.QtWidgets import QDialog, QFileDialog, QFontDialog
 
 from utility.system.win32.com.interfaces import COMDLG_FILTERSPEC, IShellItem
-from utility.ui_libraries.qt.adapters.kernel.qplatformdialoghelper.qplatformdialoghelper import (
+from utility.gui.qt.adapters.kernel.qplatformdialoghelper.qplatformdialoghelper import (
     QFileDialogPlatformHelper,
     QPlatformColorDialogHelper,
     QPlatformDialogHelper,

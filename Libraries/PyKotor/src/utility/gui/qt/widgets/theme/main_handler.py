@@ -6,7 +6,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QApplication, QComboBox, QHBoxLayout, QLabel, QMainWindow, QPushButton, QSlider, QSpinBox, QVBoxLayout, QWidget
 
-from utility.ui_libraries.qt.widgets.theme.theme_dialog import ThemeDialog
+from utility.gui.qt.widgets.theme.theme_dialog import ThemeDialog
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QCoreApplication

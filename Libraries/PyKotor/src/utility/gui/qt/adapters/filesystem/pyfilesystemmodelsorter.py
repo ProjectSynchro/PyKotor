@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from qtpy.QtCore import QCollator, QDateTime, QTimeZone, Qt  # type: ignore[attr-defined]
 
 if TYPE_CHECKING:
-    from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemnode import PyFileSystemNode
+    from utility.gui.qt.adapters.filesystem.pyfilesystemnode import PyFileSystemNode
 
 
 class PyFileSystemModelSorter:

@@ -16,7 +16,7 @@ from qtpy.QtWidgets import QDialog, QListWidgetItem, QStyle, QStyleOptionViewIte
 
 from pykotor.resource.generics.dlg import DLGLink
 from toolset.gui.editors.dlg.list_widget_base import DLGListWidget, DLGListWidgetItem
-from utility.ui_libraries.qt.widgets.itemviews.html_delegate import HTMLDelegate
+from utility.gui.qt.widgets.itemviews.html_delegate import HTMLDelegate
 
 if TYPE_CHECKING:
     import weakref

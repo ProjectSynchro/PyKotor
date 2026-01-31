@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     pass
 
 # Import the Python adapters
-from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
+from utility.gui.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
 
 
 WAITTIME = 1000  # milliseconds

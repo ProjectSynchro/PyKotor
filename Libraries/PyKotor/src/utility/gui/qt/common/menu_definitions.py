@@ -4,7 +4,7 @@ from enum import Enum
 
 from qtpy.QtWidgets import QMenu
 
-from utility.ui_libraries.qt.common.action_definitions import FileExplorerActions
+from utility.gui.qt.common.action_definitions import FileExplorerActions
 
 
 class MenuContext(Enum):

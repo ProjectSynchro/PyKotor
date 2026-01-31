@@ -27,7 +27,7 @@ from qtpy.QtWidgets import (
 )
 
 from toolset.gui.widgets.settings.widgets.misc import GlobalSettings
-from utility.ui_libraries.qt.widgets.theme.theme_dialog import ThemeDialog
+from utility.gui.qt.widgets.theme.theme_dialog import ThemeDialog
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QCoreApplication, QObject, QPoint

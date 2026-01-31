@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from qtpy.QtCore import QAbstractTableModel, QModelIndex, Qt
 from qtpy.QtWidgets import QApplication, QPushButton, QTableWidget, QVBoxLayout, QWidget
 
-from utility.ui_libraries.qt.widgets.itemviews.tableview import RobustTableView
+from utility.gui.qt.widgets.itemviews.tableview import RobustTableView
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QMenu

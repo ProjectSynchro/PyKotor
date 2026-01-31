@@ -222,7 +222,7 @@ class TestExplorerMainWindowStructure(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.show()
@@ -269,7 +269,7 @@ class TestExplorerToolbars(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.show()
@@ -306,7 +306,7 @@ class TestExplorerRibbon(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.show()
@@ -384,7 +384,7 @@ class TestExplorerRibbonHomeTab(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.show()
@@ -450,7 +450,7 @@ class TestExplorerRibbonViewTab(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.show()
@@ -545,7 +545,7 @@ class TestNavigationPane(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.show()
@@ -608,7 +608,7 @@ class TestNavigationPaneContent(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.show()
@@ -648,7 +648,7 @@ class TestContentArea(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.navigate(self.temp_dir.name)
@@ -697,7 +697,7 @@ class TestContentAreaViewModes(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.navigate(self.temp_dir.name)
@@ -758,7 +758,7 @@ class TestExplorerAddressBar(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.show()
@@ -803,7 +803,7 @@ class TestExplorerStatusBar(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.navigate(self.temp_dir.name)
@@ -857,7 +857,7 @@ class TestExplorerKeyboardNavigation(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.navigate(self.temp_dir.name)
@@ -953,7 +953,7 @@ class TestExplorerDragDrop(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.navigate(self.temp_dir.name)
@@ -1001,7 +1001,7 @@ class TestExplorerContextMenu(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.navigate(self.temp_dir.name)
@@ -1045,7 +1045,7 @@ class TestExplorerSelection(ExplorerComponentTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.navigate(self.temp_dir.name)

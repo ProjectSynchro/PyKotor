@@ -12,7 +12,7 @@ from qtpy.QtWidgets import QApplication, QListWidget, QListWidgetItem, QWidget
 
 from pykotor.resource.generics.dlg import DLGEntry, DLGLink
 from toolset.gui.editors.dlg.constants import QT_STANDARD_ITEM_FORMAT, _DLG_MIME_DATA_ROLE, _EXTRA_DISPLAY_ROLE
-from utility.ui_libraries.qt.widgets.itemviews.html_delegate import HTMLDelegate
+from utility.gui.qt.widgets.itemviews.html_delegate import HTMLDelegate
 
 if TYPE_CHECKING:
     import weakref
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
     from toolset.gui.editors.dlg.editor import DLGEditor
-    from utility.ui_libraries.qt.widgets.itemviews.html_delegate import HTMLDelegate
+    from utility.gui.qt.widgets.itemviews.html_delegate import HTMLDelegate
 
 
 class DLGListWidgetItem(QListWidgetItem):

@@ -40,7 +40,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from utility.ui_libraries.qt.tools.qt_meta import get_qt_meta_type
+from utility.gui.qt.tools.qt_meta import get_qt_meta_type
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QObject, QRegularExpressionMatch, QRegularExpressionMatchIterator, QSettings

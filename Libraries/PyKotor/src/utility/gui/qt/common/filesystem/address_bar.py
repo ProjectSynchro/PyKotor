@@ -24,7 +24,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from utility.ui_libraries.qt.common.qt_event_utils import process_events_if_safe
+from utility.gui.qt.common.qt_event_utils import process_events_if_safe
 
 if TYPE_CHECKING:
     from qtpy.QtGui import QMouseEvent, QPaintEvent

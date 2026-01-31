@@ -399,7 +399,7 @@ class WindowsExplorerConformanceTestBase(unittest.TestCase):
     
     def setUp(self) -> None:
         """Set up for each test."""
-        from utility.ui_libraries.qt.filesystem.explorer import FileSystemExplorerWidget
+        from utility.gui.qt.filesystem.explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.set_initial_path(str(self.temp_path))

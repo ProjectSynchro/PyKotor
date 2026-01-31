@@ -59,7 +59,7 @@ elif qtpy.QT6:
 from pykotor.resource.formats.ncs.compiler.classes import FunctionDefinition  # noqa: F401 - Used for type annotations in outline view
 from toolset.gui.common.localization import translate as tr, trf
 from toolset.gui.widgets.settings.installations import GlobalSettings
-from utility.ui_libraries.qt.widgets.itemviews.treewidget import RobustTreeWidget
+from utility.gui.qt.widgets.itemviews.treewidget import RobustTreeWidget
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QMimeData

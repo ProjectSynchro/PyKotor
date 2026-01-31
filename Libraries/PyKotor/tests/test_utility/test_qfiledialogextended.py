@@ -8,8 +8,8 @@ from pathlib import Path
 from qtpy.QtTest import QSignalSpy, QTest
 from qtpy.QtWidgets import QApplication
 
-from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as AdapterQFileDialog
-from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
+from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as AdapterQFileDialog
+from utility.gui.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
 
 
 class TestQFileDialogExtended(unittest.TestCase):

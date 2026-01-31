@@ -6,7 +6,7 @@ from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QApplication, QListView, QVBoxLayout, QWidget
 
-from utility.ui_libraries.qt.widgets.itemviews.abstractview import RobustAbstractItemView
+from utility.gui.qt.widgets.itemviews.abstractview import RobustAbstractItemView
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import _QMenu

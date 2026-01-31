@@ -34,7 +34,7 @@ from toolset.gui.editors.dlg.constants import (  # type: ignore[import-untyped] 
     _MODEL_INSTANCE_ID_ROLE,
 )
 from toolset.gui.editors.dlg.list_widget_base import DLGListWidgetItem  # type: ignore[import-untyped]  # pyright: ignore[reportMissingModuleSource]
-from utility.ui_libraries.qt.widgets.itemviews.html_delegate import ICONS_DATA_ROLE  # type: ignore[import-untyped]  # pyright: ignore[reportMissingModuleSource]
+from utility.gui.qt.widgets.itemviews.html_delegate import ICONS_DATA_ROLE  # type: ignore[import-untyped]  # pyright: ignore[reportMissingModuleSource]
 
 if TYPE_CHECKING:
     from typing import Callable, Literal

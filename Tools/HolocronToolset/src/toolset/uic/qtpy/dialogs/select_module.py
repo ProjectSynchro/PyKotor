@@ -49,4 +49,4 @@ class Ui_Dialog(object):
         self.cancelButton.setText(_translate("Dialog", "Cancel"))
         self.browseButton.setText(_translate("Dialog", "Browse"))
         self.openButton.setText(_translate("Dialog", "Open"))
-from utility.ui_libraries.qt.widgets.widgets.search_filter import SearchFilterWidget
+from utility.gui.qt.widgets.widgets.search_filter import SearchFilterWidget

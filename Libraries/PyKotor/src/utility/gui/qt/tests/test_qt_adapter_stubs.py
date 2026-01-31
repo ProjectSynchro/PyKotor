@@ -28,12 +28,12 @@ if TYPE_CHECKING:
     pass
 
 # Import all adapter classes
-from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
-from utility.ui_libraries.qt.adapters.filesystem.pyfileinfogatherer import PyFileInfoGatherer
-from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemnode import PyFileSystemNode
-from utility.ui_libraries.qt.adapters.filesystem.pyextendedinformation import PyQExtendedInformation
-from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemmodelsorter import PyFileSystemModelSorter
-from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as AdapterQFileDialog
+from utility.gui.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
+from utility.gui.qt.adapters.filesystem.pyfileinfogatherer import PyFileInfoGatherer
+from utility.gui.qt.adapters.filesystem.pyfilesystemnode import PyFileSystemNode
+from utility.gui.qt.adapters.filesystem.pyextendedinformation import PyQExtendedInformation
+from utility.gui.qt.adapters.filesystem.pyfilesystemmodelsorter import PyFileSystemModelSorter
+from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as AdapterQFileDialog
 
 
 class TestQtAdapterAPICompatibility:

@@ -10,14 +10,14 @@ from typing import TYPE_CHECKING
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from utility.ui_libraries.qt.common.filesystem.address_bar import RobustAddressBar
-from utility.ui_libraries.qt.common.filesystem.preview_widget import PreviewWidget
-from utility.ui_libraries.qt.common.ribbons_widget import RibbonsWidget
-from utility.ui_libraries.qt.common.tasks.task_status_widget import TaskStatusWidget
-from utility.ui_libraries.qt.widgets.widgets.stacked_view import DynamicStackedView
+from utility.gui.qt.common.filesystem.address_bar import RobustAddressBar
+from utility.gui.qt.common.filesystem.preview_widget import PreviewWidget
+from utility.gui.qt.common.ribbons_widget import RibbonsWidget
+from utility.gui.qt.common.tasks.task_status_widget import TaskStatusWidget
+from utility.gui.qt.widgets.widgets.stacked_view import DynamicStackedView
 
 if TYPE_CHECKING:
-    from utility.ui_libraries.qt.filesystem.qfileexplorer.explorer import FileSystemExplorerWidget
+    from utility.gui.qt.filesystem.qfileexplorer.explorer import FileSystemExplorerWidget
 
 
 class Ui_QFileExplorer:

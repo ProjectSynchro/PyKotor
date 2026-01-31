@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 # Import QFileDialogExtended and all dependencies
 
-from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
+from utility.gui.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
 
 
 @pytest.fixture(scope="session")

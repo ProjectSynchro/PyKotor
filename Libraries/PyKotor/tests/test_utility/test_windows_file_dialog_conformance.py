@@ -615,10 +615,10 @@ class WindowsFileDialogConformanceTestBase(unittest.TestCase):
     def setUp(self) -> None:
         """Set up for each test - create fresh dialog instance."""
         # Import here to avoid import errors during test discovery
-        from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import (
+        from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import (
             QFileDialog as AdapterQFileDialog,
         )
-        from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended import (
+        from utility.gui.qt.filesystem.qfiledialogextended.qfiledialogextended import (
             QFileDialogExtended,
         )
 

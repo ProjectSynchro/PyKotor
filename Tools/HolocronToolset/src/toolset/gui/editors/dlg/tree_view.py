@@ -16,8 +16,8 @@ from qtpy.QtWidgets import QAbstractItemDelegate, QAbstractItemView, QApplicatio
 from pykotor.resource.generics.dlg import DLGEntry, DLGLink, DLGNode, DLGReply
 from toolset.gui.editors.dlg.constants import QT_STANDARD_ITEM_FORMAT, _DLG_MIME_DATA_ROLE, _LINK_PARENT_NODE_PATH_ROLE, _MODEL_INSTANCE_ID_ROLE
 from toolset.gui.editors.dlg.model import DLGStandardItem, DLGStandardItemModel
-from utility.ui_libraries.qt.widgets.itemviews.html_delegate import HTMLDelegate
-from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
+from utility.gui.qt.widgets.itemviews.html_delegate import HTMLDelegate
+from utility.gui.qt.widgets.itemviews.treeview import RobustTreeView
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QByteArray, QMimeData

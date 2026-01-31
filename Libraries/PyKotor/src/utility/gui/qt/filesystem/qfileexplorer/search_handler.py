@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from qtpy.QtCore import QObject, Qt
 from qtpy.QtWidgets import QMessageBox, QWidget
 
-from utility.ui_libraries.qt.filesystem.qfileexplorer.explorer import FileSystemExplorerWidget
+from utility.gui.qt.filesystem.qfileexplorer.explorer import FileSystemExplorerWidget
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QModelIndex, QSortFilterProxyModel

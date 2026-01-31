@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QGraphicsWidget
 
-from utility.ui_libraries.qt.widgets.itemviews.graphicsview import RobustGraphicsView
+from utility.gui.qt.widgets.itemviews.graphicsview import RobustGraphicsView
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QGraphicsItem, QMenu, QWidget

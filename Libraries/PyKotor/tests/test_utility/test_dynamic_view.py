@@ -10,7 +10,7 @@ from qtpy.QtCore import QModelIndex
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QAbstractItemView, QApplication, QColumnView, QListView, QTableView, QTreeView
 
-from utility.ui_libraries.qt.widgets.widgets.stacked_view import DynamicStackedView
+from utility.gui.qt.widgets.widgets.stacked_view import DynamicStackedView
 
 
 class TestDynamicStackedView(unittest.TestCase):

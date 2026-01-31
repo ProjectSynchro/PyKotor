@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy.QtWidgets import QFileDialog
 
-from utility.ui_libraries.qt.adapters.kernel.qplatformdialoghelper.qplatformdialoghelper import QFileDialogPlatformHelper
+from utility.gui.qt.adapters.kernel.qplatformdialoghelper.qplatformdialoghelper import QFileDialogPlatformHelper
 
 
 class LinuxFileDialogHelper(QFileDialogPlatformHelper):

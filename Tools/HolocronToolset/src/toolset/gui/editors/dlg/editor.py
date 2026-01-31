@@ -57,8 +57,8 @@ from toolset.gui.editors.dlg.settings import DLGSettings
 from toolset.gui.editors.dlg.tree_view import DLGTreeView
 from toolset.gui.editors.dlg.widget_windows import ReferenceChooserDialog
 from toolset.gui.widgets.settings.installations import GlobalSettings
-from utility.ui_libraries.qt.adapters.itemmodels.filters import NoScrollEventFilter
-from utility.ui_libraries.qt.widgets.itemviews.html_delegate import HTMLDelegate
+from utility.gui.qt.adapters.itemmodels.filters import NoScrollEventFilter
+from utility.gui.qt.widgets.itemviews.html_delegate import HTMLDelegate
 
 if qtpy.QT6:
     from qtpy.QtGui import QUndoStack

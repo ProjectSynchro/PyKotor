@@ -56,9 +56,9 @@ from qtpy.QtWidgets import (
 )
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
-from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qsidebar_p import QUrlModel
-from utility.ui_libraries.qt.adapters.kernel.qplatformdialoghelper.qplatformdialoghelper import QPlatformFileDialogHelper
-from utility.ui_libraries.qt.tools.unifiers import sip_enum_to_int
+from utility.gui.qt.adapters.filesystem.qfiledialog.private.qsidebar_p import QUrlModel
+from utility.gui.qt.adapters.kernel.qplatformdialoghelper.qplatformdialoghelper import QPlatformFileDialogHelper
+from utility.gui.qt.tools.unifiers import sip_enum_to_int
 
 if TYPE_CHECKING:
     from qtpy.QtCore import (
@@ -81,13 +81,13 @@ if TYPE_CHECKING:
         QWidget,
     )
 
-    from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qsidebar_p import QSidebar
-    from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import (
+    from utility.gui.qt.adapters.filesystem.qfiledialog.private.qsidebar_p import QSidebar
+    from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import (
         QFileDialog,
         QFileDialog as PublicQFileDialog,
         QFileDialogOptions,  # noqa: TC004
     )
-    from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.ui_qfiledialog import Ui_QFileDialog
+    from utility.gui.qt.adapters.filesystem.qfiledialog.ui_qfiledialog import Ui_QFileDialog
 
 
 def qt_make_filter_list(filter_arg: str) -> list[str]:
@@ -264,7 +264,7 @@ class QFileDialogPrivate:
         self.defaultIconProvider: QFileIconProvider = QFileIconProvider()
 
         # QFileDialogArgs struct, used in some static methods of QFileDialog.
-        from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialogOptions
+        from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialogOptions
 
         self.options: QFileDialogOptions = QFileDialogOptions() if options is None else options
         self.filter: str = "" if filter is None else filter
@@ -278,7 +278,7 @@ class QFileDialogPrivate:
         self.selection: str = "" if selection is None else selection
 
         self.qFileDialogUi: Ui_QFileDialog | None = None
-        # from utility.ui_libraries.qt.filesystem.explorer.qfiledialog.private.ui_qfiledialog import Ui_QFileDialog
+        # from utility.gui.qt.filesystem.explorer.qfiledialog.private.ui_qfiledialog import Ui_QFileDialog
         # self.qFileDialogUi: Ui_QFileDialog = Ui_QFileDialog()
         # self.qFileDialogUi.setupUi(q)
         # self.init_directory(url=QUrl.fromLocalFile(self.directory))
@@ -396,7 +396,7 @@ class QFileDialogPrivate:
         self.model.setReadOnly(False)
 
         # Initialize UI
-        from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.ui_qfiledialog import Ui_QFileDialog
+        from utility.gui.qt.adapters.filesystem.qfiledialog.ui_qfiledialog import Ui_QFileDialog
 
         self.qFileDialogUi = Ui_QFileDialog()
         self.qFileDialogUi.setupUi(q)
@@ -2970,7 +2970,7 @@ class QFileDialogComboBox(QComboBox):
                 idx = model.index(model.rowCount() - 1, 0)
                 # Match C++: // ### TODO maybe add a horizontal line before this
                 # Match C++: model()->setData(idx, QFileDialog::tr("Recent Places"));
-                from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as PublicQFileDialog
+                from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as PublicQFileDialog
                 model.setData(idx, PublicQFileDialog.tr("Recent Places", "QFileDialog"))
                 # Match C++: QStandardItemModel *m = qobject_cast<QStandardItemModel*>(model());
                 if isinstance(model, QStandardItemModel):
@@ -3192,7 +3192,7 @@ class QFileDialogListView(QListView):
 
 
 if __name__ == "__main__":
-    from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as CustomQFileDialog
+    from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as CustomQFileDialog
 
     app = QApplication(sys.argv)
     dialog = CustomQFileDialog()

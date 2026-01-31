@@ -75,10 +75,10 @@ class TestQFileDialogExtendedLayout(unittest.TestCase):
 
     def setUp(self) -> None:
         """Create fresh dialog for each test."""
-        from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import (
+        from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import (
             QFileDialog as AdapterQFileDialog,
         )
-        from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended import (
+        from utility.gui.qt.filesystem.qfiledialogextended.qfiledialogextended import (
             QFileDialogExtended,
         )
         
@@ -231,7 +231,7 @@ class TestQFileDialogExtendedLayout(unittest.TestCase):
 
     def test_view_mode_list_shows_list_view(self) -> None:
         """Verify list mode shows list view."""
-        from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import (
+        from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import (
             QFileDialog as AdapterQFileDialog,
         )
         
@@ -243,7 +243,7 @@ class TestQFileDialogExtendedLayout(unittest.TestCase):
 
     def test_view_mode_detail_shows_tree_view(self) -> None:
         """Verify detail mode shows tree view."""
-        from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import (
+        from utility.gui.qt.adapters.filesystem.qfiledialog.qfiledialog import (
             QFileDialog as AdapterQFileDialog,
         )
         
@@ -454,7 +454,7 @@ class TestFileSystemExplorerWidgetLayout(unittest.TestCase):
 
     def setUp(self) -> None:
         """Create fresh explorer widget for each test."""
-        from utility.ui_libraries.qt.filesystem.qfileexplorer.explorer import (
+        from utility.gui.qt.filesystem.qfileexplorer.explorer import (
             FileSystemExplorerWidget,
         )
         
@@ -696,10 +696,10 @@ class TestLayoutConformanceIntegration(unittest.TestCase):
 
     def test_both_widgets_initialize_without_error(self) -> None:
         """Verify both widgets can be initialized together."""
-        from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended import (
+        from utility.gui.qt.filesystem.qfiledialogextended.qfiledialogextended import (
             QFileDialogExtended,
         )
-        from utility.ui_libraries.qt.filesystem.qfileexplorer.explorer import (
+        from utility.gui.qt.filesystem.qfileexplorer.explorer import (
             FileSystemExplorerWidget,
         )
         
@@ -715,10 +715,10 @@ class TestLayoutConformanceIntegration(unittest.TestCase):
 
     def test_widgets_share_similar_structure(self) -> None:
         """Verify both widgets have similar structural elements."""
-        from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended import (
+        from utility.gui.qt.filesystem.qfiledialogextended.qfiledialogextended import (
             QFileDialogExtended,
         )
-        from utility.ui_libraries.qt.filesystem.qfileexplorer.explorer import (
+        from utility.gui.qt.filesystem.qfileexplorer.explorer import (
             FileSystemExplorerWidget,
         )
         

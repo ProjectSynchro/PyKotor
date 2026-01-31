@@ -24,7 +24,7 @@ from qtpy.QtWidgets import (
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
+    from utility.gui.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
 
 
 class Ui_QFileDialogExtended(QFileDialog):  # noqa: N801

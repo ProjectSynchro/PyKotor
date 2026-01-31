@@ -76,4 +76,4 @@ class Ui_Form(object):
         self.label_11.setText(_translate("Form", "Name:"))
         self.label_12.setText(_translate("Form", "Path:"))
         self.label_13.setText(_translate("Form", "TSL:"))
-from utility.ui_libraries.qt.widgets.itemviews.listview import RobustListView
+from utility.gui.qt.widgets.itemviews.listview import RobustListView

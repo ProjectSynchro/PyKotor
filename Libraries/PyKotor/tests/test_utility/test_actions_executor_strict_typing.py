@@ -20,8 +20,8 @@ for path in (PYKOTOR_SRC, UTILITY_SRC):
         sys.path.insert(0, as_posix)
 
 
-from utility.ui_libraries.qt.common.expensive_functions import FileOperations
-from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor
+from utility.gui.qt.common.expensive_functions import FileOperations
+from utility.gui.qt.common.tasks.actions_executor import FileActionsExecutor
 
 
 class TestActionsExecutorStrictTyping:

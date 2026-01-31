@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 
     from pykotor.resource.formats.tpc.tpc_data import TPC
     from toolset.data.installation import HTInstallation
-    from utility.ui_libraries.qt.widgets.itemviews.listview import RobustListView
+    from utility.gui.qt.widgets.itemviews.listview import RobustListView
 
 
 class MainWindowList(QWidget):

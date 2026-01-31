@@ -638,4 +638,4 @@ class Ui_MainWindow(object):
         self.actionExit.setToolTip(_translate("MainWindow", "Close the editor (Ctrl+Q)"))
         self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+Q"))
 from toolset.gui.widgets.edit.locstring import LocalizedStringLineEdit
-from utility.ui_libraries.qt.widgets.widgets.combobox import FilterComboBox
+from utility.gui.qt.widgets.widgets.combobox import FilterComboBox

@@ -13,8 +13,8 @@ import qtpy
 from loggerplus import RobustLogger
 
 from pykotor.extract.capsule import LazyCapsule
-from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
-from utility.ui_libraries.qt.tools.image import qicon_from_file_ext, qpixmap_to_qicon
+from utility.gui.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
+from utility.gui.qt.tools.image import qicon_from_file_ext, qpixmap_to_qicon
 
 if qtpy.QT6:
     QDesktopWidget = None
@@ -75,8 +75,8 @@ from toolset.gui.dialogs.load_from_location_result import ResourceItems  # noqa:
 from toolset.main_init import main_init  # noqa: E402
 from toolset.utils.window import open_resource_editor  # noqa: E402
 from utility.system.os_helper import get_size_on_disk  # noqa: E402
-from utility.ui_libraries.qt.widgets.itemviews.html_delegate import ICONS_DATA_ROLE, HTMLDelegate  # noqa: E402
-from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView  # noqa: E402
+from utility.gui.qt.widgets.itemviews.html_delegate import ICONS_DATA_ROLE, HTMLDelegate  # noqa: E402
+from utility.gui.qt.widgets.itemviews.treeview import RobustTreeView  # noqa: E402
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QPoint, QRect
@@ -86,7 +86,7 @@ if TYPE_CHECKING:
 
     from toolset.data.installation import HTInstallation
     from toolset.gui.windows.main import ToolWindow
-    from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
+    from utility.gui.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
 
 
 class TreeItem:

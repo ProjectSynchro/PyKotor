@@ -22,8 +22,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from utility.ui_libraries.qt.widgets.itemviews.abstractview import RobustAbstractItemView
-from utility.ui_libraries.qt.widgets.itemviews.columnview import RobustColumnView  # noqa: F401
+from utility.gui.qt.widgets.itemviews.abstractview import RobustAbstractItemView
+from utility.gui.qt.widgets.itemviews.columnview import RobustColumnView  # noqa: F401
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

@@ -33,7 +33,7 @@ from qtpy.QtCore import (
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
 
-from utility.ui_libraries.qt.common.expensive_functions import FileOperations
+from utility.gui.qt.common.expensive_functions import FileOperations
 
 if qtpy.QT5:
     pass

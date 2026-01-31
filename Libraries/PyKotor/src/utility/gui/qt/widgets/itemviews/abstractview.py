@@ -8,8 +8,8 @@ from qtpy.QtCore import QAbstractItemModel, QSortFilterProxyModel, QTimer, Qt
 from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import QAbstractItemDelegate, QAbstractItemView, QAbstractScrollArea, QFrame, QStyle, QStyleOptionViewItem
 
-from utility.ui_libraries.qt.widgets.itemviews.baseview import RobustBaseWidget
-from utility.ui_libraries.qt.widgets.itemviews.html_delegate import HTMLDelegate
+from utility.gui.qt.widgets.itemviews.baseview import RobustBaseWidget
+from utility.gui.qt.widgets.itemviews.html_delegate import HTMLDelegate
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QItemSelectionModel, QMargins, QModelIndex, QPoint

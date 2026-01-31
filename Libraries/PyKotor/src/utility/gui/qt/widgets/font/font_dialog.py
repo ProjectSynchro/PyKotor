@@ -6,7 +6,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QDialog, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
-from utility.ui_libraries.qt.widgets.font.font_widget import FontWidget
+from utility.gui.qt.widgets.font.font_widget import FontWidget
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QLayout

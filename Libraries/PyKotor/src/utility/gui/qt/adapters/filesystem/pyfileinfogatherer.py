@@ -42,7 +42,7 @@ except ImportError:
     if not TYPE_CHECKING:
         QAbstractFileIconProvider = QFileIconProvider  # type: ignore[assignment, misc]
 
-from utility.ui_libraries.qt.adapters.filesystem.pyextendedinformation import PyQExtendedInformation  # noqa: E402
+from utility.gui.qt.adapters.filesystem.pyextendedinformation import PyQExtendedInformation  # noqa: E402
 
 
 def translateDriveName(drive: QFileInfo) -> str:

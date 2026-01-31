@@ -1083,4 +1083,4 @@ class Ui_MainWindow(object):
 from toolset.gui.editors.dlg import DLGTreeView
 from toolset.gui.widgets.edit.combobox_2da import ComboBox2DA
 from toolset.gui.widgets.edit.spinbox import GFFFieldSpinBox
-from utility.ui_libraries.qt.widgets.widgets.combobox import FilterComboBox
+from utility.gui.qt.widgets.widgets.combobox import FilterComboBox

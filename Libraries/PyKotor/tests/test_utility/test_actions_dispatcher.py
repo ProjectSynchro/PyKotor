@@ -20,10 +20,10 @@ if TYPE_CHECKING:
     pass
 
 # Import ActionsDispatcher and dependencies
-from utility.ui_libraries.qt.common.action_definitions import ActionDefinition, FileExplorerActions
-from utility.ui_libraries.qt.common.actions_dispatcher import ActionsDispatcher
-from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor
-from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
+from utility.gui.qt.common.action_definitions import ActionDefinition, FileExplorerActions
+from utility.gui.qt.common.actions_dispatcher import ActionsDispatcher
+from utility.gui.qt.common.tasks.actions_executor import FileActionsExecutor
+from utility.gui.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
 
 
 @pytest.fixture(scope="session")

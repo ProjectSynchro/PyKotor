@@ -101,7 +101,7 @@
   <customwidget>
    <class>RobustListView</class>
    <extends>QListView</extends>
-   <header location="global">utility.ui_libraries.qt.widgets.itemviews.listview</header>
+   <header location="global">utility.gui.qt.widgets.itemviews.listview</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

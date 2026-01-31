@@ -728,4 +728,4 @@ class Ui_MainWindow(object):
         self.actionK1.setText(_translate("MainWindow", "K1"))
         self.actionTSL.setText(_translate("MainWindow", "TSL"))
 from toolset.gui.common.widgets.code_editor import CodeEditor
-from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
+from utility.gui.qt.widgets.itemviews.treeview import RobustTreeView

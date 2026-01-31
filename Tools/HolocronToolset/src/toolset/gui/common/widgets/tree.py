@@ -24,7 +24,7 @@ from qtpy.QtWidgets import (
 )
 
 from toolset.utils.misc import get_qsettings_organization
-from utility.ui_libraries.qt.widgets.itemviews.html_delegate import HTMLDelegate
+from utility.gui.qt.widgets.itemviews.html_delegate import HTMLDelegate
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QItemSelectionModel, QObject, QPoint

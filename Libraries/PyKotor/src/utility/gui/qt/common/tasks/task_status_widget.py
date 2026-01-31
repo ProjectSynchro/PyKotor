@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING, Callable
 from qtpy.QtCore import QTimer, Qt, Signal
 from qtpy.QtWidgets import QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QProgressBar, QPushButton, QVBoxLayout, QWidget
 
-from utility.ui_libraries.qt.common.tasks.actions_executor import TaskStatus
+from utility.gui.qt.common.tasks.actions_executor import TaskStatus
 
 if TYPE_CHECKING:
     from qtpy.QtGui import QMouseEvent
 
-    from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor, Task
+    from utility.gui.qt.common.tasks.actions_executor import FileActionsExecutor, Task
 
 
 from dataclasses import dataclass
@@ -563,7 +563,7 @@ if __name__ == "__main__":
 
     from qtpy.QtWidgets import QApplication
 
-    from utility.ui_libraries.qt.filesystem.file_browser.file_system_executor import FileActionsExecutor
+    from utility.gui.qt.filesystem.file_browser.file_system_executor import FileActionsExecutor
 
     app = QApplication(sys.argv)
 

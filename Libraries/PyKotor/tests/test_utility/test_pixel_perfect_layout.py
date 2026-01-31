@@ -442,7 +442,7 @@ class TestFileDialogNavigationLayout(PixelLayoutTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -492,7 +492,7 @@ class TestFileDialogAddressBarLayout(PixelLayoutTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -536,7 +536,7 @@ class TestFileDialogSearchBoxLayout(PixelLayoutTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -587,7 +587,7 @@ class TestFileDialogSidebarLayout(PixelLayoutTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -639,7 +639,7 @@ class TestFileDialogBottomControlsLayout(PixelLayoutTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -706,7 +706,7 @@ class TestExplorerRibbonLayout(PixelLayoutTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.resize(1024, 600)
@@ -751,7 +751,7 @@ class TestExplorerSidebarLayout(PixelLayoutTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.resize(1024, 600)
@@ -779,7 +779,7 @@ class TestExplorerStatusBarLayout(PixelLayoutTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.resize(1024, 600)
@@ -815,7 +815,7 @@ class TestResponsiveFileDialogLayout(PixelLayoutTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -871,7 +871,7 @@ class TestResponsiveExplorerLayout(PixelLayoutTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.show()

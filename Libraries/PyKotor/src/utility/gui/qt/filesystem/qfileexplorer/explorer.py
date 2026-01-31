@@ -42,12 +42,12 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from utility.ui_libraries.qt.common.actions_dispatcher import ActionsDispatcher
-from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor
-from utility.ui_libraries.qt.common.tasks.task_details_dialog import TaskDetailsDialog
-from utility.ui_libraries.qt.filesystem.qfileexplorer.explorer_ui import Ui_QFileExplorer
-from utility.ui_libraries.qt.tools.image import IconLoader
-from utility.ui_libraries.qt.widgets.itemviews.abstractview import RobustAbstractItemView
+from utility.gui.qt.common.actions_dispatcher import ActionsDispatcher
+from utility.gui.qt.common.tasks.actions_executor import FileActionsExecutor
+from utility.gui.qt.common.tasks.task_details_dialog import TaskDetailsDialog
+from utility.gui.qt.filesystem.qfileexplorer.explorer_ui import Ui_QFileExplorer
+from utility.gui.qt.tools.image import IconLoader
+from utility.gui.qt.widgets.itemviews.abstractview import RobustAbstractItemView
 
 if TYPE_CHECKING:
 

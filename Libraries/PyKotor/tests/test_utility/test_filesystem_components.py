@@ -42,13 +42,13 @@ from qtpy.QtWidgets import (
     QFileSystemModel,
 )
 
-from utility.ui_libraries.qt.adapters.filesystem.pyextendedinformation import PyQExtendedInformation
-from utility.ui_libraries.qt.adapters.filesystem.pyfileinfogatherer import PyFileInfoGatherer
-from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
-from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemmodelsorter import PyFileSystemModelSorter
-from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemnode import PyFileSystemNode
-from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemwatcher import PyFileSystemWatcher
-from utility.ui_libraries.qt.adapters.filesystem.qfilesystemmodelnodekey import PyQFileSystemModelNodePathKey
+from utility.gui.qt.adapters.filesystem.pyextendedinformation import PyQExtendedInformation
+from utility.gui.qt.adapters.filesystem.pyfileinfogatherer import PyFileInfoGatherer
+from utility.gui.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
+from utility.gui.qt.adapters.filesystem.pyfilesystemmodelsorter import PyFileSystemModelSorter
+from utility.gui.qt.adapters.filesystem.pyfilesystemnode import PyFileSystemNode
+from utility.gui.qt.adapters.filesystem.pyfilesystemwatcher import PyFileSystemWatcher
+from utility.gui.qt.adapters.filesystem.qfilesystemmodelnodekey import PyQFileSystemModelNodePathKey
 
 if TYPE_CHECKING:
     pass  # type: ignore[import-untyped]
@@ -1048,7 +1048,7 @@ class TestFilesystemComponentsIntegration:
     @pytest.fixture
     def dialog_extended(self, qtbot, temp_test_dir):
         """Create QFileDialogExtended for integration testing."""
-        from utility.ui_libraries.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
+        from utility.gui.qt.filesystem.qfiledialogextended.qfiledialogextended import QFileDialogExtended
         
         dialog = QFileDialogExtended(None, None)
         qtbot.addWidget(dialog)
@@ -1658,7 +1658,7 @@ class TestPyFileInfo:
     
     def test_pyfileinfo_constructor_default(self):
         """Test default constructor."""
-        from utility.ui_libraries.qt.adapters.filesystem.pyfileitem import PyFileInfo
+        from utility.gui.qt.adapters.filesystem.pyfileitem import PyFileInfo
         
         info = PyFileInfo()
         assert info is not None
@@ -1666,7 +1666,7 @@ class TestPyFileInfo:
     
     def test_pyfileinfo_constructor_with_file(self, temp_test_dir):
         """Test constructor with file."""
-        from utility.ui_libraries.qt.adapters.filesystem.pyfileitem import PyFileInfo
+        from utility.gui.qt.adapters.filesystem.pyfileitem import PyFileInfo
         
         test_file = temp_test_dir / "test.txt"
         test_file.write_text("content")
@@ -1678,7 +1678,7 @@ class TestPyFileInfo:
     
     def test_pyfileinfo_absolute_path(self, temp_test_dir):
         """Test absolutePath()."""
-        from utility.ui_libraries.qt.adapters.filesystem.pyfileitem import PyFileInfo
+        from utility.gui.qt.adapters.filesystem.pyfileitem import PyFileInfo
         
         test_file = temp_test_dir / "test.txt"
         test_file.write_text("content")
@@ -1689,7 +1689,7 @@ class TestPyFileInfo:
     
     def test_pyfileinfo_base_name(self, temp_test_dir):
         """Test baseName()."""
-        from utility.ui_libraries.qt.adapters.filesystem.pyfileitem import PyFileInfo
+        from utility.gui.qt.adapters.filesystem.pyfileitem import PyFileInfo
         
         test_file = temp_test_dir / "test.txt"
         test_file.write_text("content")
@@ -1699,7 +1699,7 @@ class TestPyFileInfo:
     
     def test_pyfileinfo_suffix(self, temp_test_dir):
         """Test suffix()."""
-        from utility.ui_libraries.qt.adapters.filesystem.pyfileitem import PyFileInfo
+        from utility.gui.qt.adapters.filesystem.pyfileitem import PyFileInfo
         
         test_file = temp_test_dir / "test.txt"
         test_file.write_text("content")

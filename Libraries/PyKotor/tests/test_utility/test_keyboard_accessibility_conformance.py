@@ -175,7 +175,7 @@ class TestFileDialogTabNavigation(KeyboardAccessibilityTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -248,7 +248,7 @@ class TestFileDialogKeyboardShortcuts(KeyboardAccessibilityTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -324,7 +324,7 @@ class TestFileDialogArrowNavigation(KeyboardAccessibilityTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -399,7 +399,7 @@ class TestExplorerTabNavigation(KeyboardAccessibilityTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.navigate(self.temp_dir.name)
@@ -451,7 +451,7 @@ class TestExplorerKeyboardShortcuts(KeyboardAccessibilityTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.navigate(self.temp_dir.name)
@@ -533,7 +533,7 @@ class TestExplorerRibbonKeyboard(KeyboardAccessibilityTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.navigate(self.temp_dir.name)
@@ -578,7 +578,7 @@ class TestFileDialogAccessibility(KeyboardAccessibilityTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -633,7 +633,7 @@ class TestExplorerAccessibility(KeyboardAccessibilityTestBase):
     
     def setUp(self) -> None:
         """Set up explorer for testing."""
-        from utility.ui_libraries.qt.widgets.item_explorer import FileSystemExplorerWidget
+        from utility.gui.qt.widgets.item_explorer import FileSystemExplorerWidget
         
         self.explorer = FileSystemExplorerWidget()
         self.explorer.show()
@@ -675,7 +675,7 @@ class TestFocusManagement(KeyboardAccessibilityTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -725,7 +725,7 @@ class TestMinimumTargetSize(KeyboardAccessibilityTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         

@@ -40,7 +40,7 @@ from toolset.gui.dialogs.save.generic_file_saver import FileSaveHandler
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.utils.window import open_resource_editor
-from utility.ui_libraries.qt.widgets.itemviews.tableview import RobustTableView
+from utility.gui.qt.widgets.itemviews.tableview import RobustTableView
 
 if TYPE_CHECKING:
     import os

@@ -312,4 +312,4 @@ class Ui_MainWindow(object):
         self.actionExit.setText(_translate("MainWindow", "Exit"))
 from toolset.gui.widgets.edit.combobox_2da import ComboBox2DA
 from toolset.gui.widgets.edit.locstring import LocalizedStringLineEdit
-from utility.ui_libraries.qt.widgets.widgets.combobox import FilterComboBox
+from utility.gui.qt.widgets.widgets.combobox import FilterComboBox

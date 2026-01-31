@@ -18,8 +18,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable
 
-import yaml
-
 from pykotor.tslpatcher.diff.engine import CachedFileComparison
 
 if TYPE_CHECKING:
@@ -166,13 +164,16 @@ def save_diff_cache(
                 dst.write_bytes(src.read_bytes())
 
     # Save metadata to YAML
-    cache_file.write_text(yaml.dump(cache.to_dict(), default_flow_style=False), encoding="utf-8")
-    log_func(f"Saved diff cache to: {cache_file}")
-    log_func(f"  Cached {len(files_list)} file comparisons")
-    if strref_cache is not None:
-        stats: dict[str, int] = strref_cache.get_statistics()
-        log_func(f"  Cached StrRef data: {stats['unique_strrefs']} StrRefs, {stats['total_references']} references")
-    log_func(f"  Cache data directory: {cache_dir}")
+    import importlib.findspec
+    if importlib.find_spec("yaml") is not None:
+        import yaml
+        cache_file.write_text(yaml.dump(cache.to_dict(), default_flow_style=False), encoding="utf-8")
+        log_func(f"Saved diff cache to: {cache_file}")
+        log_func(f"  Cached {len(files_list)} file comparisons")
+        if strref_cache is not None:
+            stats: dict[str, int] = strref_cache.get_statistics()
+            log_func(f"  Cached StrRef data: {stats['unique_strrefs']} StrRefs, {stats['total_references']} references")
+        log_func(f"  Cache data directory: {cache_dir}")
 
 
 def load_diff_cache(

@@ -53,7 +53,7 @@ except ImportError:
     QAbstractFileIconProvider = QFileIconProvider  # type: ignore[assignment, misc]
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
-from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView  # noqa: E402
+from utility.gui.qt.widgets.itemviews.treeview import RobustTreeView  # noqa: E402
 
 
 def update_sys_path(path: pathlib.Path):
@@ -80,9 +80,9 @@ if toolset_path.exists():
         os.chdir(toolset_path)
 
 from utility.system.path import Path  # noqa: E402
-from utility.ui_libraries.qt.adapters.filesystem.pyfileinfogatherer import PyFileInfoGatherer  # noqa: E402
-from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemmodelsorter import PyFileSystemModelSorter  # noqa: E402
-from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemnode import PyFileSystemNode  # noqa: E402
+from utility.gui.qt.adapters.filesystem.pyfileinfogatherer import PyFileInfoGatherer  # noqa: E402
+from utility.gui.qt.adapters.filesystem.pyfilesystemmodelsorter import PyFileSystemModelSorter  # noqa: E402
+from utility.gui.qt.adapters.filesystem.pyfilesystemnode import PyFileSystemNode  # noqa: E402
 
 if TYPE_CHECKING:
     from qtpy.QtCore import (

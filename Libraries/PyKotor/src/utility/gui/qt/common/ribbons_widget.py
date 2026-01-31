@@ -17,9 +17,9 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from utility.ui_libraries.qt.common.action_definitions import FileExplorerActions
-from utility.ui_libraries.qt.common.column_options_dialog import SetDefaultColumnsDialog
-from utility.ui_libraries.qt.common.menu_definitions import FileExplorerMenus
+from utility.gui.qt.common.action_definitions import FileExplorerActions
+from utility.gui.qt.common.column_options_dialog import SetDefaultColumnsDialog
+from utility.gui.qt.common.menu_definitions import FileExplorerMenus
 
 
 class RibbonsWidget(QWidget):

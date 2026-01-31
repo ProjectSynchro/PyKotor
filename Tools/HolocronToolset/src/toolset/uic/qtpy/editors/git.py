@@ -595,5 +595,5 @@ class Ui_MainWindow(object):
         self.actionUseEncounterName.setText(_translate("MainWindow", "Name"))
         self.actionUseEncounterTag.setText(_translate("MainWindow", "Tag"))
 from toolset.gui.widgets.renderer.walkmesh import WalkmeshRenderer
-from utility.ui_libraries.qt.widgets.widgets.search_filter import SearchFilterWidget
+from utility.gui.qt.widgets.widgets.search_filter import SearchFilterWidget
 import resources_rc

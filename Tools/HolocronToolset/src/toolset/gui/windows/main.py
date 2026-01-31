@@ -114,7 +114,7 @@ if TYPE_CHECKING:
     from pykotor.resource.type import SOURCE_TYPES
     from toolset.gui.common.localization import ToolsetLanguage
     from toolset.gui.widgets.main_widgets import ResourceModel, TextureList
-    from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
+    from utility.gui.qt.widgets.itemviews.treeview import RobustTreeView
 
 
 def run_module_designer(

@@ -132,5 +132,5 @@ class Ui_MainWindow(object):
         self.actionDuplicateRow.setText(_translate("MainWindow", "Duplicate Row"))
         self.actionDuplicateRow.setShortcut(_translate("MainWindow", "Ctrl+D"))
         self.actionplaceholder.setText(_translate("MainWindow", "placeholder"))
-from utility.ui_libraries.qt.widgets.itemviews.tableview import RobustTableView
-from utility.ui_libraries.qt.widgets.widgets.search_filter import SearchFilterWidget
+from utility.gui.qt.widgets.itemviews.tableview import RobustTableView
+from utility.gui.qt.widgets.widgets.search_filter import SearchFilterWidget

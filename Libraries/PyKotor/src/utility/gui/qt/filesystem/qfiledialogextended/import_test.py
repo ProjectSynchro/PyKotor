@@ -6,7 +6,7 @@ if str(src) not in sys.path:
 print('src in sys.path:', str(src) in sys.path)
 try:
     import importlib
-    mod = importlib.import_module('utility.ui_libraries.qt.widgets.itemviews.file_size_delegate')
+    mod = importlib.import_module('utility.gui.qt.widgets.itemviews.file_size_delegate')
     print('Imported OK:', mod.__name__)
 except Exception as e:
     import traceback

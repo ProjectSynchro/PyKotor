@@ -8,8 +8,8 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QPalette, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QHeaderView, QMenu, QPushButton, QStyleOptionViewItem, QTreeView, QVBoxLayout
 
-from utility.ui_libraries.qt.widgets.itemviews.abstractview import RobustAbstractItemView
-from utility.ui_libraries.qt.widgets.itemviews.html_delegate import HTMLDelegate
+from utility.gui.qt.widgets.itemviews.abstractview import RobustAbstractItemView
+from utility.gui.qt.widgets.itemviews.html_delegate import HTMLDelegate
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QModelIndex

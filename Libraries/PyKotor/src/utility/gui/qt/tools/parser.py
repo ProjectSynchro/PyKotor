@@ -123,7 +123,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from utility.ui_libraries.qt.tools.qt_meta import determine_type, get_qt_meta_type
+from utility.gui.qt.tools.qt_meta import determine_type, get_qt_meta_type
 
 QMatrix = object
 try:

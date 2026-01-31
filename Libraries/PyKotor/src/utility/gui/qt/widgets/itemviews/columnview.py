@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QAbstractItemView, QApplication, QColumnView, QVBoxLayout, QWidget
 
-from utility.ui_libraries.qt.widgets.itemviews.abstractview import RobustAbstractItemView
+from utility.gui.qt.widgets.itemviews.abstractview import RobustAbstractItemView
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QModelIndex

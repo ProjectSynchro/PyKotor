@@ -14,7 +14,7 @@ from qtpy.QtGui import QIcon  # noqa: E402
 if TYPE_CHECKING:
     from qtpy.QtGui import QAbstractFileIconProvider
 
-from utility.ui_libraries.qt.adapters.filesystem.pyextendedinformation import PyQExtendedInformation  # noqa: E402
+from utility.gui.qt.adapters.filesystem.pyextendedinformation import PyQExtendedInformation  # noqa: E402
 
 
 class PyFileSystemNode:

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, overload
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QHeaderView, QWidget
 
-from utility.ui_libraries.qt.widgets.itemviews.abstractview import (
+from utility.gui.qt.widgets.itemviews.abstractview import (
     RobustAbstractItemView,
 )
 

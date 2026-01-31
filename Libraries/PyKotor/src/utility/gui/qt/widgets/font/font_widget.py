@@ -6,9 +6,9 @@ from qtpy.QtCore import Signal  # pyright: ignore[reportPrivateImportUsage]
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QTextEdit, QVBoxLayout, QWidget
 
-from utility.ui_libraries.qt.widgets.font.font_item_widget import FontItemWidget
-from utility.ui_libraries.qt.widgets.font.size_widget import SizeWidget
-from utility.ui_libraries.qt.widgets.font.style_widget import StyleWidget
+from utility.gui.qt.widgets.font.font_item_widget import FontItemWidget
+from utility.gui.qt.widgets.font.size_widget import SizeWidget
+from utility.gui.qt.widgets.font.style_widget import StyleWidget
 
 if TYPE_CHECKING:
     from qtpy.QtGui import QFontDatabase

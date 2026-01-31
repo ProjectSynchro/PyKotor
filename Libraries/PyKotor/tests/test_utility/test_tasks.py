@@ -13,13 +13,13 @@ import pytest
 from qtpy.QtWidgets import QApplication
 from typing_extensions import Literal
 
-from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor, Task, TaskStatus
+from utility.gui.qt.common.tasks.actions_executor import FileActionsExecutor, Task, TaskStatus
 
 if TYPE_CHECKING:
     from multiprocessing import Queue
     from multiprocessing.managers import ValueProxy
 
-    from utility.ui_libraries.qt.common.tasks.actions_executor import Task, TaskDetails
+    from utility.gui.qt.common.tasks.actions_executor import Task, TaskDetails
 
 
 class TestFileActionsExecutor(unittest.TestCase):

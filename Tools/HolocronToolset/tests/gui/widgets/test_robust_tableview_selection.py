@@ -11,7 +11,7 @@ from qtpy.QtGui import QMouseEvent, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QApplication
 from qtpy.QtTest import QTest
 
-from utility.ui_libraries.qt.widgets.itemviews.tableview import RobustTableView
+from utility.gui.qt.widgets.itemviews.tableview import RobustTableView
 
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot

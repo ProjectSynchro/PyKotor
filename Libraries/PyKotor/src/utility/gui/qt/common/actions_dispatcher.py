@@ -50,11 +50,11 @@ from qtpy.QtWidgets import (
 )
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
-from utility.ui_libraries.qt.common.column_options_dialog import SetDefaultColumnsDialog
-from utility.ui_libraries.qt.common.filesystem.file_properties_dialog import FilePropertiesDialog
-from utility.ui_libraries.qt.common.filesystem.filename_validator import FileNameValidator
-from utility.ui_libraries.qt.common.menu_definitions import FileExplorerMenus, MenuContext
-from utility.ui_libraries.qt.common.tasks.actions_executor import FileActionsExecutor
+from utility.gui.qt.common.column_options_dialog import SetDefaultColumnsDialog
+from utility.gui.qt.common.filesystem.file_properties_dialog import FilePropertiesDialog
+from utility.gui.qt.common.filesystem.filename_validator import FileNameValidator
+from utility.gui.qt.common.menu_definitions import FileExplorerMenus, MenuContext
+from utility.gui.qt.common.tasks.actions_executor import FileActionsExecutor
 
 try:
     importlib.util.find_spec("win32com")  # pyright: ignore[reportAttributeAccessIssue]
@@ -72,7 +72,7 @@ if TYPE_CHECKING:
     from qtpy.QtCore import QModelIndex, QPoint
     from qtpy.QtWidgets import QMenu
 
-    from utility.ui_libraries.qt.common.filesystem.file_properties_dialog import FileProperties
+    from utility.gui.qt.common.filesystem.file_properties_dialog import FileProperties
 
 
 class DropEffect(IntEnum):
@@ -119,7 +119,7 @@ class ActionsDispatcher:
 
     def setup_signals(self):
         """Set up signal connections for menu actions using declarative definitions."""
-        from utility.ui_libraries.qt.common.action_definitions import FileExplorerActions
+        from utility.gui.qt.common.action_definitions import FileExplorerActions
 
         actions = FileExplorerActions()
         for action_key, definition in actions.ACTION_DEFINITIONS.items():

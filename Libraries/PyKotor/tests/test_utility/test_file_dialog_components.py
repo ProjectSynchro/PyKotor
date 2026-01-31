@@ -181,7 +181,7 @@ class TestAddressBarStructure(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up address bar for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -250,7 +250,7 @@ class TestAddressBarNavigation(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up address bar for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -302,7 +302,7 @@ class TestAddressBarKeyboard(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up address bar for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -351,7 +351,7 @@ class TestSearchBoxStructure(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up search box for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -403,7 +403,7 @@ class TestSearchBoxFunctionality(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up search box for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -462,7 +462,7 @@ class TestPreviewPaneStructure(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up preview pane for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -514,7 +514,7 @@ class TestPreviewPaneContent(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up preview pane for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -569,7 +569,7 @@ class TestSidebarStructure(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up sidebar for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -617,7 +617,7 @@ class TestSidebarContent(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up sidebar for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -656,7 +656,7 @@ class TestSidebarNavigation(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up sidebar for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -698,7 +698,7 @@ class TestFileListStructure(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up file list for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -755,7 +755,7 @@ class TestFileListDetailView(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up file list for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -801,7 +801,7 @@ class TestFileListSelection(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up file list for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -845,7 +845,7 @@ class TestBottomControlsStructure(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         
@@ -898,7 +898,7 @@ class TestBottomControlsBehavior(FileDialogComponentTestBase):
     
     def setUp(self) -> None:
         """Set up dialog for testing."""
-        from utility.ui_libraries.qt.widgets.extended_dialogs.qfiledialog_extended import (
+        from utility.gui.qt.widgets.extended_dialogs.qfiledialog_extended import (
             QFileDialogExtended,
         )
         

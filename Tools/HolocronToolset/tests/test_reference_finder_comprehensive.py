@@ -43,7 +43,7 @@ from toolset.gui.dialogs.search import FileResults
 
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
-    from utility.ui_libraries.qt.widgets.widgets.combobox import FilterComboBox
+    from utility.gui.qt.widgets.widgets.combobox import FilterComboBox
 
 if qtpy.QT5:
     from qtpy.QtWidgets import QAction

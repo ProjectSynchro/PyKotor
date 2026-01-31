@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import QMainWindow, QTreeWidget, QTreeWidgetItem
 
-from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
+from utility.gui.qt.widgets.itemviews.treeview import RobustTreeView
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QMenu, QWidget

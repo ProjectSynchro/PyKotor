@@ -191,4 +191,4 @@ class Ui_MainWindow(object):
 from toolset.gui.widgets.edit.combobox_2da import ComboBox2DA
 from toolset.gui.widgets.edit.locstring import LocalizedStringLineEdit
 from toolset.gui.widgets.edit.plaintext import HTPlainTextEdit
-from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
+from utility.gui.qt.widgets.itemviews.treeview import RobustTreeView

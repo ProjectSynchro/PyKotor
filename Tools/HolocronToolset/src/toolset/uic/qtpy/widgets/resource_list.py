@@ -74,5 +74,5 @@ class Ui_Form(object):
         self.searchEdit.setPlaceholderText(_translate("Form", "filter..."))
         self.reloadButton.setToolTip(_translate("Form", "Reload the active module/folder."))
         self.reloadButton.setText(_translate("Form", "Reload"))
-from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
-from utility.ui_libraries.qt.widgets.widgets.search_filter import SearchFilterWidget
+from utility.gui.qt.widgets.itemviews.treeview import RobustTreeView
+from utility.gui.qt.widgets.widgets.search_filter import SearchFilterWidget
