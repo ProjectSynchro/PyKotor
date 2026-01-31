@@ -61,8 +61,8 @@ Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
 name = "holocron-ai"
 version = "0.1.1"
 description = "A Star Wars character AI chat interface using PyQt and LLMs"
-authors = ["PyKotor Team", "Benjamin Auquite <halomastar@gmail.com>"]
-maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
+authors = ["PyKotor Team", "Boden Crouch <halomastar@gmail.com>"]
+maintainers = ["Boden Crouch <halomastar@gmail.com>"]
 readme = "README.md"
 license = "MIT"
 packages = [{ include = "holocron_ai", from = "src" }]

@@ -61,8 +61,8 @@ Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 name = "kotordiff"
 version = "1.0.1"
 description = "KotOR Diff Tool - generates TSLPatcher patch data from file differences"
-authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
-maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
+authors = ["NickHugi", "Boden Crouch <halomastar@gmail.com>"]
+maintainers = ["Boden Crouch <halomastar@gmail.com>"]
 readme = "README.md"
 license = "LGPL-3.0-or-later"
 packages = [{ include = "kotordiff", from = "src" }]

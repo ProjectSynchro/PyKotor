@@ -72,8 +72,8 @@ Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 name = "holopazaak"
 version = "2.0.0"
 description = "A comprehensive PyQt6 Pazaak card game implementation for Knights of the Old Republic with multiplayer support"
-authors = ["Benjamin Auquite <halomastar@gmail.com>"]
-maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
+authors = ["Boden Crouch <halomastar@gmail.com>"]
+maintainers = ["Boden Crouch <halomastar@gmail.com>"]
 readme = "README.md"
 license = "LGPL-3.0-or-later"
 packages = [{ include = "holopazaak", from = "src" }]

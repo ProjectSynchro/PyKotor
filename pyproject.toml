@@ -28,7 +28,6 @@ holocrontoolset = ["holocrontoolset"]
 holopatcher = ["holopatcher"]
 kotordiff = ["kotordiff"]
 batchpatcher = ["batchpatcher"]
-kotorcli = ["kotorcli"]
 holopazaak = ["holopazaak"]
 
 # Development dependencies
@@ -56,7 +55,7 @@ dev = [
 name = "pykotor-workspace"
 version = "2.1.0"
 description = "PyKotor workspace - meta-package for PyKotor ecosystem"
-authors = ["Benjamin Auquite <halomastar@gmail.com>"]
+authors = ["Boden Crouch <halomastar@gmail.com>"]
 readme = "README.md"
 packages = []
 
@@ -85,7 +84,6 @@ holocrontoolset = ["holocrontoolset"]
 holopatcher = ["holopatcher"]
 kotordiff = ["kotordiff"]
 batchpatcher = ["batchpatcher"]
-kotorcli = ["kotorcli"]
 holopazaak = ["holopazaak"]
 
 # Development dependencies
@@ -130,7 +128,6 @@ members = [
     "Tools/HolocronToolset",
     "Tools/HoloPatcher",
     "Tools/HoloPazaak",
-    "Tools/KotorCLI",
     "Tools/KotorDiff"
 ]
 
