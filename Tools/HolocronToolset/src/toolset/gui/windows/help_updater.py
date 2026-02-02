@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import zipfile
 
 from pathlib import Path
@@ -18,6 +19,32 @@ from utility.updater.github import download_github_file
 
 if TYPE_CHECKING:
     from toolset.gui.windows.help_window import HelpWindow
+
+
+def get_help_path() -> Path:
+    """Get the path to the help directory.
+
+    Returns:
+        Path to help directory, checking both frozen and development locations.
+    """
+    if is_frozen():
+        help_path = Path("./help").absolute()
+    else:
+        this_file_path = Path(__file__).absolute()
+        help_path = this_file_path.parents[2].joinpath("help").absolute()
+    return help_path
+    if is_frozen():
+        # When frozen, help should be bundled in the same directory as the executable
+        exe_path = Path(sys.executable).parent
+        help_path = exe_path / "help"
+        if help_path.exists():
+            return help_path
+
+    # Development mode: check toolset/help first, then root help
+    toolset_help = this_file_path.parents[2] / "help"
+
+    # Fallback
+    return toolset_help
 
 
 class HelpUpdater:
@@ -76,15 +103,16 @@ class HelpUpdater:
                     self.help_window.help_content.setup_contents()
 
     def _download_update(self):
-        help_path = Path("./help").resolve()
+        help_path = get_help_path()
         help_path.mkdir(parents=True, exist_ok=True)
-        help_zip_path = Path("./help.zip").resolve()
+        help_parent_path = help_path.parent
+        help_zip_path = help_parent_path.joinpath("help.zip").absolute()
         download_github_file("th3w1zard1/PyKotor", help_zip_path, "/Tools/HolocronToolset/downloads/help.zip")
 
         # Extract the ZIP file
         with zipfile.ZipFile(help_zip_path) as zip_file:
-            RobustLogger().info("Extracting downloaded content to %s", help_path)
+            print(f"Extracting downloaded content to {help_path}")
             zip_file.extractall(help_path)
 
-        if is_frozen():
+        if help_zip_path.exists() and help_zip_path.is_file():
             help_zip_path.unlink()

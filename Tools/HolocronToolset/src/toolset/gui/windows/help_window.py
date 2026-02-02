@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import markdown
+import sys
 
 from qtpy import QtCore
 from qtpy.QtGui import QColor, QPalette
@@ -12,12 +13,39 @@ from qtpy.QtWidgets import QApplication, QMainWindow, QMessageBox
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from toolset.gui.windows.help_content import HelpContent
 from toolset.gui.windows.help_paths import get_help_base_paths, get_help_file_path
+from utility.system.os_helper import is_frozen
 
 if TYPE_CHECKING:
     import os
 
     from qtpy.QtGui import QShowEvent
     from qtpy.QtWidgets import QTreeWidgetItem, QWidget
+
+
+def get_help_path() -> Path:
+    """Get the path to the help directory.
+
+    Returns:
+        Path to help directory, checking both frozen and development locations.
+    """
+    if is_frozen():
+        help_path = Path("./help").absolute()
+    else:
+        this_file_path = Path(__file__).absolute()
+        help_path = this_file_path.parents[2].joinpath("help").absolute()
+    return help_path
+    if is_frozen():
+        # When frozen, help should be bundled in the same directory as the executable
+        exe_path = Path(sys.executable).parent
+        help_path = exe_path / "help"
+        if help_path.exists():
+            return help_path
+
+    # Development mode: check toolset/help first, then root help
+    toolset_help = this_file_path.parents[2] / "help"
+
+    # Fallback
+    return toolset_help
 
 
 class HelpWindow(QMainWindow):
@@ -50,7 +78,7 @@ class HelpWindow(QMainWindow):
         base_paths = get_help_base_paths()
         search_paths = [str(p) for p in base_paths]
         if not search_paths:
-            search_paths = ["./help"]  # Fallback
+            search_paths = [str(get_help_path())]  # Fallback
         self.ui.textDisplay.setSearchPaths(search_paths)
 
         if self.ENABLE_UPDATES:
@@ -314,7 +342,7 @@ class HelpWindow(QMainWindow):
                 self.display_file(resolved_path)
             else:
                 # Fallback to old behavior
-                help_path = Path("./help").resolve()
+                help_path = get_help_path()
                 file_path = Path(help_path, filename)
                 base_paths = get_help_base_paths()
                 search_paths = [str(p) for p in base_paths]

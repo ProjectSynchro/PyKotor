@@ -4,31 +4,10 @@ from typing import TYPE_CHECKING
 
 from pykotor.gl.glm_compat import mat4, Vector3, Vector4, value_ptr
 
-from pykotor.gl.compat import (
-    MissingPyOpenGLError,
-    has_pyopengl,
-    missing_constant,
-    missing_gl_func,
-)
+from OpenGL.GL import glGetUniformLocation, glUniform1f, glUniform3fv, glUniform4fv, glUniformMatrix4fv, shaders  # pyright: ignore[reportMissingImports]
+from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
+from OpenGL.raw.GL.VERSION.GL_2_0 import GL_FRAGMENT_SHADER, GL_VERTEX_SHADER, glUniform1i, glUseProgram  # pyright: ignore[reportMissingImports]
 
-HAS_PYOPENGL = has_pyopengl()
-
-if HAS_PYOPENGL:
-    from OpenGL.GL import glGetUniformLocation, glUniform1f, glUniform3fv, glUniform4fv, glUniformMatrix4fv, shaders  # pyright: ignore[reportMissingImports]
-    from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
-    from OpenGL.raw.GL.VERSION.GL_2_0 import GL_FRAGMENT_SHADER, GL_VERTEX_SHADER, glUniform1i, glUseProgram  # pyright: ignore[reportMissingImports]
-else:
-    glGetUniformLocation = missing_gl_func("glGetUniformLocation")
-    glUniform1f = missing_gl_func("glUniform1f")
-    glUniform3fv = missing_gl_func("glUniform3fv")
-    glUniform4fv = missing_gl_func("glUniform4fv")
-    glUniformMatrix4fv = missing_gl_func("glUniformMatrix4fv")
-    glUniform1i = missing_gl_func("glUniform1i")
-    glUseProgram = missing_gl_func("glUseProgram")
-    shaders = None  # type: ignore[assignment]
-    GL_FALSE = missing_constant("GL_FALSE")
-    GL_FRAGMENT_SHADER = missing_constant("GL_FRAGMENT_SHADER")
-    GL_VERTEX_SHADER = missing_constant("GL_VERTEX_SHADER")
 
 if TYPE_CHECKING:
     from pykotor.gl.glm_compat import mat4, Vector3, Vector4
@@ -37,11 +16,11 @@ if TYPE_CHECKING:
 KOTOR_VSHADER = """
 #version 330 core
 
-layout (location = 0) in Vector3 flags;
-layout (location = 1) in Vector3 position;
-layout (location = 2) in Vector3 normal;
-layout (location = 3) in Vector3 uv;
-layout (location = 4) in Vector3 uv2;
+layout (location = 0) in vec3 flags;
+layout (location = 1) in vec3 position;
+layout (location = 2) in vec3 normal;
+layout (location = 3) in vec3 uv;
+layout (location = 4) in vec3 uv2;
 
 out vec2 diffuse_uv;
 out vec2 lightmap_uv;
@@ -52,7 +31,7 @@ uniform mat4 projection;
 
 void main()
 {
-    gl_Position = projection * view * model *  Vector4(position, 1.0);
+    gl_Position = projection * view * model *  vec4(position, 1.0);
     diffuse_uv = vec2(uv.x, uv.y);
     lightmap_uv = vec2(uv2.x, uv2.y);
 }
@@ -64,7 +43,7 @@ KOTOR_FSHADER = """
 in vec2 diffuse_uv;
 in vec2 lightmap_uv;
 
-out Vector4 FragColor;
+out vec4 FragColor;
 
 layout(binding = 0) uniform sampler2D diffuse;
 layout(binding = 1) uniform sampler2D lightmap;
@@ -73,8 +52,8 @@ uniform float alphaCutoff;
 
 void main()
 {
-    Vector4 diffuseColor = texture(diffuse, diffuse_uv);
-    Vector4 lightmapColor = texture(lightmap, lightmap_uv);
+    vec4 diffuseColor = texture(diffuse, diffuse_uv);
+    vec4 lightmapColor = texture(lightmap, lightmap_uv);
 
     // Optional alpha cutout for masked textures (configured per-material).
     if (alphaCutoff > 0.0 && diffuseColor.a < alphaCutoff) {
@@ -82,8 +61,8 @@ void main()
     }
 
     if (enableLightmap == 1) {
-        Vector3 rgb = mix(diffuseColor.rgb, lightmapColor.rgb, 0.5);
-        FragColor = Vector4(rgb, diffuseColor.a);
+        vec3 rgb = mix(diffuseColor.rgb, lightmapColor.rgb, 0.5);
+        FragColor = vec4(rgb, diffuseColor.a);
     } else {
         FragColor = diffuseColor;
     }
@@ -94,7 +73,7 @@ void main()
 PICKER_VSHADER = """
 #version 330 core
 
-layout (location = 1) in Vector3 position;
+layout (location = 1) in vec3 position;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -102,7 +81,7 @@ uniform mat4 projection;
 
 void main()
 {
-    gl_Position = projection * view * model *  Vector4(position, 1.0);
+    gl_Position = projection * view * model *  vec4(position, 1.0);
 }
 """
 
@@ -110,13 +89,13 @@ void main()
 PICKER_FSHADER = """
 #version 330
 
-uniform Vector3 colorId;
+uniform vec3 colorId;
 
-out Vector4 FragColor;
+out vec4 FragColor;
 
 void main()
 {
-    FragColor = Vector4(colorId, 1.0);
+    FragColor = vec4(colorId, 1.0);
 }
 """
 
@@ -124,7 +103,7 @@ void main()
 PLAIN_VSHADER = """
 #version 330 core
 
-layout (location = 1) in Vector3 position;
+layout (location = 1) in vec3 position;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -132,7 +111,7 @@ uniform mat4 projection;
 
 void main()
 {
-    gl_Position = projection * view * model *  Vector4(position, 1.0);
+    gl_Position = projection * view * model *  vec4(position, 1.0);
 }
 """
 
@@ -140,9 +119,9 @@ void main()
 PLAIN_FSHADER = """
 #version 330
 
-uniform Vector4 color;
+uniform vec4 color;
 
-out Vector4 FragColor;
+out vec4 FragColor;
 
 void main()
 {
@@ -168,11 +147,6 @@ class Shader:
         vshader: str,
         fshader: str,
     ):
-        if not HAS_PYOPENGL or shaders is None:
-            raise MissingPyOpenGLError(
-                "PyOpenGL is required for the legacy Shader class. "
-                "Install PyOpenGL (and ensure it imports)."
-            )
         vertex_shader: int = shaders.compileShader(vshader, GL_VERTEX_SHADER)
         fragment_shader: int = shaders.compileShader(fshader, GL_FRAGMENT_SHADER)
         self._id: int = shaders.compileProgram(vertex_shader, fragment_shader)
@@ -180,11 +154,6 @@ class Shader:
         self._uniform_cache: dict[str, int] = {}
 
     def use(self):
-        if not HAS_PYOPENGL:
-            raise MissingPyOpenGLError(
-                "PyOpenGL is required for the legacy Shader class. "
-                "Install PyOpenGL (and ensure it imports)."
-            )
         glUseProgram(self._id)
 
     def uniform(

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import os
+import sys
 
 from collections import deque
 from copy import deepcopy
@@ -93,12 +94,22 @@ from toolset.gui.windows.indoor_builder.undo_commands import (
 )
 from toolset.utils.misc import get_qt_button_string, get_qt_key_string
 from utility.common.geometry import SurfaceMaterial, Vector2, Vector3
+from utility.system.os_helper import is_frozen
 
 if TYPE_CHECKING:
     from qtpy.QtGui import QKeySequence
     from qtpy.QtWidgets import QLayout
 
     from pykotor.common.indoormap import MissingRoomInfo
+
+
+def get_kits_path() -> Path:
+    if is_frozen():
+        kits_path = Path("./kits").absolute()
+    else:
+        this_file_path = Path(__file__).absolute()
+        kits_path = this_file_path.parents[2].joinpath("kits").absolute()
+    return kits_path
 
 
 # =============================================================================
@@ -503,7 +514,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
     def _setup_kits(self):
         self.ui.kitSelect.clear()
-        self._kits, missing_files = indoorkit_tools.load_kits_with_missing_files("./kits")
+        self._kits, missing_files = indoorkit_tools.load_kits_with_missing_files(get_kits_path())
 
         # Kits are deprecated and optional - modules provide the same functionality
         # No need to show a dialog when kits are missing since modules can be used instead
@@ -1433,19 +1444,19 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             detailed_lines.append("=== Missing Kits ===")
             for room_info in missing_kits:
                 kit_name = room_info.kit_name
-                kit_json_path = Path("./kits") / f"{kit_name}.json"
+                kit_json_path = get_kits_path() / f"{kit_name}.json"
                 detailed_lines.append(f"\nRoom: Kit '{kit_name}'")
                 if room_info.component_name:
                     detailed_lines.append(f"  Component: {room_info.component_name}")
                 detailed_lines.append(f"  Expected Kit JSON: {kit_json_path}")
-                detailed_lines.append(f"  Expected Kit Directory: {Path('./kits') / kit_name}")
+                detailed_lines.append(f"  Expected Kit Directory: {get_kits_path() / kit_name}")
 
         if missing_components:
             detailed_lines.append("\n=== Missing Components ===")
             for room_info in missing_components:
                 kit_name = room_info.kit_name
                 component_name = room_info.component_name or "Unknown"
-                component_path = Path("./kits") / kit_name / "components" / component_name
+                component_path = get_kits_path() / kit_name / "components" / component_name
                 detailed_lines.append(f"\nRoom: Kit '{kit_name}', Component '{component_name}'")
                 detailed_lines.append(f"  Expected Component Directory: {component_path}")
 

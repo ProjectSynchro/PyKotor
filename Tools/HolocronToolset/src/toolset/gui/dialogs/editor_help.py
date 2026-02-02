@@ -32,18 +32,14 @@ def get_wiki_path() -> tuple[Path, Path | None]:
             return wiki_path, None
 
     # Development mode: check toolset/wiki first, then root wiki
-    path1 = Path("./wiki")
-    toolset_wiki = Path(__file__).parents[2] / "wiki"
-    if toolset_wiki.exists():
-        path1 = toolset_wiki
-
-    path2 = None
-    root_wiki = Path(__file__).parents[6] / "wiki"
-    if root_wiki.exists():
-        path2 = root_wiki
+    if is_frozen():
+        toolset_wiki = Path("./wiki")
+    else:
+        this_file_path = Path(__file__).absolute()
+        toolset_wiki = this_file_path.parents[2] / "help" / "wiki"
 
     # Fallback
-    return path1, path2
+    return toolset_wiki, None
 
 
 class EditorHelpDialog(QDialog):

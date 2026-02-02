@@ -5,6 +5,10 @@
   "[jsonc]": {
     "editor.tabSize": 2
   },
+  "[xml.ui]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 1
+  },
   "[xml]": {
     "editor.tabSize": 2
   },
@@ -52,7 +56,7 @@
     "--disable-error-code=import-untyped",
     "--disable-error-code=no-any-return",
     "--explicit-package-bases",
-    "--follow-imports=skip",
+    "--follow-imports=skip"
   ],
   "mypy-type-checker.importStrategy": "fromEnvironment",
   "mypy-type-checker.preferDaemon": true,
@@ -65,7 +69,7 @@
     "--disable-error-code=import-untyped",
     "--disable-error-code=no-any-return",
     "--explicit-package-bases",
-    "--follow-imports=skip",
+    "--follow-imports=skip"
   ],
   "mypy.runUsingActiveInterpreter": true,
   "pylint.enabled": false,
@@ -83,7 +87,7 @@
     "${workspaceFolder}/Tools/KotorDiff/src"
   ],
   "python.analysis.findRefsInBackgroundThread": true,
-  "python.analysis.typeCheckingMode": "standard",
+  "python.analysis.typeCheckingMode": "basic",
   "python.analysis.typeEvaluation.deprecateTypingAliases": false,
   "python.analysis.typeEvaluation.strictListInference": true,
   "python.analysis.typeEvaluation.strictSetInference": true,
@@ -98,7 +102,7 @@
     "${workspaceFolder}/Tools/KotorDiff/src"
   ],
   "python.envFile": "${workspaceFolder}/.env",
-  "python.languageServer": "None",
+  "python.languageServer": "Default",
   "python.linting.enabled": true,
   "python.linting.pylintEnabled": false,
   "python.testing.pytestArgs": [

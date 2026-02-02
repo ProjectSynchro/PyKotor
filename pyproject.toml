@@ -19,8 +19,33 @@ dependencies = [
     "pykotor>=2.1.0",
 ]
 
+
 [project.scripts]
+batch_patcher = "batchpatcher.__main__:main"
+batch-patcher = "batchpatcher.__main__:main"
+batchpatcher = "batchpatcher.__main__:main"
+
+holopazaak = "holopazaak.__main__:main"
+holo_pazaak = "holopazaak.__main__:main"
+holo-pazaak = "holopazaak.__main__:main"
+
+holopatcher = "holopatcher.__main__:main"
+holo_patcher = "holopatcher.__main__:main"
+holo-patcher = "holopatcher.__main__:main"
+
+kotordiff = "kotordiff.__main__:main"
+kotor_diff = "kotordiff.__main__:main"
+kotor-diff = "kotordiff.__main__:main"
+
+kotor_mcp = "kotormcp.__main__:main"
+kotor-mcp = "kotormcp.__main__:main"
+kotormcp = "kotormcp.__main__:main"
+
+holocrontoolset = "toolset.__main__:main"
+holocron_toolset = "toolset.__main__:main"
 holocron-toolset = "toolset.__main__:main"
+toolset = "toolset.__main__:main"
+
 
 [project.optional-dependencies]
 # Tools (lowercase PyPI names)

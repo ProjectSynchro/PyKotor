@@ -175,8 +175,6 @@ def translate(v: Any, /) -> Any:
     -------
         Matrix4: Translation matrix.
     """
-    if not isinstance(v, Vector3):
-        raise TypeError(f"translate requires Vector3, got {type(v)}")
     result = Matrix4(1.0)  # Start with identity matrix
     result._data[3][0] = v.x
     result._data[3][1] = v.y
@@ -201,8 +199,6 @@ def rotate(m: Any, angle: float, axis: Any, /) -> Any:
     -------
         Matrix4: Rotated matrix.
     """
-    if not isinstance(m, Matrix4) or not isinstance(axis, Vector3):
-        raise TypeError(f"rotate requires Matrix4, float, Vector3, got {type(m)}, {type(axis)}")
     # Normalize axis
     axis_length = math.sqrt(axis.x**2 + axis.y**2 + axis.z**2)
     if axis_length == 0:
@@ -252,8 +248,6 @@ def mat4_cast(x: Any, /) -> Any:
         Vector4 stores (x, y, z, w) but quaternions are typically (w, x, y, z).
         This function assumes Vector4 quaternion format is (x, y, z, w).
     """
-    if not isinstance(x, Vector4):
-        raise TypeError(f"mat4_cast requires Vector4, got {type(x)}")
     result = Matrix4(0.0)
 
     # Vector4 is (x, y, z, w), quaternion is (w, x, y, z)
@@ -289,8 +283,6 @@ def inverse(m: Any, /) -> Any:
     -------
         Matrix4: Inverse matrix, or identity if singular.
     """
-    if not isinstance(m, Matrix4):
-        raise TypeError(f"inverse requires Matrix4, got {type(m)}")
     # Simple 4x4 matrix inversion using Gaussian elimination
     # For numerical stability, we use a basic implementation
     # In production, numpy.linalg.inv would be preferred but we avoid dependencies
@@ -385,8 +377,6 @@ def normalize(x: Any, /) -> Any:
     -------
         Vector3: Normalized vector.
     """
-    if not isinstance(x, Vector3):
-        raise TypeError(f"normalize requires Vector3, got {type(x)}")
     v = x
     length_val = math.sqrt(v.x**2 + v.y**2 + v.z**2)
     if length_val == 0:
@@ -416,7 +406,7 @@ def cross(x: Any, y: Any, /) -> Any:
             x.z * y.x - x.x * y.z,
             x.x * y.y - x.y * y.x,
         )
-    raise TypeError(f"Unsupported types for cross: {type(x)}, {type(y)}")
+    raise TypeError(f"Unsupported types for cross: {x.__class__.__name__}, {y.__class__.__name__}")
 
 
 @overload
@@ -532,8 +522,6 @@ def eulerAngles(x: Any, /) -> Any:
     -------
         Vector3: Euler angles (roll, pitch, yaw) in radians.
     """
-    if not isinstance(x, Vector4):
-        raise TypeError(f"eulerAngles requires Vector4, got {type(x)}")
     q = x
     # Roll (x-axis rotation)
     sinr_cosp = 2 * (q.w * q.x + q.y * q.z)
@@ -586,16 +574,22 @@ def value_ptr(x: Any, /) -> Any:
         raise ImportError("value_ptr requires numpy to be installed") from e
     
     if isinstance(x, Matrix4):
+        # PyKotor Matrix4 - has _data attribute
         # OpenGL expects column-major order
         # Convert row-major to column-major
         col_major = [[x._data[i][j] for i in range(4)] for j in range(4)]
         flat = [col_major[i][j] for i in range(4) for j in range(4)]
         return np.ascontiguousarray(np.array(flat, dtype=np.float32))
+    if x.__class__.__name__ == "mat4x4":
+        # GLM mat4x4 - already in column-major order
+        # GLM matrices are indexable as mat[col][row]
+        flat = [x[i][j] for i in range(4) for j in range(4)]
+        return np.ascontiguousarray(np.array(flat, dtype=np.float32))
     if isinstance(x, Vector3):
         return np.ascontiguousarray(np.array([x.x, x.y, x.z], dtype=np.float32))
     if isinstance(x, Vector4):
         return np.ascontiguousarray(np.array([x.x, x.y, x.z, x.w], dtype=np.float32))
-    raise TypeError(f"value_ptr requires Matrix4, Vector3, or Vector4, got {type(x)}")
+    raise TypeError(f"value_ptr requires Matrix4, Vector3, or Vector4, got {x.__class__.__name__}")
 
 
 @overload
@@ -622,7 +616,7 @@ def unProject(obj: Any, model: Any, proj: Any, viewport: Any, /) -> Any:
         or not isinstance(proj, Matrix4)
         or not isinstance(viewport, Vector4)
     ):
-        raise TypeError(f"unProject requires Vector3, Matrix4, Matrix4, Vector4, got {type(obj)}, {type(model)}, {type(proj)}, {type(viewport)}")
+        raise TypeError(f"unProject requires Vector3, Matrix4, Matrix4, Vector4, got {obj.__class__.__name__}, {model.__class__.__name__}, {proj.__class__.__name__}, {viewport.__class__.__name__}")
     win = obj
     # Compute the inverse of model * projection
     m: Matrix4 = proj * model  # type: ignore[assignment]
@@ -663,7 +657,5 @@ def length(x: Any, /) -> Any:
     -------
         float: Vector length.
     """
-    if not isinstance(x, Vector3):
-        raise TypeError(f"length requires Vector3, got {type(x)}")
     return math.sqrt(x.x**2 + x.y**2 + x.z**2)
 

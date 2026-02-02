@@ -15,6 +15,7 @@ except (ImportError, ModuleNotFoundError):
 from typing import TYPE_CHECKING, Any, Callable
 
 from loggerplus import RobustLogger
+from utility.system.os_helper import is_frozen
 from qtpy import QtCore
 from qtpy.QtWidgets import QTreeWidgetItem
 
@@ -37,7 +38,11 @@ class HelpContent:
             contents_path = get_help_file_path("contents.xml")
             if contents_path is None:
                 # Fallback to old location
-                contents_path = Path("./help/contents.xml")
+                if is_frozen():
+                    contents_path = Path("./help/contents.xml")
+                else:
+                    THIS_FILE_PATH = Path(__file__).absolute()
+                    contents_path = THIS_FILE_PATH.parents[2].joinpath("help", "contents.xml")
             
             if not contents_path.exists():
                 RobustLogger().warning(f"Could not find contents.xml at {contents_path}")

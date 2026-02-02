@@ -129,7 +129,7 @@ def load_kits(path: "os.PathLike | str") -> list[Kit]:
 
 
 def load_kits_with_missing_files(
-    path: "os.PathLike | str",
+    path: os.PathLike | str,
 ) -> tuple[list[Kit], list[tuple[str, Path, str]]]:
     """Load kits and also return a list of missing/invalid referenced files.
 

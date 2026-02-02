@@ -36,6 +36,20 @@ if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
 
+def get_help_path() -> Path:
+    """Get the path to the help directory.
+
+    Returns:
+        Path to help directory, checking both frozen and development locations.
+    """
+    if is_frozen():
+        help_path = Path("./help").absolute()
+    else:
+        THIS_FILE_PATH = Path(__file__).absolute()
+        help_path = THIS_FILE_PATH.parents[2].joinpath("help").absolute()
+    return help_path
+
+
 class HelpWindow(QMainWindow):
     ENABLE_UPDATES: ClassVar[bool] = True
 
@@ -63,7 +77,7 @@ class HelpWindow(QMainWindow):
 
     def showEvent(self, event: QShowEvent):  # pyright: ignore[reportIncompatibleMethodOverride]  # type: ignore[override]
         super().showEvent(event)
-        self.ui.textDisplay.setSearchPaths(["./help"])
+        self.ui.textDisplay.setSearchPaths([str(get_help_path())])
 
         if self.ENABLE_UPDATES:
             self.check_for_updates()
@@ -79,17 +93,13 @@ class HelpWindow(QMainWindow):
         self.ui.contentsTree.clear()
 
         try:
-            tree = ET.parse("./help/contents.xml")  # noqa: S314 incorrect warning.
+            print("Loading help contents from XML...")
+            print("cwd:", Path.cwd())
+            tree = ET.parse(str(get_help_path() / "contents.xml"))  # noqa: S314 incorrect warning.
             root = tree.getroot()
 
             self.version = str(root.get("version", "0.0"))
             self._setup_contents_rec_xml(None, root)
-
-            # Old JSON code:
-            # text = Path("./help/contents.xml").read_text()
-            # data = json.loads(text)
-            # self.version = data["version"]
-            # self._setupContentsRecJSON(None, data)
         except Exception:  # noqa: BLE001
             RobustLogger().debug("Suppressed error in HelpWindow._setupContents", exc_info=True)
 
@@ -172,9 +182,9 @@ class HelpWindow(QMainWindow):
                     self._setup_contents()
 
     def _download_update(self):
-        help_path = Path("./help").resolve()
+        help_path = get_help_path()
         help_path.mkdir(parents=True, exist_ok=True)
-        help_zip_path = Path("./help.zip").resolve()
+        help_zip_path = help_path.parent / "help.zip"
         download_github_file("th3w1zard1/PyKotor", help_zip_path, "/Tools/HolocronToolset/downloads/help.zip")
 
         # Extract the ZIP file
@@ -401,8 +411,9 @@ class HelpWindow(QMainWindow):
             return
         item: QTreeWidgetItem = selected_items[0]  # type: ignore[arg-type]
         filename: str = str(item.data(0, QtCore.Qt.ItemDataRole.UserRole) or "").strip()
-        if filename:
-            help_path = Path("./help").resolve()
-            file_path = Path(help_path, str(filename))
-            self.ui.textDisplay.setSearchPaths([str(help_path), str(file_path.parent)])
-            self.display_file(str(file_path))
+        if not filename:
+            return
+        help_path = get_help_path()
+        file_path = Path(help_path, str(filename))
+        self.ui.textDisplay.setSearchPaths([str(help_path), str(file_path.parent)])
+        self.display_file(str(file_path))
