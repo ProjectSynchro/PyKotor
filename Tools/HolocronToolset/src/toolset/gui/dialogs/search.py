@@ -13,7 +13,7 @@ from pykotor.extract.file import FileResource
 from pykotor.resource.type import ResourceType
 from pykotor.tools.reference_finder import ReferenceSearchResult
 from toolset.data.installation import HTInstallation
-from toolset.gui.dialogs.asyncloader import AsyncLoader
+from toolset.gui.dialogs.async_loader import AsyncLoader
 from toolset.utils.window import open_resource_editor
 
 if TYPE_CHECKING:

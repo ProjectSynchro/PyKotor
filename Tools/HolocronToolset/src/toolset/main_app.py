@@ -14,13 +14,12 @@ from pathlib import Path
 from loggerplus import RobustLogger
 from qtpy.QtCore import QEvent, QObject, QThread
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QApplication, QMessageBox, QWidget
+from qtpy.QtWidgets import QApplication, QWidget
 
 import resources_rc  # noqa: PLC0415, F401  # pylint: disable=ungrouped-imports,unused-import
 
 from toolset.config import CURRENT_VERSION
 from toolset.gui.windows.main import ToolWindow
-from toolset.main_init import is_running_from_temp
 from toolset.main_settings import setup_post_init_settings, setup_pre_init_settings, setup_toolset_default_env
 from toolset.utils.qt_exceptions import install_asyncio_exception_handler, install_qt_signal_slot_safety_net, install_sys_unraisablehook
 from toolset.utils.window import TOOLSET_WINDOWS
@@ -293,14 +292,6 @@ def main():
 
     setup_post_init_settings()
     setup_toolset_default_env()
-
-    if is_running_from_temp():
-        QMessageBox.critical(
-            None,
-            "Error",
-            "This application cannot be run from within a zip or temporary directory. Please extract it to a permanent location before running."
-        )
-        sys.exit("Exiting: Application was run from a temporary or zip directory.")
 
     RobustLogger().debug("TRACE: About to create ToolWindow")
     tool_window = ToolWindow()

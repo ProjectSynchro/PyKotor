@@ -268,11 +268,28 @@ jobs:
               req_file = tool_dir / "requirements.txt"
               if req_file.exists():
                   content = req_file.read_text().lower()
-                  if "pyqt5" in content or "pyqt6" in content or "pyside" in content or "qtpy" in content:
-                      features["has_qt"] = True
-                      features["qt_versions"] = ["PyQt5"]  # Default to PyQt5
-                      if "pyqt6" in content:
-                          features["qt_versions"].append("PyQt6")
+                  has_pyqt5 = "pyqt5" in content
+                  has_pyqt6 = "pyqt6" in content
+                  has_pyside2 = "pyside2" in content
+                  has_pyside6 = "pyside6" in content
+                  has_qtpy = "qtpy" in content
+                  if (
+                    has_pyqt5
+                    or has_pyqt6
+                    or has_pyside2
+                    or has_pyside6
+                    or has_qtpy  # qtpy can wrap multiple backends
+                  ):
+                    features["has_qt"] = True
+                    features["qt_versions"] = ["PyQt6"]  # Default to PyQt6
+                    if has_pyqt5:
+                      features["qt_versions"].append("PyQt5")
+                    if has_pyqt6:
+                      features["qt_versions"].append("PyQt6")
+                    if has_pyside2:
+                      features["qt_versions"].append("PySide2")
+                    if has_pyside6:
+                      features["qt_versions"].append("PySide6")
 
               # Check if there's a deps script (indicates more complex dependencies)
               deps_script = Path(f"compile/deps_{tool_name_lower}.ps1")

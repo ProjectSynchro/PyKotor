@@ -185,7 +185,7 @@ The `.github/actions/build-tool` action is reusable across all workflows:
     tool_name: toolset
     python_version: '3.8'
     architecture: x64
-    qt_version: 'PyQt5'
+    qt_version: 'PyQt6'
     dry_run: 'true'  # Set to 'false' for full build
 ```
 

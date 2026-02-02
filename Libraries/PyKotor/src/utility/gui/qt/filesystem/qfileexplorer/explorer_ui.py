@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'C:\GitHub\PyKotor\Libraries\PyKotor\src\utility\ui_libraries\qt\filesystem\browser_widget\file_system_explorer_widget.ui'
+# Form implementation generated from reading ui file 'C:\GitHub\PyKotor\Libraries\PyKotor\src\utility.gui\qt\filesystem\browser_widget\file_system_explorer_widget.ui'
 #
 # Created by: PyQt6 UI code generator 6.7.1
 #

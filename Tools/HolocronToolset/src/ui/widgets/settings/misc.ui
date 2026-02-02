@@ -39,7 +39,8 @@
        <item>
         <widget class="QCheckBox" name="useBetaChannel">
          <property name="text">
-          <string>Check for beta updates and take me to their download link when they&apos;re available.</string>
+          <string>Check for beta updates and take me to their download link when they&apos;re
+           available.</string>
          </property>
         </widget>
        </item>
@@ -63,37 +64,39 @@
        <item>
         <widget class="QCheckBox" name="mergeRimCheck">
          <property name="text">
-          <string>Merge secondary ERF/RIM's in the Modules tab of the Main Window (i.e. '_s.rim' and '_dlg.erf').</string>
+          <string>Merge secondary ERF/RIM's in the Modules tab of the Main Window (i.e. '_s.rim' and
+           '_dlg.erf').</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QCheckBox" name="attemptKeepOldGFFFields">
          <property name="text">
-          <string>Attempts to keep any pre-existing GFF fields when saving the editor. Required for save editing.</string>
+          <string>Attempts to keep any pre-existing GFF fields when saving the editor. Required for
+           save editing.</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QComboBox" name="moduleSortOptionComboBox">
-            <property name="editable">
-                <bool>false</bool>
-            </property>
-            <item>
-                <property name="text">
-                    <string>Sort by filename</string>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>Sort by humanized area name</string>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>Sort by area name</string>
-                </property>
-            </item>
+         <property name="editable">
+          <bool>false</bool>
+         </property>
+         <item>
+          <property name="text">
+           <string>Sort by filename</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Sort by humanized area name</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Sort by area name</string>
+          </property>
+         </item>
         </widget>
        </item>
        <item>
@@ -148,7 +151,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="tempDirEdit"/>
+          <widget class="QLineEdit" name="tempDirEdit" />
          </item>
         </layout>
        </item>
@@ -239,6 +242,6 @@
    </item>
   </layout>
  </widget>
- <resources/>
- <connections/>
+ <resources />
+ <connections />
 </ui>

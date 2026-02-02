@@ -61,7 +61,7 @@ from toolset.data.indoorkit.qt_preview import ensure_component_image
 from toolset.data.installation import HTInstallation
 from toolset.gui.common.filters import NoScrollEventFilter
 from toolset.gui.common.localization import translate as tr, translate_format as trf
-from toolset.gui.dialogs.asyncloader import AsyncLoader
+from toolset.gui.dialogs.async_loader import AsyncLoader
 from toolset.gui.dialogs.indoor_settings import IndoorMapSettings
 from toolset.gui.widgets.settings.widgets.module_designer import ModuleDesignerSettings
 from toolset.gui.windows.help import HelpWindow

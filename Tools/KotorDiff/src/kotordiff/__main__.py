@@ -113,25 +113,5 @@ def main():
                 sys.exit(0)
 
 
-def is_running_from_temp():
-    """Check if running from a temporary directory."""
-    from pathlib import Path
-
-    app_path = Path(sys.executable)
-    temp_dir = tempfile.gettempdir()
-    return str(app_path).startswith(temp_dir)
-
-
 if __name__ == "__main__":
-    if is_running_from_temp():
-        error_msg = "This application cannot be run from within a zip or temporary directory. Please extract it to a permanent location before running."
-        with suppress(Exception):
-            from tkinter import Tk, messagebox
-
-            root = Tk()
-            root.withdraw()
-            messagebox.showerror("Error", error_msg)
-            root.destroy()
-        print(f"[Error] {error_msg}", file=sys.stderr)
-        sys.exit("Exiting: Application was run from a temporary or zip directory.")
     main()

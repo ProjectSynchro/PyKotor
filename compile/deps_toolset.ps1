@@ -8,7 +8,7 @@ param(
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $rootPath = (Resolve-Path -LiteralPath "$scriptPath/..").Path
 
-$qtApi = if ($env:QT_API) { $env:QT_API } else { "PyQt5" }
+$qtApi = if ($env:QT_API) { $env:QT_API } else { "PyQt6" }
 $brewPackage = if ($qtApi -match "6") { "qt@6" } else { "qt@5" }
 
 $argsList = @(

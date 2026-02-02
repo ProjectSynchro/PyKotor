@@ -61,7 +61,7 @@ from toolset.gui.common.localization import (
 )
 from toolset.gui.common.style.theme_manager import ThemeManager
 from toolset.gui.dialogs.about import About
-from toolset.gui.dialogs.asyncloader import AsyncLoader
+from toolset.gui.dialogs.async_loader import AsyncLoader
 from toolset.gui.dialogs.clone_module import CloneModuleDialog
 from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow
 from toolset.gui.dialogs.save.generic_file_saver import FileSaveHandler
@@ -1335,34 +1335,17 @@ class ToolWindow(QMainWindow):
 
         self._preparing_resources = True
         try:
-            def prepare_task(loader: AsyncLoader | None = None) -> tuple[list[QStandardItem] | None, ...]:
-                """Prepare resource lists for modules, overrides, and textures."""
-                return (
-                    self._get_modules_list(reload=False),
-                    self._get_override_list(reload=False),
-                    self._get_texture_pack_list(),
-                )
-
-            prepare_loader = AsyncLoader(
-                self,
-                "Preparing resources...",
-                prepare_task,
-                "Failed to prepare installation resources",
-                realtime_progress=True,
+            prepare_value = (
+                self._get_modules_list(reload=False),
+                self._get_override_list(reload=False),
+                self._get_texture_pack_list(),
             )
-            if not prepare_loader.exec():
-                RobustLogger().error("Failed to prepare installation resources")
-                self.ui.gameCombo.blockSignals(True)
-                self.ui.gameCombo.setCurrentIndex(prev_index)
-                self.ui.gameCombo.blockSignals(False)
-                return
-
-            assert prepare_loader.value is not None
+            assert prepare_value is not None
             assert self.active is not None
 
             # Initialize UI with prepared resource lists
             try:
-                module_items, override_items, texture_items = prepare_loader.value
+                module_items, override_items, texture_items = prepare_value
                 assert module_items is not None, "Module items should not be None"
                 assert override_items is not None, "Override items should not be None"
                 assert texture_items is not None, "Texture items should not be None"

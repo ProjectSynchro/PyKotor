@@ -46,21 +46,6 @@ classifiers = [
 [project.scripts]
 holopatcher = "holopatcher.__main__:main"
 
-[project.gui-scripts]
-holopatcher-gui = "holopatcher.app:main"
-
-[project.optional-dependencies]
-updates = ["requests", "pycryptodome"]
-rtf = ["pypandoc", "PyWebView"]
-gui = [
-    "PyQt5>=5.15; python_implementation == 'CPython'",
-    "PySide6; python_implementation == 'PyPy'",
-]
-dev = [
-    "pytest>=7.0.0",
-    "ruff>=0.5.3",
-]
-
 [project.urls]
 Homepage = "https://deadlystream.com/files/file/2243-holopatcher/"
 Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki/Installing-Mods-with-HoloPatcher"

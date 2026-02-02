@@ -12,7 +12,7 @@ from qtpy.QtWidgets import QDialog, QFormLayout, QMessageBox, QPushButton, QWidg
 
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
 from toolset.gui.common.filters import NoScrollEventFilter
-from toolset.gui.dialogs.asyncloader import AsyncLoader
+from toolset.gui.dialogs.async_loader import AsyncLoader
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from utility.error_handling import format_exception_with_variables, universal_simplify_exception
 from utility.misc import is_debug_mode

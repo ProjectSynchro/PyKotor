@@ -1250,7 +1250,7 @@ class NSSEditor(Editor):
         if not hasattr(self, "_installation") or self._installation is None:
             return
 
-        from toolset.gui.dialogs.asyncloader import AsyncLoader
+        from toolset.gui.dialogs.async_loader import AsyncLoader
         from toolset.gui.dialogs.reference_search_options import ReferenceSearchOptions
         from toolset.gui.dialogs.search import FileResults
         from toolset.utils.window import add_window

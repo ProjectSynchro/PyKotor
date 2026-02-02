@@ -4,6 +4,7 @@ import os
 import re
 import uuid
 
+import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -127,13 +128,10 @@ def ht_decompile_script(
 def setup_extract_path() -> Path:
     global_settings = GlobalSettings()
     extract_path = Path(global_settings.extractPath)
-
-    if not extract_path.is_dir():
-        extract_path_str = QFileDialog.getExistingDirectory(None, "Select a temp directory")
-        extract_path = Path(extract_path_str) if extract_path_str else None
-        if not extract_path or not extract_path.is_dir():
-            msg = "Temp directory has not been set or is invalid."
-            raise NoConfigurationSetError(msg)
+    if extract_path.exists() and extract_path.is_dir():
+        return extract_path
+    extract_path = Path(tempfile.mkdtemp(prefix="holocron_toolset_"))
+    GlobalSettings().extractPath = str(extract_path)
     return extract_path
 
 def ht_compile_script(

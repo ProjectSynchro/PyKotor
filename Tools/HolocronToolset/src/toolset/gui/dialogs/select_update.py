@@ -26,7 +26,7 @@ from qtpy.QtWidgets import QApplication, QDialog, QMessageBox, QStyle
 from loggerplus import RobustLogger
 from toolset.config import LOCAL_PROGRAM_INFO, is_remote_version_newer, toolset_tag_to_version, version_to_toolset_tag
 from toolset.gui.common.localization import translate as tr
-from toolset.gui.dialogs.asyncloader import ProgressDialog
+from toolset.gui.dialogs.async_loader import ProgressDialog
 from utility.misc import ProcessorArchitecture
 from utility.system.app_process.shutdown import terminate_child_processes
 from utility.updater.github import GithubRelease

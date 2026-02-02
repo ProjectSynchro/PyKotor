@@ -9,7 +9,7 @@ from qtpy.QtWidgets import QDialog, QMessageBox
 from pykotor.common.module import Module
 from pykotor.tools import module
 from toolset.gui.common.localization import translate as tr, trf
-from toolset.gui.dialogs.asyncloader import AsyncLoader
+from toolset.gui.dialogs.async_loader import AsyncLoader
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
@@ -55,7 +55,7 @@ class CloneModuleDialog(QDialog):
         """
         super().__init__(parent)
         self.setWindowFlags(
-            QtCore.Qt.WindowFlags(
+            QtCore.Qt.WindowFlags(  # type: ignore[call-overload]
                 QtCore.Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
                 | QtCore.Qt.WindowType.WindowCloseButtonHint
             )
@@ -77,7 +77,9 @@ class CloneModuleDialog(QDialog):
 
         self.ui.createButton.clicked.connect(self.ok)
         # QPushButton.clicked emits a bool; QDialog.close takes no args.
-        self.ui.cancelButton.clicked.connect(lambda *_: self.close())
+        def close_dialog(*_: object) -> None:
+            self.close()
+        self.ui.cancelButton.clicked.connect(close_dialog)
         self.ui.filenameEdit.textChanged.connect(self.set_prefix_from_filename)
         self.ui.moduleSelect.currentIndexChanged.connect(self.changed_module)
 
@@ -131,7 +133,7 @@ class CloneModuleDialog(QDialog):
             )
 
         if copy_textures:
-            QMessageBox(
+            QMessageBox(  # type: ignore[call-overload]
                 QMessageBox.Icon.Information,
                 tr("This may take a while"),
                 tr("You have selected to create copies of the texture. This process may add a few extra minutes to the waiting time."),
@@ -141,7 +143,7 @@ class CloneModuleDialog(QDialog):
         if not AsyncLoader(self, "Creating module", task, "Failed to create module").exec():
             return
 
-        QMessageBox(
+        QMessageBox(  # type: ignore[call-overload]
             QMessageBox.Icon.Information,
             tr("Clone Successful"),
             trf("You can now warp to the cloned module '{identifier}'.", identifier=identifier),

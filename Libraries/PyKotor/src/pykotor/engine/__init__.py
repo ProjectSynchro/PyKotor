@@ -1,7 +1,7 @@
 """Abstract engine interfaces for PyKotor.
 
 This module provides abstract base classes and interfaces that can be implemented
-by different rendering backends (OpenGL, Qt5, Panda3D, etc.).
+by different rendering backends (OpenGL, Qt5 or Qt6, Panda3D, etc.).
 
 This package contains backend-specific engine implementations.
 

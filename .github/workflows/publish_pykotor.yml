@@ -158,7 +158,7 @@ jobs:
                                   "os": os_name,
                                   "python-version": py_ver,
                                   "architecture": arch,
-                                  "qt_version": "pyqt5",
+                                  "qt_version": "pyqt6",
                                   "arch": arch,
                                   "vc_redist2015": f"https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.{'x86' if arch == 'x86' else 'x64'}.exe",
                                   "vc_redist-latest": f"https://aka.ms/vs/17/release/vc_redist.{'x86' if arch == 'x86' else 'x64'}.exe",
@@ -238,7 +238,7 @@ jobs:
         os: ${{ fromJson(needs.setup.outputs.os) }}
         python-version: ${{ fromJson(needs.setup.outputs.python-version) }}
         architecture: ${{ fromJson(needs.setup.outputs.architecture) }}
-        qt_version: ["pyqt5"]
+        qt_version: ["pyqt6"]
         include:
           - architecture: x86
             vc_redist2015: "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe"

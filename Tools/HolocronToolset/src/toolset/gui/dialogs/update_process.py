@@ -13,7 +13,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QStyle
 
 from toolset.config import LOCAL_PROGRAM_INFO, toolset_tag_to_version, version_to_toolset_tag
-from toolset.gui.dialogs.asyncloader import ProgressDialog
+from toolset.gui.dialogs.async_loader import ProgressDialog
 from utility.system.app_process.shutdown import terminate_child_processes
 from utility.updater.update import AppUpdate
 

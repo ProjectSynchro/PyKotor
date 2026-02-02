@@ -252,7 +252,7 @@ class ComboBox2DA(QComboBox):
         from qtpy.QtWidgets import QDialog
 
         from pykotor.tools.reference_finder import ReferenceSearchResult, find_field_value_references
-        from toolset.gui.dialogs.asyncloader import AsyncLoader
+        from toolset.gui.dialogs.async_loader import AsyncLoader
         from toolset.gui.dialogs.reference_search_options import ReferenceSearchOptions
         from toolset.gui.dialogs.search import FileResults
         from toolset.utils.window import add_window

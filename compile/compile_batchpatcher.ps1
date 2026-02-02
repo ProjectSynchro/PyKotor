@@ -30,7 +30,14 @@ $argsList = @(
     "--clean"
     "--exclude-module", "dl_translate"
     "--exclude-module", "torch"
-    "--exclude-module", "PyQt5"
+    "--exclude-module=PyQt5",
+    "--exclude-module=PyQt5-Qt5",
+    "--exclude-module=PyQt5-sip",
+    "--exclude-module=PyQt6",
+    "--exclude-module=PyQt6-Qt6",
+    "--exclude-module=PyQt6-sip",
+    "--exclude-module=PySide2",
+    "--exclude-module=PySide6",
     "--exclude-module", "PyOpenGL"
     "--exclude-module", "PyGLM"
     "--exclude-module", "numpy"

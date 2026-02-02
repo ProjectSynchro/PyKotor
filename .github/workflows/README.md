@@ -100,7 +100,7 @@ The `.github/actions/build-tool` action provides reusable build functionality:
     tool_name: toolset        # toolset, holopatcher, kotordiff, etc.
     python_version: '3.8'
     architecture: x64         # x64 or x86
-    qt_version: 'PyQt5'       # For GUI tools
+    qt_version: 'PyQt6'       # For GUI tools
     dry_run: 'true'           # Validate without full build
 ```
 

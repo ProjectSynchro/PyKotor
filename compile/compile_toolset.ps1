@@ -37,7 +37,7 @@ $argsList = @(
     "--hidden-import", "utility.error_handling"
     "--hidden-import", "utility.common"
     "--hidden-import", "utility.system"
-    "--hidden-import", "utility.ui_libraries"
+    "--hidden-import", "utility.gui"
     "--hidden-import", "utility.updater"
     "--exclude-module", "dl_translate"
     "--exclude-module", "torch"
@@ -46,7 +46,7 @@ $argsList = @(
     "--venv-name", $venv_name
 )
 
-$qtApi = if ($env:QT_API) { $env:QT_API } else { "PyQt5" }
+$qtApi = if ($env:QT_API) { $env:QT_API } else { "PyQt6" }
 $argsList += @("--qt-api", $qtApi, "--exclude-other-qt")
 
 $upxExcludes = @(

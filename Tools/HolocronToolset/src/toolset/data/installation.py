@@ -552,7 +552,7 @@ class HTInstallation(Installation):
             find_tag_references,
             find_template_resref_references,
         )
-        from toolset.gui.dialogs.asyncloader import AsyncLoader
+        from toolset.gui.dialogs.async_loader import AsyncLoader
         from toolset.gui.dialogs.reference_search_options import ReferenceSearchOptions
         from toolset.gui.dialogs.search import FileResults
         from toolset.utils.window import add_window

@@ -17,7 +17,7 @@ One place to inspect how Qt drives selection from mouse events is the Qt source 
 
 ## PyKotor: `RobustTableView`
 
-PyKotor provides `RobustTableView` (`Libraries/PyKotor/src/utility/ui_libraries/qt/widgets/itemviews/tableview.py`) which adds convenience behavior and also supports an optional mode that restricts selection to the first column.
+PyKotor provides `RobustTableView` (`Libraries/PyKotor/src/utility/gui/qt/widgets/itemviews/tableview.py`) which adds convenience behavior and also supports an optional mode that restricts selection to the first column.
 
 To keep Qt’s selection model behavior correct, `RobustTableView` must:
 

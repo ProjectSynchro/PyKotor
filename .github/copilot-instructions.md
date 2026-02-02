@@ -20,7 +20,7 @@ Concise, actionable guidance to get an AI productive fast. Prefer small, surgica
 **Builds & Packaging**
 - Use VS Code tasks / `compile/` scripts; don’t reinvent pipelines.
 - PyInstaller one-file builds: tasks like "Build KotorDiff”, "Build K-BatchPatcher”, "Build GUI Creator”, "Build Model ASCII Compiler”, "Build Toolset - PyInstaller”.
-- Respect excludes (numpy, PyQt5, PIL, matplotlib, multiprocessing, PyOpenGL, PyGLM, dl_translate, torch) as defined in tasks.
+- Respect excludes (numpy, PyQt6, PIL, matplotlib, multiprocessing, PyOpenGL, PyGLM, dl_translate, torch) as defined in tasks.
 
 **Testing & Linting**
 - Tests: `pytest` or `uv run pytest`. TSLPatcher unit testing suite lives under `tests/test_tslpatcher/`.
@@ -28,7 +28,7 @@ Concise, actionable guidance to get an AI productive fast. Prefer small, surgica
 - Static checks: `ruff` (style), `mypy` (types), `pylint` (analysis). Prefer targeted runs on changed modules.
 
 **Conventions & Patterns**
-- Qt UI: use `qtpy` for backend-agnostic bindings. New widgets live under `Libraries/PyKotor/src/utility/ui_libraries/qt/...`.
+- Qt UI: use `qtpy` for backend-agnostic bindings. New widgets live under `Libraries/PyKotor/src/utility/gui/qt/...`.
 - Resource types: use `pykotor.resource.type.ResourceType` with format helpers; avoid ad-hoc parsers.
 - Error strategy: raise typed exceptions from `pykotor` modules; present user-facing messages in Tools.
 - Dependencies: keep `pyproject.toml` and `requirements.txt` mirrored; don’t drift.

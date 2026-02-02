@@ -243,10 +243,6 @@ def set_qt_api():
             break
 
 
-def is_running_from_temp() -> bool:
-    return str(pathlib.Path(sys.executable)).startswith(tempfile.gettempdir())
-
-
 def main_init():
     """Initialize the Holocron Toolset.
 

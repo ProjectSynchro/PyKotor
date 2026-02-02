@@ -2,25 +2,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 
-from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtCore import (
     QThread,
     QTimer,
     Qt,
-    Signal,  # pyright: ignore[reportPrivateImportUsage]
+    Signal,  # pyright: ignore[reportPrivateImportUsage]  # pyright: ignore[reportPrivateImportUsage]
 )
 from qtpy.QtGui import QColor, QPalette
-from qtpy.QtWidgets import QApplication, QDialog, QLabel, QMessageBox, QProgressBar, QSizePolicy, QVBoxLayout
+from qtpy.QtWidgets import QApplication, QDialog, QLabel, QMessageBox, QSizePolicy, QVBoxLayout
 
+from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]  # pyright: ignore[reportMissingTypeStubs]
 from toolset.gui.common.widgets.progressbar import AnimatedProgressBar
-from utility.error_handling import format_exception_with_variables, universal_simplify_exception
+from utility.error_handling import format_exception_with_variables
 
 if TYPE_CHECKING:
     from multiprocessing import Process, Queue
 
     from qtpy.QtGui import QCloseEvent
     from qtpy.QtWidgets import QWidget
-    from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
+    from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]  # pyright: ignore[reportMissingModuleSource]
 
 T = TypeVar("T")
 
@@ -48,17 +48,19 @@ class ProgressDialog(QDialog):
             | Qt.WindowType.WindowCloseButtonHint
             | Qt.WindowType.WindowStaysOnTopHint & ~Qt.WindowType.WindowContextHelpButtonHint & ~Qt.WindowType.WindowMinMaxButtonsHint
         )
-        
+
         from toolset.uic.qtpy.dialogs.progress_dialog import Ui_Dialog
+
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-        
+
         self.setWindowTitle(title)
-        
+
         from toolset.gui.common.localization import translate as tr
+
         self.ui.statusLabel.setText(tr("Initializing..."))
         self.ui.timeLabel.setText(tr("Time remaining: --/--"))
-        
+
         # Timer to poll the queue for new progress updates
         self.timer: QTimer = QTimer()
         self.timer.timeout.connect(self.check_queue)
@@ -76,6 +78,7 @@ class ProgressDialog(QDialog):
                 progress: int = int((downloaded / total) * 100) if total else 0
                 self.ui.progressBar.setValue(progress)
                 from toolset.gui.common.localization import translate as tr, trf
+
                 self.ui.statusLabel.setText(trf("Downloading... {progress}%", progress=progress))
                 time_remaining: str = data.get("time", self.ui.timeLabel.text().replace(tr("Time remaining: "), ""))
                 self.ui.timeLabel.setText(trf("Time remaining: {time}", time=time_remaining))
@@ -106,10 +109,55 @@ class ProgressDialog(QDialog):
 
 
 class AsyncLoader(QDialog, Generic[T]):
+    """Initialize an AsyncLoader dialog for running asynchronous tasks with progress tracking.
+
+    This class creates a dialog that displays progress updates while running one or more
+    tasks asynchronously in a separate QThread. It supports real-time progress updates,
+    error handling, and task completion callbacks.
+
+    Args:
+    ----
+        parent: The parent QWidget for this dialog.
+        title: The title text displayed in the dialog window.
+        task: A callable or list of callables to execute asynchronously. Each callable
+            takes no arguments and returns a result of type T.
+        error_title: Optional title for error dialogs shown if task execution fails.
+            If None, no error dialog is displayed. Defaults to None.
+        start_immediately: Whether to automatically start the worker thread upon
+            initialization. Defaults to True.
+        realtime_progress: Whether to enable real-time progress updates and display
+            subtask text. When True, the progress bar shows continuous updates and
+            allows tasks to emit progress callbacks. Defaults to False.
+
+    Attributes:
+    ----------
+        value: The result returned by the executed task(s), or None if not yet completed.
+        error: The first exception encountered during task execution, or None if successful.
+        errors: A list of all exceptions encountered during task execution.
+        optional_finish_hook: Signal emitted with the result when task completes successfully.
+        optional_error_hook: Signal emitted with the exception when task fails.
+
+    Raises:
+    ------
+        None directly, but exceptions from task execution are captured and stored in
+        the errors list and displayed in an error dialog if error_title is provided.
+
+    Notes:
+    -----
+        - The dialog uses a custom AnimatedProgressBar for visual feedback.
+        - When task is a list, the progress bar maximum is set to the number of tasks
+            and increments after each task completes.
+        - When realtime_progress is True, the progress bar maximum is set to 1, allowing
+            tasks to control progress via progress_callback_api().
+        - The dialog window includes minimize/maximize buttons and stays on top.
+        - The worker thread is terminated if the dialog is closed before completion.
+        - Stylesheet is dynamically generated using the application palette colors.
+    """
+
     optional_finish_hook: Signal = Signal(object)  # pyright: ignore[reportPrivateImportUsage]
     optional_error_hook: Signal = Signal(object)  # pyright: ignore[reportPrivateImportUsage]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         parent: QWidget,
         title: str,
@@ -119,25 +167,6 @@ class AsyncLoader(QDialog, Generic[T]):
         start_immediately: bool = True,
         realtime_progress: bool = False,
     ):
-        """Initializes a progress dialog.
-
-        Args:
-        ----
-            parent: QWidget: The parent widget of the dialog.
-            title: str: The title of the dialog window.
-            task: Callable or list of Callables: The task(s) to run asynchronously.
-
-        Returns:
-        -------
-            None: Does not return anything.
-
-        Processing Logic:
-        ----------------
-            - Creates a QProgressBar and QLabel to display progress
-            - Sets the dialog layout, title and size
-            - Starts an AsyncWorker thread to run the task asynchronously
-            - Connects callbacks for successful/failed task completion.
-        """
         super().__init__(parent)
         self.setWindowFlags(
             Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
@@ -203,24 +232,24 @@ class AsyncLoader(QDialog, Generic[T]):
         self.setWindowTitle(title)
         self.setMinimumSize(260, 40)
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        
+
         # Get palette colors for progress bar
         app = QApplication.instance()
         if app is None or not isinstance(app, QApplication):
             palette = QPalette()
         else:
             palette = app.palette()
-        
+
         # Use link color for progress bar chunk (usually indicates active/progress)
         link_color = palette.color(QPalette.ColorRole.Link)
         chunk_color1 = link_color.darker(120).name()  # Darker variant for gradient start/end
         chunk_color2 = link_color.name()  # Base link color for gradient middle
-        
+
         # Create border color with transparency
         chunk_border = QColor(link_color)
         chunk_border.setAlpha(128)  # 50% opacity
         chunk_border_str = f"rgba({chunk_border.red()}, {chunk_border.green()}, {chunk_border.blue()}, {chunk_border.alpha() / 255.0:.2f})"
-        
+
         self.setStyleSheet(f"""
     QDialog {{
         border-radius: 10px;

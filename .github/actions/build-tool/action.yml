@@ -14,9 +14,9 @@ inputs:
     required: false
     default: 'x64'
   qt_version:
-    description: 'Qt version for GUI tools (PyQt5, PyQt6, etc.)'
+    description: 'Qt version for GUI tools (PyQt5, PyQt6, PySide6, etc.)'
     required: false
-    default: 'PyQt5'
+    default: 'PyQt6'
   upx_version:
     description: 'UPX version for compression'
     required: false

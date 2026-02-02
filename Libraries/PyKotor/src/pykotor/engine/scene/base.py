@@ -1,7 +1,7 @@
 """Abstract scene graph base classes.
 
 This module defines the abstract interfaces for scene graph management that can be
-implemented by any rendering backend (OpenGL, Qt5, Panda3D, etc.).
+implemented by any rendering backend (OpenGL, Qt5 or Qt6, Panda3D, etc.).
 
 References:
 ----------
@@ -48,7 +48,7 @@ class ISceneGraph(ABC):
     """Abstract interface for scene graph management.
     
     This interface defines the contract that all scene graph implementations must follow,
-    regardless of the underlying rendering backend (OpenGL, Qt5, Panda3D, etc.).
+    regardless of the underlying rendering backend (OpenGL, Qt5 or Qt6, Panda3D, etc.).
     
     References:
     ----------

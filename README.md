@@ -140,10 +140,17 @@ See individual tool documentation for detailed usage.
 
 ## Documentation
 
+### User Documentation
 - **[Installation & Usage](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/docs)** - Detailed library documentation
 - **[Contributing Guide](CONTRIBUTING.md)** - Development setup and guidelines
 - **[Project Wiki](https://github.com/OldRepublicDevs/PyKotor/wiki)** - Community documentation
 - **[PowerShell Setup](POWERSHELL.md)** - Windows PowerShell configuration
+
+### Design & Architecture
+- **[Figma Integration Summary](FIGMA_INTEGRATION_SUMMARY.md)** - Complete Figma tools integration overview
+- **[FigJam Diagrams](FIGMA_DIAGRAMS.md)** - 22 architectural diagrams covering all components
+- **[Design System Rules](.cursor/rules/design_system_rules.md)** - Comprehensive UI design system documentation
+- **[Code Connect Examples](FIGMA_CODE_CONNECT_EXAMPLES.md)** - Figma-to-code mapping examples
 
 ## Contributing
 

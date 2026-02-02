@@ -1,99 +1,116 @@
 {
-    "editor.inlineSuggest.enabled": true,
-    "editor.quickSuggestions": {
-        "comments": true,
-        "other": "inline",
-        "strings": true
-    },
-    "editor.quickSuggestionsDelay": 100,
-    "files.watcherExclude": {
-        "**/.git/**": true
-    },
-    "github-actions.workflows.pinned.workflows": [
-        ".github/workflows/publish_and_test_pykotor.yml"
+  "[json]": {
+    "editor.tabSize": 2
+  },
+  "[jsonc]": {
+    "editor.tabSize": 2
+  },
+  "[xml]": {
+    "editor.tabSize": 2
+  },
+  "cmake.ignoreCMakeListsMissing": true,
+  "cursorpyright.analysis.extraPaths": [
+    "${workspaceFolder}/Libraries/PyKotor/src",
+    "${workspaceFolder}/Tools/BatchPatcher/src",
+    "${workspaceFolder}/Tools/HolocronAI/src",
+    "${workspaceFolder}/Tools/HolocronToolset/src",
+    "${workspaceFolder}/Tools/HoloPatcher/src",
+    "${workspaceFolder}/Tools/HoloPazaak/src",
+    "${workspaceFolder}/Tools/KotorMCP/src",
+    "${workspaceFolder}/Tools/KotorDiff/src"
+  ],
+  "cursorpyright.analysis.typeCheckingMode": "basic",
+  "editor.inlineSuggest.enabled": true,
+  "editor.quickSuggestions": {
+    "comments": true,
+    "other": "inline",
+    "strings": true
+  },
+  "editor.quickSuggestionsDelay": 100,
+  "files.associations": {
+    "*.ui": "xml"
+  },
+  "files.exclude": {
+    "**/.history/**": true
+  },
+  "files.watcherExclude": {
+    "**/.git/**": true
+  },
+  "github-actions.workflows.pinned.workflows": [
+    ".github/workflows/publish_and_test_pykotor.yml"
+  ],
+  "launch": {
+    "compounds": [],
+    "debugStdLib": true,
+    "justMyCode": true
+  },
+  "mypy-type-checker.args": [
+    "--check-untyped-defs",
+    "--explicit-package-bases"
+  ],
+  "mypy-type-checker.importStrategy": "fromEnvironment",
+  "mypy-type-checker.preferDaemon": true,
+  "mypy-type-checker.reportingScope": "workspace",
+  "mypy.extraArguments": [
+    "--exclude=./.venv",
+    "--exclude=tests/results",
+    "--check-untyped-defs",
+    "-v",
+    "--explicit-package-bases"
+  ],
+  "mypy.runUsingActiveInterpreter": true,
+  "pylint.enabled": false,
+  "python-envs.pythonProjects": [],
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.enablePytestSupport": true,
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/Libraries/PyKotor/src",
+    "${workspaceFolder}/Tools/BatchPatcher/src",
+    "${workspaceFolder}/Tools/HolocronAI/src",
+    "${workspaceFolder}/Tools/HolocronToolset/src",
+    "${workspaceFolder}/Tools/HoloPatcher/src",
+    "${workspaceFolder}/Tools/HoloPazaak/src",
+    "${workspaceFolder}/Tools/KotorMCP/src",
+    "${workspaceFolder}/Tools/KotorDiff/src"
+  ],
+  "python.analysis.findRefsInBackgroundThread": true,
+  "python.analysis.typeCheckingMode": "standard",
+  "python.analysis.typeEvaluation.deprecateTypingAliases": false,
+  "python.analysis.typeEvaluation.strictListInference": true,
+  "python.analysis.typeEvaluation.strictSetInference": true,
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/Libraries/PyKotor/src",
+    "${workspaceFolder}/Tools/BatchPatcher/src",
+    "${workspaceFolder}/Tools/HolocronAI/src",
+    "${workspaceFolder}/Tools/HolocronToolset/src",
+    "${workspaceFolder}/Tools/HoloPatcher/src",
+    "${workspaceFolder}/Tools/HoloPazaak/src",
+    "${workspaceFolder}/Tools/KotorMCP/src",
+    "${workspaceFolder}/Tools/KotorDiff/src"
+  ],
+  "python.envFile": "${workspaceFolder}/.env",
+  "python.languageServer": "None",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.testing.pytestArgs": [
+    "Libraries/PyKotor/tests",
+    "Tools/HolocronToolset/tests",
+    "-v"
+  ],
+  "python.testing.pytestEnabled": true,
+  "pythonTestExplorer.outputs.showOutputsOnRun": true,
+  "pythonTestExplorer.testFramework": "pytest",
+  "qtForPython.rcc.liveExecution.enabled": false,
+  "qtForPython.uic.liveExecution.enabled": false,
+  "remote.WSL.fileWatcher.polling": true,
+  "search.exclude": {
+    "**/.history/**": true
+  },
+  "terminal.integrated.automationProfile.windows": {
+    "args": [
+      "-NoProfile",
+      "-NoLogo"
     ],
-    "launch": {
-        "compounds": [],
-        "debugStdLib": true,
-        "justMyCode": true
-    },
-    "mypy-type-checker.args": [
-        "--check-untyped-defs",
-        "--explicit-package-bases",
-        "--namespace-packages"
-    ],
-    "mypy-type-checker.importStrategy": "fromEnvironment",
-    "mypy-type-checker.preferDaemon": true,
-    "mypy-type-checker.reportingScope": "file",
-    "mypy.extraArguments": [
-        "--exclude=./.venv",
-        "--exclude=tests/results",
-        "--check-untyped-defs",
-        "-v",
-        "--explicit-package-bases"
-    ],
-    "mypy.runUsingActiveInterpreter": true,
-    "python.envFile": "${workspaceFolder}/.env",
-    "python.analysis.extraPaths": [
-        "${workspaceFolder}/Libraries/PyKotor/src",
-        "${workspaceFolder}/Tools/BatchPatcher/src",
-        "${workspaceFolder}/Tools/HolocronAI/src",
-        "${workspaceFolder}/Tools/HolocronToolset/src",
-        "${workspaceFolder}/Tools/HoloGenerator/src",
-        "${workspaceFolder}/Tools/HoloPatcher/src",
-        "${workspaceFolder}/Tools/HoloPazaak/src",
-        "${workspaceFolder}/Tools/KotorCLI/src",
-        "${workspaceFolder}/Tools/KotorDiff/src"
-    ],
-    "python.linting.pylintEnabled": false,
-    "python.linting.enabled": true,
-    "python.languageServer": "None",
-    "python.analysis.typeCheckingMode": "basic",
-    "cursorpyright.analysis.extraPaths": [
-        "${workspaceFolder}/Libraries/PyKotor/src",
-        "${workspaceFolder}/Tools/BatchPatcher/src",
-        "${workspaceFolder}/Tools/HolocronAI/src",
-        "${workspaceFolder}/Tools/HolocronToolset/src",
-        "${workspaceFolder}/Tools/HoloGenerator/src",
-        "${workspaceFolder}/Tools/HoloPatcher/src",
-        "${workspaceFolder}/Tools/HoloPazaak/src",
-        "${workspaceFolder}/Tools/KotorCLI/src",
-        "${workspaceFolder}/Tools/KotorDiff/src"
-    ],
-    "python.testing.pytestArgs": [
-        "Libraries/PyKotor/tests",
-        "Tools/HolocronToolset/tests",
-        "-v"
-    ],
-    "python.testing.pytestEnabled": true,
-    "pythonTestExplorer.outputs.showOutputsOnRun": true,
-    "pythonTestExplorer.testFramework": "pytest",
-    "remote.WSL.fileWatcher.polling": true,
-    "terminal.integrated.automationProfile.windows": {
-        "path": "pwsh.exe",
-        "args": ["-NoProfile", "-NoLogo"]
-    },
-    "python-envs.pythonProjects": [],
-    "python.autoComplete.extraPaths": [
-        "${workspaceFolder}/Libraries/PyKotor/src",
-        "${workspaceFolder}/Tools/BatchPatcher/src",
-        "${workspaceFolder}/Tools/HolocronAI/src",
-        "${workspaceFolder}/Tools/HolocronToolset/src",
-        "${workspaceFolder}/Tools/HoloGenerator/src",
-        "${workspaceFolder}/Tools/HoloPatcher/src",
-        "${workspaceFolder}/Tools/HoloPazaak/src",
-        "${workspaceFolder}/Tools/KotorCLI/src",
-        "${workspaceFolder}/Tools/KotorDiff/src"
-    ],
-    "files.exclude": {
-      "**/.history/**": true
-    },
-    "search.exclude": {
-      "**/.history/**": true
-    },
-    "cmake.ignoreCMakeListsMissing": true,
-    "files.associations": {
-        "*.ui": "xml"
-    },
-    "pylint.enabled": false
+    "path": "pwsh.exe"
+  }
 }

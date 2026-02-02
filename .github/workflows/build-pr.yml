@@ -378,7 +378,7 @@ jobs:
           tool_name: ${{ matrix.tool.build_name }}
           python_version: '3.8'
           architecture: ${{ matrix.architecture }}
-          qt_version: ${{ matrix.tool.build_name == 'toolset' && 'PyQt5' || '' }}
+          qt_version: ${{ matrix.tool.build_name == 'toolset' && 'PyQt6' || '' }}
           dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
           upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
           artifact_retention_days: '3'

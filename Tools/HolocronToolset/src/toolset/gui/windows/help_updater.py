@@ -10,7 +10,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QMessageBox
 
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
-from toolset.gui.dialogs.asyncloader import AsyncLoader
+from toolset.gui.dialogs.async_loader import AsyncLoader
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.gui.windows.help_window import HelpWindow
 from utility.system.os_helper import is_frozen

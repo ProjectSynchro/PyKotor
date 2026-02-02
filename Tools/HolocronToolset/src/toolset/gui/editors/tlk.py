@@ -26,7 +26,7 @@ from pykotor.resource.formats.ssf.ssf_data import SSFSound
 from pykotor.resource.formats.tlk import TLK, TLKEntry, bytes_tlk, read_tlk, write_tlk
 from pykotor.resource.type import ResourceType
 from toolset.gui.common.localization import tr, trf
-from toolset.gui.dialogs.asyncloader import AsyncLoader
+from toolset.gui.dialogs.async_loader import AsyncLoader
 from toolset.gui.dialogs.search import FileResults
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings

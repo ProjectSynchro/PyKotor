@@ -333,7 +333,7 @@ jobs:
           tool_name: ${{ needs.validate-version.outputs.build_name }}
           python_version: '3.8'
           architecture: x64
-          qt_version: ${{ needs.validate-version.outputs.build_name == 'toolset' && 'PyQt5' || '' }}
+          qt_version: ${{ needs.validate-version.outputs.build_name == 'toolset' && 'PyQt6' || '' }}
           dry_run: ${{ github.event.inputs.run_full_build != 'true' && 'true' || 'false' }}
           upload_artifact: ${{ github.event.inputs.run_full_build }}
           artifact_retention_days: '3'
@@ -367,7 +367,7 @@ jobs:
           tool_name: ${{ needs.validate-version.outputs.build_name }}
           python_version: '3.8'
           architecture: ${{ matrix.architecture }}
-          qt_version: ${{ needs.validate-version.outputs.build_name == 'toolset' && 'PyQt5' || '' }}
+          qt_version: ${{ needs.validate-version.outputs.build_name == 'toolset' && 'PyQt6' || '' }}
           dry_run: 'false'
           upload_artifact: 'true'
           artifact_retention_days: '7'

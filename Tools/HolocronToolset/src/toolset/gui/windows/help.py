@@ -24,7 +24,7 @@ from qtpy.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem
 from loggerplus import RobustLogger
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
-from toolset.gui.dialogs.asyncloader import AsyncLoader
+from toolset.gui.dialogs.async_loader import AsyncLoader
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from utility.system.os_helper import is_frozen
 from utility.updater.github import download_github_file

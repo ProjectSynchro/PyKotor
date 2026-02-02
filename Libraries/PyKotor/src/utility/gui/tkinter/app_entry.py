@@ -6,7 +6,6 @@ consistent entry points across all PyKotor GUI applications.
 Usage in __main__.py:
     from utility.tkinter.app_entry import (
         is_frozen,
-        is_running_from_temp,
         setup_sys_path,
         create_exception_hook,
         create_cleanup_func,
@@ -64,18 +63,6 @@ def is_frozen() -> bool:
         or getattr(sys, "_MEIPASS", False)
         or tempfile.gettempdir() in sys.executable
     )
-
-
-def is_running_from_temp() -> bool:
-    """Check if running from a temporary directory (e.g., inside a zip).
-
-    Returns:
-        True if executable is in a temp directory
-    """
-    from pathlib import Path
-    app_path = Path(sys.executable)
-    temp_dir = tempfile.gettempdir()
-    return str(app_path).startswith(temp_dir)
 
 
 def setup_sys_path(
@@ -216,41 +203,6 @@ def create_cleanup_func(
         app.root.destroy()
 
     return cleanup
-
-
-def check_temp_directory(
-    app_name: str = "This application",
-) -> bool:
-    """Check if running from temp directory and show error if so.
-
-    Should be called at the start of __main__.py's if __name__ == "__main__" block.
-
-    Args:
-        app_name: Name to use in error message
-
-    Returns:
-        True if running from temp (error was shown), False if OK to proceed
-    """
-    if not is_running_from_temp():
-        return False
-
-    error_msg = (
-        f"{app_name} cannot be run from within a zip or temporary directory. "
-        "Please extract it to a permanent location before running."
-    )
-
-    # Try GUI message
-    with suppress(Exception):
-        from tkinter import Tk, messagebox
-        root = Tk()
-        root.withdraw()
-        messagebox.showerror("Error", error_msg)
-        root.destroy()
-
-    # Print to stderr
-    print(f"[Error] {error_msg}", file=sys.stderr)
-    sys.exit("Exiting: Application was run from a temporary or zip directory.")
-    return True
 
 
 def main_wrapper(

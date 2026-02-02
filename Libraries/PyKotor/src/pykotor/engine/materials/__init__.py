@@ -1,7 +1,7 @@
 """Abstract material system interfaces.
 
 This package defines backend-agnostic interfaces for material handling that can
-be implemented by different rendering engines (OpenGL, Qt5, Panda3D, etc.).
+be implemented by different rendering engines (OpenGL, Qt5 or Qt6, Panda3D, etc.).
 
 References:
 ----------

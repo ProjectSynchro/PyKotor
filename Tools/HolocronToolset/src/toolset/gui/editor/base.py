@@ -262,11 +262,8 @@ class Editor(QMainWindow):
         extract_path: Path = Path(GlobalSettings().extractPath)
         if extract_path.exists() and extract_path.is_dir():
             return extract_path
-        extract_path_str: str = QFileDialog.getExistingDirectory(None, "Select a temp directory")
-        if not extract_path_str.strip():
-            extract_path_str = tempfile.gettempdir()
-        GlobalSettings().extractPath = extract_path_str
-        extract_path = Path(extract_path_str)
+        extract_path = Path(tempfile.mkdtemp(prefix="holocron_toolset_"))
+        GlobalSettings().extractPath = str(extract_path)
         return extract_path
 
     def refresh_window_title(self):

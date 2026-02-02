@@ -1392,16 +1392,7 @@ class KOTORPatchingToolUI:
         return None
 
 
-def is_running_from_temp() -> bool:
-    app_path = Path(sys.executable)
-    temp_dir = tempfile.gettempdir()
-    return str(app_path).startswith(temp_dir)
-
-
 if __name__ == "__main__":
-    if is_running_from_temp():
-        messagebox.showerror("Error", "This application cannot be run from within a zip or temporary directory. Please extract it to a permanent location before running.")
-        sys.exit("Exiting: Application was run from a temporary or zip directory.")
     try:
         root = tk.Tk()
         APP = KOTORPatchingToolUI(root)

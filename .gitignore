@@ -19,7 +19,7 @@ __pycache__
 /__main__.onefile-build/
 /.aider.tags.cache.v3
 /.qtcreator
-/Libraries/Utility/src/utility/ui_libraries/qt/adapters/filesystem/relevant_qt_src
+/Libraries/Utility/src/utility/gui/qt/adapters/filesystem/relevant_qt_src
 /pyglm-2.8.2
 /pykotor/gl/window.py
 /toolset/help/
@@ -131,3 +131,4 @@ test_output.txt
 .cursor/plans/*.md
 Tools/HolocronToolset/src/ui/**/*_ui.py
 Tools/tests/
+Tools/HolocronToolset/src/toolset/wiki/

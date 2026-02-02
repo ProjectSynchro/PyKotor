@@ -14,7 +14,7 @@ QFileDialogExtended is a sophisticated file dialog implementation that extends Q
 
 ## Directory Structure Analysis
 
-The `Libraries/PyKotor/src/utility/ui_libraries/qt` directory contains:
+The `Libraries/PyKotor/src/utility/gui/qt` directory contains:
 
 ### Core Components Used by QFileDialogExtended:
 1. **adapters/filesystem/** - Qt API adapters
@@ -44,7 +44,7 @@ The `Libraries/PyKotor/src/utility/ui_libraries/qt` directory contains:
 ## Qt6 Source Code Integration
 
 ### Retrieved Qt6 Source Files:
-Located in `Libraries/PyKotor/src/utility/ui_libraries/qt/relevant_qt_src/`
+Located in `Libraries/PyKotor/src/utility/gui/qt/relevant_qt_src/`
 
 #### Core Classes:
 1. **QFileSystemModel** (`gui/itemmodels/`)

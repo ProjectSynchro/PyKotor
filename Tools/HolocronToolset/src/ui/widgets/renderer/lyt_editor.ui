@@ -31,7 +31,7 @@
           </attribute>
           <layout class="QVBoxLayout" name="roomsLayout">
            <item>
-            <widget class="QListWidget" name="roomsList"/>
+            <widget class="QListWidget" name="roomsList" />
            </item>
            <item>
             <layout class="QHBoxLayout" name="roomButtonsLayout">
@@ -67,7 +67,7 @@
           </attribute>
           <layout class="QVBoxLayout" name="tracksLayout">
            <item>
-            <widget class="QListWidget" name="tracksList"/>
+            <widget class="QListWidget" name="tracksList" />
            </item>
            <item>
             <layout class="QHBoxLayout" name="trackButtonsLayout">
@@ -96,7 +96,7 @@
           </attribute>
           <layout class="QVBoxLayout" name="obstaclesLayout">
            <item>
-            <widget class="QListWidget" name="obstaclesList"/>
+            <widget class="QListWidget" name="obstaclesList" />
            </item>
            <item>
             <layout class="QHBoxLayout" name="obstacleButtonsLayout">
@@ -125,7 +125,7 @@
           </attribute>
           <layout class="QVBoxLayout" name="doorhooksLayout">
            <item>
-            <widget class="QListWidget" name="doorhooksList"/>
+            <widget class="QListWidget" name="doorhooksList" />
            </item>
            <item>
             <layout class="QHBoxLayout" name="doorhookButtonsLayout">
@@ -157,28 +157,28 @@
        <!-- Toolbar -->
        <item>
         <widget class="QToolBar" name="toolBar">
-         <addaction name="actionSelect"/>
-         <addaction name="actionMove"/>
-         <addaction name="actionRotate"/>
-         <addaction name="actionScale"/>
-         <addaction name="separator"/>
-         <addaction name="actionConnectRooms"/>
-         <addaction name="actionAutoLayout"/>
-         <addaction name="separator"/>
-         <addaction name="actionGrid"/>
-         <addaction name="actionSnap"/>
-         <addaction name="separator"/>
-         <addaction name="actionTop"/>
-         <addaction name="actionFront"/>
-         <addaction name="actionSide"/>
-         <addaction name="separator"/>
-         <addaction name="actionWalkmesh"/>
+         <addaction name="actionSelect" />
+         <addaction name="actionMove" />
+         <addaction name="actionRotate" />
+         <addaction name="actionScale" />
+         <addaction name="separator" />
+         <addaction name="actionConnectRooms" />
+         <addaction name="actionAutoLayout" />
+         <addaction name="separator" />
+         <addaction name="actionGrid" />
+         <addaction name="actionSnap" />
+         <addaction name="separator" />
+         <addaction name="actionTop" />
+         <addaction name="actionFront" />
+         <addaction name="actionSide" />
+         <addaction name="separator" />
+         <addaction name="actionWalkmesh" />
         </widget>
        </item>
        <!-- 3D View -->
        <item>
         <widget class="QWidget" name="viewportContainer">
-         <layout class="QVBoxLayout" name="viewportLayout"/>
+         <layout class="QVBoxLayout" name="viewportLayout" />
         </widget>
        </item>
        <!-- Transform Controls -->
@@ -188,86 +188,86 @@
           <string>Transform</string>
          </property>
          <layout class="QGridLayout" name="transformLayout">
-           <item row="0" column="0">
-             <widget class="QLabel" name="posXLabel">
-               <property name="text">
-                <string>X:</string>
-               </property>
-             </widget>
-           </item>
-           <item row="0" column="1">
-             <widget class="QDoubleSpinBox" name="posXSpin">
-               <property name="decimals">
-                <number>2</number>
-               </property>
-               <property name="minimum">
-                <double>-10000.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>10000.000000000000000</double>
-               </property>
-             </widget>
-           </item>
-           <item row="0" column="2">
-             <widget class="QLabel" name="posYLabel">
-               <property name="text">
-                <string>Y:</string>
-               </property>
-             </widget>
-           </item>
-           <item row="0" column="3">
-             <widget class="QDoubleSpinBox" name="posYSpin">
-               <property name="decimals">
-                <number>2</number>
-               </property>
-               <property name="minimum">
-                <double>-10000.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>10000.000000000000000</double>
-               </property>
-             </widget>
-           </item>
-           <item row="0" column="4">
-             <widget class="QLabel" name="posZLabel">
-               <property name="text">
-                <string>Z:</string>
-               </property>
-             </widget>
-           </item>
-           <item row="0" column="5">
-             <widget class="QDoubleSpinBox" name="posZSpin">
-               <property name="decimals">
-                <number>2</number>
-               </property>
-               <property name="minimum">
-                <double>-10000.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>10000.000000000000000</double>
-               </property>
-             </widget>
-           </item>
-           <item row="1" column="0">
-             <widget class="QLabel" name="rotLabel">
-               <property name="text">
-                <string>Rot:</string>
-               </property>
-             </widget>
-           </item>
-           <item row="1" column="1">
-             <widget class="QDoubleSpinBox" name="rotSpin">
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="minimum">
-                <double>-360.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>360.000000000000000</double>
-               </property>
-             </widget>
-           </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="posXLabel">
+            <property name="text">
+             <string>X:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QDoubleSpinBox" name="posXSpin">
+            <property name="decimals">
+             <number>2</number>
+            </property>
+            <property name="minimum">
+             <double>-10000.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="posYLabel">
+            <property name="text">
+             <string>Y:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QDoubleSpinBox" name="posYSpin">
+            <property name="decimals">
+             <number>2</number>
+            </property>
+            <property name="minimum">
+             <double>-10000.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QLabel" name="posZLabel">
+            <property name="text">
+             <string>Z:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="5">
+           <widget class="QDoubleSpinBox" name="posZSpin">
+            <property name="decimals">
+             <number>2</number>
+            </property>
+            <property name="minimum">
+             <double>-10000.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="rotLabel">
+            <property name="text">
+             <string>Rot:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QDoubleSpinBox" name="rotSpin">
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="minimum">
+             <double>-360.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>360.000000000000000</double>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
@@ -292,7 +292,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QListWidget" name="modelsList"/>
+            <widget class="QListWidget" name="modelsList" />
            </item>
            <item>
             <widget class="QPushButton" name="importModelButton">
@@ -324,7 +324,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QListWidget" name="texturesList"/>
+            <widget class="QListWidget" name="texturesList" />
            </item>
            <item>
             <widget class="QPushButton" name="importTextureButton">
@@ -355,7 +355,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QListWidget" name="templatesList"/>
+            <widget class="QListWidget" name="templatesList" />
            </item>
            <item>
             <widget class="QPushButton" name="saveTemplateButton">
@@ -498,6 +498,6 @@
    </property>
   </action>
  </widget>
- <resources/>
- <connections/>
+ <resources />
+ <connections />
 </ui>

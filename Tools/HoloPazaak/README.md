@@ -1,6 +1,6 @@
 # HoloPazaak
 
-A PyQt5 implementation of the Pazaak card game from Knights of the Old Republic.
+A PyQt5/PyQt6 implementation of the Pazaak card game from Knights of the Old Republic.
 
 ## Requirements
 
