@@ -155,7 +155,7 @@ class SearchFilterWidget(QWidget):
         placeholder_color: QColor = palette.color(QPalette.ColorRole.PlaceholderText)
         if not placeholder_color.isValid():
             # Fallback if PlaceholderText is not available
-            placeholder_color: QColor = palette.color(QPalette.ColorRole.Dark)
+            placeholder_color = palette.color(QPalette.ColorRole.Dark)
 
         self.setStyleSheet(f"""
             SearchFilterWidget QLineEdit {{

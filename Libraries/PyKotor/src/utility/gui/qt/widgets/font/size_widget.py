@@ -78,7 +78,7 @@ class SizeWidget(QWidget):
             try:
                 style_name = QFontDatabase.styles(font_name)[0]  # type: ignore[arg-type]
             except Exception:  # noqa: BLE001
-                fd: QFontDatabase = QFontDatabase()  # pyright: ignore[reportCallIssue]
+                fd = QFontDatabase()  # pyright: ignore[reportCallIssue]
                 style_name = fd.styles(font_name)[0]
         sizes: list[int] | list[str] = point_sizes(font_name, style_name)
         sizes = list(map(str, sizes))

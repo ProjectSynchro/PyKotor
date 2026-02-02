@@ -1405,6 +1405,7 @@ def diff_data(  # noqa: PLR0913
         if are_same and not comparison_result.has_field_differences():
             return True
 
+        modifications: PatcherModifications | tuple[PatcherModifications, dict[int, int]] | None = None
         if modifications_by_type is not None or format_type != "unified":
             try:
                 analyzer = DiffAnalyzerFactory.get_analyzer("gff")
@@ -1437,7 +1438,7 @@ def diff_data(  # noqa: PLR0913
 
                 # Set destination based on MODDED installation location (file2)
                 resource_name = Path(str(context.where)).name
-                destination = _determine_destination_for_source(
+                destination: str = _determine_destination_for_source(
                     context.file2_rel,  # Use MODDED installation, not vanilla
                     resource_name,
                     log_func=log_func,
@@ -1584,7 +1585,7 @@ def diff_data(  # noqa: PLR0913
                         log_func(f"^ '{context.where}': {context.ext.upper()} is different ^", separator=True)
                         return False
 
-                    modifications: PatcherModifications | tuple[PatcherModifications, dict[int, int]] | None = analyzer.analyze(data1, data2, str(context.where))
+                    modifications = analyzer.analyze(data1, data2, str(context.where))
                     if modifications is None:
                         # Log final separator AFTER all patch info
                         log_func(f"^ '{context.where}': {context.ext.upper()} is different ^", separator=True)
@@ -1714,7 +1715,7 @@ def diff_data(  # noqa: PLR0913
 
                         # Set destination based on MODDED installation location (file2)
                         resource_name = PurePath(str(context.where)).name
-                        destination: str = _determine_destination_for_source(
+                        destination = _determine_destination_for_source(
                             context.file2_rel,  # Use MODDED installation, not vanilla
                             resource_name,
                             log_func=log_func,

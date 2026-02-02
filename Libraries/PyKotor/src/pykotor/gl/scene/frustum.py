@@ -15,7 +15,7 @@ import math
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
-from pykotor.gl.glm_compat import vec3, vec4
+from pykotor.gl.glm_compat import Vector3, Vector4
 
 if TYPE_CHECKING:
     from pykotor.gl.glm_compat import mat4
@@ -49,7 +49,7 @@ class Frustum:
     def __init__(self):
         """Initialize frustum with default planes."""
         # Each plane is stored as (nx, ny, nz, d) where n is normal, d is distance
-        self.planes: list[vec4] = [vec4() for _ in range(6)]
+        self.planes: list[Vector4] = [Vector4() for _ in range(6)]
         self._cached_vp_hash: int = 0
 
     def update_from_camera(self, camera: Camera) -> None:
@@ -92,7 +92,7 @@ class Frustum:
 
         # Extract planes using Gribb/Hartmann method
         # Left plane: row3 + row0
-        self.planes[FrustumPlane.LEFT] = vec4(
+        self.planes[FrustumPlane.LEFT] = Vector4(
             vp[0][3] + vp[0][0],
             vp[1][3] + vp[1][0],
             vp[2][3] + vp[2][0],
@@ -100,7 +100,7 @@ class Frustum:
         )
 
         # Right plane: row3 - row0
-        self.planes[FrustumPlane.RIGHT] = vec4(
+        self.planes[FrustumPlane.RIGHT] = Vector4(
             vp[0][3] - vp[0][0],
             vp[1][3] - vp[1][0],
             vp[2][3] - vp[2][0],
@@ -108,7 +108,7 @@ class Frustum:
         )
 
         # Bottom plane: row3 + row1
-        self.planes[FrustumPlane.BOTTOM] = vec4(
+        self.planes[FrustumPlane.BOTTOM] = Vector4(
             vp[0][3] + vp[0][1],
             vp[1][3] + vp[1][1],
             vp[2][3] + vp[2][1],
@@ -116,7 +116,7 @@ class Frustum:
         )
 
         # Top plane: row3 - row1
-        self.planes[FrustumPlane.TOP] = vec4(
+        self.planes[FrustumPlane.TOP] = Vector4(
             vp[0][3] - vp[0][1],
             vp[1][3] - vp[1][1],
             vp[2][3] - vp[2][1],
@@ -124,7 +124,7 @@ class Frustum:
         )
 
         # Near plane: row3 + row2
-        self.planes[FrustumPlane.NEAR] = vec4(
+        self.planes[FrustumPlane.NEAR] = Vector4(
             vp[0][3] + vp[0][2],
             vp[1][3] + vp[1][2],
             vp[2][3] + vp[2][2],
@@ -132,7 +132,7 @@ class Frustum:
         )
 
         # Far plane: row3 - row2
-        self.planes[FrustumPlane.FAR] = vec4(
+        self.planes[FrustumPlane.FAR] = Vector4(
             vp[0][3] - vp[0][2],
             vp[1][3] - vp[1][2],
             vp[2][3] - vp[2][2],
@@ -153,7 +153,7 @@ class Frustum:
         length = math.sqrt(plane.x * plane.x + plane.y * plane.y + plane.z * plane.z)
         if length > 1e-10:  # Use smaller epsilon for better precision
             inv_length = 1.0 / length
-            self.planes[index] = vec4(
+            self.planes[index] = Vector4(
                 plane.x * inv_length,
                 plane.y * inv_length,
                 plane.z * inv_length,
@@ -161,9 +161,9 @@ class Frustum:
             )
         else:
             # Degenerate plane - set to a default that won't cull anything
-            self.planes[index] = vec4(0.0, 0.0, 1.0, 1e10)
+            self.planes[index] = Vector4(0.0, 0.0, 1.0, 1e10)
 
-    def point_in_frustum(self, point: vec3) -> bool:
+    def point_in_frustum(self, point: Vector3) -> bool:
         """Test if a point is inside the frustum.
 
         Args:
@@ -179,7 +179,7 @@ class Frustum:
                 return False
         return True
 
-    def sphere_in_frustum(self, center: vec3, radius: float) -> bool:
+    def sphere_in_frustum(self, center: Vector3, radius: float) -> bool:
         """Test if a bounding sphere intersects the frustum.
 
         This is the primary culling test used for render objects.
@@ -201,8 +201,8 @@ class Frustum:
 
     def aabb_in_frustum(
         self,
-        min_point: vec3,
-        max_point: vec3,
+        min_point: Vector3,
+        max_point: Vector3,
     ) -> bool:
         """Test if an axis-aligned bounding box intersects the frustum.
 
@@ -217,7 +217,7 @@ class Frustum:
         """
         for plane in self.planes:
             # Find the positive vertex (furthest in plane normal direction)
-            p_vertex = vec3(
+            p_vertex = Vector3(
                 max_point.x if plane.x >= 0 else min_point.x,
                 max_point.y if plane.y >= 0 else min_point.y,
                 max_point.z if plane.z >= 0 else min_point.z,
@@ -229,7 +229,7 @@ class Frustum:
 
         return True
 
-    def sphere_in_frustum_distance(self, center: vec3, radius: float) -> float:
+    def sphere_in_frustum_distance(self, center: Vector3, radius: float) -> float:
         """Get the minimum distance from sphere to any frustum plane.
 
         Useful for level-of-detail calculations.

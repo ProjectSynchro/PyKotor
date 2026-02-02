@@ -158,7 +158,7 @@ class LTR(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, LTR):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return (
             self._singles == other._singles
             and self._doubles == other._doubles
@@ -438,7 +438,7 @@ class LTRBlock(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, LTRBlock):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return (
             self._start == other._start
             and self._middle == other._middle

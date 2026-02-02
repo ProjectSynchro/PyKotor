@@ -58,6 +58,7 @@ class TXIBinaryReader(ResourceReader):
 
                 # Check if this line is a command (starts with a known TXI command)
                 # This allows commands to interrupt coordinate parsing
+                args: str
                 raw_cmd, args = (
                     parsed_line.split(" ", maxsplit=1)
                     if " " in parsed_line
@@ -121,7 +122,7 @@ class TXIBinaryReader(ResourceReader):
                     RobustLogger().debug(f"Invalid TXI command: '{raw_cmd}'")
                     continue
                 command: TXICommand = TXICommand.__members__[parsed_cmd_str]
-                args: str = args.strip() if args else ""
+                args = args.strip() if args else ""
 
                 if command == TXICommand.ALPHAMEAN:
                     self._txi.features.alphamean = float(args)

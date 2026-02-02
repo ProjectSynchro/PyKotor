@@ -245,8 +245,6 @@ def construct_dlg(  # noqa: C901, PLR0915
     dlg.delay_entry = root.acquire("DelayEntry", 0)
     dlg.delay_reply = root.acquire("DelayReply", 0)
 
-    
-    
     # StuntList contains stunt model references for special dialog animations
     stunt_list: GFFList = root.acquire("StuntList", GFFList())
     for stunt_struct in stunt_list:
@@ -259,7 +257,7 @@ def construct_dlg(  # noqa: C901, PLR0915
 
     starting_list: GFFList = root.acquire("StartingList", GFFList())
     for link_list_index, link_struct in enumerate(starting_list):
-        node_struct_id = link_struct.acquire("Index", 0)
+        node_struct_id: int = link_struct.acquire("Index", 0)
         try:
             starter_node: DLGEntry = all_entries[node_struct_id]
         except IndexError:
@@ -283,10 +281,10 @@ def construct_dlg(  # noqa: C901, PLR0915
             try:
                 reply_node: DLGReply = all_replies[node_struct_id]
             except IndexError:
-                context_link_msg: str = f"(EntryList/{node_list_index}/RepliesList/{link_list_index})"  # noqa: SLF001
+                context_link_msg = f"(EntryList/{node_list_index}/RepliesList/{link_list_index})"  # noqa: SLF001
                 RobustLogger().error(f"'Index' field value '{node_struct_id}' at {context_link_msg} does not point to a valid ReplyList node, omitting...")
             else:
-                link: DLGLink = DLGLink(reply_node, link_list_index)
+                link = DLGLink(reply_node, link_list_index)
                 link.is_child = bool(link_struct.acquire("IsChild", default=False))
                 link.comment = link_struct.acquire("LinkComment", "")
 
@@ -301,14 +299,14 @@ def construct_dlg(  # noqa: C901, PLR0915
 
         entries_list: GFFList = reply_struct.acquire("EntriesList", GFFList())
         for link_list_index, link_struct in enumerate(entries_list):
-            node_struct_id: int = link_struct.acquire("Index", 0)
+            node_struct_id = link_struct.acquire("Index", 0)
             try:
                 entry_node: DLGEntry = all_entries[node_struct_id]
             except IndexError:
-                context_link_msg: str = f"(ReplyList/{node_list_index}/EntriesList/{link_list_index})"  # noqa: SLF001
+                context_link_msg = f"(ReplyList/{node_list_index}/EntriesList/{link_list_index})"  # noqa: SLF001
                 RobustLogger().error(f"'Index' field value '{node_struct_id}' at {context_link_msg} does not point to a valid EntryList node, omitting...")
             else:
-                link: DLGLink = DLGLink(entry_node, link_list_index)
+                link = DLGLink(entry_node, link_list_index)
                 link.is_child = bool(link_struct.acquire("IsChild", default=False))
                 link.comment = link_struct.acquire("LinkComment", "")
 

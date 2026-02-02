@@ -42,7 +42,7 @@ class ThemeDialog(QDialog):
         app_style: QStyle | None = app.style()
         if app_style is None:
             raise RuntimeError("Failed to get application style")
-        return app_style.objectName().lower()
+        return str(app_style.objectName().lower())
 
     @staticmethod
     def adjust_color(

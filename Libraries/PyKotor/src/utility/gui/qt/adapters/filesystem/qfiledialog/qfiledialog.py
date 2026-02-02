@@ -162,12 +162,12 @@ class QFileDialogOptions(QObject):
             def __or__(self, other: QFileDialogOptions.FileDialogOption | RealQFileDialog.Option | int) -> QFileDialogOptions.FileDialogOption:  # type: ignore[misc]
                 if isinstance(other, (QFileDialogOptions.FileDialogOption, RealQFileDialog.Options if qtpy.QT5 else RealQFileDialog.Option, RealQFileDialog.Option, int)):  # pyright: ignore[reportAttributeAccessIssue]
                     return QFileDialogOptions.FileDialogOption(int(self) | int(other))
-                return NotImplemented
+                return NotImplemented  # type: ignore[no-any-return]
 
             def __ror__(self, other):  # type: ignore[misc]
                 if isinstance(other, (QFileDialogOptions.FileDialogOption, RealQFileDialog.Options if qtpy.QT5 else RealQFileDialog.Option, RealQFileDialog.Option, int)):  # pyright: ignore[reportAttributeAccessIssue]
                     return RealQFileDialog.Option(int(self) | int(other))
-                return NotImplemented
+                return NotImplemented  # type: ignore[no-any-return]
 
             def __and__(
                 self,
@@ -175,12 +175,12 @@ class QFileDialogOptions(QObject):
             ) -> QFileDialogOptions.FileDialogOption:  # type: ignore[misc]
                 if isinstance(other, (QFileDialogOptions.FileDialogOption, RealQFileDialog.Options if qtpy.QT5 else RealQFileDialog.Option, RealQFileDialog.Option, int)):  # pyright: ignore[reportAttributeAccessIssue]
                     return QFileDialogOptions.FileDialogOption(int(self) & int(other))
-                return NotImplemented
+                return NotImplemented  # type: ignore[no-any-return]
 
             def __rand__(self, other):  # type: ignore[misc]
                 if isinstance(other, (QFileDialogOptions.FileDialogOption, RealQFileDialog.Options if qtpy.QT5 else RealQFileDialog.Option, RealQFileDialog.Option, int)):  # pyright: ignore[reportAttributeAccessIssue]
                     return RealQFileDialog.Option(int(self) & int(other))
-                return NotImplemented
+                return NotImplemented  # type: ignore[no-any-return]
 
             def __xor__(
                 self,
@@ -188,7 +188,7 @@ class QFileDialogOptions(QObject):
             ) -> QFileDialogOptions.FileDialogOption:  # type: ignore[misc]
                 if isinstance(other, (QFileDialogOptions.FileDialogOption, RealQFileDialog.Options if qtpy.QT5 else RealQFileDialog.Option, RealQFileDialog.Option, int)):  # pyright: ignore[reportAttributeAccessIssue]
                     return QFileDialogOptions.FileDialogOption(int(self) ^ int(other))
-                return NotImplemented
+                return NotImplemented  # type: ignore[no-any-return]
 
             def __rxor__(
                 self,
@@ -196,7 +196,7 @@ class QFileDialogOptions(QObject):
             ) -> QFileDialogOptions.FileDialogOption:  # type: ignore[misc]
                 if isinstance(other, (QFileDialogOptions.FileDialogOption, RealQFileDialog.Options if qtpy.QT5 else RealQFileDialog.Option, RealQFileDialog.Option, int)):  # pyright: ignore[reportAttributeAccessIssue]
                     return QFileDialogOptions.FileDialogOption(int(other) ^ int(self))
-                return NotImplemented
+                return NotImplemented  # type: ignore[no-any-return]
 
     if not TYPE_CHECKING:
         FileMode = RealQFileDialog.Option.FileMode if hasattr(RealQFileDialog.Option, "FileMode") else RealQFileDialog.FileMode
@@ -1604,7 +1604,7 @@ class QFileDialog(RealQFileDialog if TYPE_CHECKING else QDialog):  # pyright: ig
         
         if mode_int == directory_mode_int or mode_int == directory_only_mode_int:
             # Case: Directory
-            fn = files[0]
+            fn: str = files[0]
             info = QFileInfo(fn)
             if not info.exists():
                 # Match C++: info = QFileInfo(d->getEnvironmentVariable(fn))
@@ -1619,7 +1619,7 @@ class QFileDialog(RealQFileDialog if TYPE_CHECKING else QDialog):  # pyright: ig
 
         if mode_int == sip_enum_to_int(RealQFileDialog.FileMode.AnyFile):
             # Case: AnyFile
-            fn: str = files[0]
+            fn = files[0]
             info = QFileInfo(fn)
             if info.isDir():
                 self.setDirectory(info.absoluteFilePath())

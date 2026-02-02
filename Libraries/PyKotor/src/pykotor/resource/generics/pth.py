@@ -153,7 +153,7 @@ class PTHEdge:
             return True
         if isinstance(other, PTHEdge):
             return self.source == other.source and self.target == other.target
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self):
         return hash((self.source, self.target))

@@ -57,7 +57,7 @@ class LYTAsciiReader(ResourceReader):
     def load(self, *, auto_close: bool = True) -> LYT:  # noqa: FBT001, FBT002, ARG002
         self._lyt = LYT()
 
-        self._lines: list[str] = self._reader.read_string(self._reader.size()).splitlines()
+        self._lines = self._reader.read_string(self._reader.size()).splitlines()
 
         iterator: Iterator[str] = iter(self._lines)
         for line in iterator:

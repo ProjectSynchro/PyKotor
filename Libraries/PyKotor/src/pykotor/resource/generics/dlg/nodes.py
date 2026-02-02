@@ -215,7 +215,7 @@ class DLGNode:
 
     def __eq__(self, other):
         if self.__class__ is not other.__class__:
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.__hash__() == other.__hash__()
 
     def __hash__(self):
@@ -392,8 +392,8 @@ class DLGNode:
         for key, value in node_data.items():
             if not isinstance(value, dict):
                 continue
-            py_type: str | None = value.get("py_type")
-            actual_value: Any = value.get("value")
+            py_type = value.get("py_type")
+            actual_value = value.get("value")
 
             if py_type == "list" and key == "links":
                 # Cast to correct type based on node type:

@@ -140,7 +140,7 @@ class UTT:
         self.portrait_id: int = 0
         self.loadscreen_id: int = 0
         self.palette_id: int = 0
-        self.name: LocalizedString = LocalizedString.from_invalid()
+        self.name = LocalizedString.from_invalid()
 
 
 def construct_utt(

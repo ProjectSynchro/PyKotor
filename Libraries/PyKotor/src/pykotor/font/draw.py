@@ -51,8 +51,8 @@ class _FontMetrics:
             underhang_height: int = int(char_bbox[3] - baseline_bbox[3])
             char_height: int = int(char_bbox[3] - char_bbox[1])
 
-            max_underhang_height: int = max(max_underhang_height, underhang_height)
-            max_char_height: int = max(max_char_height, char_height + underhang_height)
+            max_underhang_height = max(max_underhang_height, underhang_height)
+            max_char_height = max(max_char_height, char_height + underhang_height)
 
         return baseline_height, max_underhang_height, max_char_height
 
@@ -120,8 +120,8 @@ def write_bitmap_font(
 
     # Recalculate everything with the new resolution
     font_size: int = min(new_original_resolution[0] // characters_per_column, new_original_resolution[1] // characters_per_row)
-    pil_font: ImageFont.FreeTypeFont = ImageFont.truetype(str(font_path), font_size)
-    metrics: _FontMetrics = _FontMetrics(pil_font, charset_list)
+    pil_font = ImageFont.truetype(str(font_path), font_size)
+    metrics = _FontMetrics(pil_font, charset_list)
 
     # Determine debug behavior
     debug_flag: bool = draw_debug_box if draw_debug_box is not None else bool(draw_box)
@@ -131,8 +131,8 @@ def write_bitmap_font(
     draw: ImageDraw.ImageDraw = ImageDraw.Draw(charset_image)
 
     # Initialize the grid position
-    grid_x = 0
-    grid_y = 0
+    grid_x: int = 0
+    grid_y: int = 0
     upper_left_coords: list[tuple[float, float, int]] = []
     lower_right_coords: list[tuple[float, float, int]] = []
     for char in charset_list:
@@ -193,7 +193,7 @@ def write_bitmap_font(
         lower_right_coords.append((norm_x2, norm_y2, 0))
 
         # Move to the next grid position
-        grid_x: int = (grid_x + 1) % characters_per_row
+        grid_x = (grid_x + 1) % characters_per_row
         if grid_x == 0:
             grid_y += 1
 

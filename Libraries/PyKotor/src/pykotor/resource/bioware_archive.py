@@ -76,7 +76,7 @@ class ArchiveResource:
         if self is other or hash(self) == hash(other):
             return True
         if not isinstance(other, ArchiveResource):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.resref == other.resref and self.restype == other.restype and self.data == other.data
 
     def __hash__(self):
@@ -288,7 +288,7 @@ class BiowareArchive(ComparableMixin, ABC):
         other: BiowareArchive,
     ) -> Self:  # noqa: ANN001
         if not isinstance(other, BiowareArchive):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         combined_archive: Self = self.__class__()
         resource: ArchiveResource
@@ -306,7 +306,7 @@ class BiowareArchive(ComparableMixin, ABC):
         if self is other:
             return True
         if not isinstance(other, BiowareArchive):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return (
             set(self._resources) == set(other._resources) and super().__eq__(other)  # ComparableMixin.__eq__
         )

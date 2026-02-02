@@ -10,13 +10,14 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from logging import Logger
 
-try:
-    import tomllib
-except ModuleNotFoundError:
-    import tomli as tomllib  # type: ignore[import-not-found, no-redef]
+
 
 try:
-    import tomli_w
+    import tomli as tomllib  # type: ignore[import-not-found, no-redef]
+except ModuleNotFoundError:
+    import tomllib  # Python 3.11+
+try:
+    import tomli_w  # type: ignore[import-not-found, no-redef]
 except ModuleNotFoundError:
     # Fallback to manual TOML writing if tomli_w not available
     tomli_w = None  # type: ignore[assignment]

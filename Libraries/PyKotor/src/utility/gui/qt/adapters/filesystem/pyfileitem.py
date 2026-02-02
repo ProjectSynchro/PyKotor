@@ -7,18 +7,20 @@ import sys
 
 from contextlib import suppress
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import qtpy
 
 from pykotor.tools.path import CaseAwarePath
 
-if qtpy.QT6:
-    QDesktopWidget = None
-    from qtpy.QtGui import QUndoCommand, QUndoStack  # pyright: ignore[reportPrivateImportUsage]  # noqa: F401
-elif qtpy.QT5:
-    from qtpy.QtWidgets import QDesktopWidget, QUndoCommand, QUndoStack  # noqa: F401  # pyright: ignore[reportPrivateImportUsage]
-else:
-    raise RuntimeError(f"Unexpected qtpy version: '{qtpy.API_NAME}'")
+if not TYPE_CHECKING:
+    if qtpy.QT6:
+        QDesktopWidget = None
+        from qtpy.QtGui import QUndoCommand, QUndoStack  # pyright: ignore[reportPrivateImportUsage]  # noqa: F401
+    elif qtpy.QT5:
+        from qtpy.QtWidgets import QDesktopWidget, QUndoCommand, QUndoStack  # noqa: F401  # pyright: ignore[reportPrivateImportUsage]
+    else:
+        raise RuntimeError(f"Unexpected qtpy version: '{qtpy.API_NAME}'")
 
 
 def update_sys_path(_path: pathlib.Path):
@@ -356,7 +358,7 @@ class PyFileInfo:
     def __eq__(self, other: QFileInfo) -> bool:
         """Checks if two QFileInfo objects refer to the same file."""
         if not isinstance(other, QFileInfo):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.absoluteFilePath() == other.absoluteFilePath()
 
     def __ne__(self, other: QFileInfo) -> bool:
@@ -377,7 +379,7 @@ class PyWrappedQFileInfo:
         folder: str | Path | None = None,
     ):
         if folder is not None:
-            self._path = self._getPathType()(folder) / self._getPathType()(file)
+            self._path: Path = self._getPathType()(folder) / self._getPathType()(file)
         elif file is not None:
             self._path = self._getPathType()(file)
         else:
@@ -406,7 +408,7 @@ class PyWrappedQFileInfo:
         """Sets the file path for this object."""
         file_obj = Path(file)
         if dir is None or file_obj.is_absolute():
-            self._path: Path = file_obj
+            self._path = file_obj
         else:
             self._path = self._getPathType()(dir, file)
         self._path = self._getPathType()(file) if dir is None else self._getPathType()(dir, file)
@@ -636,7 +638,7 @@ class PyWrappedQFileInfo:
     def __eq__(self, other: PyFileInfo) -> bool:
         """Checks if two PyFileInfo objects refer to the same file."""
         if not isinstance(other, PyFileInfo):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.absoluteFilePath() == other.absoluteFilePath()
 
     def __ne__(self, other: PyFileInfo) -> bool:

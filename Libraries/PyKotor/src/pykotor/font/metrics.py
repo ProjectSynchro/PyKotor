@@ -48,8 +48,8 @@ class FontMetrics:
         baseline_bbox: tuple[int, int, int, int] = temp_draw.textbbox((0, 0), self.baseline_char, font=self.pil_font)
         baseline_height: int = int(baseline_bbox[3] - baseline_bbox[1])
 
-        max_underhang_height = 0
-        max_char_height = 0
+        max_underhang_height: int = 0
+        max_char_height: int = 0
 
         # Calculate metrics for each character
         for char in self.charset_list:
@@ -61,7 +61,7 @@ class FontMetrics:
             underhang_height = int(char_bbox[3] - baseline_bbox[3])
             char_height = int(char_bbox[3] - char_bbox[1])
 
-            max_underhang_height: int = max(max_underhang_height, underhang_height)
-            max_char_height: int = max(max_char_height, char_height + underhang_height)
+            max_underhang_height = max(max_underhang_height, underhang_height)
+            max_char_height = max(max_char_height, char_height + underhang_height)
 
         return baseline_height, max_underhang_height, max_char_height

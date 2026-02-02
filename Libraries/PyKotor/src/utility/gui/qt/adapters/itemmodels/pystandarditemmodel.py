@@ -111,7 +111,7 @@ class PyQStandardItem:
             self._data.update(other._data)  # noqa: SLF001
             self._flags = other._flags  # noqa: SLF001
             for row in other._children:  # noqa: SLF001
-                self.appendRow(tuple(None if child is None else child.clone() for child in row))
+                self.appendRow(tuple(None if child is None else child.clone() for child in row))  # type: ignore[misc]
             return
 
         # Handle rows and columns constructor
@@ -133,7 +133,14 @@ class PyQStandardItem:
         )
         raise TypeError(error_message)
 
-    def _childIndex(self, row: int, column: int) -> int:
+    def _childIndex(self, row: int | Self, column: int | None = None) -> int:
+        column = -1 if column is None else column
+        if isinstance(row, PyQStandardItem):
+            try:
+                index = self._children.index(row)  # noqa: SLF001
+                return index
+            except ValueError:
+                return -1
         if row < 0 or row >= self._rows or column < 0 or column >= self._columns:
             return -1
         return (row * self._columns) + column
@@ -157,6 +164,7 @@ class PyQStandardItem:
             item._parent = self  # noqa: SLF001
             item._model = self._model  # noqa: SLF001
         if old_item is not None:
+            assert isinstance(old_item, PyQStandardItem)
             old_item._model = None  # noqa: SLF001
         self._children[index] = (item,)  # Wrap item in a tuple
         if self._model is not None and emitChanged:
@@ -743,14 +751,14 @@ class PyQStandardItemModel(QAbstractItemModel):
     def insertColumn(self, column: int, *args: Any, **kwargs: Any) -> bool | None:
         items: Iterable[PyQStandardItem] | Any = kwargs.get("items", args[0])
         if isinstance(items, Iterable):
-            parent = QModelIndex() if len(args) < 2 or args[1] is None else args[1]
+            parent: QModelIndex = QModelIndex() if len(args) < 2 or args[1] is None else args[1]
             parentItem = self._getItem(parent)
             self.beginInsertColumns(parent, column, column)
             for item in items:
                 parentItem.appendChild(item)
             self.endInsertColumns()
             return True
-        parent: QModelIndex = kwargs.get("parent", QModelIndex() if args[0] is None else args[0])
+        parent = kwargs.get("parent", QModelIndex() if args[0] is None else args[0])
         if isinstance(parent, QModelIndex) or parent is None:
             parentItem = self._getItem(parent)
             self.beginInsertColumns(parent, column, column)

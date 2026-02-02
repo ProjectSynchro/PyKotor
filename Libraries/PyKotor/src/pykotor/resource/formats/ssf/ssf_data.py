@@ -57,7 +57,7 @@ class SSF(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, SSF):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self._sounds == other._sounds
 
     def __hash__(self):
@@ -69,7 +69,7 @@ class SSF(ComparableMixin):
     ):
         """Returns the stringref for the specified sound."""
         if not isinstance(item, SSFSound):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self._sounds[item]
 
     def reset(self):

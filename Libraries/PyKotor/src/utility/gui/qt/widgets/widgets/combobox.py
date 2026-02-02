@@ -251,11 +251,11 @@ class FilterComboBox(QComboBox):
         if always_on_top:
             if text_search_index != -1:  # Text found
                 self.removeItem(text_search_index)
-            new_index = 0
+            new_index: int = 0
             self.insertItem(new_index, text)
         elif text_search_index == -1:  # Text not found
             self.addItem(text)
-            new_index: int = self.findText(text)
+            new_index = self.findText(text)
         self.setCurrentIndex(new_index)
         line_edit: QLineEdit = self.lineEdit()
         if line_edit is not None:
@@ -282,7 +282,7 @@ class FilterComboBox(QComboBox):
         items_to_measure: int = min(self.source_model.rowCount(), 1000)
         for i in range(items_to_measure):
             item_width: int = delegate.sizeHint(QStyleOptionViewItem(), self.source_model.index(i, 0)).width()
-            max_width: int = max(item_width, max_width)
+            max_width = max(item_width, max_width)
         adjusted_width: int = max_width
         self.resize(adjusted_width, self.height())
         self.filter_line_edit.setFixedWidth(adjusted_width)

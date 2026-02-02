@@ -3133,7 +3133,7 @@ class MDLBinaryReader:
                 # Flare textures: array of string pointers, each pointing to a 12-byte null-terminated string
                 if light_header.flare_textures_count > 0 and light_header.offset_to_flare_textures not in (0, 0xFFFFFFFF):
                     node.light.flare_textures = []
-                    saved_pos = self._reader.position()
+                    saved_pos: int = self._reader.position()
                     try:
                         # Read texture name pointers (each pointer is 4 bytes)
                         self._reader.seek(light_header.offset_to_flare_textures)
@@ -3430,7 +3430,7 @@ class MDLBinaryReader:
                 # MDLOps: unpacks constraints as floats from "constraints+" array (line 2401: $ref->{$node}{'constraints'}[$i] = $ref->{$node}{$structs{'darray'}[9]{'name'}}{'unpacked'}[$i];)
                 # MDLOps: writes constraints as pack("f", $_) for each constraint (line 7264)
                 if bin_node.dangly.offset_to_contraints not in (0, 0xFFFFFFFF) and bin_node.dangly.constraints_count > 0:
-                    saved_pos: int = self._reader.position()
+                    saved_pos = self._reader.position()
                     try:
                         # MDLOps line 2176: offset + 12 (offset-12 semantics)
                         constraint_loc: int = bin_node.dangly.offset_to_contraints + 12
@@ -4478,9 +4478,10 @@ class MDLBinaryWriter:
             for i, n in enumerate(mdl_nodes)
         }
         parent_by_idx: dict[int, int] = {}
+        parent_idx: int | None
         for parent_idx, parent in enumerate(mdl_nodes):
             for child in parent.children:
-                child_idx = idx_by_id.get(id(child))
+                child_idx: int | None = idx_by_id.get(id(child))
                 if child_idx is not None:
                     parent_by_idx[child_idx] = parent_idx
 
@@ -4492,7 +4493,7 @@ class MDLBinaryWriter:
             # Child offsets from the MDL node tree
             bin_node.children_offsets = []
             for child in mdl_node.children:
-                child_idx: int | None = idx_by_id.get(id(child))
+                child_idx = idx_by_id.get(id(child))
                 if child_idx is not None:
                     bin_node.children_offsets.append(bin_offsets[child_idx])
 
@@ -4529,7 +4530,7 @@ class MDLBinaryWriter:
                 # Store as (absolute_offset - 12) to match MDLOps format
                 bin_node.header.offset_to_children = absolute_children_offset - 12
             bin_node.header.offset_to_root = 0
-            parent_idx: int | None = parent_by_idx.get(i)
+            parent_idx = parent_by_idx.get(i)
             # MDLOps stores offsets as (absolute_offset - 12) in the file format
             #
             if parent_idx is not None:

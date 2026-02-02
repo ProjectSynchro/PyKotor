@@ -295,14 +295,14 @@ class FileOperations:
             try:
                 import pwd
 
-                owner = pwd.getpwuid(info.st_uid).pw_name
+                owner: str = pwd.getpwuid(info.st_uid).pw_name
             except KeyError:
                 owner = str(info.st_uid)
 
             try:
                 import grp
 
-                group = grp.getgrgid(info.st_gid).gr_name
+                group: str = grp.getgrgid(info.st_gid).gr_name
             except KeyError:
                 group = str(info.st_gid)
         elif os.name == "nt":
@@ -335,8 +335,8 @@ class FileOperations:
             sid_type = wintypes.DWORD()
             LookupAccountSid(None, owner_sid, owner_name, ctypes.byref(owner_name_size), domain_name, ctypes.byref(domain_name_size), ctypes.byref(sid_type))
 
-            owner: str = owner_name.value
-            group: str = domain_name.value
+            owner = owner_name.value
+            group = domain_name.value
 
         attributes: dict[str, bool] = get_file_attributes(path)
 

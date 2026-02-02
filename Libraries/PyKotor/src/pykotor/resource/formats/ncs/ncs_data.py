@@ -286,7 +286,7 @@ class NCS(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, NCS):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         if len(self.instructions) != len(other.instructions):
             return False
@@ -707,7 +707,7 @@ class NCSInstruction(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, NCSInstruction):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         # NOTE: We compare jump by identity since it's a circular reference
         return (
             self.ins_type == other.ins_type

@@ -25,7 +25,7 @@ class DLGStunt:
 
     def __eq__(self, other):
         if self.__class__ is not other.__class__:
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.__hash__() == other.__hash__()
 
     def __hash__(self):

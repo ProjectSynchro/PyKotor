@@ -182,7 +182,7 @@ class BIFResource(ArchiveResource):
     ) -> bool:
         """Compare two resources."""
         if not isinstance(other, BIFResource):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.resname_key_index == other.resname_key_index and self.restype == other.restype and self.size == other.size
 
     def __hash__(self) -> int:
@@ -455,6 +455,7 @@ class BIF(BiowareArchive):
         key_resources: list[KeyEntry] = [r for r in key.key_entries if r.bif_index == bif_idx]
 
         # Check all KEY resources exist in BIF
+        key_res: KeyEntry | None
         for key_res in key_resources:
             bif_res: BIFResource | None = self.get_resource_by_id(key_res.resname_key_index)
             if bif_res is None:
@@ -466,7 +467,7 @@ class BIF(BiowareArchive):
 
         # Check all BIF resources exist in KEY
         for bif_res in self._resources:
-            key_res: KeyEntry | None = next((r for r in key_resources if r.resname_key_index == bif_res.resname_key_index), None)
+            key_res = next((r for r in key_resources if r.resname_key_index == bif_res.resname_key_index), None)
             if key_res is None:
                 errors.append(f"Resource ID {bif_res.resname_key_index} from BIF not found in KEY")
 

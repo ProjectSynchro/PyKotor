@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING, Sequence
 if TYPE_CHECKING:
     from ctypes import _CData
 
-CHOOSECOLOR = ctypes.windll.comdlg32.ChooseColorW
 class COLORREF(ctypes.Structure):
     _fields_ = [("rgb", wintypes.DWORD)]
 
-class CHOOSECOLOR(ctypes.Structure):
+CHOOSECOLOR = ctypes.windll.comdlg32.ChooseColorW
+class ChooseColor(ctypes.Structure):
     _fields_: Sequence[tuple[str, type[_CData]] | tuple[str, type[_CData], int]] = [
         ("lStructSize", wintypes.DWORD),
         ("hwndOwner", wintypes.HWND),

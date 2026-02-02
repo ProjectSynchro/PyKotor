@@ -125,11 +125,11 @@ from qtpy.QtWidgets import (
 
 from utility.gui.qt.tools.qt_meta import determine_type, get_qt_meta_type
 
-QMatrix = object
 try:
     from qtpy.QtGui import QMatrix
 except ImportError:
-    from qtpy.QtGui import QMatrix  # noqa: F401
+    if not TYPE_CHECKING:
+        QMatrix = object
 if qtpy.API_NAME == "PySide2":
     from qtpy.QtCore import QJsonArray, QJsonValue  # noqa: F401
 elif qtpy.API_NAME == "PySide6":

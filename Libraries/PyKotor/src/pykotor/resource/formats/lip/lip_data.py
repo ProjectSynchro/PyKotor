@@ -455,11 +455,11 @@ class LIP(ComparableMixin):
                 errors.append(f"Negative time value: {frame.time}")
 
         # Check for proper ordering
-        last_time = -1
+        last_time: float = -1
         for frame in self.frames:
             if frame.time < last_time:
                 errors.append(f"Keyframes out of order: {frame.time} after {last_time}")
-            last_time: float = frame.time
+            last_time = frame.time
 
         # Check length matches last keyframe
         if self.frames and abs(self.length - self.frames[-1].time) > 0.0001:

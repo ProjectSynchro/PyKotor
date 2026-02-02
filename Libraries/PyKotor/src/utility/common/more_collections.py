@@ -131,7 +131,7 @@ class OrderedSet(MutableSet[T]):
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, (OrderedSet, list)):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self._list.__eq__(other) and self._set.__eq__(other)
 
     def __lt__(self, other: Iterable[T]) -> bool:
@@ -188,7 +188,7 @@ class CaseInsensitiveDict(Generic[T]):
         initial: Mapping[str, T] | Iterable[tuple[str, T]] | ItemsView[str, T] | None = None,
     ):
         self._dictionary: dict[str, T] = {}
-        self._case_map: dict[str, T] = {}
+        self._case_map: dict[str, str] = {}
 
         if initial:
             # If initial is a mapping, use its items method.
@@ -237,13 +237,16 @@ class CaseInsensitiveDict(Generic[T]):
         if self is other:
             return True
         is_casedict = isinstance(other, CaseInsensitiveDict)
-        is_dict = isinstance(other, dict) and not is_casedict  # for future implementation when we make CaseInsensitiveDict subclass dict.
-        if not is_dict and not is_casedict:
-            return NotImplemented
+        if not isinstance(other, dict) and not is_casedict:
+            return NotImplemented  # type: ignore[no-any-return]
         # it's a dict of some sort, do some more quick checks.
-        if is_casedict and other._case_map != self._case_map:
+        if is_casedict and (not isinstance(other, CaseInsensitiveDict) or other._case_map != self._case_map):
             return False
-        other_dict: dict[str, T] = other._dictionary if isinstance(other, CaseInsensitiveDict) else other  # pyright: ignore[reportAssignmentType]
+        other_dict: dict[str, T]
+        if isinstance(other, CaseInsensitiveDict):
+            other_dict = other._dictionary
+        else:
+            other_dict = other  # type: ignore[assignment]
         if len(self._dictionary) != len(other_dict):
             return False
 
@@ -262,7 +265,7 @@ class CaseInsensitiveDict(Generic[T]):
         if not isinstance(key, str):
             msg = f"Keys must be strings in CaseInsensitiveDict-inherited classes, got {key!r}"
             raise KeyError(msg)
-        return self._dictionary[self._case_map[key.lower()]]  # pyright: ignore[reportArgumentType]
+        return self._dictionary[self._case_map[key.lower()]]
 
     def __setitem__(self, key: str, value: T):
         if not isinstance(key, str):
@@ -270,7 +273,7 @@ class CaseInsensitiveDict(Generic[T]):
             raise KeyError(msg)
         if key in self:
             self.__delitem__(key)
-        self._case_map[key.lower()] = key  # pyright: ignore[reportArgumentType]
+        self._case_map[key.lower()] = key
         self._dictionary[key] = value
 
     def __delitem__(self, key: str):
@@ -278,7 +281,7 @@ class CaseInsensitiveDict(Generic[T]):
             msg = f"Keys must be strings in CaseInsensitiveDict-inherited classes, got {key!r}"
             raise KeyError(msg)
         lower_key = key.lower()
-        del self._dictionary[self._case_map[lower_key]]  # pyright: ignore[reportArgumentType]
+        del self._dictionary[self._case_map[lower_key]]
         del self._case_map[lower_key]
 
     def __contains__(self, key: str) -> bool:
@@ -292,14 +295,14 @@ class CaseInsensitiveDict(Generic[T]):
 
     def __or__(self, other):
         if not isinstance(other, (dict, CaseInsensitiveDict)):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         new_dict: CaseInsensitiveDict[T] = self.copy()
         new_dict.update(other)
         return new_dict
 
     def __ror__(self, other):
         if not isinstance(other, (dict, CaseInsensitiveDict)):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         other_dict: CaseInsensitiveDict[T] = other if isinstance(other, CaseInsensitiveDict) else CaseInsensitiveDict.from_dict(other)
         new_dict: CaseInsensitiveDict[T] = other_dict.copy()
         new_dict.update(self)
@@ -315,13 +318,13 @@ class CaseInsensitiveDict(Generic[T]):
     @overload
     def pop(self, __key: str) -> T: ...
     @overload
-    def pop(self, __key: str, __default: VT = None) -> VT | T: ...
+    def pop(self, __key: str, __default: VT) -> VT | T: ...
 
-    def pop(self, __key: str, __default: VT = _unique_sentinel) -> VT | T:  # type: ignore[assignment]
+    def pop(self, __key: str, __default: VT | object = _unique_sentinel) -> VT | T:
         lower_key: str = __key.lower()
         try:
             # Attempt to pop the value using the case-insensitive key.
-            value: T = self._dictionary.pop(self._case_map.pop(lower_key))  # pyright: ignore[reportArgumentType]
+            value: T = self._dictionary.pop(self._case_map.pop(lower_key))
         except KeyError:
             if __default is _unique_sentinel:
                 raise
@@ -353,16 +356,16 @@ class CaseInsensitiveDict(Generic[T]):
                 self[key] = value
 
     @overload
-    def get(self, __key: str) -> T: ...
+    def get(self, __key: str) -> T | None: ...
     @overload
-    def get(self, __key: str, __default: VT = None) -> VT | T: ...
+    def get(self, __key: str, __default: VT) -> VT | T: ...
 
-    def get(self, __key: str, __default: VT = None) -> VT | T:  # type: ignore[assignment]
-        key_lookup: str = self._case_map.get(__key.lower(), _unique_sentinel)  # type: ignore[arg-type]
+    def get(self, __key: str, __default: VT | None = None) -> VT | T | None:
+        key_lookup: str | object = self._case_map.get(__key.lower(), _unique_sentinel)
         return (
             __default
             if key_lookup is _unique_sentinel
-            else self._dictionary.get(key_lookup, __default)
+            else self._dictionary.get(key_lookup, __default)  # type: ignore[arg-type]
         )
 
     def items(self):

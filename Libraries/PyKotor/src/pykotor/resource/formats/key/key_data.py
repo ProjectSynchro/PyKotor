@@ -129,7 +129,7 @@ class BifEntry:
     ) -> bool:
         """Compare two BIF entries."""
         if not isinstance(other, BifEntry):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.filename == other.filename and self.filesize == other.filesize and self.drives == other.drives
 
     def __hash__(self) -> int:
@@ -269,7 +269,7 @@ class KeyEntry:
     ) -> bool:
         """Compare two key entries."""
         if not isinstance(other, KeyEntry):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return str(self.resref) == str(other.resref) and self.restype == other.restype and self.resource_id == other.resource_id
 
     def __hash__(self) -> int:

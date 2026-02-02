@@ -130,19 +130,19 @@ class FileActionsExecutor(QObject):
         # Check environment variable for testing mode
         if not enable_multiprocessing or os.environ.get("PYKOTOR_DISABLE_MULTIPROCESSING", "").lower() in ("1", "true", "yes"):
             RobustLogger().debug("FileActionsExecutor running in DISABLED mode (no multiprocessing)")
-            self.process_pool = None  # type: ignore[assignment]
-            self.manager = None  # type: ignore[assignment]
-            self.tasks = {}  # type: ignore[assignment]
-            self.futures = {}
+            self.process_pool: ProcessPoolExecutor = None  # type: ignore[assignment]
+            self.manager: SyncManager = None  # type: ignore[assignment]
+            self.tasks: DictProxy[str, Task] = {}  # type: ignore[assignment]
+            self.futures: dict[str, _ConcurrentFuture] = {}
             return
         
         worker_count: int = max_workers or multiprocessing.cpu_count()
         RobustLogger().debug(f"Initializing FileActionsExecutor with max_workers: {worker_count}")
         # Use multiprocessing exclusively, never threading
-        self.process_pool: ProcessPoolExecutor = ProcessPoolExecutor(max_workers=worker_count)
-        self.manager: SyncManager = Manager()
-        self.tasks: DictProxy[str, Task] = self.manager.dict()
-        self.futures: dict[str, _ConcurrentFuture] = {}
+        self.process_pool = ProcessPoolExecutor(max_workers=worker_count)
+        self.manager = Manager()
+        self.tasks = self.manager.dict()
+        self.futures = {}
         RobustLogger().debug("FileActionsExecutor initialized with multiprocessing only")
 
     @property

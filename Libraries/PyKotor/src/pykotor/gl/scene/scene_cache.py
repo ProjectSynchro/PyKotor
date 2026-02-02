@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, ClassVar, TypeVar
 
 from loggerplus import RobustLogger
 from pykotor.extract.installation import SearchLocation
-from pykotor.gl.glm_compat import eulerAngles, quat, vec3
+from pykotor.gl.glm_compat import eulerAngles, quat
 from pykotor.gl.models.mdl import Boundary
 from pykotor.gl.scene import RenderObject
 from pykotor.resource.generics.git import GIT, GITCamera, GITCreature, GITDoor, GITEncounter, GITPlaceable, GITSound, GITStore, GITTrigger, GITWaypoint
@@ -15,6 +15,7 @@ from pykotor.resource.generics.utd import UTD
 from pykotor.resource.generics.utp import UTP
 from pykotor.resource.generics.uts import UTS
 from pykotor.resource.type import ResourceType
+from utility.common.geometry import Vector3
 
 if TYPE_CHECKING:
     from pykotor.gl.scene.scene import Scene
@@ -85,7 +86,7 @@ class SceneCache:
 
         for room in scene.layout.rooms:
             if room not in scene.objects:
-                position = vec3(room.position.x, room.position.y, room.position.z)
+                position = Vector3(room.position.x, room.position.y, room.position.z)
                 scene.objects[room] = RenderObject(
                     room.model,
                     position,
@@ -122,8 +123,8 @@ class SceneCache:
 
                 scene.objects[door] = RenderObject(
                     model_name,
-                    vec3(),
-                    vec3(),
+                    Vector3(),
+                    Vector3(),
                     data=door,
                 )
 
@@ -163,8 +164,8 @@ class SceneCache:
 
                 scene.objects[placeable] = RenderObject(
                     model_name,
-                    vec3(),
-                    vec3(),
+                    Vector3(),
+                    Vector3(),
                     data=placeable,
                 )
 
@@ -184,8 +185,8 @@ class SceneCache:
                 continue
             obj = RenderObject(
                 "waypoint",
-                vec3(),
-                vec3(),
+                Vector3(),
+                Vector3(),
                 data=waypoint,
             )
             scene.objects[waypoint] = obj
@@ -197,8 +198,8 @@ class SceneCache:
             if store not in scene.objects:
                 obj = RenderObject(
                     "store",
-                    vec3(),
-                    vec3(),
+                    Vector3(),
+                    Vector3(),
                     data=store,
                 )
                 scene.objects[store] = obj
@@ -209,9 +210,9 @@ class SceneCache:
         for sound in scene.git.sounds:
             if sound in scene.objects:
                 continue
-            uts = None
+            uts: UTS | None = None
             try:
-                uts: UTS | None = scene._resource_from_gitinstance(sound, scene._module.sound)
+                uts = scene._resource_from_gitinstance(sound, scene._module.sound)
             except Exception:  # noqa: BLE001
                 RobustLogger().exception(f"Could not get the sound resource '{sound.resref}.uts' and/or the appearance.2da")
             if uts is None:
@@ -219,8 +220,8 @@ class SceneCache:
 
             obj = RenderObject(
                 "sound",
-                vec3(),
-                vec3(),
+                Vector3(),
+                Vector3(),
                 data=sound,
                 gen_boundary=lambda uts=uts: Boundary.from_circle(scene, uts.max_distance),
             )
@@ -234,8 +235,8 @@ class SceneCache:
                 continue
             obj = RenderObject(
                 "encounter",
-                vec3(),
-                vec3(),
+                Vector3(),
+                Vector3(),
                 data=encounter,
                 gen_boundary=lambda encounter=encounter: Boundary(scene, encounter.geometry.points),
             )
@@ -252,8 +253,8 @@ class SceneCache:
             if trigger not in scene.objects:
                 obj = RenderObject(
                     "trigger",
-                    vec3(),
-                    vec3(),
+                    Vector3(),
+                    Vector3(),
                     data=trigger,
                     gen_boundary=lambda trigger=trigger: Boundary(scene, trigger.geometry.points),
                 )
@@ -270,14 +271,14 @@ class SceneCache:
             if camera not in scene.objects:
                 obj = RenderObject(
                     "camera",
-                    vec3(),
-                    vec3(),
+                    Vector3(),
+                    Vector3(),
                     data=camera,
                 )
                 scene.objects[camera] = obj
 
             scene.objects[camera].set_position(camera.position.x, camera.position.y, camera.position.z + camera.height)
-            euler: vec3 = eulerAngles(quat(camera.orientation.w, camera.orientation.x, camera.orientation.y, camera.orientation.z))
+            euler: Vector3 = eulerAngles(quat(camera.orientation.w, camera.orientation.x, camera.orientation.y, camera.orientation.z))
             scene.objects[camera].set_rotation(
                 euler.y,
                 euler.z - math.pi / 2 + math.radians(camera.pitch),

@@ -10,7 +10,7 @@ from pykotor.gl.compat import (
     missing_gl_func,
     safe_gl_error_module,
 )
-from pykotor.gl.glm_compat import mat4, vec3, vec4, value_ptr
+from pykotor.gl.glm_compat import mat4, Vector3, Vector4, value_ptr
 
 HAS_PYOPENGL = has_pyopengl()
 gl_error = safe_gl_error_module()
@@ -192,7 +192,7 @@ class Mesh:
     def _fast_bounds(
         self,
         transform: mat4,
-    ) -> tuple[vec3, vec3] | None:
+    ) -> tuple[Vector3, Vector3] | None:
         if not fastmath.available() or self.mdx_size <= 0:
             return None
         vertex_count = len(self.vertex_data) // self.mdx_size
@@ -203,18 +203,18 @@ class Mesh:
         bounds_min, bounds_max = fastmath.transform_bounds(
             mv, vertex_count, self.mdx_size, self.mdx_vertex, matrix_values
         )
-        return vec3(*bounds_min), vec3(*bounds_max)
+        return Vector3(*bounds_min), Vector3(*bounds_max)
 
     def bounds(
         self,
         transform: mat4,
-    ) -> tuple[vec3, vec3]:
+    ) -> tuple[Vector3, Vector3]:
         fast = self._fast_bounds(transform)
         if fast is not None:
             return fast
 
-        min_point = vec3(100000, 100000, 100000)
-        max_point = vec3(-100000, -100000, -100000)
+        min_point = Vector3(100000, 100000, 100000)
+        max_point = Vector3(-100000, -100000, -100000)
         vertex_count = len(self.vertex_data) // self.mdx_size
         if vertex_count == 0:
             return min_point, max_point
@@ -224,7 +224,7 @@ class Mesh:
         for idx in range(vertex_count):
             offset = idx * self.mdx_size + self.mdx_vertex
             x, y, z = struct.unpack_from("<3f", self.vertex_data, offset)
-            world = transform * vec4(x, y, z, 1.0)
+            world = transform * Vector4(x, y, z, 1.0)
             min_point.x = min(min_point.x, world.x)
             min_point.y = min(min_point.y, world.y)
             min_point.z = min(min_point.z, world.z)

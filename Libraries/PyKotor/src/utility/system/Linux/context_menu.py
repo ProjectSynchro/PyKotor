@@ -60,7 +60,7 @@ def context_menu_qt(path: os.PathLike | str) -> bool:
         for action in actions:
             libQt5.QMenu_addAction(menu, action.encode())
         libQt5.QMenu_exec(menu)
-        libQt5.qApp.exec()
+        libQt5.qApp.exec()  # type: ignore[attr-defined]
     except Exception:  # noqa: BLE001
         return False
     else:
@@ -194,7 +194,7 @@ def show_context_menu(path: str):
     ]
     abs_path = PosixPath(path).resolve()
     for method in methods:
-        if method(abs_path):
+        if method(str(abs_path)):
             return
     print("All methods failed to display the context menu.")
 

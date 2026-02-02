@@ -118,7 +118,7 @@ class HTMLDelegate(QStyledItemDelegate):
                     if show_tooltip:
                         QToolTip.showText(event.globalPosition().toPoint(), tooltip, self.parent())
                         return icon_width_total, True
-                    if execute_action and action:
+                    if bool(execute_action) and bool(action):
                         action()
                         handled_click = True
 

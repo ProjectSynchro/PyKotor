@@ -451,7 +451,7 @@ class NCSType:
             return self._type_code == other._type_code
         if isinstance(other, (int, NCSTypeCode)):
             return self._type_code == other
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self) -> int:
         """Hash for use in dictionaries/sets."""

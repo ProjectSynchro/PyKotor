@@ -146,9 +146,11 @@ def get_system_info() -> dict[str, Any]:
         info["Memory Usage"] = f"{svmem.percent}%"
 
     # GPU Information
-    GPUtil = None
-    with suppress(ImportError):
+    try:
         import GPUtil  # pyright: ignore[reportMissingImports]  # type: ignore[no-redef]
+    except ImportError:
+        if not TYPE_CHECKING:
+            GPUtil = None
     if GPUtil is not None:
         gpus = GPUtil.getGPUs()
         gpu_info = []

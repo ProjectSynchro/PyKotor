@@ -34,7 +34,7 @@ class TaskStatusWidget(QWidget):
         self.dispatcher: FileActionsExecutor | None = None
         self.task_widgets: dict[str, TaskWidget] = {}
 
-    def set_dispatcher(self, dispatcher: FileActionsExecutor) -> None:
+    def set_dispatcher(self, dispatcher: FileActionsExecutor):
         self.dispatcher = dispatcher
         self._connect_signals()
 
@@ -42,7 +42,7 @@ class TaskStatusWidget(QWidget):
         self._create_widgets()
         self._setup_timer()
 
-    def _setup_layout(self) -> None:
+    def _setup_layout(self):
         """Set up the main layout for the widget."""
         layout = QVBoxLayout(self)
         if not isinstance(layout, QVBoxLayout):
@@ -50,7 +50,7 @@ class TaskStatusWidget(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.setLayout(layout)
 
-    def _connect_signals(self) -> None:
+    def _connect_signals(self):
         """Connect signals from the dispatcher to the widget's slots."""
         self.dispatcher.TaskStarted.connect(self.add_task)
         self.dispatcher.TaskCompleted.connect(self.update_task_status)
@@ -61,7 +61,7 @@ class TaskStatusWidget(QWidget):
         self.dispatcher.TaskProgress.connect(self.update_task_progress)
         self.dispatcher.ProgressUpdated.connect(self.update_overall_progress)
 
-    def _create_widgets(self) -> None:
+    def _create_widgets(self):
         """Create and add widgets to the layout."""
         self.clear_completed_button = QPushButton("Clear Completed Tasks")
         self.clear_completed_button.clicked.connect(self.clear_completed_tasks)
@@ -122,13 +122,13 @@ class TaskStatusWidget(QWidget):
         )
         return task_list
 
-    def _setup_timer(self) -> None:
+    def _setup_timer(self):
         """Set up a timer to update all tasks periodically."""
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_all_tasks)
         self.update_timer.start(1000)  # Update every second
 
-    def add_task(self, task_id: str) -> None:
+    def add_task(self, task_id: str):
         """Add a new task to the widget.
 
         This function is crucial for displaying task progress to the user.
@@ -145,7 +145,7 @@ class TaskStatusWidget(QWidget):
         self.task_list.addItem(item)
         self.task_list.setItemWidget(item, task_widget.widget)
 
-    def update_task_status(self, task_id: str, error: Exception | None = None) -> None:
+    def update_task_status(self, task_id: str, error: Exception | None = None):
         """Update the status of a task in the widget.
 
         This function is essential for keeping the user informed about task progress.
@@ -157,7 +157,7 @@ class TaskStatusWidget(QWidget):
             return
         self._update_task_widget(task)
 
-    def update_task_progress(self, task_id: str, progress: float) -> None:
+    def update_task_progress(self, task_id: str, progress: float):
         """Update the progress of a task in the widget.
 
         This function is crucial for providing real-time feedback to the user.
@@ -167,7 +167,7 @@ class TaskStatusWidget(QWidget):
         task_widget = self.task_widgets[task_id]
         task_widget.progress_bar.setValue(int(progress * 100))
 
-    def update_overall_progress(self, completed_tasks: int, total_tasks: int) -> None:
+    def update_overall_progress(self, completed_tasks: int, total_tasks: int):
         """Update the overall progress of all tasks.
 
         This function is essential for giving the user a high-level view of task completion.
@@ -269,7 +269,7 @@ class TaskStatusWidget(QWidget):
     def _create_mouse_press_event(self, task_id: str) -> Callable[[QMouseEvent], None]:
         """Create a mouse press event handler for a task widget."""
 
-        def mouse_press_event(event: QMouseEvent) -> None:
+        def mouse_press_event(event: QMouseEvent):
             self.task_clicked.emit(task_id)
 
         return mouse_press_event
@@ -277,7 +277,7 @@ class TaskStatusWidget(QWidget):
     def _create_cancel_callback(self, task_id: str) -> Callable[[], None]:
         """Create a callback function for cancelling a task."""
 
-        def cancel_task() -> None:
+        def cancel_task():
             self.dispatcher.cancel_task(task_id)
 
         return cancel_task
@@ -285,7 +285,7 @@ class TaskStatusWidget(QWidget):
     def _create_pause_resume_callback(self, task_id: str) -> Callable[[], None]:
         """Create a callback function for pausing or resuming a task."""
 
-        def toggle_pause_resume() -> None:
+        def toggle_pause_resume():
             self._toggle_pause_resume(task_id)
 
         return toggle_pause_resume
@@ -293,12 +293,12 @@ class TaskStatusWidget(QWidget):
     def _create_retry_callback(self, task_id: str) -> Callable[[], None]:
         """Create a callback function for retrying a task."""
 
-        def retry_task() -> None:
+        def retry_task():
             self._retry_task(task_id)
 
         return retry_task
 
-    def _toggle_pause_resume(self, task_id: str) -> None:
+    def _toggle_pause_resume(self, task_id: str):
         """Toggle the pause/resume state of a task."""
         task = self.dispatcher.get_task(task_id)
         if task is None:
@@ -308,11 +308,12 @@ class TaskStatusWidget(QWidget):
         elif task.status == TaskStatus.PAUSED:
             self.dispatcher.resume_task(task_id)
 
-    def _retry_task(self, task_id: str) -> None:
+    def _retry_task(self, task_id: str):
         """Retry a failed or cancelled task."""
         self.dispatcher.retry_task(task_id)
+        self.update_task_status(task_id)
 
-    def _update_task_widget(self, task: Task) -> None:
+    def _update_task_widget(self, task: Task):
         """Update the UI of a task widget based on its current state."""
         task_widget = self.task_widgets.get(task.id)
         if task_widget is None:
@@ -333,19 +334,54 @@ class TaskStatusWidget(QWidget):
         task_widget.progress_bar.setValue(int(task.progress * 100))
 
         if task.status == TaskStatus.COMPLETED:
-            self._update_completed_task_widget(task_widget, status_label, cancel_button, pause_resume_button, retry_button)
+            self._update_completed_task_widget(
+                task_widget,
+                status_label,
+                cancel_button,
+                pause_resume_button,
+                retry_button,
+            )
         elif task.status == TaskStatus.FAILED:
-            self._update_failed_task_widget(task_widget, status_label, cancel_button, pause_resume_button, retry_button)
+            self._update_failed_task_widget(
+                task_widget,
+                status_label,
+                cancel_button,
+                pause_resume_button,
+                retry_button,
+            )
         elif task.status == TaskStatus.CANCELLED:
-            self._update_cancelled_task_widget(task_widget, status_label, cancel_button, pause_resume_button, retry_button)
+            self._update_cancelled_task_widget(
+                task_widget,
+                status_label,
+                cancel_button,
+                pause_resume_button,
+                retry_button,
+            )
         elif task.status == TaskStatus.PAUSED:
-            self._update_paused_task_widget(task_widget, status_label, cancel_button, pause_resume_button, retry_button)
+            self._update_paused_task_widget(
+                task_widget,
+                status_label,
+                cancel_button,
+                pause_resume_button,
+                retry_button,
+            )
         else:  # PENDING or RUNNING
-            self._update_active_task_widget(task_widget, status_label, cancel_button, pause_resume_button, retry_button)
+            self._update_active_task_widget(
+                task_widget,
+                status_label,
+                cancel_button,
+                pause_resume_button,
+                retry_button,
+            )
 
     def _update_completed_task_widget(
-        self, task_widget: TaskWidget, status_label: QLabel, cancel_button: QPushButton, pause_resume_button: QPushButton, retry_button: QPushButton
-    ) -> None:
+        self,
+        task_widget: TaskWidget,
+        status_label: QLabel,
+        cancel_button: QPushButton,
+        pause_resume_button: QPushButton,
+        retry_button: QPushButton,
+    ):
         """Update the UI for a completed task."""
         status_label.setStyleSheet("color: #27ae60;")
         cancel_button.setEnabled(False)
@@ -360,8 +396,13 @@ class TaskStatusWidget(QWidget):
         )
 
     def _update_failed_task_widget(
-        self, task_widget: TaskWidget, status_label: QLabel, cancel_button: QPushButton, pause_resume_button: QPushButton, retry_button: QPushButton
-    ) -> None:
+        self,
+        task_widget: TaskWidget,
+        status_label: QLabel,
+        cancel_button: QPushButton,
+        pause_resume_button: QPushButton,
+        retry_button: QPushButton,
+    ):
         """Update the UI for a failed task."""
         status_label.setStyleSheet("color: #c0392b;")
         cancel_button.setVisible(False)
@@ -376,8 +417,13 @@ class TaskStatusWidget(QWidget):
         )
 
     def _update_cancelled_task_widget(
-        self, task_widget: TaskWidget, status_label: QLabel, cancel_button: QPushButton, pause_resume_button: QPushButton, retry_button: QPushButton
-    ) -> None:
+        self,
+        task_widget: TaskWidget,
+        status_label: QLabel,
+        cancel_button: QPushButton,
+        pause_resume_button: QPushButton,
+        retry_button: QPushButton,
+    ):
         """Update the UI for a cancelled task."""
         status_label.setStyleSheet("color: #f39c12;")
         cancel_button.setVisible(False)
@@ -392,8 +438,13 @@ class TaskStatusWidget(QWidget):
         )
 
     def _update_paused_task_widget(
-        self, task_widget: TaskWidget, status_label: QLabel, cancel_button: QPushButton, pause_resume_button: QPushButton, retry_button: QPushButton
-    ) -> None:
+        self,
+        task_widget: TaskWidget,
+        status_label: QLabel,
+        cancel_button: QPushButton,
+        pause_resume_button: QPushButton,
+        retry_button: QPushButton,
+    ):
         """Update the UI for a paused task."""
         status_label.setStyleSheet("color: #3498db;")
         cancel_button.setEnabled(True)
@@ -408,8 +459,13 @@ class TaskStatusWidget(QWidget):
         )
 
     def _update_active_task_widget(
-        self, task_widget: TaskWidget, status_label: QLabel, cancel_button: QPushButton, pause_resume_button: QPushButton, retry_button: QPushButton
-    ) -> None:
+        self,
+        task_widget: TaskWidget,
+        status_label: QLabel,
+        cancel_button: QPushButton,
+        pause_resume_button: QPushButton,
+        retry_button: QPushButton,
+    ):
         """Update the UI for an active (pending or running) task."""
         status_label.setStyleSheet("color: #2ecc71;")
         cancel_button.setEnabled(True)
@@ -424,7 +480,12 @@ class TaskStatusWidget(QWidget):
             """
         )
 
-    def clear_completed_tasks(self) -> None:
+    def clear_completed_tasks(self):
+        completed_tasks = [task_id for task_id, task in self.dispatcher.get_all_tasks() if task.status == TaskStatus.COMPLETED]
+        for task_id in completed_tasks:
+            self.remove_task(task_id)
+
+    def clear_completed_tasks2(self):
         """Remove all completed tasks from the widget."""
         for i in range(self.task_list.count() - 1, -1, -1):
             item = self.task_list.item(i)
@@ -441,7 +502,12 @@ class TaskStatusWidget(QWidget):
                 self.task_list.takeItem(i)
                 del self.task_widgets[task_id]
 
-    def update_all_tasks(self) -> None:
+    def update_all_tasks(self):
+        for task_id, task in self.dispatcher.get_all_tasks():
+            self.update_task_progress(task_id, task.progress)
+            self.update_task_status(task_id)
+
+    def update_all_tasks2(self):
         """Update the status and progress of all tasks."""
         for task_id, task_widget in self.task_widgets.items():
             task = self.dispatcher.get_task(task_id)
@@ -449,96 +515,11 @@ class TaskStatusWidget(QWidget):
                 self.update_task_progress(task_id, task.progress)
                 self.update_task_status(task_id)
 
-    def _update_task_widget(self, task: Task) -> None:
-        task_widget = self.task_widgets[task.id]
-        status_label = task_widget.findChild(QLabel, "status_label")
-        cancel_button = task_widget.findChild(QPushButton, "Cancel")
-        pause_resume_button = task_widget.findChild(QPushButton, "Pause")
-        retry_button = task_widget.findChild(QPushButton, "Retry")
-        progress_bar = task_widget.findChild(QProgressBar)
-
-        status_label.setText(task.status.name)
-        progress_bar.setValue(int(task.progress * 100))
-
-        if task.status == TaskStatus.COMPLETED:
-            status_label.setStyleSheet("color: #27ae60;")
-            cancel_button.setEnabled(False)
-            pause_resume_button.setEnabled(False)
-            retry_button.setVisible(False)
-            progress_bar.setStyleSheet(
-                """
-                QProgressBar::chunk {
-                    background-color: #27ae60;
-                }
-                """
-            )
-        elif task.status == TaskStatus.FAILED:
-            status_label.setStyleSheet("color: #c0392b;")
-            cancel_button.setVisible(False)
-            pause_resume_button.setEnabled(False)
-            retry_button.setVisible(True)
-            progress_bar.setStyleSheet(
-                """
-                QProgressBar::chunk {
-                    background-color: #e74c3c;
-                }
-                """
-            )
-        elif task.status == TaskStatus.CANCELLED:
-            status_label.setStyleSheet("color: #f39c12;")
-            cancel_button.setVisible(False)
-            pause_resume_button.setEnabled(False)
-            retry_button.setVisible(True)
-            progress_bar.setStyleSheet(
-                """
-                QProgressBar::chunk {
-                    background-color: #f39c12;
-                }
-                """
-            )
-        elif task.status == TaskStatus.PAUSED:
-            status_label.setStyleSheet("color: #3498db;")
-            cancel_button.setEnabled(True)
-            pause_resume_button.setText("Resume")
-            retry_button.setVisible(False)
-            progress_bar.setStyleSheet(
-                """
-                QProgressBar::chunk {
-                    background-color: #3498db;
-                }
-                """
-            )
-        else:  # PENDING or RUNNING
-            status_label.setStyleSheet("color: #2ecc71;")
-            cancel_button.setEnabled(True)
-            pause_resume_button.setText("Pause")
-            pause_resume_button.setEnabled(True)
-            retry_button.setVisible(False)
-            progress_bar.setStyleSheet(
-                """
-                QProgressBar::chunk {
-                    background-color: #2ecc71;
-                }
-                """
-            )
-
-    def _toggle_pause_resume(self, task_id: str):
-        task = self.dispatcher.get_task(task_id)
-        if task:
-            if task.status == TaskStatus.RUNNING:
-                self.dispatcher.pause_task(task_id)
-            elif task.status == TaskStatus.PAUSED:
-                self.dispatcher.resume_task(task_id)
-
-    def _retry_task(self, task_id: str) -> None:
-        self.dispatcher.retry_task(task_id)
-        self.update_task_status(task_id)
-
-    def mousePressEvent(self, event: QMouseEvent) -> None:
+    def mousePressEvent(self, event: QMouseEvent):
         super().mousePressEvent(event)
         self.task_clicked.emit("")  # Emit signal to show task details dialog
 
-    def remove_task(self, task_id: str) -> None:
+    def remove_task(self, task_id: str):
         if task_id in self.task_widgets:
             widget = self.task_widgets[task_id]
             for i in range(self.task_list.count()):
@@ -548,22 +529,14 @@ class TaskStatusWidget(QWidget):
                     break
             del self.task_widgets[task_id]
 
-    def clear_completed_tasks(self) -> None:
-        completed_tasks = [task_id for task_id, task in self.dispatcher.get_all_tasks() if task.status == TaskStatus.COMPLETED]
-        for task_id in completed_tasks:
-            self.remove_task(task_id)
-
-    def update_all_tasks(self) -> None:
-        for task_id, task in self.dispatcher.get_all_tasks():
-            self.update_task_progress(task_id, task.progress)
-            self.update_task_status(task_id)
 
 if __name__ == "__main__":
     import sys
 
     from qtpy.QtWidgets import QApplication
 
-    from utility.gui.qt.filesystem.file_browser.file_system_executor import FileActionsExecutor
+    if not TYPE_CHECKING:
+        from utility.gui.qt.filesystem.file_browser.file_system_executor import FileActionsExecutor
 
     app = QApplication(sys.argv)
 

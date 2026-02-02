@@ -259,7 +259,7 @@ class BWM(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, BWM):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return (
             self.walkmesh_type == other.walkmesh_type
             and self.faces == other.faces
@@ -1556,10 +1556,10 @@ class BWMFace(Face, ComparableMixin):
         lookup (the `is` operator) instead of relying on `__eq__`. See `io_bwm.py`.
         """
         if not isinstance(other, BWMFace):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         parent_eq = super().__eq__(other)
         if parent_eq is NotImplemented:
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return (
             parent_eq
             and self.trans1 == other.trans1
@@ -1709,7 +1709,7 @@ class BWMNodeAABB(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, BWMNodeAABB):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         if self is other:
             return True
         return (
@@ -1786,7 +1786,7 @@ class BWMAdjacency(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, BWMAdjacency):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.face == other.face and self.edge == other.edge
 
     def __hash__(self):
@@ -1872,7 +1872,7 @@ class BWMEdge(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, BWMEdge):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.face == other.face and self.index == other.index and self.transition == other.transition and self.final == other.final
 
     def __hash__(self):

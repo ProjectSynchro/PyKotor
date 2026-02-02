@@ -129,7 +129,7 @@ class WAV:
         if self is other:
             return True
         if not isinstance(other, WAV):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return (
             self.wav_type == other.wav_type
             and self.audio_format == other.audio_format

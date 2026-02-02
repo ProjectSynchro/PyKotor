@@ -6,17 +6,15 @@ from contextlib import suppress
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from types import ModuleType
-
     from charset_normalizer import CharsetMatch, CharsetMatches
 
     from pykotor.common.language import Language
 
-charset_normalizer: None | ModuleType
 try:
     import charset_normalizer
 except ImportError:
-    charset_normalizer = None
+    if not TYPE_CHECKING:
+        charset_normalizer = None
 
 
 def decode_bytes_with_fallbacks(  # noqa: C901
@@ -89,10 +87,10 @@ def decode_bytes_with_fallbacks(  # noqa: C901
         if only_8bit_encodings:
             max_8bit_characters: int = 256
             detected_8bit_encodings: list[CharsetMatch] = [enc_match for enc_match in detected_encodings if len(enc_match.alphabets) <= max_8bit_characters]
-            best_8bit_encoding = "windows-1252"
+            best_8bit_encoding: str = "windows-1252"
             if detected_8bit_encodings:
                 best_match: CharsetMatch = detected_8bit_encodings[0]
-                best_8bit_encoding: str = best_match.encoding
+                best_8bit_encoding = best_match.encoding
             return byte_content.decode(encoding=best_8bit_encoding, errors=attempt_errors)
 
         result_detect: CharsetMatch | None = detected_encodings.best()

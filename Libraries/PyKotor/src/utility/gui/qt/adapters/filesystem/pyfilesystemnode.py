@@ -296,7 +296,7 @@ class PyFileSystemNode:
             return self.fileName.lower() == other.lower()
         if isinstance(other, PyQExtendedInformation):
             return bool(self.info and self.info == other)
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self) -> int:
         """Hash method to make PyFileSystemNode hashable for use as dictionary keys.

@@ -308,14 +308,6 @@ class GithubRelease:
         )
 
 
-
-@dataclass
-class LinksData(AbstractAPIResult):
-    self: str
-    git: str | None
-    html: str
-
-
 @dataclass
 class ForkContentsData(AbstractAPIResult):
     id: int

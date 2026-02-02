@@ -1870,7 +1870,7 @@ class ModuleResource(Generic[T]):
             return self._identifier == other
         if isinstance(other, ModuleResource):
             return self._identifier == other._identifier
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self):
         return hash(self._identifier)

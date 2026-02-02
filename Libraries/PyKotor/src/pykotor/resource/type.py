@@ -136,7 +136,7 @@ class ResourceReader:
                 loaded_src = bytearray(source.read_all())
 
             self._offset: int = offset
-            self._size: int = len(loaded_src)
+            self._size = len(loaded_src)
             self._source: bytearray = loaded_src[offset : self._size]
 
     def close(self):
@@ -1091,7 +1091,7 @@ class ResourceType(Enum):
             return self.extension == other.lower()
         if isinstance(other, int):
             return self.type_id == other
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self):
         return hash(self.extension)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pykotor.gl.glm_compat import mat4, vec3, vec4, value_ptr
+from pykotor.gl.glm_compat import mat4, Vector3, Vector4, value_ptr
 
 from pykotor.gl.compat import (
     MissingPyOpenGLError,
@@ -31,17 +31,17 @@ else:
     GL_VERTEX_SHADER = missing_constant("GL_VERTEX_SHADER")
 
 if TYPE_CHECKING:
-    from pykotor.gl.glm_compat import mat4, vec3, vec4
+    from pykotor.gl.glm_compat import mat4, Vector3, Vector4
 
 
 KOTOR_VSHADER = """
 #version 330 core
 
-layout (location = 0) in vec3 flags;
-layout (location = 1) in vec3 position;
-layout (location = 2) in vec3 normal;
-layout (location = 3) in vec3 uv;
-layout (location = 4) in vec3 uv2;
+layout (location = 0) in Vector3 flags;
+layout (location = 1) in Vector3 position;
+layout (location = 2) in Vector3 normal;
+layout (location = 3) in Vector3 uv;
+layout (location = 4) in Vector3 uv2;
 
 out vec2 diffuse_uv;
 out vec2 lightmap_uv;
@@ -52,7 +52,7 @@ uniform mat4 projection;
 
 void main()
 {
-    gl_Position = projection * view * model *  vec4(position, 1.0);
+    gl_Position = projection * view * model *  Vector4(position, 1.0);
     diffuse_uv = vec2(uv.x, uv.y);
     lightmap_uv = vec2(uv2.x, uv2.y);
 }
@@ -64,7 +64,7 @@ KOTOR_FSHADER = """
 in vec2 diffuse_uv;
 in vec2 lightmap_uv;
 
-out vec4 FragColor;
+out Vector4 FragColor;
 
 layout(binding = 0) uniform sampler2D diffuse;
 layout(binding = 1) uniform sampler2D lightmap;
@@ -73,8 +73,8 @@ uniform float alphaCutoff;
 
 void main()
 {
-    vec4 diffuseColor = texture(diffuse, diffuse_uv);
-    vec4 lightmapColor = texture(lightmap, lightmap_uv);
+    Vector4 diffuseColor = texture(diffuse, diffuse_uv);
+    Vector4 lightmapColor = texture(lightmap, lightmap_uv);
 
     // Optional alpha cutout for masked textures (configured per-material).
     if (alphaCutoff > 0.0 && diffuseColor.a < alphaCutoff) {
@@ -82,8 +82,8 @@ void main()
     }
 
     if (enableLightmap == 1) {
-        vec3 rgb = mix(diffuseColor.rgb, lightmapColor.rgb, 0.5);
-        FragColor = vec4(rgb, diffuseColor.a);
+        Vector3 rgb = mix(diffuseColor.rgb, lightmapColor.rgb, 0.5);
+        FragColor = Vector4(rgb, diffuseColor.a);
     } else {
         FragColor = diffuseColor;
     }
@@ -94,7 +94,7 @@ void main()
 PICKER_VSHADER = """
 #version 330 core
 
-layout (location = 1) in vec3 position;
+layout (location = 1) in Vector3 position;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -102,7 +102,7 @@ uniform mat4 projection;
 
 void main()
 {
-    gl_Position = projection * view * model *  vec4(position, 1.0);
+    gl_Position = projection * view * model *  Vector4(position, 1.0);
 }
 """
 
@@ -110,13 +110,13 @@ void main()
 PICKER_FSHADER = """
 #version 330
 
-uniform vec3 colorId;
+uniform Vector3 colorId;
 
-out vec4 FragColor;
+out Vector4 FragColor;
 
 void main()
 {
-    FragColor = vec4(colorId, 1.0);
+    FragColor = Vector4(colorId, 1.0);
 }
 """
 
@@ -124,7 +124,7 @@ void main()
 PLAIN_VSHADER = """
 #version 330 core
 
-layout (location = 1) in vec3 position;
+layout (location = 1) in Vector3 position;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -132,7 +132,7 @@ uniform mat4 projection;
 
 void main()
 {
-    gl_Position = projection * view * model *  vec4(position, 1.0);
+    gl_Position = projection * view * model *  Vector4(position, 1.0);
 }
 """
 
@@ -140,9 +140,9 @@ void main()
 PLAIN_FSHADER = """
 #version 330
 
-uniform vec4 color;
+uniform Vector4 color;
 
-out vec4 FragColor;
+out Vector4 FragColor;
 
 void main()
 {
@@ -216,14 +216,14 @@ class Shader:
     def set_vector4(
         self,
         uniform: str,
-        vector: vec4,
+        vector: Vector4,
     ):
         glUniform4fv(self.uniform(uniform), 1, value_ptr(vector))
 
     def set_vector3(
         self,
         uniform: str,
-        vector: vec3,
+        vector: Vector3,
     ):
         glUniform3fv(self.uniform(uniform), 1, value_ptr(vector))
 

@@ -132,7 +132,7 @@ class ResRef(str):
         if self is other:
             return True
         if not isinstance(other, str):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         other_value: str = other.casefold().strip()
         return other_value == self._value.casefold()
 
@@ -302,7 +302,7 @@ class Color:
         if self is other:
             return True
         if not isinstance(other, Color):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         return hash(self) == hash(other)
 
@@ -525,7 +525,7 @@ class WrappedInt:
         if isinstance(other, int):
             self._value += other
             return None
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self):
         return hash(self._value)
@@ -574,7 +574,7 @@ class InventoryItem:
             return True
         if isinstance(other, InventoryItem):
             return self.resref == other.resref and self.droppable == other.droppable  # and self.infinite == other.infinite
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self):
         return hash(self.resref)

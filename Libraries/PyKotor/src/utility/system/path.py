@@ -468,7 +468,7 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
 
     def with_stem(self, stem: str) -> Self:  # type: ignore[type-var, misc]
         """Return a new path with the stem changed."""
-        self: PurePath = self  # type: ignore[]  # noqa: PLW0127, PLW0642
+        self: PurePath = self  # type: ignore[no-redef]  # noqa: PLW0127, PLW0642
         return self.with_name(stem + self.suffix)  # type: ignore[return-value]
 
     def endswith(

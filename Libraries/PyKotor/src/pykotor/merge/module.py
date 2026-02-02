@@ -182,6 +182,36 @@ class ModuleManager:
         return {ResourceIdentifier(texture, ResourceType.TGA) for texture in lookup_texture_queries}
 
     def summarize(self) -> None:
+        """Prints a summary of the missing, unused, and conflicting resources."""
+        print("\nSummary:")
+        print("--------")
+
+        if self.missing_resources:
+            print("\nMissing Resources:")
+            for module, resources in self.missing_resources.items():
+                print(f"Module '{module}':")
+                for res in resources:
+                    print(f"  - {res}")
+        else:
+            print("\nNo missing resources found.")
+
+        if self.unused_resources:
+            print("\nUnused Resources:")
+            for module, resources in self.unused_resources.items():
+                print(f"Module '{module}':")
+                for res in resources:
+                    print(f"  - {res}")
+        else:
+            print("\nNo unused resources found.")
+
+        if self.conflicting_resources:
+            print("\nConflicting Resources:")
+            for resname, modules in self.conflicting_resources.items():
+                print(f"Resource '{resname}' found in modules: {', '.join(modules)}")
+        else:
+            print("\nNo conflicting resources found.")
+
+    def summarize2(self) -> None:
         """Prints a summary of the analysis including conflicts, missing resources, and unused resources."""
         print("\nSummary:")
         print("--------")
@@ -327,33 +357,3 @@ class ModuleManager:
                         print(f"Copied '{resource_file.name}' to '{destination}'.")
                     except Exception as e:  # noqa: BLE001
                         print(f"Failed to copy '{resource_file.name}' to '{destination}': {e}")
-
-    def summarize(self) -> None:
-        """Prints a summary of the missing, unused, and conflicting resources."""
-        print("\nSummary:")
-        print("--------")
-
-        if self.missing_resources:
-            print("\nMissing Resources:")
-            for module, resources in self.missing_resources.items():
-                print(f"Module '{module}':")
-                for res in resources:
-                    print(f"  - {res}")
-        else:
-            print("\nNo missing resources found.")
-
-        if self.unused_resources:
-            print("\nUnused Resources:")
-            for module, resources in self.unused_resources.items():
-                print(f"Module '{module}':")
-                for res in resources:
-                    print(f"  - {res}")
-        else:
-            print("\nNo unused resources found.")
-
-        if self.conflicting_resources:
-            print("\nConflicting Resources:")
-            for resname, modules in self.conflicting_resources.items():
-                print(f"Resource '{resname}' found in modules: {', '.join(modules)}")
-        else:
-            print("\nNo conflicting resources found.")

@@ -705,7 +705,7 @@ def _diff_installations_with_resolution_impl(  # noqa: PLR0913, PLR0915, C901
     index1 = install_indices[0]
     index2 = install_indices[1]
 
-    all_identifiers = list(all_identifiers_set)
+    all_identifiers: list[ResourceIdentifier] = list(all_identifiers_set)
     log_func(f"  Total unique resources across all installations: {len(all_identifiers)}")
 
     # PROCESS TLK FILES FIRST AND IMMEDIATELY (before StrRef cache building)
@@ -718,7 +718,7 @@ def _diff_installations_with_resolution_impl(  # noqa: PLR0913, PLR0915, C901
         # Apply filtering for irrelevant TLK files when both paths are installations
         for identifier in tlk_identifiers:
             # Resolve in install2 to check filepath for filtering
-            resolved2 = resolve_resource_in_installation(install2, identifier, log_func=log_func, verbose=False, resource_index=index2)
+            resolved2: ResolvedResource = resolve_resource_in_installation(install2, identifier, log_func=log_func, verbose=False, resource_index=index2)
 
             if _should_process_tlk_file(resolved2):
                 filtered_tlk_identifiers.append(identifier)
@@ -733,7 +733,7 @@ def _diff_installations_with_resolution_impl(  # noqa: PLR0913, PLR0915, C901
         for idx, identifier in enumerate(filtered_tlk_identifiers, start=1):
             log_func(f"Processing TLK {idx}/{len(filtered_tlk_identifiers)}: {identifier.resname}.{identifier.restype.extension}")
             # Resolve in both installations using indices (O(1) lookups)
-            resolved1 = resolve_resource_in_installation(install1, identifier, log_func=log_func, verbose=False, resource_index=index1)
+            resolved1: ResolvedResource = resolve_resource_in_installation(install1, identifier, log_func=log_func, verbose=False, resource_index=index1)
             resolved2 = resolve_resource_in_installation(install2, identifier, log_func=log_func, verbose=False, resource_index=index2)
 
             # Check if resource exists in both
@@ -816,7 +816,7 @@ def _diff_installations_with_resolution_impl(  # noqa: PLR0913, PLR0915, C901
                 log_func(line)
 
     # Remove TLK identifiers from the main list since we've processed them
-    all_identifiers: list[ResourceIdentifier] = [ident for ident in all_identifiers if ident.restype.extension.lower() != "tlk"]
+    all_identifiers = [ident for ident in all_identifiers if ident.restype.extension.lower() != "tlk"]
     log_func("TLK processing complete.")
     log_func("")
 
@@ -905,8 +905,8 @@ def _diff_installations_with_resolution_impl(  # noqa: PLR0913, PLR0915, C901
             resolution_cache[cache_key1] = resolve_resource_in_installation(install1, identifier, log_func=log_func, verbose=False, resource_index=index1)
         if cache_key2 not in resolution_cache:
             resolution_cache[cache_key2] = resolve_resource_in_installation(install2, identifier, log_func=log_func, verbose=False, resource_index=index2)
-        resolved1: ResolvedResource = resolution_cache[cache_key1]
-        resolved2: ResolvedResource = resolution_cache[cache_key2]
+        resolved1 = resolution_cache[cache_key1]
+        resolved2 = resolution_cache[cache_key2]
 
         # Check if resource exists in both
         if resolved1.data is None and resolved2.data is None:

@@ -133,7 +133,7 @@ class LYT(ComparableMixin):
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, LYT):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return (
             self.rooms == other.rooms
             and self.tracks == other.tracks
@@ -279,7 +279,7 @@ class LYTRoom(ComparableMixin):
         if self is other:
             return True
         if not isinstance(other, LYTRoom):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.model.lower() == other.model.lower() and self.position == other.position
 
     def __hash__(self) -> int:
@@ -347,7 +347,7 @@ class LYTTrack(ComparableMixin):
         if self is other:
             return True
         if not isinstance(other, LYTTrack):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.model.lower() == other.model.lower() and self.position == other.position
 
     def __hash__(self) -> int:
@@ -405,7 +405,7 @@ class LYTObstacle(ComparableMixin):
         if self is other:
             return True
         if not isinstance(other, LYTObstacle):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.model.lower() == other.model.lower() and self.position == other.position
 
     def __hash__(self) -> int:
@@ -490,7 +490,7 @@ class LYTDoorHook(ComparableMixin):
         if self is other:
             return True
         if not isinstance(other, LYTDoorHook):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return (
             self.room == other.room
             and self.door == other.door

@@ -171,7 +171,7 @@ class Identifier:
             return self.label == other.label
         if isinstance(other, str):
             return self.label == other
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __str__(self):
         return self.label
@@ -1067,7 +1067,7 @@ class IdentifierExpression(Expression):
             return True
         if isinstance(other, IdentifierExpression):
             return self.identifier == other.identifier
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self) -> int:
         return hash(self.identifier)
@@ -1129,7 +1129,7 @@ class StringExpression(Expression):
             return True
         if isinstance(other, StringExpression):
             return self.value == other.value
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self) -> int:
         return hash(self.value)
@@ -1155,7 +1155,7 @@ class IntExpression(Expression):
             return True
         if isinstance(other, IntExpression):
             return self.value == other.value
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self) -> int:
         return hash(self.value)
@@ -1182,7 +1182,7 @@ class ObjectExpression(Expression):
             return True
         if isinstance(other, ObjectExpression):
             return self.value == other.value
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self) -> int:
         return hash(self.value)
@@ -1208,7 +1208,7 @@ class FloatExpression(Expression):
             return True
         if isinstance(other, FloatExpression):
             return self.value == other.value
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self) -> int:
         return hash(self.value)
@@ -1236,7 +1236,7 @@ class VectorExpression(Expression):
             return True
         if isinstance(other, VectorExpression):
             return self.x == other.x and self.y == other.y and self.z == other.z
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self) -> int:
         return hash(self.x) ^ hash(self.y) ^ hash(self.z)
@@ -3139,7 +3139,7 @@ class DynamicDataType:
             return False
         if isinstance(other, DataType):
             return self.builtin == other and self.builtin != DataType.STRUCT
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self) -> int:
         return hash(self.builtin) ^ hash(self._struct)

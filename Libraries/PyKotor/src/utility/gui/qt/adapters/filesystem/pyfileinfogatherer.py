@@ -720,9 +720,8 @@ class PyFileInfoGatherer(QThread):
         }
         """
         # List drives
+        updatedFiles: list[tuple[str, QFileInfo]] = []
         if not path:
-            updatedFiles: list[tuple[str, QFileInfo]] = []
-            
             def addToUpdatedFiles(fileInfo: QFileInfo) -> None:
                 fileInfo.refresh()  # stat() equivalent
                 updatedFiles.append((translateDriveName(fileInfo), fileInfo))
@@ -744,7 +743,6 @@ class PyFileInfoGatherer(QThread):
         base.start()
         fileInfo = QFileInfo()
         firstTime = True
-        updatedFiles: list[tuple[str, QFileInfo]] = []
         filesToCheck = files
 
         allFiles: list[str] = []

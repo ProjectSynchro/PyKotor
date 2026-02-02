@@ -345,7 +345,7 @@ class FileResource:
             return self.identifier() == other
         if isinstance(other, FileResource):
             return True if self is other else self._path_ident_obj == other._path_ident_obj
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     @classmethod
     def from_path(cls, path: os.PathLike | str) -> Self:
@@ -608,7 +608,7 @@ class ResourceResult:
                 and self.restype == other.restype
                 and self.data == other.data
             )
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __len__(self) -> Literal[4]:
         return 4
@@ -668,7 +668,7 @@ class LocationResult:
                 and self.size == other.size
                 and self.offset == other.offset
             )
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __len__(self) -> Literal[3]:
         return 3
@@ -752,7 +752,7 @@ class ResourceIdentifier:
             return self._cached_filename_str == other._cached_filename_str
         if isinstance(other, str):
             return self._cached_filename_str == other.lower()
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     @property
     def lower_resname(self) -> str:

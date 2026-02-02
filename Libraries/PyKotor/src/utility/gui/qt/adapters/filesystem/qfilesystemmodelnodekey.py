@@ -20,7 +20,7 @@ class PyQFileSystemModelNodePathKey(str):
 
     def __eq__(self, other: Any) -> bool:  # noqa: PYI032
         if not isinstance(other, str):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         if os.name == "nt":
             return self.lower() == other.lower()
         return super().__eq__(other)

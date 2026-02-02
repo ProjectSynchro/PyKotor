@@ -704,3 +704,11 @@ if __name__ == "__main__":
     except RuntimeError:
         RobustLogger().exception("Message for a caught exception")
     # raise RuntimeError("Test uncaught exception")  # TODO: sys.excepthook support maybe?
+
+__all__ = [
+    "RobustLogger",
+    "get_root_logger",
+    "get_log_directory",
+    "SafeEncodingLogger",
+    "UTF8StreamWrapper",
+]

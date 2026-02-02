@@ -201,8 +201,8 @@ class ConfigReader:
         self,
         config: PatcherConfig,
     ) -> PatcherConfig:
-        self.config: PatcherConfig = config
-        self.previously_parsed_sections: set[str] = set()
+        self.config = config
+        self.previously_parsed_sections.clear()
 
         self.load_settings()
         self.load_tlk_list()

@@ -44,7 +44,7 @@ class CustomQPushButton(QtWidgets.QPushButton):
             return int(self) == other
         if isinstance(other, QMessageBox.StandardButton):
             return int(self) == other
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self) -> int:
         return hash(self.enum_member.value)

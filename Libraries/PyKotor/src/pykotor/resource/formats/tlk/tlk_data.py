@@ -400,7 +400,7 @@ class TLKEntry(ComparableMixin):
         if self is other:
             return True
         if not isinstance(other, TLKEntry):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return other.text == self.text and other.voiceover == self.voiceover
 
     def __hash__(self) -> int:

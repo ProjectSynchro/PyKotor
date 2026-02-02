@@ -430,10 +430,10 @@ class QWindowsFileDialogHelper(QWindowsDialogHelperBase, QPlatformFileDialogHelp
 class QWindowsColorDialogHelper(QWindowsDialogHelperBase, QPlatformColorDialogHelper):
     def __init__(self):
         super().__init__()
-        self.m_color = QColor()
+        self.m_color: QColor = QColor()
 
     def setCurrentColor(self, color: QColor):
-        self.m_color: QColor = color
+        self.m_color = color
         self.currentColorChanged.emit(color)
 
     def currentColor(self) -> QColor:
@@ -540,4 +540,4 @@ class QWindowsDialogHelper(QWindowsDialogHelperBase):
             self.m_helper.hide()
 
     def setHelper(self, helper: QPlatformDialogHelper):
-        self.m_helper: QPlatformDialogHelper = helper
+        self.m_helper = helper

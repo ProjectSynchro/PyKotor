@@ -108,7 +108,7 @@ class VIS(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, VIS):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self._rooms == other._rooms and self._visibility == other._visibility
 
     def __hash__(self):

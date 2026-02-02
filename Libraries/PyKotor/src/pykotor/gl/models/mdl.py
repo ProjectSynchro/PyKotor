@@ -12,54 +12,54 @@ import numpy as np
 
 from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
 
-HAS_PYOPENGL = has_pyopengl()
-gl_error = safe_gl_error_module()
+from pykotor.gl import glm, mat4, quat
+from utility.common.geometry import Vector3, Vector4
 
-if HAS_PYOPENGL:
-    from OpenGL import error as gl_error  # pyright: ignore[reportMissingImports]
-    from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer
-    from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
-    from OpenGL.raw.GL.ARB.tessellation_shader import GL_TRIANGLES  # pyright: ignore[reportMissingImports]
-    from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT  # pyright: ignore[reportMissingImports]
-    from OpenGL.raw.GL.VERSION.GL_1_0 import GL_UNSIGNED_SHORT  # pyright: ignore[reportMissingImports]
-    from OpenGL.raw.GL.VERSION.GL_1_1 import glDrawElements  # pyright: ignore[reportMissingImports]
-    from OpenGL.raw.GL.VERSION.GL_1_3 import GL_TEXTURE0, GL_TEXTURE1, glActiveTexture  # pyright: ignore[reportMissingImports]
-    from OpenGL.raw.GL.VERSION.GL_1_5 import GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, glBindBuffer, glBufferData  # pyright: ignore[reportMissingImports]
-    from OpenGL.raw.GL.VERSION.GL_2_0 import glEnableVertexAttribArray  # pyright: ignore[reportMissingImports]
-    from OpenGL.raw.GL.VERSION.GL_3_0 import glBindVertexArray  # pyright: ignore[reportMissingImports]
-    from pykotor.gl.compat import GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_COLOR, glBlendFunc, glDepthMask  # noqa: E501
-else:
-    glGenBuffers = missing_gl_func("glGenBuffers")
-    glGenVertexArrays = missing_gl_func("glGenVertexArrays")
-    glVertexAttribPointer = missing_gl_func("glVertexAttribPointer")
-    glDrawElements = missing_gl_func("glDrawElements")
-    glActiveTexture = missing_gl_func("glActiveTexture")
-    glBindBuffer = missing_gl_func("glBindBuffer")
-    glBufferData = missing_gl_func("glBufferData")
-    glEnableVertexAttribArray = missing_gl_func("glEnableVertexAttribArray")
-    glBindVertexArray = missing_gl_func("glBindVertexArray")
-    GL_FALSE = missing_constant("GL_FALSE")
-    GL_TRIANGLES = missing_constant("GL_TRIANGLES")
-    GL_FLOAT = missing_constant("GL_FLOAT")
-    GL_UNSIGNED_SHORT = missing_constant("GL_UNSIGNED_SHORT")
-    GL_TEXTURE0 = missing_constant("GL_TEXTURE0")
-    GL_TEXTURE1 = missing_constant("GL_TEXTURE1")
-    GL_ARRAY_BUFFER = missing_constant("GL_ARRAY_BUFFER")
-    GL_ELEMENT_ARRAY_BUFFER = missing_constant("GL_ELEMENT_ARRAY_BUFFER")
-    GL_STATIC_DRAW = missing_constant("GL_STATIC_DRAW")
-    GL_ONE = missing_constant("GL_ONE")
-    GL_ONE_MINUS_SRC_ALPHA = missing_constant("GL_ONE_MINUS_SRC_ALPHA")
-    GL_SRC_ALPHA = missing_constant("GL_SRC_ALPHA")
-    GL_SRC_COLOR = missing_constant("GL_SRC_COLOR")
-    glBlendFunc = missing_gl_func("glBlendFunc")
-    glDepthMask = missing_gl_func("glDepthMask")
-
-from pykotor.gl import glm, mat4, quat, vec3, vec4
-from utility.common.geometry import Vector3
 
 if TYPE_CHECKING:
     from pykotor.gl.scene import Scene
     from pykotor.gl.shader import Shader
+else:
+    HAS_PYOPENGL = has_pyopengl()
+    gl_error = safe_gl_error_module()
+    if HAS_PYOPENGL:
+        from OpenGL import error as gl_error  # pyright: ignore[reportMissingImports]
+        from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer
+        from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
+        from OpenGL.raw.GL.ARB.tessellation_shader import GL_TRIANGLES  # pyright: ignore[reportMissingImports]
+        from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT  # pyright: ignore[reportMissingImports]
+        from OpenGL.raw.GL.VERSION.GL_1_0 import GL_UNSIGNED_SHORT  # pyright: ignore[reportMissingImports]
+        from OpenGL.raw.GL.VERSION.GL_1_1 import glDrawElements  # pyright: ignore[reportMissingImports]
+        from OpenGL.raw.GL.VERSION.GL_1_3 import GL_TEXTURE0, GL_TEXTURE1, glActiveTexture  # pyright: ignore[reportMissingImports]
+        from OpenGL.raw.GL.VERSION.GL_1_5 import GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, glBindBuffer, glBufferData  # pyright: ignore[reportMissingImports]
+        from OpenGL.raw.GL.VERSION.GL_2_0 import glEnableVertexAttribArray  # pyright: ignore[reportMissingImports]
+        from OpenGL.raw.GL.VERSION.GL_3_0 import glBindVertexArray  # pyright: ignore[reportMissingImports]
+        from pykotor.gl.compat import GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_COLOR, glBlendFunc, glDepthMask  # noqa: E501
+    else:
+        glGenBuffers = missing_gl_func("glGenBuffers")
+        glGenVertexArrays = missing_gl_func("glGenVertexArrays")
+        glVertexAttribPointer = missing_gl_func("glVertexAttribPointer")
+        glDrawElements = missing_gl_func("glDrawElements")
+        glActiveTexture = missing_gl_func("glActiveTexture")
+        glBindBuffer = missing_gl_func("glBindBuffer")
+        glBufferData = missing_gl_func("glBufferData")
+        glEnableVertexAttribArray = missing_gl_func("glEnableVertexAttribArray")
+        glBindVertexArray = missing_gl_func("glBindVertexArray")
+        GL_FALSE = missing_constant("GL_FALSE")
+        GL_TRIANGLES = missing_constant("GL_TRIANGLES")
+        GL_FLOAT = missing_constant("GL_FLOAT")
+        GL_UNSIGNED_SHORT = missing_constant("GL_UNSIGNED_SHORT")
+        GL_TEXTURE0 = missing_constant("GL_TEXTURE0")
+        GL_TEXTURE1 = missing_constant("GL_TEXTURE1")
+        GL_ARRAY_BUFFER = missing_constant("GL_ARRAY_BUFFER")
+        GL_ELEMENT_ARRAY_BUFFER = missing_constant("GL_ELEMENT_ARRAY_BUFFER")
+        GL_STATIC_DRAW = missing_constant("GL_STATIC_DRAW")
+        GL_ONE = missing_constant("GL_ONE")
+        GL_ONE_MINUS_SRC_ALPHA = missing_constant("GL_ONE_MINUS_SRC_ALPHA")
+        GL_SRC_ALPHA = missing_constant("GL_SRC_ALPHA")
+        GL_SRC_COLOR = missing_constant("GL_SRC_COLOR")
+        glBlendFunc = missing_gl_func("glBlendFunc")
+        glDepthMask = missing_gl_func("glDepthMask")
 
 
 logger = logging.getLogger(__name__)
@@ -97,13 +97,13 @@ class Model:
             all_nodes.append(node)
         return all_nodes
 
-    def box(self) -> tuple[vec3, vec3]:
+    def box(self) -> tuple[Vector3, Vector3]:
         return self.bounds(mat4())
 
-    def bounds(self, transform: mat4) -> tuple[vec3, vec3]:
+    def bounds(self, transform: mat4) -> tuple[Vector3, Vector3]:
         """Calculate the bounding box of the model with the given transform."""
-        min_point = vec3(100000, 100000, 100000)
-        max_point = vec3(-100000, -100000, -100000)
+        min_point = Vector3(100000, 100000, 100000)
+        max_point = Vector3(-100000, -100000, -100000)
         self._box_rec(self.root, transform, min_point, max_point)
 
         min_point.x -= 0.1
@@ -119,8 +119,8 @@ class Model:
         self,
         node: Node,
         transform: mat4,
-        min_point: vec3,
-        max_point: vec3,
+        min_point: Vector3,
+        max_point: Vector3,
     ):
         """Calculates bounding box of node and its children recursively.
 
@@ -130,8 +130,8 @@ class Model:
         ----
             node: {Node object whose bounding box is calculated}
             transform: {Transformation matrix to apply on node}
-            min_point: {vec3 to store minimum point of bounding box}
-            max_point: {vec3 to store maximum point of bounding box}.
+            min_point: {Vector3 to store minimum point of bounding box}
+            max_point: {Vector3 to store maximum point of bounding box}.
 
         Processing Logic:
         ----------------
@@ -149,7 +149,7 @@ class Model:
                 index = i * node.mesh.mdx_size + node.mesh.mdx_vertex
                 data = node.mesh.vertex_data[index : index + 12]
                 x, y, z = struct.unpack("fff", data)
-                position = transform * vec3(x, y, z)
+                position = transform * Vector3(x, y, z)
                 min_point.x = min(min_point.x, position.x)
                 min_point.y = min(min_point.y, position.y)
                 min_point.z = min(min_point.z, position.z)
@@ -172,7 +172,7 @@ class Node:
         self._parent: Node | None = parent
         self.name: str = name
         self._transform: mat4 = mat4()
-        self._position: vec3 = glm.vec3()
+        self._position: Vector3 = Vector3()
         self._rotation: quat = glm.quat()
         self.children: list[Node] = []
         self.render: bool = True
@@ -194,14 +194,14 @@ class Node:
             ancestor = ancestor._parent  # noqa: SLF001
         return list(reversed(ancestors))
 
-    def global_position(self) -> vec3:
+    def global_position(self) -> Vector3:
         ancestors: list[Node] = [*self.ancestors(), self]
         transform = mat4()
         for ancestor in ancestors:
             transform = transform * glm.translate(ancestor._position)  # noqa: SLF001
             transform = transform * glm.mat4_cast(ancestor._rotation)  # noqa: SLF001
-        position = vec3()
-        glm.decompose(transform, vec3(), quat(), position, vec3(), vec4())  # pyright: ignore[reportCallIssue, reportArgumentType]
+        position = Vector3()
+        glm.decompose(transform, Vector3(), quat(), position, Vector3(), Vector4())  # pyright: ignore[reportCallIssue, reportArgumentType]
         return position
 
     def global_rotation(self) -> quat:
@@ -211,7 +211,7 @@ class Node:
             transform = transform * glm.translate(ancestor._position)  # noqa: SLF001
             transform = transform * glm.mat4_cast(ancestor._rotation)  # noqa: SLF001
         rotation = quat()
-        glm.decompose(transform, vec3(), rotation, vec3(), vec3(), vec4())  # pyright: ignore[reportCallIssue, reportArgumentType]
+        glm.decompose(transform, Vector3(), rotation, Vector3(), Vector3(), Vector4())  # pyright: ignore[reportCallIssue, reportArgumentType]
         return rotation
 
     def global_transform(self) -> mat4:
@@ -228,11 +228,11 @@ class Node:
     def _recalc_transform(self):
         self._transform = glm.translate(self._position) * glm.mat4_cast(quat(self._rotation))
 
-    def position(self) -> vec3:
+    def position(self) -> Vector3:
         return copy(self._position)
 
     def set_position(self, x: float, y: float, z: float):
-        self._position = vec3(x, y, z)
+        self._position = Vector3(x, y, z)
         self._recalc_transform()
 
     def rotation(self) -> quat:
@@ -244,7 +244,7 @@ class Node:
         yaw: float,
         roll: float,
     ):
-        self._rotation = quat(vec3(pitch, yaw, roll))
+        self._rotation = quat(Vector3(pitch, yaw, roll))
         self._recalc_transform()
 
     def draw(
@@ -293,9 +293,9 @@ class Mesh:
         self._vertex_blob_cache: bytes | None = None
 
         if HAS_PYOPENGL:
-            self._vao: int = glGenVertexArrays(1)
-            self._vbo: int = glGenBuffers(1)
-            self._ebo: int = glGenBuffers(1)
+            self._vao = glGenVertexArrays(1)
+            self._vbo = glGenBuffers(1)
+            self._ebo = glGenBuffers(1)
             glBindVertexArray(self._vao)
 
             glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
@@ -325,9 +325,9 @@ class Mesh:
             glBindBuffer(GL_ARRAY_BUFFER, 0)
             glBindVertexArray(0)
         else:
-            self._vao = 0
-            self._vbo = 0
-            self._ebo = 0
+            self._vao: int = 0
+            self._vbo: int = 0
+            self._ebo: int = 0
 
         self._face_count: int = len(element_data) // 2
 
@@ -437,13 +437,13 @@ class Cube:
     def __init__(
         self,
         scene: Scene,
-        min_point: vec3 | None = None,
-        max_point: vec3 | None = None,
+        min_point: Vector3 | None = None,
+        max_point: Vector3 | None = None,
     ):
         self._scene = scene
 
-        min_point = vec3(-1.0, -1.0, -1.0) if min_point is None else min_point
-        max_point = vec3(1.0, 1.0, 1.0) if max_point is None else max_point
+        min_point = Vector3(-1.0, -1.0, -1.0) if min_point is None else min_point
+        max_point = Vector3(1.0, 1.0, 1.0) if max_point is None else max_point
 
         vertices = np.array(
             [
@@ -480,8 +480,8 @@ class Cube:
             dtype="int16",
         )
 
-        self.min_point: vec3 = min_point
-        self.max_point: vec3 = max_point
+        self.min_point: Vector3 = min_point
+        self.max_point: Vector3 = max_point
         self._vertex_data = vertices
         self._index_data = elements
         self._face_count: int = len(elements)
@@ -489,9 +489,9 @@ class Cube:
 
         if HAS_PYOPENGL:
             try:
-                self._vao: int = glGenVertexArrays(1)
-                self._vbo: int = glGenBuffers(1)
-                self._ebo: int = glGenBuffers(1)
+                self._vao = glGenVertexArrays(1)
+                self._vbo = glGenBuffers(1)
+                self._ebo = glGenBuffers(1)
                 glBindVertexArray(self._vao)
 
                 glBindBuffer(GL_ARRAY_BUFFER, self._vbo)

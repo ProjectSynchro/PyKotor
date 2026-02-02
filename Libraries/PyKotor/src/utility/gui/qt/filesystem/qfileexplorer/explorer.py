@@ -469,6 +469,14 @@ class FileSystemExplorerWidget(QMainWindow):
         dialog = PropertiesDialog(properties, self)
         dialog.exec()
 
+    def show_properties2(
+        self,
+        properties: dict,
+    ) -> None:
+        """Show file or directory properties."""
+        property_text: str = "\n".join(f"{k}: {v}" for k, v in properties.items())
+        QMessageBox.information(self, "Properties", property_text)
+
     def update_status_bar(self):
         selected_items: int = len(self.ui.dynamicView.selectedIndexes())
         view_model: QAbstractItemModel | None = self.ui.dynamicView.current_view().model()
@@ -854,14 +862,6 @@ class FileSystemExplorerWidget(QMainWindow):
             }
         """)
         self.ui.progressBar.show()
-
-    def show_properties(
-        self,
-        properties: dict,
-    ) -> None:
-        """Show file or directory properties."""
-        property_text: str = "\n".join(f"{k}: {v}" for k, v in properties.items())
-        QMessageBox.information(self, "Properties", property_text)
 
 
 if __name__ == "__main__":

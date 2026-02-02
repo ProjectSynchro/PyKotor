@@ -219,7 +219,7 @@ class Language(IntEnum):
     @classmethod
     def _missing_(cls, value: Any) -> Language:
         if not isinstance(value, int):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         if value != 0x7FFFFFFF:  # 0x7FFFFFFF is unset/disabled/unused
             print(f"Language integer not known: {value}")
@@ -694,7 +694,7 @@ class LocalizedString:
         if self is other:
             return True
         if not isinstance(other, LocalizedString):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         if other.stringref != self.stringref:
             return False
         return other._substrings == self._substrings

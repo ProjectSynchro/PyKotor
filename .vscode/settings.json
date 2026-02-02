@@ -45,8 +45,14 @@
     "justMyCode": true
   },
   "mypy-type-checker.args": [
+    "--exclude=./.venv",
+    "--exclude=tests/results",
     "--check-untyped-defs",
-    "--explicit-package-bases"
+    "-v",
+    "--disable-error-code=import-untyped",
+    "--disable-error-code=no-any-return",
+    "--explicit-package-bases",
+    "--follow-imports=skip",
   ],
   "mypy-type-checker.importStrategy": "fromEnvironment",
   "mypy-type-checker.preferDaemon": true,
@@ -56,7 +62,10 @@
     "--exclude=tests/results",
     "--check-untyped-defs",
     "-v",
-    "--explicit-package-bases"
+    "--disable-error-code=import-untyped",
+    "--disable-error-code=no-any-return",
+    "--explicit-package-bases",
+    "--follow-imports=skip",
   ],
   "mypy.runUsingActiveInterpreter": true,
   "pylint.enabled": false,

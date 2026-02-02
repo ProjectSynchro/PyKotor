@@ -120,6 +120,7 @@ class TXI:
                         mode = TXIReaderMode.NORMAL
                     continue
 
+                args: str
                 raw_cmd, args = (
                     parsed_line.split(" ", maxsplit=1)
                     if " " in parsed_line
@@ -136,7 +137,7 @@ class TXI:
                     RobustLogger().warning(f"Invalid TXI command: '{parsed_line}'")
                     continue
                 command: TXICommand = TXICommand.__members__[parsed_cmd_str]
-                args: str = args.strip() if args else ""
+                args = args.strip() if args else ""
 
                 if command == TXICommand.ALPHAMEAN:
                     self.features.alphamean = float(args)
@@ -824,7 +825,7 @@ class TXIBaseInformation(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, TXIBaseInformation):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return (
             self.mipmap == other.mipmap
             and self.filter == other.filter
@@ -857,7 +858,7 @@ class TXIMaterialInformation(TXIBaseInformation):
 
     def __eq__(self, other):
         if not isinstance(other, TXIMaterialInformation):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return (
             super().__eq__(other)
             and self.bumpmaptexture == other.bumpmaptexture
@@ -933,7 +934,7 @@ class TXITextureInformation(TXIBaseInformation):
 
     def __eq__(self, other):
         if not isinstance(other, TXITextureInformation):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return (
             super().__eq__(other)
             and self.proceduretype == other.proceduretype

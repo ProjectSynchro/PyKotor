@@ -1290,7 +1290,7 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
         if self is other:
             return True
         if not isinstance(other, (os.PathLike, str)):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         if isinstance(other, CaseAwarePath):
             return self.as_posix().lower() == other.as_posix().lower()
 

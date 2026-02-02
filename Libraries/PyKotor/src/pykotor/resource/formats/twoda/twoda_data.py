@@ -156,7 +156,7 @@ class TwoDA(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, TwoDA):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self._rows == other._rows and self._headers == other._headers and self._labels == other._labels
 
     def __hash__(self):
@@ -969,7 +969,7 @@ class TwoDARow(ComparableMixin):
             return True
         if isinstance(other, TwoDARow):
             return self._row_label == other._row_label and self._data == other._data
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __hash__(self):
         return hash((self._row_label, tuple(sorted(self._data.items()))))

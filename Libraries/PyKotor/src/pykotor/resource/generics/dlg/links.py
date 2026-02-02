@@ -143,7 +143,7 @@ class DLGLink(Generic[T_co]):
 
     def __eq__(self, other):
         if self.__class__ is not other.__class__:
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.__hash__() == other.__hash__()
 
     def __hash__(self) -> int:
@@ -151,9 +151,9 @@ class DLGLink(Generic[T_co]):
 
     def partial_path(self, *, is_starter: bool) -> str:
         if is_starter:
-            p1 = "StartingList"
+            p1: Literal["EntriesList", "RepliesList", "StartingList"] = "StartingList"
         else:
-            p1: Literal["EntriesList", "RepliesList", "StartingList"] = (
+            p1 = (
                 "EntriesList"
                 if self.node.__class__.__name__ == "DLGEntry"
                 else "RepliesList"

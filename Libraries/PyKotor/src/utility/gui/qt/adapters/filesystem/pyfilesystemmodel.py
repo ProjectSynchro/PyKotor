@@ -94,13 +94,13 @@ if TYPE_CHECKING:
     from qtpy.QtWidgets import QScrollBar
     from typing_extensions import Literal
 
-
-if qtpy.QT6:
-    QDesktopWidget = None
-elif qtpy.QT5:
-    from qtpy.QtWidgets import QDesktopWidget
 else:
-    raise RuntimeError(f"Unexpected qtpy version: '{qtpy.API_NAME}'")
+    if qtpy.QT6:
+        QDesktopWidget = None
+    elif qtpy.QT5:
+        from qtpy.QtWidgets import QDesktopWidget
+    else:
+        raise RuntimeError(f"Unexpected qtpy version: '{qtpy.API_NAME}'")
 
 
 if os.name == "nt_disabled":
@@ -302,9 +302,12 @@ class PyFileSystemModel(QAbstractItemModel):
     _roleNames: dict[int, QByteArray] | None = None
 
     # Signals matching C++ lines 29-32
-    rootPathChanged = Signal(str)  # (const QString &newPath)
-    fileRenamed = Signal(str, str, str)  # (const QString &path, const QString &oldName, const QString &newName)
-    directoryLoaded = Signal(str)  # (const QString &path)
+    #rootPathChanged = Signal(str)  # (const QString &newPath)
+    rootPathChanged: ClassVar[Signal] = QFileSystemModel.rootPathChanged  # (const QString &newPath)
+    #fileRenamed = Signal(str, str, str)  # (const QString &path, const QString &oldName, const QString &newName)
+    fileRenamed: ClassVar[Signal] = QFileSystemModel.fileRenamed  # (const QString &path, const QString &oldName, const QString &newName)
+    #directoryLoaded: ClassVar[Signal] = Signal(str)  # (const QString &path)
+    directoryLoaded: ClassVar[Signal] = QFileSystemModel.directoryLoaded  # (const QString &path)
 
     def __init__(self, parent: QObject | None = None):
         """Initialize QFileSystemModel matching C++ lines 195-208 exactly.
@@ -2820,10 +2823,6 @@ class PyFileSystemModel(QAbstractItemModel):
 
     def nameFilters(self) -> list[str]:
         return self._nameFilters
-
-    directoryLoaded: ClassVar[Signal] = QFileSystemModel.directoryLoaded
-    rootPathChanged: ClassVar[Signal] = QFileSystemModel.rootPathChanged
-    fileRenamed: ClassVar[Signal] = QFileSystemModel.fileRenamed
 
     # Option and Roles are defined as inner classes above (lines 275-272)
     # These are class attributes that reference the inner classes

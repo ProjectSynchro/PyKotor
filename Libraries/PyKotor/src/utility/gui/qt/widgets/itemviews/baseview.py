@@ -469,7 +469,7 @@ class RobustBaseWidget(QWidget if TYPE_CHECKING else object):
         def update_state(
             menu: QMenu = sub_menu,
         ):
-            current_state = 0
+            current_state: Any = 0
             for action in menu.actions():
                 if action.isChecked():
                     current_state |= options[action.text()]
@@ -477,7 +477,7 @@ class RobustBaseWidget(QWidget if TYPE_CHECKING else object):
                 initial_value is not None
                 and not isinstance(current_state, initial_value.__class__)
             ):
-                current_state: Any = initial_value.__class__(current_state)
+                current_state = initial_value.__class__(current_state)
             set_func(current_state)
 
         if not self._initialized:

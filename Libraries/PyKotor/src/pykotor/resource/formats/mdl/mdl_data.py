@@ -1412,7 +1412,7 @@ class MDL(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDL):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         # Header/scalars (canonical float compare)
         if self.name != other.name:
             return False
@@ -1818,7 +1818,7 @@ class MDLAnimation(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLAnimation):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_animation_equal(self, other)
 
     def __hash__(self):
@@ -1911,7 +1911,7 @@ class MDLEvent(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLEvent):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS | _MDL_EQ_ID_KEYS)
 
     def __hash__(self):
@@ -2090,7 +2090,7 @@ class MDLNode(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLNode):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         if not _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS | _MDL_EQ_ID_KEYS):
             return False
         return _mdl_ids_equivalent_subtree(self, other)
@@ -2306,7 +2306,7 @@ class MDLLight(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLLight):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS | _MDL_EQ_ID_KEYS)
 
     def __hash__(self):
@@ -2529,7 +2529,7 @@ class MDLEmitter(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLEmitter):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS | _MDL_EQ_ID_KEYS)
 
     def __hash__(self):
@@ -2605,7 +2605,7 @@ class MDLReference(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLReference):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS | _MDL_EQ_ID_KEYS)
 
     def __hash__(self):
@@ -2785,7 +2785,7 @@ class MDLMesh(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLMesh):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         # vertex_uvs is an alias; raw value can differ (None vs list) while still meaning "uv1".
         # We therefore ignore the alias field in the deep-compare, but enforce equivalence here.
         if not _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS | _MDL_EQ_ID_KEYS):
@@ -2959,7 +2959,7 @@ class MDLConstraint(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLConstraint):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS)
 
     def __hash__(self):
@@ -3113,7 +3113,7 @@ class MDLWalkmesh(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLWalkmesh):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS)
 
     def __hash__(self):
@@ -3196,7 +3196,7 @@ class MDLSaber(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLSaber):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS)
 
     def __hash__(self):
@@ -3261,7 +3261,7 @@ class MDLBoneVertex(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLBoneVertex):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS)
 
     def __hash__(self):
@@ -3325,7 +3325,7 @@ class MDLFace(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLFace):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS)
 
     def __hash__(self):
@@ -3510,7 +3510,7 @@ class MDLController(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLController):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS)
 
     def __hash__(self):
@@ -3536,7 +3536,7 @@ class MDLControllerRow(ComparableMixin):
 
     def __eq__(self, other):
         if not isinstance(other, MDLControllerRow):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return _mdl_eq(self, other, ignore_keys=_MDL_EQ_IGNORE_KEYS)
 
     def __hash__(self):

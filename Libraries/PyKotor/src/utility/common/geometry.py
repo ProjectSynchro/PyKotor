@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import math
 
 from enum import IntEnum
@@ -13,7 +14,13 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 
-class Vector2:
+if importlib.util.find_spec("glm"):
+    from glm import vec2, vec3, vec4, mat4
+elif not TYPE_CHECKING:
+    vec2, vec3, vec4, mat4 = object, object, object, object
+
+
+class Vector2(vec2):
     """Represents a 2 dimensional vector.
 
     Attributes:
@@ -29,14 +36,14 @@ class Vector2:
     ):
         # Handle construction from other vector types
         if isinstance(x, (Vector2, Vector3, Vector4)):
-            self.x = float(x.x)
-            self.y = float(x.y)
+            self.x: float = float(x.x)
+            self.y: float = float(x.y)
             return
         # Handle scalar construction
         if y is None:
             y = x
-        self.x: float = float(x)
-        self.y: float = float(y)
+        self.x = float(x)
+        self.y = float(y)
 
     def __iter__(self) -> Iterator[float]:
         return iter((self.x, self.y))
@@ -56,7 +63,7 @@ class Vector2:
         if self is other:
             return True
         if not isinstance(other, Vector2):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         isclose_x: bool = math.isclose(self.x, other.x)
         isclose_y: bool = math.isclose(self.y, other.y)
@@ -68,7 +75,7 @@ class Vector2:
     ):
         """Adds the components of two Vector2 objects."""
         if not isinstance(other, Vector2):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         new: Self = self.__class__.from_vector2(self)
         new.x += other.x
@@ -85,7 +92,7 @@ class Vector2:
             new.x = other + new.x
             new.y = other + new.y
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __sub__(
         self,
@@ -93,7 +100,7 @@ class Vector2:
     ):
         """Subtracts the components of two Vector2 objects."""
         if not isinstance(other, Vector2):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         new = self.__class__.from_vector2(self)
         new.x -= other.x
@@ -110,7 +117,7 @@ class Vector2:
             new.x = other - new.x
             new.y = other - new.y
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __mul__(
         self,
@@ -122,7 +129,7 @@ class Vector2:
             new.x *= other
             new.y *= other
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __rmul__(
         self,
@@ -134,7 +141,7 @@ class Vector2:
             new.x *= other
             new.y *= other
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __truediv__(
         self,
@@ -164,7 +171,7 @@ class Vector2:
             new.x /= other
             new.y /= other
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __rtruediv__(
         self,
@@ -176,7 +183,7 @@ class Vector2:
             new.x = other / new.x if new.x != 0 else 0.0
             new.y = other / new.y if new.y != 0 else 0.0
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __getitem__(
         self,
@@ -188,7 +195,7 @@ class Vector2:
             if item == 1:
                 return self.y
             raise KeyError
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __setitem__(
         self,
@@ -200,7 +207,7 @@ class Vector2:
                 self.x = value
             elif key == 1:
                 self.y = value
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     @classmethod
     def from_vector2(
@@ -387,7 +394,7 @@ class Vector2:
         return math.atan2(self.y, self.x)
 
 
-class Vector3:
+class Vector3(vec3):
     """Represents a 3 dimensional vector.
 
     Attributes:
@@ -436,7 +443,7 @@ class Vector3:
         if self is other:
             return True
         if not isinstance(other, Vector3):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         isclose_x = math.isclose(self.x, other.x)
         isclose_y = math.isclose(self.y, other.y)
@@ -452,7 +459,7 @@ class Vector3:
     ):
         """Adds the components of two Vector3 objects."""
         if not isinstance(other, Vector3):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         new = self.__class__.from_vector3(self)
         new.x += other.x
@@ -471,7 +478,7 @@ class Vector3:
             new.y = other + new.y
             new.z = other + new.z
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __sub__(
         self,
@@ -479,7 +486,7 @@ class Vector3:
     ):
         """Subtracts the components of two Vector3 objects."""
         if not isinstance(other, Vector3):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         new = self.__class__.from_vector3(self)
         new.x -= other.x
@@ -498,7 +505,7 @@ class Vector3:
             new.y = other - new.y
             new.z = other - new.z
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __mul__(
         self,
@@ -517,7 +524,7 @@ class Vector3:
             new.y *= other.y
             new.z *= other.z
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __rmul__(
         self,
@@ -530,7 +537,7 @@ class Vector3:
             new.y *= other
             new.z *= other
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __truediv__(
         self,
@@ -543,7 +550,7 @@ class Vector3:
             new.y /= other
             new.z /= other
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __rtruediv__(
         self,
@@ -556,7 +563,7 @@ class Vector3:
             new.y = other / new.y if new.y != 0 else 0.0
             new.z = other / new.z if new.z != 0 else 0.0
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __getitem__(
         self,
@@ -570,7 +577,7 @@ class Vector3:
             if item == 2:  # noqa: PLR2004
                 return self.z
             raise KeyError
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __setitem__(
         self,
@@ -588,7 +595,7 @@ class Vector3:
                 self.z = value
                 return None
             return None
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     @classmethod
     def from_vector2(
@@ -764,7 +771,7 @@ class Vector3:
         return {"x": float(self.x), "y": float(self.y), "z": float(self.z)}
 
 
-class Vector4:
+class Vector4(vec4):
     """Represents a 4 dimensional vector.
 
     Attributes:
@@ -784,10 +791,10 @@ class Vector4:
     ):
         # Handle construction from other vector types
         if isinstance(x, Vector2):
-            self.x = float(x.x)
-            self.y = float(x.y)
-            self.z = 0.0
-            self.w = float(y) if y is not None else 0.0
+            self.x: float = float(x.x)
+            self.y: float = float(x.y)
+            self.z: float = 0.0
+            self.w: float = float(y) if y is not None else 0.0
             return
         if isinstance(x, Vector3):
             self.x = float(x.x)
@@ -808,10 +815,10 @@ class Vector4:
             z = x
         if w is None:
             w = x
-        self.x: float = float(x)
-        self.y: float = float(y)
-        self.z: float = float(z)
-        self.w: float = float(w)
+        self.x = float(x)
+        self.y = float(y)
+        self.z = float(z)
+        self.w = float(w)
 
     def __iter__(self) -> Iterator[float]:
         return iter((self.x, self.y, self.z, self.w))
@@ -831,7 +838,7 @@ class Vector4:
         if self is other:
             return True
         if not isinstance(other, Vector4):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         isclose_x: bool = math.isclose(self.x, other.x)
         isclose_y: bool = math.isclose(self.y, other.y)
@@ -845,7 +852,7 @@ class Vector4:
     ):
         """Adds the components of two Vector4 objects."""
         if not isinstance(other, Vector4):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         new = self.__class__.from_vector4(self)
         new.x += other.x
@@ -866,7 +873,7 @@ class Vector4:
             new.z = other + new.z
             new.w = other + new.w
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __getitem__(
         self,
@@ -883,7 +890,7 @@ class Vector4:
             if item == 3:  # noqa: PLR2004
                 return self.w
             raise IndexError(f"Vector4 index out of range: {item}")
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __setitem__(
         self,
@@ -904,7 +911,7 @@ class Vector4:
             if key == 3:  # noqa: PLR2004
                 self.w = value
                 return None
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __sub__(
         self,
@@ -912,7 +919,7 @@ class Vector4:
     ):
         """Subtracts the components of two Vector4 objects."""
         if not isinstance(other, Vector4):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
 
         new = self.__class__.from_vector4(self)
         new.x -= other.x
@@ -933,7 +940,7 @@ class Vector4:
             new.z = other - new.z
             new.w = other - new.w
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __mul__(
         self,
@@ -954,7 +961,7 @@ class Vector4:
             new.z *= other.z
             new.w *= other.w
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __rmul__(
         self,
@@ -968,7 +975,7 @@ class Vector4:
             new.z *= other
             new.w *= other
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __truediv__(
         self,
@@ -982,7 +989,7 @@ class Vector4:
             new.z /= other
             new.w /= other
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __rtruediv__(
         self,
@@ -996,7 +1003,7 @@ class Vector4:
             new.z = other / new.z if new.z != 0 else 0.0
             new.w = other / new.w if new.w != 0 else 0.0
             return new
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     @classmethod
     def from_vector2(
@@ -1446,7 +1453,7 @@ class Face:
         and the same material. This is value-based equality, not identity-based.
         """
         if not isinstance(other, Face):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return self.v1 == other.v1 and self.v2 == other.v2 and self.v3 == other.v3 and self.material == other.material
 
     def __hash__(self) -> int:
@@ -1541,7 +1548,7 @@ class Polygon2:
             return self.points[item]
         if isinstance(item, slice):
             return self.points[item.start : item.stop : item.step]
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __setitem__(
         self,
@@ -1550,7 +1557,7 @@ class Polygon2:
     ):
         if isinstance(key, int) and isinstance(value, Vector2):
             self.points[key] = value
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     @classmethod
     def from_polygon3(
@@ -1592,7 +1599,7 @@ class Polygon2:
         # https://stackoverflow.com/a/42306732
 
         n = len(self.points)
-        inside = False
+        inside: bool = False
 
         p1: Vector2 = self.points[0]
         for i in range(1, n + 1):
@@ -1600,7 +1607,7 @@ class Polygon2:
             if p1.y == p2.y:
                 if point.y == p2.y:
                     if min(p1.x, p2.x) <= point.x <= max(p1.x, p2.x):
-                        inside: bool = include_edges
+                        inside = include_edges
                         break
                     if point.x < min(p1.x, p2.x):
                         inside = not inside
@@ -1692,7 +1699,7 @@ class Polygon3:
             return self.points[item]
         if isinstance(item, slice):
             return self.points[item.start : item.stop : item.step]
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __setitem__(
         self,
@@ -1701,7 +1708,7 @@ class Polygon3:
     ):
         if isinstance(key, int) and isinstance(value, Vector3):
             self.points[key] = value
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     @classmethod
     def from_polygon2(
@@ -1783,7 +1790,7 @@ class Polygon3:
         return self.points.index(point)
 
 
-class Matrix4:
+class Matrix4(mat4):
     """Represents a 4x4 matrix for 3D transformations.
 
     This class provides matrix operations compatible with GLM-style APIs.
@@ -1843,7 +1850,7 @@ class Matrix4:
     ) -> bool:
         """Two Matrix4 objects are equal if their components are approximately the same."""
         if not isinstance(other, Matrix4):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         for i in range(4):
             for j in range(4):
                 if not math.isclose(self._data[i][j], other._data[i][j]):
@@ -1874,7 +1881,7 @@ class Matrix4:
             vec4_data = [other.x, other.y, other.z, 1.0]
             result_data = [sum(self._data[i][j] * vec4_data[j] for j in range(4)) for i in range(4)]
             return Vector3(result_data[0], result_data[1], result_data[2])
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __getitem__(
         self,
@@ -1921,7 +1928,7 @@ class Matrix4:
             value: Vector4 to set as column.
         """
         if not isinstance(value, Vector4):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         if not 0 <= index < 4:
             raise IndexError(f"Matrix4 column index out of range: {index}")
         # Set column (transpose for row-major storage)

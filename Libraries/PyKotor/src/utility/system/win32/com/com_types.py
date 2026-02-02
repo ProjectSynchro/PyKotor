@@ -134,9 +134,11 @@ class GUID(*inherit):
 
         This allows duck typing and subclasses to work in isinstance checks.
         """
-        COMTYPE_GUID = None
-        with suppress(ImportError, ModuleNotFoundError):
+        try:
             from comtypes.GUID import GUID as COMTYPE_GUID  # pyright: ignore[reportMissingTypeStubs, reportMissingImports]
+        except ImportError:
+            if not TYPE_CHECKING:
+                COMTYPE_GUID = None
         return (GUID, cls) if COMTYPE_GUID is None else (cls, GUID, COMTYPE_GUID)  # pyright: ignore[reportReturnType]
 
     def __bool__(self):

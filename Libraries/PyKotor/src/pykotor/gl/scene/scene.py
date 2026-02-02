@@ -26,7 +26,7 @@ from pykotor.gl.compat import (
     glEnable,
     glReadPixels,
 )
-from pykotor.gl.glm_compat import mat4, vec3, vec4, unProject
+from pykotor.gl.glm_compat import mat4, Vector3, Vector4, unProject
 from pykotor.gl.models.mdl import Model
 from pykotor.gl.scene.frustum import CullingStats, Frustum
 from pykotor.gl.scene.scene_base import RenderObject, SceneBase
@@ -237,7 +237,7 @@ class Scene(SceneBase):
             assert self._cached_view is not None and self._cached_projection is not None
             self.plain_shader.set_matrix4("view", self._cached_view)
             self.plain_shader.set_matrix4("projection", self._cached_projection)
-            self.plain_shader.set_vector4("color", vec4(0.0, 0.0, 1.0, 0.4))
+            self.plain_shader.set_vector4("color", Vector4(0.0, 0.0, 1.0, 0.4))
 
             # Render special objects (icons)
             assert self._cached_special_objects is not None
@@ -249,13 +249,13 @@ class Scene(SceneBase):
                 self._render_object(self.plain_shader, obj, identity)
 
             # Draw bounding box for selected objects
-            self.plain_shader.set_vector4("color", vec4(1.0, 0.0, 0.0, 0.4))
+            self.plain_shader.set_vector4("color", Vector4(1.0, 0.0, 0.0, 0.4))
             for obj in self.selection:
                 obj.cube(self).draw(self.plain_shader, obj.transform())
 
             # Draw boundary for selected objects
             glDisable(GL_CULL_FACE)
-            self.plain_shader.set_vector4("color", vec4(0.0, 1.0, 0.0, 0.8))
+            self.plain_shader.set_vector4("color", Vector4(0.0, 1.0, 0.0, 0.8))
             for obj in self.selection:
                 obj.boundary(self).draw(self.plain_shader, obj.transform())
 
@@ -279,7 +279,7 @@ class Scene(SceneBase):
                         obj.boundary(self).draw(self.plain_shader, obj.transform())
 
             if self.show_cursor:
-                self.plain_shader.set_vector4("color", vec4(1.0, 0.0, 0.0, 0.4))
+                self.plain_shader.set_vector4("color", Vector4(1.0, 0.0, 0.0, 0.4))
                 self._render_object(self.plain_shader, self.cursor, identity)
 
             # End frame statistics
@@ -414,7 +414,7 @@ class Scene(SceneBase):
             r: int = idx & 0xFF
             g: int = (idx >> 8) & 0xFF
             b: int = (idx >> 16) & 0xFF
-            color = vec3(r / 0xFF, g / 0xFF, b / 0xFF)
+            color = Vector3(r / 0xFF, g / 0xFF, b / 0xFF)
             self.picker_shader.set_vector3("colorId", color)
             self._picker_render_object(obj, identity)
 
@@ -510,11 +510,11 @@ class Scene(SceneBase):
             GL_FLOAT,
         )[0][0]  # type: ignore[]
 
-        cursor: vec3 = unProject(
-            vec3(x, self.camera.height - y, zpos),
+        cursor: Vector3 = unProject(
+            Vector3(x, self.camera.height - y, zpos),
             view,
             projection,
-            vec4(0, 0, self.camera.width, self.camera.height),
+            Vector4(0, 0, self.camera.width, self.camera.height),
         )
         return Vector3(cursor.x, cursor.y, cursor.z)
 

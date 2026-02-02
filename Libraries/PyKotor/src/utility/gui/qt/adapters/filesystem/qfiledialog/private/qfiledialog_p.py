@@ -1671,7 +1671,7 @@ class QFileDialogPrivate:
         # Match C++: if (multipleFiles.size() > 0)
         if multipleFiles:
             # Match C++: QModelIndexList oldFiles = qFileDialogUi->listView->selectionModel()->selectedRows();
-            sel_listview_model: QItemSelectionModel | None = self.qFileDialogUi.listView.selectionModel()
+            sel_listview_model = self.qFileDialogUi.listView.selectionModel()
             assert sel_listview_model is not None, f"{self.__class__.__name__}._q_autoCompleteFileName: No selection model found."
             oldFiles: list[QModelIndex] = sel_listview_model.selectedRows()
             # Match C++: QList<QModelIndex> newFiles;
@@ -1716,7 +1716,7 @@ class QFileDialogPrivate:
         editText: str = self.lineEdit().text()
         # Match C++: if (!editText.contains(u'"')) {
         if '"' not in editText:
-            prefix = q.directory().absolutePath() + QDir.separator()
+            prefix: str = q.directory().absolutePath() + QDir.separator()
             if os.path.exists(os.path.join(prefix, editText)):  # noqa: PTH110, PTH118
                 files.append(editText)
             else:
@@ -1735,7 +1735,7 @@ class QFileDialogPrivate:
                     # Match C++: const QString token = tokens.at(i);
                     token: str = tokens[i]
                     # Match C++: const QString prefix = q->directory().absolutePath() + QDir::separator();
-                    prefix: str = q.directory().absolutePath() + QDir.separator()
+                    prefix = q.directory().absolutePath() + QDir.separator()
                     # Match C++: if (QFile::exists(prefix + token)) files << token; else files << qt_tildeExpansion(token);
                     if os.path.exists(prefix + token):  # noqa: PTH110
                         files.append(token)

@@ -158,7 +158,7 @@ class RIM(BiowareArchive):
         from pykotor.resource.formats.erf.erf_data import ERF  # Prevent circular imports  # noqa: PLC0415
 
         if not isinstance(other, (RIM, ERF)):
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
         return set(self._resources) == set(other._resources)
 
     def __hash__(self) -> int:

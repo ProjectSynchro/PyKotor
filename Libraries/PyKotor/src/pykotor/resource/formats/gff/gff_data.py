@@ -614,7 +614,7 @@ class GFFStruct(ComparableMixin, dict):
         """Get field value by label, supporting both dict-style and existing API access."""
         if isinstance(key, str):
             return self._fields[key].value()
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
     def __setitem__(self, key: str, value: Any) -> None:
         """Set field value by label. For backwards compatibility, this is not allowed directly."""

@@ -281,10 +281,10 @@ class QFileDialogExtended(AdapterQFileDialog):
                     RobustLogger.getLogger(__name__).warning("SearchFilterWidget not available; continuing without search filter", exc_info=True)
                 except Exception:
                     pass
-                self.search_filter = None
+                self.search_filter: SearchFilterWidget = None
                 return
 
-        self.search_filter: SearchFilterWidget = SearchFilterWidget(self)
+        self.search_filter = SearchFilterWidget(self)
         self.search_filter.setObjectName("searchFilter")
         self.search_filter.textChanged.connect(self._on_search_text_changed)
         self.search_filter.searchRequested.connect(self._on_search_requested)
@@ -302,11 +302,11 @@ class QFileDialogExtended(AdapterQFileDialog):
                     RobustLogger.getLogger(__name__).warning("EnhancedPreviewPane not available; preview pane disabled", exc_info=True)
                 except Exception:
                     pass
-                self.preview_pane = None
+                self.preview_pane: EnhancedPreviewPane = None
                 self._preview_pane_visible = False
                 return
 
-        self.preview_pane: EnhancedPreviewPane = EnhancedPreviewPane(self)
+        self.preview_pane = EnhancedPreviewPane(self)
         self.preview_pane.setObjectName("previewPane")
 
         # Add preview pane to the main splitter (after the file views frame)

@@ -197,7 +197,7 @@ class PazaakGame:
                 self.apply_yellow_card_effect(Player("Simulated", simulated_hand), side_card)
                 simulated_value: int = sum(card.get_value() if isinstance(card, PazaakSideCard) else card for card in simulated_hand)
             else:
-                simulated_value: int = ai_value + side_card.get_value()
+                simulated_value = ai_value + side_card.get_value()
 
             value_diff: int = self.MAX_HAND_VALUE - simulated_value
             if 0 <= value_diff < min_value_diff:
@@ -378,10 +378,10 @@ class ConsolePazaak(PazaakInterface):
     def play_game(self):
         self.setup_game()
         while not self.game.winner:
-            round_winner = None
+            round_winner: Player | None = None
             while round_winner is None:
                 self.play_turn(self.game.current_player)
-                round_winner: Player | None = self.game.check_winner()
+                round_winner = self.game.check_winner()
                 if round_winner is None:
                     self.game.switch_player()
 

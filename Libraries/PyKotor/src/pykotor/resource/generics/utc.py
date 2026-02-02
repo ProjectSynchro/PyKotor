@@ -484,7 +484,7 @@ class UTCClass:
             return True
         if isinstance(other, UTCClass):
             return self.class_id == other.class_id and self.class_level == other.class_level
-        return NotImplemented
+        return NotImplemented  # type: ignore[no-any-return]
 
 
 def construct_utc(

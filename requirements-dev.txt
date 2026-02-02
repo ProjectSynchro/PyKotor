@@ -1,13 +1,31 @@
 -r ./requirements.txt
 autoflake
+fitz
+fusepy
+GPUtil
 mypy
+panda3d
+psutil
 pylint
+pyqt5
+pyside6
 pytest
 pytest-html
 pytest-json-report
 pytest-xdist
+qasync
 ruff>=0.5.3
 send2trash
 snakeviz
+tomli-w; python_version < "3.11"
+tomli; python_version < "3.11"
+tomllib; python_version >= "3.11"
+types-cffi
+types-colorama
+types-defusedxml
 types-Pillow
+types-psutil
+types-pywin32
+types-PyYAML
+types-requests
 types-Send2Trash

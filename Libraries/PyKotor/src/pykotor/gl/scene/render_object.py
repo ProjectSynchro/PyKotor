@@ -11,11 +11,10 @@ from pykotor.gl.glm_compat import (
     mat4,
     mat4_cast,
     quat,
-    translate,
-    vec3,
-    vec4,
+    translate
 )
 from pykotor.gl.models.mdl import Cube, Empty
+from utility.common.geometry import Vector3, Vector4
 
 if TYPE_CHECKING:
     from pykotor.gl.models.mdl import Boundary
@@ -51,8 +50,8 @@ class RenderObject:
     def __init__(
         self,
         model: str,
-        position: vec3 | None = None,
-        rotation: vec3 | None = None,
+        position: Vector3 | None = None,
+        rotation: Vector3 | None = None,
         *,
         data: Any = None,
         gen_boundary: Callable[[], Boundary] | None = None,
@@ -61,8 +60,8 @@ class RenderObject:
         self.model: str = model
         self.children: list[RenderObject] = []
         self._transform: mat4 = mat4()
-        self._position: vec3 = vec3() if position is None else position
-        self._rotation: vec3 = vec3() if rotation is None else rotation
+        self._position: Vector3 = Vector3() if position is None else position
+        self._rotation: Vector3 = Vector3() if rotation is None else rotation
         self._cube: Cube | None = None
         self._boundary: Boundary | Empty | None = None
         self.gen_boundary: Callable[[], Boundary] | None = gen_boundary
@@ -71,7 +70,7 @@ class RenderObject:
 
         # Cached bounding sphere for frustum culling
         self._cached_radius: float = -1.0  # -1 means not computed
-        self._cached_center: vec3 | None = None
+        self._cached_center: Vector3 | None = None
         self._bounds_dirty: bool = True
 
         self._recalc_transform()
@@ -85,9 +84,9 @@ class RenderObject:
     ):
         self._transform = transform
         rotation = quat()
-        scale = vec3()
-        skew = vec3()
-        perspective = vec4()
+        scale = Vector3()
+        skew = Vector3()
+        perspective = Vector4()
         decompose(transform, scale, rotation, self._position, skew, perspective)  # pyright: ignore[reportArgumentType, reportCallIssue]
         self._rotation = eulerAngles(rotation)
         self._bounds_dirty = True
@@ -96,7 +95,7 @@ class RenderObject:
         self._transform = mat4() * translate(self._position)
         self._transform = self._transform * mat4_cast(quat(self._rotation))
 
-    def position(self) -> vec3:
+    def position(self) -> Vector3:
         return copy(self._position)
 
     def set_position(
@@ -108,11 +107,11 @@ class RenderObject:
         if self._position.x == x and self._position.y == y and self._position.z == z:
             return
 
-        self._position = vec3(x, y, z)
+        self._position = Vector3(x, y, z)
         self._recalc_transform()
         self._bounds_dirty = True
 
-    def rotation(self) -> vec3:
+    def rotation(self) -> Vector3:
         return copy(self._rotation)
 
     def set_rotation(
@@ -124,7 +123,7 @@ class RenderObject:
         if self._rotation.x == x and self._rotation.y == y and self._rotation.z == z:
             return
 
-        self._rotation = vec3(x, y, z)
+        self._rotation = Vector3(x, y, z)
         self._recalc_transform()
         self._bounds_dirty = True
 
@@ -139,8 +138,8 @@ class RenderObject:
         scene: Scene,
     ) -> Cube:
         if not self._cube:
-            min_point = vec3(10000, 10000, 10000)
-            max_point = vec3(-10000, -10000, -10000)
+            min_point = Vector3(10000, 10000, 10000)
+            max_point = Vector3(-10000, -10000, -10000)
             self._cube_rec(scene, mat4(), self, min_point, max_point)
             self._cube = Cube(scene, min_point, max_point)
             self._bounds_dirty = True
@@ -164,7 +163,7 @@ class RenderObject:
         self,
         scene: Scene,
         default_radius: float = 5.0,
-    ) -> tuple[vec3, float]:
+    ) -> tuple[Vector3, float]:
         """Get cached bounding sphere center and radius for frustum culling.
 
         This is optimized for fast access during rendering - values are cached
@@ -181,7 +180,7 @@ class RenderObject:
         if not self._bounds_dirty and self._cached_radius >= 0 and self._cached_center is not None:
             # Update center position (cheap operation)
             pos = self._position
-            return vec3(
+            return Vector3(
                 pos.x + self._cached_center.x,
                 pos.y + self._cached_center.y,
                 pos.z + self._cached_center.z,
@@ -202,7 +201,7 @@ class RenderObject:
             self._cached_radius = math.sqrt(dx * dx + dy * dy + dz * dz) / 2.0
 
             # Center offset relative to object position
-            self._cached_center = vec3(
+            self._cached_center = Vector3(
                 (min_pt.x + max_pt.x) / 2.0,
                 (min_pt.y + max_pt.y) / 2.0,
                 (min_pt.z + max_pt.z) / 2.0,
@@ -211,7 +210,7 @@ class RenderObject:
 
             # Return world-space center
             pos = self._position
-            return vec3(
+            return Vector3(
                 pos.x + self._cached_center.x,
                 pos.y + self._cached_center.y,
                 pos.z + self._cached_center.z,
@@ -220,7 +219,7 @@ class RenderObject:
         except Exception:  # noqa: BLE001
             # Fallback to default values
             self._cached_radius = default_radius
-            self._cached_center = vec3(0, 0, 0)
+            self._cached_center = Vector3(0, 0, 0)
             self._bounds_dirty = False
             return self._position, default_radius
 
@@ -229,8 +228,8 @@ class RenderObject:
         scene: Scene,
         transform: mat4,
         obj: RenderObject,
-        min_point: vec3,
-        max_point: vec3,
+        min_point: Vector3,
+        max_point: Vector3,
     ):
         obj_min, obj_max = scene.model(obj.model).bounds(transform)
         min_point.x = min(min_point.x, obj_min.x, obj_max.x)

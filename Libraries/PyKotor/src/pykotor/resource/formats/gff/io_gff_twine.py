@@ -129,7 +129,7 @@ class GFFTwineWriter(ResourceWriter):
 
         # Start with entries
         for i, entry in enumerate(entries):
-            passage = ET.SubElement(self.xml_root, "tw-passagedata")
+            passage: ET.Element = ET.SubElement(self.xml_root, "tw-passagedata")
             passage.set("pid", str(i))
             passage.set("name", entry.speaker or f"Entry {i}")
             passage.set("tags", "entry")
@@ -147,7 +147,7 @@ class GFFTwineWriter(ResourceWriter):
 
         # Then replies
         for i, reply in enumerate(replies):
-            passage: ET.Element = ET.SubElement(self.xml_root, "tw-passagedata")
+            passage = ET.SubElement(self.xml_root, "tw-passagedata")
             passage.set("pid", str(len(entries) + i))
             passage.set("name", f"Reply {i}")
             passage.set("tags", "reply")
@@ -160,7 +160,7 @@ class GFFTwineWriter(ResourceWriter):
                 if link_to_entry.node not in entries:
                     continue
                 entry_index: int = entries.index(link_to_entry.node)
-                link_elem: ET.Element = ET.SubElement(passage, "link")
+                link_elem = ET.SubElement(passage, "link")
                 link_elem.set("pid", str(entry_index))
 
         # Set starting node if exists

@@ -101,7 +101,7 @@ class TwoDABinaryReader(ResourceReader):
         for i in range(cell_count):
             column_id: int = i % column_count
             row_id: int = i // column_count
-            column_header: str = columns[column_id]
+            column_header = columns[column_id]
             self._reader.seek(cell_data_offset + cell_offsets[i])
             
             # NOTE: reone uses readCStringAt with limit, PyKotor uses read_terminated_string
