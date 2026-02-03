@@ -72,6 +72,7 @@ from qtpy.QtWidgets import (  # noqa: E402
 from pykotor.extract.file import FileResource  # noqa: E402
 from pykotor.tools.misc import is_capsule_file  # noqa: E402
 from toolset.gui.dialogs.load_from_location_result import ResourceItems  # noqa: E402
+from toolset.gui.widgets.settings.installations import InstallationConfig  # noqa: E402
 from toolset.main_init import main_init  # noqa: E402
 from toolset.utils.window import open_resource_editor  # noqa: E402
 from utility.system.os_helper import get_size_on_disk  # noqa: E402
@@ -95,21 +96,26 @@ class TreeItem:
     def __init__(
         self,
         path: os.PathLike | str,
-        parent: DirItem | None = None,
+        parent: TreeItem | None = None,
     ):
         super().__init__()
         self.path: Path = Path(path)
-        self.parent: DirItem | None = parent
+        self.parent: TreeItem | None = parent
 
     def row(self) -> int:
         if self.parent is None:
             return -1
-        if isinstance(self.parent, DirItem):
-            if self not in self.parent.children:
-                RobustLogger().warning(f"parent '{self.parent.path}' has orphaned the item '{self.path}' without warning!")
-                return -1
-            return self.parent.children.index(self)
-        raise RuntimeError(f"INVALID parent item! Only `DirItem` instances should children, but parent was: '{self.parent.__class__.__name__}'")
+        if not hasattr(self.parent, "children"):
+            raise RuntimeError(
+                "INVALID parent item! Parent items must expose a children list, "
+                f"but parent was: '{self.parent.__class__.__name__}'"
+            )
+        parent_children = getattr(self.parent, "children")
+        if self not in parent_children:
+            parent_path = getattr(self.parent, "path", "<virtual>")
+            RobustLogger().warning(f"parent '{parent_path}' has orphaned the item '{self.path}' without warning!")
+            return -1
+        return parent_children.index(self)
 
     @abstractmethod
     def childCount(self) -> int:
@@ -126,22 +132,31 @@ class DirItem(TreeItem):
     def __init__(
         self,
         path: Path,
-        parent: DirItem | None = None,
+        parent: TreeItem | None = None,
     ):
         super().__init__(path, parent)
-        self.children: list[TreeItem | None] = [None]  # dummy!!
+        self.children: list[TreeItem] = []
+        self._children_loaded: bool = False
 
     def childCount(self) -> int:
         return len(self.children)
 
-    def loadChildren(self, model: ResourceFileSystemModel | QFileSystemModel) -> list[TreeItem | None]:
-        idx: QModelIndex = model.indexFromItem(self) if isinstance(model, ResourceFileSystemModel) else model.index(self.row(), 0)
-        model.beginRemoveRows(idx, 0, self.childCount() - 1 if self.childCount() > 0 else 0)
-        model.beginInsertRows(idx, 0, max(0, self.childCount() - 1))
+    def loadChildren(self, model: KotorFileSystemModel | ResourceFileSystemModel) -> list[TreeItem]:
+        idx: QModelIndex = model.indexFromItem(self)
+        if self.childCount() > 0:
+            model.beginRemoveRows(idx, 0, self.childCount() - 1)
+            self.children = []
+            model.endRemoveRows()
         print(f"{self.__class__.__name__}({self.path}).load_children, row={self.row()}")
         children: list[TreeItem] = []
-        toplevel_items = list(self.path.iterdir())
-        for child_path in sorted(toplevel_items):
+        if not self.path.exists() or not self.path.is_dir():
+            self._children_loaded = True
+            return self.children
+
+        qdir = QDir(str(self.path))
+        qdir.setFilter(model.filter())
+        for entry in qdir.entryInfoList():
+            child_path = Path(entry.filePath())
             if child_path.is_dir():
                 item = DirItem(child_path, self)
             elif is_capsule_file(child_path):
@@ -149,13 +164,16 @@ class DirItem(TreeItem):
             else:
                 item = FileItem(child_path, self)
             children.append(item)
-        self.children = list(children)
+
+        if children:
+            model.beginInsertRows(idx, 0, len(children) - 1)
+            self.children = list(children)
+            model.endInsertRows()
+        else:
+            self.children = []
+        self._children_loaded = True
         for child in self.children:
-            if child is None:
-                continue
             model.setData(model.index(self.children.index(child), 0, idx), child.iconData(), Qt.ItemDataRole.DecorationRole)
-        model.endInsertRows()
-        model.endRemoveRows()
         return self.children
 
     def child(self, row: int) -> TreeItem | None:
@@ -165,11 +183,182 @@ class DirItem(TreeItem):
         return qpixmap_to_qicon(QStyle.StandardPixmap.SP_DirIcon, 16, 16)
 
 
+class RootItem(TreeItem):
+    def __init__(
+        self,
+        children: list[TreeItem] | None = None,
+    ):
+        super().__init__(Path("/"), None)
+        self.children: list[TreeItem] = [] if children is None else children
+        for child in self.children:
+            child.parent = self
+
+    def childCount(self) -> int:
+        return len(self.children)
+
+    def child(self, row: int) -> TreeItem | None:
+        return self.children[row] if 0 <= row < len(self.children) else None
+
+    def iconData(self) -> QIcon:
+        return qpixmap_to_qicon(QStyle.StandardPixmap.SP_DirIcon, 16, 16)
+
+
+class InstallationItem(DirItem):
+    def __init__(
+        self,
+        name: str,
+        path: Path,
+        tsl: bool,
+        parent: TreeItem | None = None,
+    ):
+        super().__init__(path, parent)
+        self.name: str = name
+        self.tsl: bool = tsl
+
+    def data(self) -> str:
+        return self.name
+
+    def iconData(self) -> QIcon:
+        return qpixmap_to_qicon(QStyle.StandardPixmap.SP_ComputerIcon, 16, 16)
+
+    def loadChildren(self, model: KotorFileSystemModel | ResourceFileSystemModel) -> list[TreeItem]:
+        """Load category nodes (Core, Modules, Override, Textures, Saves) as children."""
+        from toolset.data.installation import HTInstallation
+
+        idx: QModelIndex = model.indexFromItem(self)
+        if self.childCount() > 0:
+            model.beginRemoveRows(idx, 0, self.childCount() - 1)
+            self.children = []
+            model.endRemoveRows()
+
+        print(f"{self.__class__.__name__}({self.name}).loadChildren, row={self.row()}")
+        
+        # Create category nodes
+        children: list[TreeItem] = []
+        
+        # Core category
+        core_path = self.path / "data"
+        if core_path.exists() and core_path.is_dir():
+            children.append(CategoryItem("Core", core_path, self))
+        
+        # Modules category
+        modules_path = self.path / "modules"
+        if modules_path.exists() and modules_path.is_dir():
+            children.append(CategoryItem("Modules", modules_path, self))
+        
+        # Override category
+        override_path = self.path / "override"
+        if override_path.exists() and override_path.is_dir():
+            children.append(CategoryItem("Override", override_path, self))
+        
+        # Textures category (same as Override but filtered)
+        if override_path.exists() and override_path.is_dir():
+            children.append(CategoryItem("Textures", override_path, self, filter_textures=True))
+        
+        # Saves category
+        saves_path = self.path / "saves"
+        if saves_path.exists() and saves_path.is_dir():
+            children.append(CategoryItem("Saves", saves_path, self))
+
+        if children:
+            model.beginInsertRows(idx, 0, len(children) - 1)
+            self.children = children
+            model.endInsertRows()
+        else:
+            self.children = []
+        
+        self._children_loaded = True
+        return self.children
+
+
+class CategoryItem(DirItem):
+    """Represents a category node (Core, Modules, Override, Textures, Saves) under an installation."""
+    
+    def __init__(
+        self,
+        category_name: str,
+        path: Path,
+        parent: TreeItem | None = None,
+        *,
+        filter_textures: bool = False,
+    ):
+        super().__init__(path, parent)
+        self.category_name: str = category_name
+        self.filter_textures: bool = filter_textures
+
+    def data(self) -> str:
+        return self.category_name
+
+    def iconData(self) -> QIcon:
+        # Use different icons for different categories
+        icon_map = {
+            "Core": QStyle.StandardPixmap.SP_DirHomeIcon,
+            "Modules": QStyle.StandardPixmap.SP_DirIcon,
+            "Override": QStyle.StandardPixmap.SP_DirOpenIcon,
+            "Textures": QStyle.StandardPixmap.SP_FileDialogDetailedView,
+            "Saves": QStyle.StandardPixmap.SP_FileIcon,
+        }
+        standard_pixmap = icon_map.get(self.category_name, QStyle.StandardPixmap.SP_DirIcon)
+        return qpixmap_to_qicon(standard_pixmap, 16, 16)
+
+    def loadChildren(self, model: KotorFileSystemModel | ResourceFileSystemModel) -> list[TreeItem]:
+        """Load files/folders as children, optionally filtering for textures."""
+        idx: QModelIndex = model.indexFromItem(self)
+        if self.childCount() > 0:
+            model.beginRemoveRows(idx, 0, self.childCount() - 1)
+            self.children = []
+            model.endRemoveRows()
+
+        print(f"{self.__class__.__name__}({self.category_name}).loadChildren, row={self.row()}")
+        children: list[TreeItem] = []
+        
+        if not self.path.exists() or not self.path.is_dir():
+            self._children_loaded = True
+            return self.children
+
+        qdir = QDir(str(self.path))
+        qdir.setFilter(model.filter())
+        
+        for entry in qdir.entryInfoList():
+            child_path = Path(entry.filePath())
+            
+            # Filter for texture files if this is the Textures category
+            if self.filter_textures:
+                if child_path.is_file():
+                    ext = child_path.suffix.lower()
+                    if ext not in ['.tpc', '.tga', '.png', '.jpg', '.jpeg', '.bmp', '.dds']:
+                        continue
+                else:
+                    # Skip directories in Textures category
+                    continue
+            
+            if child_path.is_dir():
+                item = DirItem(child_path, self)
+            elif is_capsule_file(child_path):
+                item = CapsuleItem(child_path, self)
+            else:
+                item = FileItem(child_path, self)
+            children.append(item)
+
+        if children:
+            model.beginInsertRows(idx, 0, len(children) - 1)
+            self.children = list(children)
+            model.endInsertRows()
+        else:
+            self.children = []
+        
+        self._children_loaded = True
+        for child in self.children:
+            model.setData(model.index(self.children.index(child), 0, idx), child.iconData(), Qt.ItemDataRole.DecorationRole)
+        
+        return self.children
+
+
 class ResourceItem(TreeItem):
     def __init__(
         self,
         file: Path | FileResource,
-        parent: DirItem | None = None,
+        parent: TreeItem | None = None,
     ):
         self.resource: FileResource
         if isinstance(file, FileResource):
@@ -202,7 +391,7 @@ class CapsuleItem(DirItem, FileItem):
     def __init__(
         self,
         file: Path | FileResource,
-        parent: DirItem | None = None,
+        parent: TreeItem | None = None,
     ):
         FileItem.__init__(self, file, parent)  # call BEFORE diritem.__init__!
         DirItem.__init__(self, file.filepath() if isinstance(file, FileResource) else file, parent)  # noqa: SLF001
@@ -213,13 +402,24 @@ class CapsuleItem(DirItem, FileItem):
 
     def loadChildren(
         self: CapsuleItem | NestedCapsuleItem,
-        model: ResourceFileSystemModel,
+        model: KotorFileSystemModel | ResourceFileSystemModel,
     ) -> list[CapsuleChildItem | NestedCapsuleItem]:
+        idx: QModelIndex = model.indexFromItem(self)
+        if self.childCount() > 0:
+            model.beginRemoveRows(idx, 0, self.childCount() - 1)
+            self.children = []
+            model.endRemoveRows()
         print(f"{self.__class__.__name__}({self.path}).load_children, row={self.row()}")
         children: list[NestedCapsuleItem | CapsuleChildItem] = [
             NestedCapsuleItem(res, self) if is_capsule_file(res.filename()) else CapsuleChildItem(res, self) for res in LazyCapsule(self.resource.filepath())
         ]
-        self.children = children
+        if children:
+            model.beginInsertRows(idx, 0, len(children) - 1)
+            self.children = children
+            model.endInsertRows()
+        else:
+            self.children = []
+        self._children_loaded = True
         return self.children
 
     def iconData(self) -> QIcon:
@@ -288,7 +488,7 @@ class ResourceFileSystemWidget(QWidget):
         parent: QWidget | None = None,
         *,
         view: RobustTreeView | None = None,
-        model: PyFileSystemModel | QFileSystemModel | ResourceFileSystemModel | None = None,
+        model: PyFileSystemModel | QFileSystemModel | KotorFileSystemModel | ResourceFileSystemModel | None = None,
     ):
         super().__init__(parent)
 
@@ -312,7 +512,7 @@ class ResourceFileSystemWidget(QWidget):
             self.ui.fsTreeView.deleteLater()
             self.ui.mainLayout.addWidget(self.fsTreeView)
 
-        self.fs_model: QFileSystemModel | ResourceFileSystemModel | PyFileSystemModel = ResourceFileSystemModel(self) if model is None else model
+        self.fs_model: QFileSystemModel | KotorFileSystemModel | ResourceFileSystemModel | PyFileSystemModel = KotorFileSystemModel(self) if model is None else model
         self.fsTreeView.setModel(self.fs_model)
 
         # Store references for easier access
@@ -397,7 +597,7 @@ class ResourceFileSystemWidget(QWidget):
         print(f"onItemExpanded, row={idx.row()}, col={idx.column()}")
         self.fsTreeView.debounce_layout_changed(pre_change_emit=True)
         item = idx.internalPointer()
-        if isinstance(item, DirItem) and isinstance(self.fs_model, (ResourceFileSystemModel, QFileSystemModel)):
+        if isinstance(item, DirItem) and isinstance(self.fs_model, (KotorFileSystemModel, ResourceFileSystemModel, QFileSystemModel)):
             item.loadChildren(self.fs_model)
         self.refresh_item(item)
         self.fsTreeView.debounce_layout_changed(pre_change_emit=False)
@@ -411,7 +611,7 @@ class ResourceFileSystemWidget(QWidget):
         self.refresh_item(item)
         self.fsTreeView.debounce_layout_changed(pre_change_emit=False)
 
-    def model(self) -> QFileSystemModel | ResourceFileSystemModel | PyFileSystemModel:
+    def model(self) -> QFileSystemModel | KotorFileSystemModel | ResourceFileSystemModel | PyFileSystemModel:
         return self.fs_model
 
     def fileSystemModelDoubleClick(self, idx: QModelIndex):
@@ -425,7 +625,7 @@ class ResourceFileSystemWidget(QWidget):
                 return
             open_resource_editor(item.path, item.resource.resname(), item.resource.restype(), item.resource.data(), installation=mw.active, parentWindow=None)
         elif isinstance(item, DirItem):
-            if not item.children and isinstance(self.fs_model, (ResourceFileSystemModel, QFileSystemModel)):
+            if not item.children and isinstance(self.fs_model, (KotorFileSystemModel, ResourceFileSystemModel, QFileSystemModel)):
                 item.loadChildren(self.fs_model)
             self.fsTreeView.expand(idx)
         else:
@@ -465,7 +665,7 @@ class ResourceFileSystemWidget(QWidget):
 
     def refresh_item(self, item: TreeItem, depth: int = 1):
         """Refresh the given TreeItem and its children up to the specified depth."""
-        model: QFileSystemModel | ResourceFileSystemModel | PyFileSystemModel = self.fs_model
+        model: QFileSystemModel | KotorFileSystemModel | ResourceFileSystemModel | PyFileSystemModel = self.fs_model
         if not isinstance(item, TreeItem):
             raise TypeError(f"Expected a TreeItem, got {type(item).__name__}")
         index: QModelIndex = model.indexFromItem(item)
@@ -475,7 +675,7 @@ class ResourceFileSystemWidget(QWidget):
 
     def refresh_item_recursive(self, item: TreeItem, depth: int):
         """Recursively refresh the given TreeItem and its children up to the specified depth."""
-        model: QFileSystemModel | ResourceFileSystemModel | PyFileSystemModel = self.fs_model
+        model: QFileSystemModel | KotorFileSystemModel | ResourceFileSystemModel | PyFileSystemModel = self.fs_model
 
         index: QModelIndex = model.indexFromItem(item)  # pyright: ignore[reportAttributeAccessIssue]
         if not index.isValid():
@@ -610,7 +810,7 @@ class SupportsRichComparison(Protocol):
 T = TypeVar("T", bound=Union[SupportsRichComparison, str])
 
 
-class ResourceFileSystemModel(QAbstractItemModel):
+class KotorFileSystemModel(QAbstractItemModel):
     COLUMN_TO_STAT_MAP: ClassVar[dict[str, str]] = {
         "Size on Disk": "size_on_disk",
         "Size Ratio": "size_ratio",
@@ -641,7 +841,7 @@ class ResourceFileSystemModel(QAbstractItemModel):
     ):
         super().__init__(parent=parent)
         self._detailed_view: bool = False
-        self._root: DirItem | None = None
+        self._root: RootItem = RootItem()
         self._headers: list[str] = ["Name", "Size", "Path", "Offset", "Last Modified"]
         self._detailed_headers: list[str] = [*self._headers]
         self._detailed_headers.extend(h for h in self.COLUMN_TO_STAT_MAP if h not in self._headers)
@@ -652,50 +852,72 @@ class ResourceFileSystemModel(QAbstractItemModel):
         """Note: This overrides a class level variable."""
         return len(self._detailed_headers if self._detailed_view else self._headers)
 
-    def get_tree_view(self) -> RobustTreeView:
+    def get_tree_view(self) -> RobustTreeView | None:
+        """Get the tree view if parented by ResourceFileSystemWidget, else None."""
         qparent_obj = QObject.parent(self)
-        if not isinstance(qparent_obj, ResourceFileSystemWidget):
-            raise RuntimeError("ResourceFileSystem MVC setup incorrectly, the parent of the model must be the container.")  # noqa: TRY004
-        return qparent_obj.fsTreeView
+        if isinstance(qparent_obj, ResourceFileSystemWidget):
+            return qparent_obj.fsTreeView
+        return None
 
-    def get_container_widget(self) -> ResourceFileSystemWidget:
+    def get_container_widget(self) -> ResourceFileSystemWidget | None:
+        """Get the container widget if parented by ResourceFileSystemWidget, else None."""
         q_parent_obj: QObject | None = QObject.parent(self)
-        if not isinstance(q_parent_obj, ResourceFileSystemWidget):
-            raise RuntimeError("ResourceFileSystem MVC setup incorrectly, the parent of the model must be the container.")  # noqa: TRY004
-        return q_parent_obj
+        if isinstance(q_parent_obj, ResourceFileSystemWidget):
+            return q_parent_obj
+        return None
 
     def toggle_detailed_view(self):
-        # self.layoutAboutToBeChanged.emit()
         self._detailed_view = not self._detailed_view
         print("<SDM> [toggle_detailed_view scope] self._detailed_view: ", self._detailed_view)
-        self.get_container_widget().resize_all_columns()
-        # self.layoutChanged.emit()
+        container = self.get_container_widget()
+        if container is not None:
+            container.resize_all_columns()
 
     def rootPath(self) -> Path | None:
-        return None if self._root is None else self._root.path
+        if self._root.childCount() != 1:
+            return None
+        child = self._root.child(0)
+        return None if child is None else child.path
+
+    def rootPaths(self) -> list[Path]:
+        return [child.path for child in self._root.children if isinstance(child, TreeItem)]
 
     def resetInternalData(self, *, _alwaysEndReset: bool = True):
         """Resets the internal data of the model, forcing a reload of the view. i.e.: restat's all files on disk and reloads them into the ui anew."""
         self.beginResetModel()
 
         # Clear the current root item and reset it
-        if self._root:
+        if self._root.childCount() > 0:
             self._root.children.clear()
-            self._root.loadChildren(self)
 
         if _alwaysEndReset:
             self.endResetModel()
         print("<SDM> [resetInternalData scope] Model data has been reset.")
-        self.get_container_widget().updateAddressBar()  # TODO(th3w1zard1): emit a signal for this.
+        container = self.get_container_widget()
+        if container is not None:
+            container.updateAddressBar()  # TODO(th3w1zard1): emit a signal for this.
 
     def setRootPath(self, path: os.PathLike | str):
         self.resetInternalData(_alwaysEndReset=False)
-        self._root = self.create_fertile_tree_item(Path(path))
-        print("<SDM> [setRootPath scope] self._root: ", self._root.path)
+        root_item = self.create_fertile_tree_item(Path(path))
+        self._root = RootItem([root_item])
+        print("<SDM> [setRootPath scope] root: ", root_item.path)
 
-        self._root.loadChildren(self)
-        self._rootIndex = self.index(0, 0, QModelIndex())
-        assert self._rootIndex.isValid()
+        root_item.loadChildren(self)
+        self.endResetModel()
+
+    def set_installations(self, installations: dict[str, InstallationConfig]):
+        self.resetInternalData(_alwaysEndReset=False)
+        children: list[TreeItem] = []
+        for installation in installations.values():
+            path = Path(installation.path)
+            if not path.exists() or not path.is_dir():
+                continue
+            children.append(InstallationItem(installation.name, path, installation.tsl))
+        self._root = RootItem(children)
+        for child in self._root.children:
+            if isinstance(child, DirItem):
+                child.loadChildren(self)
         self.endResetModel()
 
     def create_fertile_tree_item(self, file: Path | FileResource) -> DirItem:
@@ -726,18 +948,17 @@ class ResourceFileSystemModel(QAbstractItemModel):
 
     def indexFromItem(self, item: TreeItem) -> QModelIndex:
         if not isinstance(item, TreeItem):
-            return None
-        if self._root == item:
-            return self.createIndex(0, 0, self._root)
-        parent_node = item.parent
-        if parent_node is None:
             return QModelIndex()
-        return self.createIndex(item.row(), 0, parent_node)
+        if item is self._root:
+            return QModelIndex()
+        return self.createIndex(item.row(), 0, item)
 
     def rowCount(self, parent: QModelIndex | None = None) -> int:
         parent = QModelIndex() if parent is None else parent
+        if parent.isValid() and parent.column() > 0:
+            return 0
         if not parent.isValid():  # Root level
-            return 0 if self._root is None else self._root.childCount()
+            return self._root.childCount()
         item = parent.internalPointer()
         assert isinstance(item, TreeItem)
         return 0 if item is None else item.childCount()
@@ -747,6 +968,8 @@ class ResourceFileSystemModel(QAbstractItemModel):
 
     def index(self, row: int, column: int, parent: QModelIndex | None = None) -> QModelIndex:
         parent = QModelIndex() if parent is None else parent
+        if parent.isValid() and parent.column() != 0:
+            return QModelIndex()
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 
@@ -759,14 +982,14 @@ class ResourceFileSystemModel(QAbstractItemModel):
         if not index.isValid():
             return None
         item: TreeItem = index.internalPointer()
-        if isinstance(self.get_tree_view().itemDelegate(), HTMLDelegate):
+        tree_view = self.get_tree_view()
+        if tree_view is not None and isinstance(tree_view.itemDelegate(), HTMLDelegate):
             if role == Qt.ItemDataRole.DisplayRole:
                 if self._detailed_view:
                     display_data = self.get_detailed_data(index)
                 else:
                     display_data = self.get_default_data(index)
                 # Use palette color for text instead of hardcoded black
-                tree_view = self.get_tree_view()
                 palette = tree_view.palette()
                 text_color = palette.color(QPalette.ColorRole.WindowText)
                 return f'<span style="color:{text_color.name()}; font-size:{tree_view.get_text_size()}pt;">{display_data}</span>'
@@ -780,6 +1003,9 @@ class ResourceFileSystemModel(QAbstractItemModel):
         if role == Qt.ItemDataRole.DecorationRole and index.column() == 0:
             return item.iconData()
 
+        if role == Qt.ItemDataRole.ToolTipRole:
+            return self._format_item_path(item)
+
         if role == ICONS_DATA_ROLE and index.column() == 0:
             iconData = {
                 "icons": [(item.iconData(), None, "Item icon")],
@@ -792,12 +1018,24 @@ class ResourceFileSystemModel(QAbstractItemModel):
 
         return None
 
+    def flags(self, index: QModelIndex) -> Qt.ItemFlags:
+        if not index.isValid():
+            return Qt.ItemFlag.ItemIsEnabled
+        return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+
+    def hasChildren(self, parent: QModelIndex | None = None) -> bool:
+        parent = QModelIndex() if parent is None else parent
+        if not parent.isValid():
+            return self._root.childCount() > 0
+        item = parent.internalPointer()
+        return isinstance(item, DirItem)
+
     def canFetchMore(self, index: QModelIndex) -> bool:
         print(f"canFetchMore({index.row()}, {index.column()})")
         if not index.isValid():
             return False
         item = index.internalPointer()
-        result = isinstance(item, DirItem) and item.childCount() == 0
+        result = isinstance(item, DirItem) and not item._children_loaded
         print("<SDM> [canFetchMore scope]", result)
         return result
 
@@ -813,7 +1051,7 @@ class ResourceFileSystemModel(QAbstractItemModel):
             f"row: {'item is None' if item is None else item.row()}",
         )
 
-        if isinstance(item, DirItem):
+        if isinstance(item, DirItem) and not item._children_loaded:
             item.loadChildren(self)
 
     def filter(self) -> QDir.Filter | int:
@@ -824,7 +1062,18 @@ class ResourceFileSystemModel(QAbstractItemModel):
         print("<SDM> [setFilter scope] self._filter: ", self._filter)
 
     def filePath(self, index: QModelIndex) -> str:
-        return str(index.internalPointer().path) if index.isValid() else ""
+        if not index.isValid():
+            return ""
+        item = index.internalPointer()
+        if not isinstance(item, TreeItem):
+            return ""
+        return self._format_item_path(item)
+
+    def installation_from_index(self, index: QModelIndex) -> InstallationItem | None:
+        item = self.itemFromIndex(index)
+        while item is not None and not isinstance(item, InstallationItem):
+            item = item.parent
+        return item
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> str | None:
         if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
@@ -881,15 +1130,15 @@ class ResourceFileSystemModel(QAbstractItemModel):
         return str(value)
 
     def get_detailed_data(self, index: QModelIndex) -> str:
-        item: FileItem | DirItem = index.internalPointer()
+        item: FileItem | DirItem | InstallationItem = index.internalPointer()
         column_name = self._detailed_headers[index.column()]
         stat_attr = self.COLUMN_TO_STAT_MAP.get(column_name)
         if (stat_attr is not None or column_name in ("Size on Disk", "Size Ratio")) and isinstance(item, ResourceItem):
             return self.get_detailed_from_stat(index, item)
         if column_name == "Name":
-            return item.path.name if isinstance(item, DirItem) else item.resource.filename()
+            return item.data() if isinstance(item, InstallationItem) else (item.path.name if isinstance(item, DirItem) else item.resource.filename())
         if column_name == "Path":
-            return str(item.path if isinstance(item, DirItem) else item.resource.filepath())
+            return self._format_item_path(item)
         if column_name == "Offset":
             return "0x0" if isinstance(item, DirItem) else f"{hex(item.resource.offset())}"
         if column_name == "Size":
@@ -897,12 +1146,12 @@ class ResourceFileSystemModel(QAbstractItemModel):
         return "N/A"
 
     def get_default_data(self, index: QModelIndex) -> str:
-        item: ResourceItem | DirItem = index.internalPointer()
+        item: ResourceItem | DirItem | InstallationItem = index.internalPointer()
         column_name = self._headers[index.column()]
         if column_name == "Name":
-            return item.path.name if isinstance(item, DirItem) else item.resource.filename()
+            return item.data() if isinstance(item, InstallationItem) else (item.path.name if isinstance(item, DirItem) else item.resource.filename())
         if column_name == "Path":
-            return str(item.path if isinstance(item, DirItem) else item.resource.filepath().relative_to(self.rootPath()))  # pyright: ignore[reportCallIssue, reportArgumentType]
+            return self._format_item_path(item)
         if column_name == "Offset":
             return "0x0" if isinstance(item, DirItem) else f"{hex(item.resource.offset())}"
         if column_name == "Size":
@@ -949,6 +1198,22 @@ class ResourceFileSystemModel(QAbstractItemModel):
             self.layoutAboutToBeChanged.emit()
             sort_items(self._root.children)
             self.layoutChanged.emit()
+
+    def _format_item_path(self, item: TreeItem) -> str:
+        if isinstance(item, InstallationItem):
+            return str(item.path)
+        if isinstance(item, DirItem):
+            return str(item.path)
+        if isinstance(item, ResourceItem):
+            parent = item.parent
+            if isinstance(parent, CapsuleItem):
+                return f"{parent.resource.filepath()}::{item.resource.filename()}"
+            return str(item.resource.filepath())
+        return str(item.path)
+
+
+class ResourceFileSystemModel(KotorFileSystemModel):
+    """Backward-compatible alias for KotorFileSystemModel."""
 
 
 def create_example_directory_structure(base_path: Path):

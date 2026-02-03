@@ -27,9 +27,6 @@ from qtpy.QtCore import (
     Qt,  # pyright: ignore[reportAttributeAccessIssue]
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
-from PyQt6.QtCore import (
-    pyqtBoundSignal,  # pyright: ignore[reportPrivateImportUsage]
-)
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QAction,  # pyright: ignore[reportPrivateImportUsage]
@@ -1382,7 +1379,7 @@ class QFileDialog(RealQFileDialog if TYPE_CHECKING else QDialog):  # pyright: ig
             if d.completer:
                 d.completer.setModel(d.proxyModel)
                 d.completer.proxyModel = d.proxyModel
-            cast(pyqtBoundSignal, d.proxyModel.rowsInserted).connect(d._q_rowsInserted)  # noqa: SLF001  # pyright: ignore[reportOptionalMemberAccess]
+            cast(Signal, d.proxyModel.rowsInserted).connect(d._q_rowsInserted)  # noqa: SLF001  # pyright: ignore[reportOptionalMemberAccess]
         else:
             d.proxyModel = None
             d.qFileDialogUi.listView.setModel(d.model)
@@ -1391,7 +1388,7 @@ class QFileDialog(RealQFileDialog if TYPE_CHECKING else QDialog):  # pyright: ig
                 d.completer.setModel(d.model)
                 d.completer.sourceModel = d.model
                 d.completer.proxyModel = None
-            cast(pyqtBoundSignal, d.model.rowsInserted).connect(d._q_rowsInserted)  # noqa: SLF001
+            cast(Signal, d.model.rowsInserted).connect(d._q_rowsInserted)  # noqa: SLF001
 
         # Match C++: QScopedPointer<QItemSelectionModel> selModel(d->qFileDialogUi->treeView->selectionModel());
         # Match C++: d->qFileDialogUi->treeView->setSelectionModel(d->qFileDialogUi->listView->selectionModel());
@@ -1906,7 +1903,7 @@ class QFileDialog(RealQFileDialog if TYPE_CHECKING else QDialog):  # pyright: ig
                 def __init__(self):
                     super().__init__()
                     self.web_view = QWebEngineView()
-                    cast(pyqtBoundSignal, self.web_view.loadFinished).connect(self.handle_file_selection)
+                    cast(Signal, self.web_view.loadFinished).connect(self.handle_file_selection)
 
                 def open_file(self):
                     self.web_view.load("about:blank")

@@ -75,6 +75,4 @@ class HolocronToolsetContainer(PluginMainContainer):
         self,
         installation_name: str,
     ):
-        self.tool_window.change_active_installation(
-            self.tool_window.ui.gameCombo.findText(installation_name)
-        )
+        self.tool_window._select_installation_in_tree(installation_name)

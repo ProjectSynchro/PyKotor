@@ -1,8 +1,21 @@
 #!/usr/bin/env python3
-"""Generic PyInstaller build helper for any tool under the repository.
+"""Generic PyInstaller build helper - fully dynamic, reads from pyproject.toml.
 
-This script centralizes the compile logic used by the per-tool wrappers so the
-wrappers only need to pass configuration (paths, entrypoints, excludes, etc.).
+Discovers tool configuration from pyproject.toml [tool.pyinstaller] section.
+All options can be overridden via CLI arguments.
+
+Example pyproject.toml configuration:
+
+[tool.pyinstaller]
+console = false          # or true
+windowed = true          # or false
+hidden-imports = ["module1", "module2"]
+exclude-modules = ["PyQt5", "torch"]
+icon = "resources/icons/app.ico"
+add-data = ["wiki:wiki", "vendor:vendor"]
+upx-exclude = ["_uuid.pyd"]
+name = "MyCustomName"  # Override binary name
+entrypoint = "myapp/__main__.py"  # Override entrypoint
 """
 
 from __future__ import annotations
@@ -12,8 +25,19 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
 from pathlib import Path
-from typing import Iterable, List
+from typing import Any
+
+try:
+    import tomllib
+except ImportError:
+    try:
+        import tomli as tomllib  # type: ignore[import-not-found,no-redef]
+    except ImportError:
+        print("Error: tomllib (Python 3.11+) or tomli package required for reading pyproject.toml")
+        print("Install with: pip install tomli")
+        sys.exit(1)
 
 
 def detect_os() -> str:
@@ -31,271 +55,413 @@ def run(cmd: list[str], cwd: Path | None = None, env: dict[str, str] | None = No
     subprocess.run(cmd, check=True, cwd=cwd, env=env)
 
 
-def install_venv(repo_root: Path, venv_name: str, noprompt: bool) -> None:
-    installer = repo_root / "install_python_venv.ps1"
-    if not installer.exists():
-        raise SystemExit(f"install_python_venv.ps1 not found at {installer}")
-
-    args = ["pwsh", "-File", str(installer)]
-    if noprompt:
-        args.append("-noprompt")
-    args.extend(["-venv_name", venv_name])
-    run(args)
-
-
 def path_separator_for_data(os_name: str) -> str:
+    """Return the path separator PyInstaller expects in --add-data."""
     return ";" if os_name == "Windows" else ":"
 
 
-def add_flag_values(flag: str, values: Iterable[str], buffer: list[str]) -> None:
-    for value in values:
-        buffer.append(f"--{flag}={value}")
-
-
-def compute_final_executable(distpath: Path, name: str, os_name: str, windowed: bool = False) -> Path:
-    """Compute the expected executable path based on OS and windowed mode.
+def read_pyproject_toml(tool_path: Path) -> dict[str, Any]:
+    """Read and parse pyproject.toml from tool directory."""
+    pyproject_path = tool_path / "pyproject.toml"
+    if not pyproject_path.exists():
+        return {}
     
-    On macOS:
-    - windowed=True: Creates .app bundle
-    - windowed=False: Creates regular executable (no extension)
-    On Windows:
-    - Always creates .exe
-    On Linux:
-    - Always creates regular executable (no extension)
-    """
-    if os_name == "Windows":
-        return distpath / f"{name}.exe"
-    elif os_name == "Mac":
-        if windowed:
-            return distpath / f"{name}.app"
+    with open(pyproject_path, "rb") as f:
+        return tomllib.load(f)
+
+
+def discover_tool_metadata(tool_path: Path, src_dir: Path, os_name: str) -> dict[str, Any]:
+    """Discover tool metadata from filesystem and pyproject.toml."""
+    pyproject = read_pyproject_toml(tool_path)
+    
+    metadata: dict[str, Any] = {
+        "name": None,
+        "entrypoint": None,
+        "console": None,
+        "windowed": None,
+        "icon": None,
+        "hidden_imports": [],
+        "exclude_modules": [],
+        "add_data": [],
+        "upx_exclude": [],
+        "requires_qt": False,
+    }
+    
+    # Extract name from pyproject.toml
+    if "project" in pyproject and "name" in pyproject["project"]:
+        metadata["name"] = pyproject["project"]["name"]
+    
+    # Extract entry point from [project.scripts]
+    if "project" in pyproject and "scripts" in pyproject["project"]:
+        scripts = pyproject["project"]["scripts"]
+        if scripts:
+            # Use first script as entrypoint
+            script_name = list(scripts.keys())[0]
+            script_path = scripts[script_name]
+            # Convert 'toolset.__main__:main' to 'toolset/__main__.py'
+            if ":" in script_path:
+                module_path = script_path.split(":")[0]
+                metadata["entrypoint"] = module_path.replace(".", "/") + ".py"
+    
+    # Fallback: search for __main__.py in src directory
+    if not metadata["entrypoint"]:
+        for candidate in src_dir.rglob("__main__.py"):
+            rel = candidate.relative_to(src_dir)
+            metadata["entrypoint"] = str(rel)
+            break
+    
+    # Check if tool requires Qt by inspecting dependencies
+    if "project" in pyproject and "dependencies" in pyproject["project"]:
+        deps = pyproject["project"]["dependencies"]
+        for dep in deps:
+            dep_lower = str(dep).lower()
+            if any(qt in dep_lower for qt in ["pyqt", "pyside", "qtpy"]):
+                metadata["requires_qt"] = True
+                break
+    
+    # Read PyInstaller-specific configuration from [tool.pyinstaller]
+    if "tool" in pyproject and "pyinstaller" in pyproject["tool"]:
+        pi_config = pyproject["tool"]["pyinstaller"]
+        
+        if "name" in pi_config:
+            metadata["name"] = pi_config["name"]
+        if "entrypoint" in pi_config:
+            metadata["entrypoint"] = pi_config["entrypoint"]
+        if "console" in pi_config:
+            metadata["console"] = pi_config["console"]
+        if "windowed" in pi_config:
+            metadata["windowed"] = pi_config["windowed"]
+        if "hidden-imports" in pi_config:
+            metadata["hidden_imports"] = pi_config["hidden-imports"]
+        if "exclude-modules" in pi_config:
+            metadata["exclude_modules"] = pi_config["exclude-modules"]
+        if "icon" in pi_config:
+            metadata["icon"] = pi_config["icon"]
+        if "add-data" in pi_config:
+            metadata["add_data"] = pi_config["add-data"]
+        if "upx-exclude" in pi_config:
+            metadata["upx_exclude"] = pi_config["upx-exclude"]
+    
+    return metadata
+
+
+def find_icon(src_dir: Path, os_name: str) -> str | None:
+    """Auto-discover icon file in tool's resource directory."""
+    icon_ext = "icns" if os_name == "Mac" else "ico"
+    
+    # Search for icons in common locations
+    for pattern in [
+        f"**/resources/icons/*.{icon_ext}",
+        f"**/resources/*.{icon_ext}",
+        f"**/*.{icon_ext}",
+    ]:
+        for icon_path in src_dir.glob(pattern):
+            if icon_path.is_file():
+                return str(icon_path)
+    
+    return None
+
+
+def build_pyinstaller_args(
+    metadata: dict[str, Any],
+    args: argparse.Namespace,
+    tool_path: Path,
+    src_dir: Path,
+    repo_root: Path,
+    os_name: str,
+    python_exe: str,
+) -> list[str]:
+    """Build PyInstaller command line arguments from metadata and CLI args."""
+    cmd = [python_exe, "-m", "PyInstaller"]
+    
+    # Console/windowed mode: CLI args override metadata
+    if args.windowed:
+        cmd.append("--windowed")
+    elif args.console:
+        cmd.append("--console")
+    elif metadata.get("windowed"):
+        cmd.append("--windowed")
+    elif metadata.get("console") is not None:
+        if metadata["console"]:
+            cmd.append("--console")
         else:
-            return distpath / name
-    else:  # Linux
-        return distpath / name
-
-
-def normalize_add_data(entries: Iterable[str], sep: str) -> list[str]:
-    normalized: list[str] = []
-    for entry in entries:
-        if ":" not in entry and sep == ":":
-            raise SystemExit(f"--add-data entry '{entry}' missing destination (use src{sep}dest)")
-        if ";" not in entry and sep == ";" and ":" not in entry:
-            raise SystemExit(f"--add-data entry '{entry}' missing destination (use src{sep}dest)")
-        normalized.append(entry)
-    return normalized
+            cmd.append("--windowed")
+    else:
+        # Default to console
+        cmd.append("--console")
+    
+    # One-file mode
+    if args.onefile:
+        cmd.append("--onefile")
+    
+    # Clean and noconfirm
+    if args.clean:
+        cmd.append("--clean")
+    if args.noconfirm:
+        cmd.append("--noconfirm")
+    
+    # Name: CLI > metadata > tool directory name
+    name = args.name or metadata.get("name") or tool_path.name
+    cmd.extend(["--name", name])
+    
+    # Icon: CLI > metadata > auto-discover
+    icon = args.icon or metadata.get("icon")
+    if icon:
+        icon_path = Path(icon)
+        if not icon_path.is_absolute():
+            icon_path = tool_path / icon
+        if icon_path.exists():
+            cmd.extend(["--icon", str(icon_path)])
+    else:
+        auto_icon = find_icon(src_dir, os_name)
+        if auto_icon:
+            cmd.extend(["--icon", auto_icon])
+    
+    # Hidden imports: merge CLI + metadata
+    hidden_imports = list(args.hidden_import) + metadata.get("hidden_imports", [])
+    for hidden in hidden_imports:
+        cmd.extend(["--hidden-import", hidden])
+    
+    # Exclude modules: merge CLI + metadata
+    exclude_modules = list(args.exclude_module) + metadata.get("exclude_modules", [])
+    
+    # Auto-exclude other Qt backends if --exclude-other-qt or tool uses Qt with specific API
+    if args.exclude_other_qt or (metadata.get("requires_qt") and args.qt_api):
+        qt_backends = ["PyQt5", "PyQt6", "PySide2", "PySide6"]
+        if args.qt_api:
+            # Remove the specified Qt API from exclusion list
+            qt_backends = [qb for qb in qt_backends if qb != args.qt_api]
+        exclude_modules.extend(qt_backends)
+    
+    for exclude in set(exclude_modules):  # Deduplicate
+        cmd.extend(["--exclude-module", exclude])
+    
+    # Add data: merge CLI + metadata
+    data_sep = path_separator_for_data(os_name)
+    add_data_list = list(args.add_data) + metadata.get("add_data", [])
+    
+    # Process add-data entries
+    for data_spec in add_data_list:
+        # Handle both ":" and ";" separators from metadata
+        if ":" in data_spec and os_name != "Windows":
+            # Unix-style separator
+            cmd.extend(["--add-data", data_spec])
+        elif ";" in data_spec and os_name == "Windows":
+            # Windows-style separator
+            cmd.extend(["--add-data", data_spec])
+        else:
+            # Need to normalize separator
+            if ":" in data_spec:
+                src, dst = data_spec.split(":", 1)
+            elif ";" in data_spec:
+                src, dst = data_spec.split(";", 1)
+            else:
+                print(f"Warning: invalid add-data spec '{data_spec}', skipping")
+                continue
+            
+            # Resolve relative paths
+            src_path = Path(src)
+            if not src_path.is_absolute():
+                src_path = tool_path / src_path
+            
+            if src_path.exists():
+                cmd.extend(["--add-data", f"{src_path}{data_sep}{dst}"])
+            else:
+                print(f"Warning: add-data source not found: {src_path}, skipping")
+    
+    # Auto-add wiki if requested
+    if args.include_wiki_if_present:
+        wiki_src = repo_root / "wiki"
+        if wiki_src.exists():
+            cmd.extend(["--add-data", f"{wiki_src}{data_sep}wiki"])
+    
+    # UPX
+    if args.upx_dir:
+        cmd.extend(["--upx-dir", args.upx_dir])
+    
+    upx_excludes = list(args.upx_exclude) + metadata.get("upx_exclude", [])
+    for upx_ex in upx_excludes:
+        cmd.extend(["--upx-exclude", upx_ex])
+    
+    # Dist path
+    dist_path = args.dist_path or (repo_root / "dist")
+    cmd.extend(["--distpath", str(dist_path)])
+    
+    # Work path
+    work_path = args.work_path or (src_dir / "build")
+    cmd.extend(["--workpath", str(work_path)])
+    
+    # Paths: always include src + library paths
+    cmd.extend(["--path", str(src_dir)])
+    
+    # Auto-include Libraries/*/src paths
+    libraries_dir = repo_root / "Libraries"
+    if libraries_dir.exists():
+        for lib_dir in libraries_dir.iterdir():
+            lib_src = lib_dir / "src"
+            if lib_src.exists():
+                cmd.extend(["--path", str(lib_src)])
+    
+    # Additional paths from CLI
+    for extra_path in args.extra_path:
+        cmd.extend(["--path", extra_path])
+    
+    # Debug options
+    if args.debug:
+        cmd.extend(["--debug", args.debug])
+    if args.log_level:
+        cmd.extend(["--log-level", args.log_level])
+    
+    # Entry point (must be last positional argument)
+    entrypoint = args.entrypoint or metadata.get("entrypoint")
+    if not entrypoint:
+        raise SystemExit(
+            "No entrypoint found. Specify --entrypoint, define [project.scripts] in pyproject.toml, "
+            "or ensure a __main__.py exists in your tool's src directory."
+        )
+    
+    entrypoint_path = src_dir / entrypoint
+    if not entrypoint_path.exists():
+        raise SystemExit(f"Entrypoint not found: {entrypoint_path}")
+    
+    cmd.append(str(entrypoint_path))
+    
+    return cmd
 
 
 def main() -> None:
     repo_root = Path(__file__).resolve().parent.parent
-    parser = argparse.ArgumentParser(description="Generic PyInstaller compiler for repository tools")
-    parser.add_argument("--tool-path", required=True, help="Path to the tool directory (e.g., Tools/HoloPatcher)")
-    parser.add_argument("--src-dir", help="Override src directory (defaults to <tool-path>/src)")
-    parser.add_argument("--entrypoint", help="Relative path from src to __main__ (defaults to <slug>/__main__.py)")
-    parser.add_argument("--name", help="PyInstaller --name (defaults to tool directory name)")
-    parser.add_argument("--distpath", help="Output directory (defaults to <repo>/dist)")
-    parser.add_argument("--workpath", help="PyInstaller workpath (defaults to <src>/build)")
-    parser.add_argument("--icon", help="Icon path passed to PyInstaller")
-    parser.add_argument("--hidden-import", action="append", default=[], help="Repeatable hidden imports")
-    parser.add_argument("--exclude-module", action="append", default=[], help="Repeatable exclusions")
-    parser.add_argument("--upx-exclude", action="append", default=[], help="Repeatable UPX exclusions")
-    parser.add_argument("--add-data", action="append", default=[], help="Repeatable --add-data entries (src{sep}dest)")
-    parser.add_argument("--add-data-if-exists", action="append", default=[], help="Optional --add-data entries only if src exists")
-    parser.add_argument("--extra-path", action="append", default=[], help="Additional --path entries for PyInstaller")
-    parser.add_argument("--inherit-pythonpath", action="store_true", default=True, help="Include PYTHONPATH entries")
-    parser.add_argument("--no-inherit-pythonpath", dest="inherit_pythonpath", action="store_false")
-    parser.add_argument("--include-library-src", action="store_true", default=True, help="Include all Libraries/*/src paths when present")
-    parser.add_argument("--no-include-library-src", dest="include_library_src", action="store_false")
-    parser.add_argument("--include-wiki-if-present", action="store_true", help="Bundle wiki directory if it exists")
-    parser.add_argument("--wiki-dest", default="wiki", help="Destination folder name for wiki add-data")
-    parser.add_argument("--clean", action="store_true", default=True, help="Enable PyInstaller --clean and remove workpath")
-    parser.add_argument("--no-clean", dest="clean", action="store_false")
-    parser.add_argument("--onefile", action="store_true", default=True)
-    parser.add_argument("--no-onefile", dest="onefile", action="store_false")
-    parser.add_argument("--noconfirm", action="store_true", default=True)
-    parser.add_argument("--no-noconfirm", dest="noconfirm", action="store_false")
-    parser.add_argument("--windowed", action="store_true", help="Use windowed mode")
+    parser = argparse.ArgumentParser(
+        description="Generic PyInstaller build tool - dynamically reads configuration from pyproject.toml",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Tool configuration is read from pyproject.toml [tool.pyinstaller] section.
+All options can be overridden via command line arguments.
+
+Example pyproject.toml:
+    [tool.pyinstaller]
+    console = false
+    windowed = true
+    hidden-imports = ["module1", "module2"]
+    exclude-modules = ["PyQt5", "torch"]
+    icon = "resources/icons/app.ico"
+    add-data = ["wiki:wiki", "vendor:vendor"]
+    upx-exclude = ["_uuid.pyd"]
+"""
+    )
+    
+    # Required
+    parser.add_argument("--tool-path", required=True, help="Path to tool directory (e.g., Tools/HolocronToolset)")
+    
+    # Optional overrides
+    default_python = os.environ.get("pythonExePath") or sys.executable
+    parser.add_argument("--python-exe", default=default_python, help="Python executable")
+    parser.add_argument("--name", help="Override output binary name (from pyproject.toml or directory name)")
+    parser.add_argument("--entrypoint", help="Override entry point, relative to src dir (e.g., toolset/__main__.py)")
+    parser.add_argument("--icon", help="Override icon path")
     parser.add_argument("--console", action="store_true", help="Force console mode")
-    parser.add_argument("--debug", help="Debug setting for PyInstaller")
-    parser.add_argument("--log-level", help="Log level for PyInstaller")
-    parser.add_argument("--upx-dir", help="Path to UPX binary")
-    parser.add_argument("--qt-api", help="Normalize QT_API environment variable and exclude other bindings")
-    parser.add_argument("--exclude-other-qt", action="store_true", default=False, help="Exclude other Qt bindings when qt-api is set")
-    parser.add_argument("--preinstall-playwright", action="store_true", help="Run 'playwright install' before building")
-    parser.add_argument("--playwright-browser", action="append", default=["chromium"], help="Browsers to install with playwright")
-    parser.add_argument("--pre-pip", action="append", default=[], help="Packages to pip install before running PyInstaller")
-    parser.add_argument("--venv-name", default=".venv", help="Virtual environment name")
-    parser.add_argument("--skip-venv", action="store_true", help="Skip install_python_venv.ps1 invocation")
-    parser.add_argument("--noprompt", action="store_true", help="Skip prompts in install_python_venv.ps1")
-    parser.add_argument("--python-exe", default=os.environ.get("pythonExePath", "python"), help="Python executable to use")
-    parser.add_argument("--remove-previous", action="store_true", default=True, help="Remove prior dist artifacts for this tool")
+    parser.add_argument("--windowed", action="store_true", help="Force windowed mode")
+    parser.add_argument("--onefile", action="store_true", default=True, help="Build one-file bundle")
+    parser.add_argument("--no-onefile", dest="onefile", action="store_false")
+    parser.add_argument("--clean", action="store_true", default=True, help="Clean PyInstaller cache")
+    parser.add_argument("--no-clean", dest="clean", action="store_false")
+    parser.add_argument("--noconfirm", action="store_true", default=True, help="Replace output without confirmation")
+    parser.add_argument("--no-noconfirm", dest="noconfirm", action="store_false")
+    parser.add_argument("--dist-path", help="Output directory for built binaries")
+    parser.add_argument("--work-path", help="PyInstaller work directory")
+    parser.add_argument("--upx-dir", help="Path to UPX directory")
+    parser.add_argument("--debug", help="Debug mode (all/imports/bootloader/noarchive)")
+    parser.add_argument("--log-level", help="Log level (TRACE/DEBUG/INFO/WARN/ERROR/CRITICAL)")
+    
+    # Lists (append to metadata values)
+    parser.add_argument("--hidden-import", action="append", default=[], help="Additional hidden imports")
+    parser.add_argument("--exclude-module", action="append", default=[], help="Additional modules to exclude")
+    parser.add_argument("--add-data", action="append", default=[], help="Additional data files (src:dst or src;dst)")
+    parser.add_argument("--upx-exclude", action="append", default=[], help="Files to exclude from UPX compression")
+    parser.add_argument("--extra-path", action="append", default=[], help="Additional --path entries")
+    
+    # Qt handling
+    parser.add_argument("--qt-api", help="Qt API in use (PyQt5/PyQt6/PySide2/PySide6)")
+    parser.add_argument("--exclude-other-qt", action="store_true", help="Exclude other Qt backends when qt-api is set")
+    
+    # Special flags
+    parser.add_argument("--include-wiki-if-present", action="store_true", help="Include wiki folder if it exists")
+    parser.add_argument("--remove-previous", action="store_true", default=True, help="Remove previous build artifacts")
     parser.add_argument("--no-remove-previous", dest="remove_previous", action="store_false")
+    
     args = parser.parse_args()
     
-    # Validate python_exe exists if skip_venv is True (when venv is pre-created)
-    if args.skip_venv and args.python_exe:
-        python_exe_path = Path(args.python_exe)
-        if not python_exe_path.exists():
-            raise SystemExit(
-                f"Python executable not found at {args.python_exe}. "
-                f"This is required when --skip-venv is used. "
-                f"Ensure the venv was created and pythonExePath is set correctly."
-            )
-
-    os_name = detect_os()
-    tool_path = (repo_root / args.tool_path).resolve() if not Path(args.tool_path).is_absolute() else Path(args.tool_path)
-    src_dir = Path(args.src_dir) if args.src_dir else tool_path / "src"
+    # Resolve tool path
+    tool_path = Path(args.tool_path)
+    if not tool_path.is_absolute():
+        tool_path = (repo_root / tool_path).resolve()
+    
+    if not tool_path.exists():
+        raise SystemExit(f"Tool directory not found: {tool_path}")
+    
+    # Find src directory
+    src_dir = tool_path / "src"
     if not src_dir.exists():
-        raise SystemExit(f"src directory not found: {src_dir}")
-
-    name = args.name or Path(tool_path).name
-    distpath = Path(args.distpath) if args.distpath else repo_root / "dist"
-    workpath = Path(args.workpath) if args.workpath else src_dir / "build"
-
-    entrypoint = args.entrypoint
-    if not entrypoint:
-        slug = Path(tool_path).name.lower()
-        entrypoint = f"{slug}/__main__.py"
-
-    data_sep = path_separator_for_data(os_name)
-
-    # Prepare environment
+        raise SystemExit(f"Source directory not found: {src_dir}")
+    
+    os_name = detect_os()
+    
+    # Discover tool metadata from pyproject.toml
+    print(f"Building tool from: {tool_path}")
+    print(f"Reading configuration from pyproject.toml...")
+    metadata = discover_tool_metadata(tool_path, src_dir, os_name)
+    print(f"  Tool name: {metadata.get('name') or tool_path.name}")
+    print(f"  Entry point: {metadata.get('entrypoint') or 'auto-detect'}")
+    print(f"  Requires Qt: {metadata.get('requires_qt')}")
+    print(f"  Console: {metadata.get('console')}")
+    print(f"  Windowed: {metadata.get('windowed')}")
+    
+    # Build PyInstaller command
+    cmd = build_pyinstaller_args(metadata, args, tool_path, src_dir, repo_root, os_name, args.python_exe)
+    
+    # Remove previous artifacts if requested
+    if args.remove_previous:
+        name = args.name or metadata.get("name") or tool_path.name
+        dist_path = Path(args.dist_path) if args.dist_path else (repo_root / "dist")
+        
+        # Determine expected output based on windowed/console mode
+        is_windowed = args.windowed or (not args.console and metadata.get("windowed"))
+        
+        if os_name == "Mac" and is_windowed:
+            artifact = dist_path / f"{name}.app"
+        elif os_name == "Windows":
+            artifact = dist_path / f"{name}.exe"
+        else:
+            artifact = dist_path / name
+        
+        if artifact.exists():
+            print(f"Removing previous artifact: {artifact}")
+            if artifact.is_dir():
+                shutil.rmtree(artifact)
+            else:
+                artifact.unlink()
+        
+        # Also remove work directory if cleaning
+        if args.clean:
+            work_path = Path(args.work_path) if args.work_path else (src_dir / "build")
+            if work_path.exists():
+                print(f"Removing work directory: {work_path}")
+                shutil.rmtree(work_path)
+    
+    # Set Qt environment variable if specified
     env = os.environ.copy()
     if args.qt_api:
         env["QT_API"] = args.qt_api
-    if args.exclude_other_qt and args.qt_api:
-        normalized_api = args.qt_api
-        all_bindings = {"PyQt5", "PyQt6", "PySide2", "PySide6"}
-        other_bindings = sorted(api for api in all_bindings if api != normalized_api)
-        args.exclude_module.extend(other_bindings)
-
-    if not args.skip_venv:
-        # install_python_venv.ps1 handles venv creation, activation, and Python installation
-        # We trust it to set up the environment correctly
-        install_venv(repo_root, args.venv_name, args.noprompt)
-        # Use venv Python executable directly - install_python_venv.ps1 ensures it exists and has pip
-        venv_python = repo_root / args.venv_name / ("Scripts" if os_name == "Windows" else "bin") / ("python.exe" if os_name == "Windows" else "python")
-        if venv_python.exists():
-            args.python_exe = str(venv_python)
-        else:
-            # Fallback: try common venv names if the requested one doesn't exist
-            # This handles cases where install_python_venv.ps1 creates a versioned venv
-            venv_found = False
-            for alt_venv_name in [".venv_3.13", ".venv_3.12", ".venv_3.11", ".venv_3.10", ".venv_3.9"]:
-                alt_venv_python = repo_root / alt_venv_name / ("Scripts" if os_name == "Windows" else "bin") / ("python.exe" if os_name == "Windows" else "python")
-                if alt_venv_python.exists():
-                    args.python_exe = str(alt_venv_python)
-                    venv_found = True
-                    break
-            if not venv_found:
-                raise SystemExit(
-                    f"Virtual environment creation failed: expected venv at {venv_python.parent.parent} but it does not exist. "
-                    f"Checked fallback venvs: .venv_3.13, .venv_3.12, .venv_3.11, .venv_3.10, .venv_3.9"
-                )
-
-    if args.pre_pip:
-        run([args.python_exe, "-m", "pip", "install", *args.pre_pip, "--prefer-binary", "--progress-bar", "on"], env=env)
-
-    # Only install playwright when explicitly requested via --preinstall-playwright
-    if args.preinstall_playwright:
-        # Check if playwright is already installed to avoid unnecessary installation
-        result = subprocess.run(
-            [args.python_exe, "-c", "import playwright"],
-            env=env,
-            capture_output=True,
-            text=True
-        )
-        if result.returncode != 0:
-            print("Installing playwright...")
-            run([args.python_exe, "-m", "pip", "install", "playwright", "--prefer-binary", "--progress-bar", "on"], env=env)
-        # Install playwright browsers
-        env["PLAYWRIGHT_BROWSERS_PATH"] = env.get("PLAYWRIGHT_BROWSERS_PATH", "0")
-        for browser in args.playwright_browser:
-            run([args.python_exe, "-m", "playwright", "install", browser], env=env)
-
-    # Collect PyInstaller args
-    pyinstaller_args: list[str] = []
-    if args.clean:
-        pyinstaller_args.append("--clean")
-    if args.onefile:
-        pyinstaller_args.append("--onefile")
-    if args.noconfirm:
-        pyinstaller_args.append("--noconfirm")
-    if args.windowed and not args.console:
-        pyinstaller_args.append("--windowed")
-    if args.console and not args.windowed:
-        pyinstaller_args.append("--console")
-    if args.debug:
-        pyinstaller_args.append(f"--debug={args.debug}")
-    if args.log_level:
-        pyinstaller_args.append(f"--log-level={args.log_level}")
-    if args.icon:
-        pyinstaller_args.append(f"--icon={args.icon}")
-    pyinstaller_args.append(f"--name={name}")
-    pyinstaller_args.append(f"--distpath={distpath}")
-    pyinstaller_args.append(f"--workpath={workpath}")
-    if args.upx_dir:
-        pyinstaller_args.append(f"--upx-dir={args.upx_dir}")
-
-    add_flag_values("hidden-import", args.hidden_import, pyinstaller_args)
-    add_flag_values("exclude-module", args.exclude_module, pyinstaller_args)
-    add_flag_values("upx-exclude", args.upx_exclude, pyinstaller_args)
-
-    add_data_entries: list[str] = list(args.add_data)
-    for candidate in args.add_data_if_exists:
-        src, _, dest = candidate.partition(data_sep)
-        if not src:
-            continue
-        if Path(src).expanduser().exists():
-            add_data_entries.append(candidate)
-
-    if args.include_wiki_if_present:
-        wiki_dir = repo_root / "wiki"
-        if wiki_dir.exists():
-            add_data_entries.append(f"{wiki_dir}{data_sep}{args.wiki_dest}")
-
-    normalized_data = normalize_add_data(add_data_entries, data_sep)
-    add_flag_values("add-data", normalized_data, pyinstaller_args)
-
-    paths: List[str] = []
-    if args.include_library_src:
-        libraries_dir = repo_root / "Libraries"
-        if libraries_dir.exists():
-            for child in libraries_dir.iterdir():
-                candidate = child / "src"
-                if candidate.exists():
-                    paths.append(str(candidate))
-    paths.extend(args.extra_path)
-    if args.inherit_pythonpath:
-        paths.extend([p for p in env.get("PYTHONPATH", "").split(os.pathsep) if p])
-
-    add_flag_values("path", paths, pyinstaller_args)
-
-    entry_arg = str(Path(entrypoint))
-    pyinstaller_args.append(entry_arg)
-
-    # Determine if windowed mode is used (for macOS .app bundle detection)
-    is_windowed = args.windowed and not args.console
-    final_executable = compute_final_executable(distpath, name, os_name, windowed=is_windowed)
-    if args.remove_previous:
-        if final_executable.exists():
-            if final_executable.is_dir():
-                shutil.rmtree(final_executable)
-            else:
-                final_executable.unlink()
-        alt_dir = distpath / name
-        if alt_dir.exists():
-            shutil.rmtree(alt_dir)
-
-        if args.clean and workpath.exists():
-            shutil.rmtree(workpath)
-
-    cmd = [args.python_exe, "-m", "PyInstaller"] + pyinstaller_args
-    print("Executing:", " ".join(cmd))
-    run(cmd, cwd=src_dir, env=env)
-
-    if not final_executable.exists():
-        raise SystemExit(f"Build failed, expected output missing: {final_executable}")
-    print(f"Built executable at: {final_executable}")
+    
+    print(f"\nRunning PyInstaller...")
+    print(f"Command: {' '.join(cmd)}\n")
+    
+    try:
+        run(cmd, cwd=src_dir, env=env)
+        print(f"\n[SUCCESS] Build complete for {tool_path.name}")
+    except subprocess.CalledProcessError as e:
+        print(f"\n[ERROR] Build failed with exit code {e.returncode}")
+        sys.exit(e.returncode)
 
 
 if __name__ == "__main__":

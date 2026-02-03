@@ -17,6 +17,8 @@ from qtpy import QtCore
 from qtpy.QtCore import (
     QCoreApplication,
     QFileSystemWatcher,
+    QItemSelectionModel,
+    QModelIndex,
     QMimeData,
     QSortFilterProxyModel,
     QThread,
@@ -27,16 +29,16 @@ from qtpy.QtCore import (
 )
 from qtpy.QtGui import QIcon, QPixmap, QStandardItem
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QAction,  # pyright: ignore[reportPrivateImportUsage]
     QApplication,
-    QBoxLayout,
     QFileDialog,
     QHBoxLayout,
+    QHeaderView,
     QMainWindow,
     QMessageBox,
     QPushButton,
     QSizePolicy,
-    QStackedLayout,
     QVBoxLayout,
 )
 
@@ -68,6 +70,7 @@ from toolset.gui.dialogs.save.generic_file_saver import FileSaveHandler
 from toolset.gui.dialogs.search import FileResults, FileSearcher
 from toolset.gui.dialogs.settings import SettingsDialog
 from toolset.gui.dialogs.theme_selector import ThemeSelectorDialog
+from toolset.gui.widgets.kotor_filesystem_model import InstallationItem
 from toolset.gui.dialogs.tslpatchdata_editor import TSLPatchDataEditor
 from toolset.gui.editors.dlg import DLGEditor
 from toolset.gui.editors.erf import ERFEditor
@@ -85,8 +88,8 @@ from toolset.gui.editors.utp import UTPEditor
 from toolset.gui.editors.uts import UTSEditor
 from toolset.gui.editors.utt import UTTEditor
 from toolset.gui.editors.utw import UTWEditor
-from toolset.gui.widgets.kotor_filesystem_model import ResourceFileSystemWidget
 from toolset.gui.widgets.main_widgets import ResourceList, ResourceStandardItem
+from toolset.gui.widgets.settings.installations import InstallationConfig
 from toolset.gui.widgets.settings.widgets.misc import GlobalSettings
 from toolset.gui.windows.help import HelpWindow
 from toolset.gui.windows.indoor_builder import IndoorMapBuilder
@@ -105,7 +108,7 @@ if TYPE_CHECKING:
         QPoint,
     )
     from qtpy.QtGui import QCloseEvent, QKeyEvent, QMouseEvent, QPalette, QShowEvent, QStandardItemModel
-    from qtpy.QtWidgets import QBoxLayout, QComboBox, QStackedLayout, QStyle, QWidget
+    from qtpy.QtWidgets import QComboBox, QStyle, QWidget
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.extract.file import LocationResult, ResourceResult
@@ -208,6 +211,7 @@ class ToolWindow(QMainWindow):
     sig_module_files_updated: Signal = Signal(str, str)  # pyright: ignore[reportPrivateImportUsage]
     sig_override_files_update: Signal = Signal(object, object)  # pyright: ignore[reportPrivateImportUsage]
     sig_installation_changed: Signal = Signal(HTInstallation)
+    sig_installations_updated: Signal = Signal(list)
 
     def __init__(self):
         """Initialize the main window for the Holocron Toolset."""
@@ -229,7 +233,7 @@ class ToolWindow(QMainWindow):
         self.theme_manager._apply_theme_and_style(self.settings.selectedTheme, self.settings.selectedStyle)
 
         # UI state management
-        self.previous_game_combo_index: int = 0
+        self.previous_installation_name: str | None = None
         self._mouse_move_pos: QPoint | None = None
         self._preparing_resources: bool = False  # Guard to prevent multiple simultaneous preparations
 
@@ -424,10 +428,15 @@ class ToolWindow(QMainWindow):
 
     def _initUi(self):
         """Initialize Holocron Toolset main window UI."""
-        from toolset.uic.qtpy.windows.main import Ui_MainWindow
+        from toolset.gui.widgets.kotor_explorer_widget import KotorExplorerWidget
 
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
+        # Create the KOTOR Explorer as the main central widget
+        # This replaces the old tab-based architecture with a unified file explorer interface
+        self.explorer = KotorExplorerWidget(parent=self)
+        self.setCentralWidget(self.explorer)
+
+        # Setup menu bar
+        self._setup_menubar()
 
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
@@ -435,74 +444,73 @@ class ToolWindow(QMainWindow):
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 
-        self.ui.coreWidget.hide_section()
-        self.ui.coreWidget.hide_reload_button()
-
         if os.getenv("HOLOCRON_DEBUG_RELOAD") is not None:
-            self.ui.menubar.addAction("Debug Reload").triggered.connect(debug_reload_pymodules)  # pyright: ignore[reportOptionalMemberAccess]
+            # Add debug reload action if environment variable is set
+            debug_action = self.menuBar().addAction("Debug Reload")
+            debug_action.triggered.connect(debug_reload_pymodules)
 
         self.setWindowIcon(cast("QApplication", QApplication.instance()).windowIcon())
-        self.setup_modules_tab()
+        self.setWindowTitle("Holocron Toolset")
+        self.resize(1200, 800)
+
+    def _setup_menubar(self):
+        """Setup the main window menu bar."""
+        from toolset.gui.common.localization import translate as tr
+
+        menubar = self.menuBar()
+        
+        # File menu
+        file_menu = menubar.addMenu(tr("&File"))
+        file_menu.addAction(tr("&New Installation")).triggered.connect(self.new_installation)
+        file_menu.addAction(tr("&Open Installation")).triggered.connect(self.open_installation)
+        file_menu.addSeparator()
+        file_menu.addAction(tr("E&xit")).triggered.connect(self.close)
+        
+        # View menu
+        view_menu = menubar.addMenu(tr("&View"))
+        view_menu.addAction(tr("&Refresh")).triggered.connect(self.explorer.refresh)
+        
+        # Help menu
+        help_menu = menubar.addMenu(tr("&Help"))
+        help_menu.addAction(tr("&About")).triggered.connect(self.show_about)
+
+    def new_installation(self):
+        """Create a new installation. (Stub - to be implemented)"""
+        pass
+
+    def open_installation(self):
+        """Open an installation. (Stub - to be implemented)"""
+        pass
+
+    def show_about(self):
+        """Show about dialog. (Stub - to be implemented)"""
+        from toolset.gui.dialogs.about import About
+        About(self).exec()
 
     def setup_modules_tab(self):
-        """Set up the modules tab UI components and layout."""
-        self._setup_erf_editor_button()
-        self._reorganize_modules_ui_layout()
-
+        """Set up the modules tab UI components and layout. (OBSOLETE - kept for compatibility)"""
+        pass
     def _setup_erf_editor_button(self):
-        """Create and configure the ERF Editor button for the modules tab."""
-        self.erf_editor_button = QPushButton(tr("ERF Editor"), self)
-        self.erf_editor_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        self.erf_editor_button.clicked.connect(self._open_module_tab_erf_editor)
-        self.ui.verticalLayoutRightPanel.insertWidget(2, self.erf_editor_button)  # pyright: ignore[reportArgumentType]
-        self.erf_editor_button.hide()
+        """Create and configure the ERF Editor button for the modules tab. (OBSOLETE)"""
+        pass
 
     def _reorganize_modules_ui_layout(self):
-        """Reorganize the modules UI layout to stack buttons vertically next to the section combo."""
-        # Get references to UI components
-        modules_resource_list = self.ui.modulesWidget.ui
-        modules_section_combo: QComboBox = modules_resource_list.sectionCombo  # type: ignore[attr-defined]
-        refresh_button: QPushButton = modules_resource_list.refreshButton  # type: ignore[attr-defined]
-        designer_button: QPushButton = self.ui.specialActionButton  # type: ignore[attr-defined]
-        level_builder_button: QPushButton = self.ui.levelBuilderButton  # type: ignore[attr-defined]
-
-        # Remove existing horizontal layout containing combo and refresh button
-        modules_resource_list.horizontalLayout_2.removeWidget(modules_section_combo)  # type: ignore[arg-type]
-        modules_resource_list.horizontalLayout_2.removeWidget(refresh_button)  # type: ignore[arg-type]
-        modules_resource_list.verticalLayout.removeItem(modules_resource_list.horizontalLayout_2)  # type: ignore[arg-type]
-
-        # Configure button size policies
-        refresh_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)  # type: ignore[arg-type]
-        designer_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)  # type: ignore[arg-type]
-        level_builder_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)  # type: ignore[arg-type]
-
-        # Create vertical button stack layout
-        stack_button_layout = QVBoxLayout()
-        stack_button_layout.setSpacing(1)
-        stack_button_layout.addWidget(refresh_button)  # type: ignore[arg-type]
-        stack_button_layout.addWidget(designer_button)  # type: ignore[arg-type]
-        stack_button_layout.addWidget(level_builder_button)  # type: ignore[arg-type]
-
-        # Create top layout combining section combo with button stack
-        top_layout = QHBoxLayout()
-        top_layout.addWidget(modules_section_combo)  # type: ignore[arg-type]
-        top_layout.addLayout(stack_button_layout)
-
-        # Insert the new top layout at the beginning of the modules tab
-        self.ui.verticalLayoutModulesTab.insertLayout(0, top_layout)  # type: ignore[attributeAccessIssue]
-
-        # Add the resource tree widget to complete the layout
-        modules_resource_list.verticalLayout.addWidget(modules_resource_list.resourceTree)  # type: ignore[arg-type]
+        """Reorganize the modules UI layout to stack buttons vertically next to the section combo. (OBSOLETE)"""
+        pass
 
     def _setup_signals(self):
         """Set up all signal connections for the main window."""
         self._setup_core_signals()
-        self._setup_widget_signals()
+        # self._setup_widget_signals()  # OBSOLETE: Old tab-based widgets replaced by unified explorer
         self._setup_action_signals()
 
     def _setup_core_signals(self):
         """Set up core application signals."""
-        self.ui.gameCombo.currentIndexChanged.connect(self.change_active_installation)
+        # Explorer signals
+        if hasattr(self, "explorer"):
+            # Connect explorer signals if needed in future
+            pass
+        
         self.sig_module_files_updated.connect(self.on_module_file_updated)
         self.sig_override_files_update.connect(self.on_override_file_updated)
 
@@ -511,163 +519,15 @@ class ToolWindow(QMainWindow):
         self._file_watcher.fileChanged.connect(self._on_watched_file_changed)
 
     def _setup_widget_signals(self):
-        """Set up signals for resource list widgets."""
-        # Core widget signals
-        self.ui.coreWidget.sig_request_extract_resource.connect(self.on_extract_resources)
-        self.ui.coreWidget.sig_request_refresh.connect(self.on_core_refresh)
-        self.ui.coreWidget.sig_request_open_resource.connect(self.on_open_resources)
-
-        # Modules widget signals
-        self.ui.modulesWidget.sig_section_changed.connect(self.on_module_changed)
-        self.ui.modulesWidget.sig_request_reload.connect(self.on_module_reload)
-        self.ui.modulesWidget.sig_request_refresh.connect(self.on_module_refresh)
-        self.ui.modulesWidget.sig_request_extract_resource.connect(self.on_extract_resources)
-        self.ui.modulesWidget.sig_request_open_resource.connect(self.on_open_resources)
-        self.sig_installation_changed.connect(self.ui.modulesWidget.set_installation)
-
-        # Saves widget signals
-        self.ui.savesWidget.sig_section_changed.connect(self.on_savepath_changed)
-        self.ui.savesWidget.sig_request_reload.connect(self.on_save_reload)
-        self.ui.savesWidget.sig_request_refresh.connect(self.on_save_refresh)
-        self.ui.savesWidget.sig_request_extract_resource.connect(self.on_extract_resources)
-        self.ui.savesWidget.sig_request_open_resource.connect(self.on_open_resources)
-        self.sig_installation_changed.connect(self.ui.savesWidget.set_installation)
-
-        # Override widget signals
-        self.ui.overrideWidget.sig_section_changed.connect(self.on_override_changed)
-        self.ui.overrideWidget.sig_request_reload.connect(self.on_override_reload)
-        self.ui.overrideWidget.sig_request_refresh.connect(self.on_override_refresh)
-        self.ui.overrideWidget.sig_request_extract_resource.connect(self.on_extract_resources)
-        self.ui.overrideWidget.sig_request_open_resource.connect(self.on_open_resources)
-        self.sig_installation_changed.connect(self.ui.overrideWidget.set_installation)
-
-        # Textures widget signals
-        self.ui.texturesWidget.sig_section_changed.connect(self.on_textures_changed)
-        self.ui.texturesWidget.sig_request_open_resource.connect(self.on_open_resources)
-        self.sig_installation_changed.connect(self.ui.texturesWidget.set_installation)
+        """Set up signals for resource list widgets. (OBSOLETE - old tab-based widgets replaced by explorer)"""
+        pass
 
     def _setup_action_signals(self):
         """Set up signals for action buttons and UI controls."""
-        # Save Editor button
-        self.ui.openSaveEditorButton.clicked.connect(self.on_open_save_editor)
-
-        # Enable/disable Open Save Editor button based on selection
-        selectionModel = self.ui.savesWidget.ui.resourceTree.selectionModel()
-        assert selectionModel is not None, "Selection model not found in saves widget"
-        selectionModel.selectionChanged.connect(self.on_save_selection_changed)
-
-        # Tab change signal
-        self.ui.resourceTabs.currentChanged.connect(self.on_tab_changed)
-
-        def open_module_designer(*args) -> ModuleDesigner | None:
-            """Open the module designer."""
-            assert self.active is not None
-            module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
-            module_path: Path | None = None
-            if module_data:
-                module_path = self.active.module_path() / Path(str(module_data))
-            try:
-                designer_window = ModuleDesigner(  # pyright: ignore[call-arg]
-                    None,
-                    self.active,
-                    mod_filepath=module_path,
-                )
-            except TypeError as exc:
-                RobustLogger().warning(f"ModuleDesigner signature mismatch: {exc}. Falling back without module path.")
-                designer_window = ModuleDesigner(None, self.active)
-                if module_path is not None:
-                    QTimer.singleShot(33, lambda: designer_window.open_module(module_path))
-
-            designer_window.setWindowIcon(cast("QApplication", QApplication.instance()).windowIcon())
-            add_window(designer_window)
-
-        self.ui.specialActionButton.clicked.connect(open_module_designer)
-
-        def open_indoor_map_builder_with_module(*args) -> IndoorMapBuilder | None:
-            """Open the Indoor Map Builder with the selected module."""
-            assert self.active is not None
-            module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
-            if not module_data:
-                from qtpy.QtWidgets import QMessageBox
-
-                from toolset.gui.common.localization import translate as tr
-
-                QMessageBox.warning(
-                    self,
-                    tr("No Module Selected"),
-                    tr("Please select a module from the Modules tab before opening the Level Builder."),
-                )
-                return None
-
-            # Use the selected module file name and strip extension robustly.
-            module_name = PurePath(str(module_data)).stem
-
-            builder = IndoorMapBuilder(None, self.active)
-            builder.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-            builder.show()
-            builder.activateWindow()  # Bring the window to the front
-            add_window(builder)
-
-            # Load the selected module (use QTimer to ensure window is fully initialized)
-            QTimer.singleShot(33, lambda: builder.load_module_from_name(module_name))  # Load the module after the window is fully initialized
-
-            return builder
-
-        self.ui.levelBuilderButton.clicked.connect(open_indoor_map_builder_with_module)
-
-        self.ui.overrideWidget.sig_section_changed.connect(self.on_override_changed)
-        self.ui.overrideWidget.sig_request_reload.connect(self.on_override_reload)
-        self.ui.overrideWidget.sig_request_refresh.connect(self.on_override_refresh)
-        self.ui.overrideWidget.sig_request_extract_resource.connect(self.on_extract_resources)
-        self.ui.overrideWidget.sig_request_open_resource.connect(self.on_open_resources)
-        self.sig_installation_changed.connect(self.ui.overrideWidget.set_installation)
-
-        self.ui.texturesWidget.sig_section_changed.connect(self.on_textures_changed)
-        self.ui.texturesWidget.sig_request_open_resource.connect(self.on_open_resources)
-        self.sig_installation_changed.connect(self.ui.texturesWidget.set_installation)
-
-        def extract_resources():
-            self.on_extract_resources(
-                self.get_active_resource_widget().selected_resources(),
-                resource_widget=self.get_active_resource_widget(),
-            )
-
-        self.ui.extractButton.clicked.connect(extract_resources)
-        self.ui.openButton.clicked.connect(lambda checked=False: self.get_active_resource_widget().on_resource_double_clicked(None))
-
-        self.ui.openAction.triggered.connect(self.open_from_file)
-        self.ui.actionSettings.triggered.connect(self.open_settings_dialog)
-        self.ui.actionExit.triggered.connect(lambda *args: self.close() and None or None)
-
-        self.ui.actionNewTLK.triggered.connect(lambda: add_window(TLKEditor(self, self.active)))
-        self.ui.actionNewDLG.triggered.connect(lambda: add_window(DLGEditor(self, self.active)))
-        self.ui.actionNewNSS.triggered.connect(lambda: add_window(NSSEditor(self, self.active)))
-        self.ui.actionNewUTC.triggered.connect(lambda: add_window(UTCEditor(self, self.active)))  # type: ignore[arg-type]
-        self.ui.actionNewUTP.triggered.connect(lambda: add_window(UTPEditor(self, self.active)))  # type: ignore[arg-type]
-        self.ui.actionNewUTD.triggered.connect(lambda: add_window(UTDEditor(self, self.active)))  # type: ignore[arg-type]
-        self.ui.actionNewUTI.triggered.connect(lambda: add_window(UTIEditor(self, self.active)))  # type: ignore[arg-type]
-        self.ui.actionNewUTT.triggered.connect(lambda: add_window(UTTEditor(self, self.active)))
-        self.ui.actionNewUTM.triggered.connect(lambda: add_window(UTMEditor(self, self.active)))
-        self.ui.actionNewUTW.triggered.connect(lambda: add_window(UTWEditor(self, self.active)))
-        self.ui.actionNewUTE.triggered.connect(lambda: add_window(UTEEditor(self, self.active)))
-        self.ui.actionNewUTS.triggered.connect(lambda: add_window(UTSEditor(self, self.active)))  # type: ignore[arg-type]
-        self.ui.actionNewGFF.triggered.connect(lambda: add_window(GFFEditor(self, self.active)))
-        self.ui.actionNewERF.triggered.connect(lambda: add_window(ERFEditor(self, self.active)))
-        self.ui.actionNewTXT.triggered.connect(lambda: add_window(TXTEditor(self, self.active)))
-        self.ui.actionNewSSF.triggered.connect(lambda: add_window(SSFEditor(self, self.active)))
-        self.ui.actionCloneModule.triggered.connect(lambda: add_window(CloneModuleDialog(self, self.active, self.installations)))  # type: ignore[arg-type]
-
-        self.ui.actionModuleDesigner.triggered.connect(self.open_module_designer)
-        self.ui.actionEditTLK.triggered.connect(self.open_active_talktable)
-        self.ui.actionEditJRL.triggered.connect(self.open_active_journal)
-        self.ui.actionFileSearch.triggered.connect(self.open_file_search_dialog)
-        self.ui.actionIndoorMapBuilder.triggered.connect(self.open_indoor_map_builder)
-        self.ui.actionKotorDiff.triggered.connect(self.open_kotordiff)
-        self.ui.actionTSLPatchDataEditor.triggered.connect(self.open_tslpatchdata_editor)
-
-        self.ui.actionInstructions.triggered.connect(self.open_instructions_window)
-        self.ui.actionHelpUpdates.triggered.connect(self.update_manager.check_for_updates)
-        self.ui.actionHelpAbout.triggered.connect(self.open_about_dialog)
+        # NOTE: Old tab-based action signals have been removed with the unified explorer.
+        # Menu actions are connected directly via the menu setup.
+        # File operations can be re-added as needed based on explorer selections.
+        pass
         self.ui.actionDiscordDeadlyStream.triggered.connect(lambda: open_link("https://discord.com/invite/bRWyshn"))
         self.ui.actionDiscordKotOR.triggered.connect(lambda: open_link("http://discord.gg/kotor"))
         self.ui.actionDiscordHolocronToolset.triggered.connect(lambda: open_link("https://discord.gg/3ME278a9tQ"))
@@ -862,25 +722,25 @@ class ToolWindow(QMainWindow):
         self.ui.actionNewTXT.setText(tr("TXT"))
         self.ui.actionNewSSF.setText(tr("SSF"))
 
-        # Translate tab titles
-        self.ui.resourceTabs.setTabText(0, tr("Core"))
-        self.ui.resourceTabs.setTabText(1, tr("Saves"))
-        self.ui.resourceTabs.setTabText(2, tr("Modules"))
-        self.ui.resourceTabs.setTabText(3, tr("Override"))
-        self.ui.resourceTabs.setTabText(4, tr("Textures"))
+        # Translate tab titles - OBSOLETE with unified explorer (commented out)
+        # self.ui.resourceTabs.setTabText(0, tr("Core"))
+        # self.ui.resourceTabs.setTabText(1, tr("Saves"))
+        # self.ui.resourceTabs.setTabText(2, tr("Modules"))
+        # self.ui.resourceTabs.setTabText(3, tr("Override"))
+        # self.ui.resourceTabs.setTabText(4, tr("Textures"))
 
         # Translate buttons
         self.ui.openButton.setText(tr("Open Selected"))
         self.ui.extractButton.setText(tr("Extract Selected"))
-        self.ui.openSaveEditorButton.setText(tr("Open Save Editor"))
-        self.ui.specialActionButton.setText(tr("Designer"))
+        # self.ui.openSaveEditorButton.setText(tr("Open Save Editor"))  # OBSOLETE: No longer exists in unified explorer
+        # self.ui.specialActionButton.setText(tr("Designer"))  # OBSOLETE: No longer exists in unified explorer
 
-        # Translate tooltips
-        self.ui.openSaveEditorButton.setToolTip(tr("Open the selected save in the Save Editor"))
+        # Translate tooltips - OBSOLETE with unified explorer (commented out)
+        # self.ui.openSaveEditorButton.setToolTip(tr("Open the selected save in the Save Editor"))
 
         # Translate group boxes
-        self.ui.tpcGroup_2.setTitle(tr("TPC"))
-        self.ui.mdlGroup_2.setTitle(tr("MDL"))
+        self.ui.tpcGroup.setTitle(tr("TPC"))
+        self.ui.mdlGroup.setTitle(tr("MDL"))
 
         # Translate checkboxes
         self.ui.tpcDecompileCheckbox.setText(tr("Decompile"))
@@ -1195,47 +1055,106 @@ class ToolWindow(QMainWindow):
         assert self.active is not None, "No active installation selected"
         self.ui.texturesWidget.set_resources(self.active.texturepack_resources(texturepackName))
 
-    @Slot(int)
+    @Slot(QModelIndex, QModelIndex)
     def change_active_installation(
         self,
-        index: int,  # noqa: PLR0915, C901, PLR0912
+        current: QModelIndex,
+        previous: QModelIndex,
     ):
-        RobustLogger().debug(f"TRACE: change_active_installation({index}) called")
-        if index < 0:  # self.ui.gameCombo.clear() will call this function with -1
-            return
+        RobustLogger().debug(f"TRACE: change_active_installation({current.row()}, {current.column()}) called")
 
-        prev_index: int = self.previous_game_combo_index
-        # Only set index if it's different to avoid unnecessary signal emission
-        current_index = self.ui.gameCombo.currentIndex()
-        if current_index != index:
-            # Block signals to prevent recursive calls when setting index programmatically
-            self.ui.gameCombo.blockSignals(True)
-            self.ui.gameCombo.setCurrentIndex(index)
-            self.ui.gameCombo.blockSignals(False)
-
-        if index == 0:
+        if not current.isValid():
             self.unset_installation()
-            self.previous_game_combo_index = 0
             return
 
-        # Get installation details from settings
-        name: str = self.ui.gameCombo.itemText(index)
-        installation_config = self.settings.installations()[name]
-        path: str = installation_config.path.strip()
-        tsl: bool = installation_config.tsl
+        installation_item = self.installation_tree_model.installation_from_index(current)
+        if installation_item is None:
+            return
+
+        if self.active is not None and self.active.name == installation_item.name:
+            self._apply_tree_selection_to_tabs(current)
+            return
+
+        prev_name: str | None = self.previous_installation_name
+        name: str = installation_item.name
+        path: str = str(installation_item.path)
+        tsl: bool = installation_item.tsl
 
         # Validate and prompt for installation path if needed
-        path = self._validate_installation_path(name, path, tsl, prev_index)
+        path = self._validate_installation_path(name, path, tsl, prev_name)
         if not path:
             return
 
         # Enable resource tabs for the selected installation
-        self.ui.resourceTabs.setEnabled(True)
+        self.ui.resourceStack.setEnabled(True)
 
         # Load or create the installation
-        self._load_installation(name, path, tsl, prev_index)
+        self._load_installation(name, path, tsl, prev_name)
+        self._apply_tree_selection_to_tabs(current)
 
-    def _validate_installation_path(self, name: str, path: str, tsl: bool, prev_index: int) -> str:
+    def _apply_tree_selection_to_tabs(self, index: QModelIndex) -> None:
+        if self.active is None or not index.isValid():
+            return
+
+        item = self.installation_tree_model.itemFromIndex(index)
+        if isinstance(item, InstallationItem):
+            self.ui.resourceStack.setCurrentWidget(self.ui.coreTab)  # pyright: ignore[reportArgumentType]
+            return
+
+        path_str = self.installation_tree_model.filePath(index)
+        if not path_str:
+            return
+
+        entry_name: str | None = None
+        if "::" in path_str:
+            container_str, entry_name = path_str.split("::", 1)
+            path = Path(container_str)
+        else:
+            path = Path(path_str)
+
+        modules_root = self.active.module_path()
+        override_root = self.active.override_path()
+        texturepacks_root = self.active.texturepacks_path()
+
+        if self._is_in_path(path, modules_root):
+            self.ui.resourceStack.setCurrentWidget(self.ui.modulesTab)  # pyright: ignore[reportArgumentType]
+            if path.is_file() and is_capsule_file(path):
+                self.change_module(path.name)
+            return
+
+        if self._is_in_path(path, override_root):
+            self.ui.resourceStack.setCurrentWidget(self.ui.overrideTab)  # pyright: ignore[reportArgumentType]
+            try:
+                rel = path.relative_to(override_root)
+                if path.is_file():
+                    rel = rel.parent
+                rel_text = "" if str(rel) in (".", "") else rel.as_posix()
+                self.change_override_folder(rel_text)
+            except ValueError:
+                pass
+            return
+
+        if self._is_in_path(path, texturepacks_root):
+            self.ui.resourceStack.setCurrentWidget(self.ui.texturesTab)  # pyright: ignore[reportArgumentType]
+            if path.is_file() and is_capsule_file(path):
+                self.ui.texturesWidget.change_section(path.name)
+            return
+
+        for save_root in self.active.save_locations():
+            if self._is_in_path(path, save_root):
+                self.ui.resourceStack.setCurrentWidget(self.ui.savesTab)  # pyright: ignore[reportArgumentType]
+                self.ui.savesWidget.change_section(str(save_root))
+                return
+
+        self.ui.resourceStack.setCurrentWidget(self.ui.coreTab)  # pyright: ignore[reportArgumentType]
+
+    def _is_in_path(self, path: Path, root: Path) -> bool:
+        try:
+            return path == root or root in path.parents
+        except Exception:  # noqa: BLE001
+            return False
+
+    def _validate_installation_path(self, name: str, path: str, tsl: bool, prev_name: str | None) -> str:
         """Validate the installation path and prompt user if needed.
 
         Args:
@@ -1260,9 +1179,8 @@ class ToolWindow(QMainWindow):
 
         # Return to previous selection if no path provided
         if not path or not path.strip():
-            self.ui.gameCombo.blockSignals(True)
-            self.ui.gameCombo.setCurrentIndex(prev_index)
-            self.ui.gameCombo.blockSignals(False)
+            if prev_name is not None:
+                self._select_installation_in_tree(prev_name)
             return ""
 
         return path
@@ -1272,7 +1190,7 @@ class ToolWindow(QMainWindow):
         name: str,
         path: str,
         tsl: bool,
-        prev_index: int,
+        prev_name: str | None,
     ) -> None:
         """Load or create the installation instance."""
 
@@ -1310,9 +1228,8 @@ class ToolWindow(QMainWindow):
             )
             if not installation_loader.exec():
                 RobustLogger().error("Failed to create installation")
-                self.ui.gameCombo.blockSignals(True)
-                self.ui.gameCombo.setCurrentIndex(prev_index)
-                self.ui.gameCombo.blockSignals(False)
+                if prev_name is not None:
+                    self._select_installation_in_tree(prev_name)
                 return
             self.active = installation_loader.value
             assert self.active is not None, "Active installation should not be None here after loading"
@@ -1321,11 +1238,11 @@ class ToolWindow(QMainWindow):
             self.active = active
 
         # Prepare resource lists for the installation
-        self._prepare_installation_resources(prev_index)
+        self._prepare_installation_resources(prev_name)
 
     def _prepare_installation_resources(
         self,
-        prev_index: int,
+        prev_name: str | None,
     ) -> None:
         """Prepare and initialize all resource lists for the active installation."""
         # Prevent multiple simultaneous preparations
@@ -1367,7 +1284,7 @@ class ToolWindow(QMainWindow):
                     f"Failed to initialize the installation {self.active.name}<br><br>{e}",
                 ).exec()
                 self.unset_installation()
-                self.previous_game_combo_index = 0
+                self.previous_installation_name = None
                 return
 
             # Finalize installation setup
@@ -1392,13 +1309,17 @@ class ToolWindow(QMainWindow):
         self.activateWindow()
 
         # Update UI state
-        self.previous_game_combo_index = self.ui.gameCombo.currentIndex()
+        self.previous_installation_name = self.active.name
 
         # Emit installation changed signal
         self.sig_installation_changed.emit(self.active)
 
         # Set up file system watcher for auto-detecting changes
         self._setup_file_watcher()
+
+        selection_model = self.ui.installationTree.selectionModel()
+        if selection_model is not None:
+            self._apply_tree_selection_to_tabs(selection_model.currentIndex())
 
         # Apply current view mode
         #self._apply_view_mode()
@@ -1943,18 +1864,43 @@ class ToolWindow(QMainWindow):
         self.change_override_folder(subfolder)
 
     def reload_installations(self):
-        """Refresh the list of installations available in the combobox."""
-        try:
-            self.ui.gameCombo.currentIndexChanged.disconnect(self.change_active_installation)
-        except (TypeError, RuntimeError):
-            # Signal may not be connected yet during initialization
-            pass
-        self.ui.gameCombo.clear()  # without above disconnect, would call ToolWindow().changeActiveInstallation(-1)
-        self.ui.gameCombo.addItem(tr("[None]"))  # without above disconnect, would call ToolWindow().changeActiveInstallation(0)
+        """Refresh the list of installations available in the tree view."""
+        self.installations.clear()
 
-        for installation in self.settings.installations().values():
-            self.ui.gameCombo.addItem(installation.name)
-        self.ui.gameCombo.currentIndexChanged.connect(self.change_active_installation)
+        for installation_config in self.settings.installations():
+            if not isinstance(installation_config, InstallationConfig):
+                RobustLogger().warning(f"Expected InstallationConfig, got {type(installation_config)}: {installation_config}")
+                continue
+            name = installation_config.name
+            self.installations[name] = HTInstallation(
+                str(installation_config.path),
+                name,
+                tsl=installation_config.tsl,
+                mainWindow=self,
+            )
+
+        # Load installations into the resource explorer
+        if hasattr(self, "resource_explorer"):
+            self.resource_explorer.set_installations(self.installations)
+
+        if self.previous_installation_name is not None:
+            # Find and select the previous installation in the tree
+            pass  # TODO: implement selection in tree
+
+        self.sig_installations_updated.emit(self.get_installations())
+
+    def add_installation(self, name: str, path: str, tsl: bool):
+        installations = self.settings.installations()
+        config = installations.get(name)
+        if config is None:
+            config = InstallationConfig(name)
+            installations[name] = config
+        config.path = path
+        config.tsl = tsl
+        self.reload_installations()
+
+    def get_installations(self) -> list[str]:
+        return [installation.name for installation in self.settings.installations().values()]
 
     @Slot()
     def unset_installation(self):
@@ -1962,29 +1908,24 @@ class ToolWindow(QMainWindow):
         # Clear file system watcher before clearing the installation
         self._clear_file_watcher()
 
-        # Disconnect signal to prevent recursive call when setting index to 0
-        try:
-            self.ui.gameCombo.currentIndexChanged.disconnect(self.change_active_installation)
-        except (TypeError, RuntimeError):
-            # Signal may not be connected yet during initialization
-            pass
+        # Clear resource explorer (new unified explorer)
+        if hasattr(self, "resource_explorer"):
+            self.resource_explorer.set_installations({})
 
-        self.ui.gameCombo.setCurrentIndex(0)
-
-        # Reconnect signal after setting index
-        self.ui.gameCombo.currentIndexChanged.connect(self.change_active_installation)
-
-        # Clear all resource lists
-        self.ui.coreWidget.set_resources([])
-        self.ui.modulesWidget.set_sections([])
-        self.ui.modulesWidget.set_resources([])
-        self.ui.overrideWidget.set_sections([])
-        self.ui.overrideWidget.set_resources([])
-
-        # Disable resource tabs and update menus
-        self.ui.resourceTabs.setEnabled(False)
+        # Update menus
         self.update_menus()
         self.active = None
+        self.previous_installation_name = None
+
+    def _select_installation_in_tree(self, name: str):
+        model = self.installation_tree_model
+        root_index = QModelIndex()
+        for row in range(model.rowCount(root_index)):
+            idx = model.index(row, 0, root_index)
+            item = model.itemFromIndex(idx)
+            if isinstance(item, InstallationItem) and item.name == name:
+                self.ui.installationTree.setCurrentIndex(idx)
+                return
 
     # endregion
 
@@ -2609,6 +2550,25 @@ class ToolWindow(QMainWindow):
             except (ValueError, OSError) as e:
                 etype, msg = (e.__class__.__name__, str(e))
                 QMessageBox(QMessageBox.Icon.Critical, f"Failed to open file ({etype})", msg).exec()
+
+    def on_resource_double_clicked(self, resource: FileResource):
+        """Handle double-click on a resource in the explorer.
+        
+        Args:
+        ----
+            resource: The FileResource that was double-clicked
+        """
+        RobustLogger().debug(f"Resource double-clicked: {resource.filename()}")
+        # Resource is already opened by the explorer's open_resource_item method
+    
+    def on_explorer_selection_changed(self, resources: list[FileResource]):
+        """Handle selection changes in the resource explorer.
+        
+        Args:
+        ----
+            resources: List of currently selected FileResource objects
+        """
+        RobustLogger().debug(f"Explorer selection changed: {len(resources)} resources selected")
 
     # endregion
 

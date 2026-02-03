@@ -3,14 +3,12 @@ from __future__ import annotations
 
 import json
 
+from contextlib import suppress
 from typing import TYPE_CHECKING, Any, ClassVar
 
-import qtpy
-from contextlib import suppress
-
 from qtpy.QtCore import Signal, Slot  # pyright: ignore[reportPrivateImportUsage]
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QAction, QMessageBox
+from qtpy.QtGui import QAction, QIcon
+from qtpy.QtWidgets import QMessageBox
 
 from spyder.api.plugin_registration.decorators import on_plugin_available
 from spyder.api.plugins import Plugins, SpyderPluginV2
@@ -22,12 +20,13 @@ from toolset.gui.windows.main import ToolWindow
 from .container import HolocronToolsetContainer
 
 if TYPE_CHECKING:
-    from qtpy.QtWidgets import QCheckBox, QComboBox, QFrame, QGroupBox, QHBoxLayout, QMenu, QMenuBar, QPushButton, QStatusBar, QTabWidget, QWidget
+    from qtpy.QtWidgets import QCheckBox, QFrame, QGroupBox, QHBoxLayout, QMenu, QMenuBar, QPushButton, QSplitter, QStatusBar, QTabWidget, QWidget
     from typing_extensions import Self
 
     from toolset.gui.widgets.main_widgets import ResourceList, TextureList
 
 _ = get_translation("spyder_holocron_toolset.spyder")
+
 
 class HolocronToolset(SpyderPluginV2):
     """Holocron Toolset plugin for Spyder."""
@@ -82,7 +81,6 @@ class HolocronToolset(SpyderPluginV2):
             statusbar.add_status_widget(self.holocron_status)
 
     def _disassemble_tool_window(self):
-
         # Import the appropriate Ui_MainWindow based on the Qt bindings
         from toolset.uic.qtpy.windows.main import Ui_MainWindow
 
@@ -106,20 +104,16 @@ class HolocronToolset(SpyderPluginV2):
         main_horiz_layout_parent: QWidget = central_widget
         assert main_horiz_layout.parent() == main_horiz_layout_parent
 
-        game_combo: QComboBox = orig_ui.gameCombo
-        game_combo_parent: QWidget = central_widget
-        assert game_combo.parent() == game_combo_parent
+        main_splitter: QSplitter = orig_ui.mainSplitter
+        main_splitter_parent: QWidget = central_widget
+        assert main_splitter.parent() == main_splitter_parent
 
-        outer_tab_widget: QTabWidget = orig_ui.outerTabWidget
-        outer_tab_widget_parent: QWidget = central_widget
-        assert outer_tab_widget.parent() == outer_tab_widget_parent
-
-        resource_list_tab: QWidget = orig_ui.resourceListTab
-        resource_list_tab_parent: QWidget = outer_tab_widget
-        assert resource_list_tab.parent() == resource_list_tab_parent
+        installation_tree = orig_ui.installationTree
+        installation_tree_parent: QWidget = orig_ui.installationPanel
+        assert installation_tree.parent() == installation_tree_parent
 
         resource_tabs: QTabWidget = orig_ui.resourceTabs
-        resource_tabs_parent: QWidget = resource_list_tab
+        resource_tabs_parent: QWidget = main_splitter
         assert resource_tabs.parent() == resource_tabs_parent
 
         core_tab: QWidget = orig_ui.coreTab
@@ -258,12 +252,9 @@ class HolocronToolset(SpyderPluginV2):
         tpc_group.setParent(None)
         mdl_group.setParent(None)
 
-        # Remove tabs from outer_tab_widget
-        outer_tab_widget.clear()
-
         # Remove widgets from central_widget
-        game_combo.setParent(None)
-        outer_tab_widget.setParent(None)
+        installation_tree.setParent(None)
+        main_splitter.setParent(None)
         sidebar.setParent(None)
 
         # Remove central_widget from main window
@@ -281,8 +272,8 @@ class HolocronToolset(SpyderPluginV2):
             "central_widget": central_widget,
             "menubar": menubar,
             "statusbar": statusbar,
-            "game_combo": game_combo,
-            "outer_tab_widget": outer_tab_widget,
+            "main_splitter": main_splitter,
+            "installation_tree": installation_tree,
             "resource_tabs": resource_tabs,
             "core_widget": core_widget,
             "saves_widget": saves_widget,
@@ -313,6 +304,7 @@ class HolocronToolset(SpyderPluginV2):
         }
 
         # The widgets are now disassembled and ready to be reassembled into the plugin structure
+
     # --- SpyderPluginV2 API
     # ------------------------------------------------------------------------
     def get_name(self):
@@ -383,11 +375,7 @@ class HolocronToolset(SpyderPluginV2):
                 data = json.load(f)
                 installations = data.get("installations", [])
                 for installation in installations:
-                    self.tool_window.add_installation(
-                        installation["name"],
-                        installation["path"],
-                        installation["tsl"]
-                    )
+                    self.tool_window.add_installation(installation["name"], installation["path"], installation["tsl"])
 
     def load_installations(self):
         """Load installations from configuration file."""
@@ -397,23 +385,12 @@ class HolocronToolset(SpyderPluginV2):
                 data = json.load(f)
                 installations = data.get("installations", [])
                 for installation in installations:
-                    self.tool_window.add_installation(
-                        installation["name"],
-                        installation["path"],
-                        installation["tsl"]
-                    )
+                    self.tool_window.add_installation(installation["name"], installation["path"], installation["tsl"])
 
     def save_installations(self):
         conf_file = get_conf_path(self.CONF_FILE)
         data: dict[str, list[dict[str, Any]]] = {
-            "installations": [
-                {
-                    "name": name,
-                    "path": inst.path(),
-                    "tsl": inst.tsl
-                }
-                for name, inst in self.tool_window.installations.items()
-            ]
+            "installations": [{"name": name, "path": inst.path(), "tsl": inst.tsl} for name, inst in self.tool_window.installations.items()]
         }
         with open(conf_file, "w") as f:
             json.dump(data, f)
@@ -449,8 +426,7 @@ class HolocronToolset(SpyderPluginV2):
         return self.tool_window.get_installations()
 
     def show_about_dialog(self):
-        QMessageBox.about(self.main, _("About Holocron Toolset"),
-                          _("Holocron Toolset is a KotOR modding toolset for Spyder."))
+        QMessageBox.about(self.main, _("About Holocron Toolset"), _("Holocron Toolset is a KotOR modding toolset for Spyder."))
 
     # --- Preferences API
     # ------------------------------------------------------------------------

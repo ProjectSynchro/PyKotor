@@ -566,7 +566,7 @@ class ReactiveModel(QAbstractItemModel):
 - **Current Issues:** Static dialog, minimal changes
 - **Refactoring Type:** None (already simple)
 
-##### `dialogs/asyncloader.py`
+##### `dialogs/async_loader.py`
 - **Current Issues:** Manual progress updates
 - **Refactoring Type:** Reactive progress properties
 - **Migration Steps:**

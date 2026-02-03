@@ -1,130 +1,156 @@
-[build-system]
-requires = ["setuptools>=67.8.0", "wheel"]
+[build-system]                                                                                                                              
 build-backend = "setuptools.build_meta"
+requires = ["setuptools>=67.8.0", "wheel"]
 
 [project]
 name = "pykotor"
-version = "2.1.0"
+version = "2.1.1"
 description = "Read, modify and write files used by KotOR's game engine."
-authors = [{name = "NickHugi"}, {name = "th3w1zard1", email = "halomastar@gmail.com"}]
-maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
-readme = "README.md"
-license = {text = "LGPL-3.0-or-later"}
-keywords = [
-    "kotor", "kotor1", "kotor2", "tsl",
-    "star-wars", "knights-of-the-old-republic", "sith-lords",
-    "modding", "game-modding", "game-files",
-    "gff", "2da", "tlk", "erf", "rim", "bif", "mdl",
-    "pykotor", "holocron", "bioware", "lucasarts",
-]
-requires-python = ">=3.8"
+authors = [{ name = "Nick Hugi" }, { name = "th3w1zard1" }]
+maintainers = [{ name = "th3w1zard1", email = "boden.crouch@gmail.com" }]
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Topic :: Games/Entertainment",
-    "Topic :: Games/Entertainment :: Role-Playing",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: File Formats",
-    "Typing :: Typed",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Games/Entertainment",
+  "Topic :: Games/Entertainment :: Role-Playing",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: File Formats",
+  "Typing :: Typed",
 ]
 dependencies = [
-    "ply>=3.11,<4",
-    "pycryptodome>=3.19.0",
+  "defusedxml>=0.7",
+  "ply>=3.11,<4"
 ]
+keywords = [
+  "2da",
+  "bif",
+  "bioware",
+  "erf",
+  "game-files",
+  "game-modding",
+  "gff",
+  "holocron",
+  "knights-of-the-old-republic",
+  "kotor",
+  "kotor1",
+  "kotor2",
+  "lucasarts",
+  "mdl",
+  "modding",
+  "pykotor",
+  "rim",
+  "sith-lords",
+  "star-wars",
+  "tlk",
+  "tsl"
+]
+license = {text = "LGPL-3.0-or-later"}
+readme = "README.md"
+requires-python = ">=3.8"
 
 [project.optional-dependencies]
+# Development dependencies
+dev = [
+  "astroid>=3.2.0,<3.5.0; python_version<\"3.9\"",
+  "astroid>=3.2.0; python_version>=\"3.9\"",
+  "autoflake>=2.3.1",
+  "mypy-extensions>=1.1.0; python_version>=\"3.8\"",
+  "mypy>=1.0.0,<1.10.0; python_version<\"3.9\"",
+  "mypy>=1.19.1; python_version>=\"3.9\"",
+  "pyflakes>=2.0.0,<3.4.0; python_version<\"3.9\"",
+  "pylint>=2.0.0,<3.3.9; python_version<\"3.9\"",
+  "pytest-cov>=4.0.0",
+  "pytest-html>=3.0.0,<4.0.0; python_version<\"3.9\"",
+  "pytest-html>=4.2.0",
+  "pytest-json-report>=1.5.0",
+  "pytest-metadata>=2.0.0,<3.0.0; python_version<\"3.9\"",
+  "pytest-metadata>=3.1.1",
+  "pytest-xdist>=2.0.0,<3.8.0; python_version<\"3.9\"",
+  "pytest-xdist>=3.8.0",
+  "pytest>=7.0.0",
+  "pytest>=7.0.0,<8.0.0; python_version<\"3.9\"",
+  "python-dateutil>=2.9.0.post0",
+  "python-dotenv>=1.2.1",
+  "python-multipart>=0.0.22",
+  "ruff>=0.5.3",
+  "ruff>=0.5.3,<0.6.0; python_version<\"3.9\"",
+  "snakeviz>=2.2.2",
+  "tomli-w>=1.2.0; python_version>\"3.11\"",
+  "tomli>=2.4.0; python_version>\"3.11\"",
+  "tomllib; python_version<\"3.11\"",
+  "types-cffi>=1.17.0.20250915",
+  "types-colorama>=0.4.15.20250801",
+  "types-defusedxml>=0.7.0.20250822",
+  "types-pillow>=10.2.0.20240822",
+  "types-psutil>=7.2.2.20260130",
+  "types-pywin32>=38; sys_platform == \"win32\"",
+  "types-pyyaml>=6.0.12.20250915",
+  "types-requests>=2.32.4.20260107",
+  "types-2.1.12.1.1>=2.2.0.20260117",
+  "types-setuptools>=80.10.0.20260124",
+  "typing-extensions>=4.15.0,<4.9.0; python_version<\"3.9\"",
+  "typing-extensions>=4.15.0; python_version>=\"3.9\"",
+  "typing-inspection>=0.4.2"
+]
+encodings = [
+  "charset-normalizer>=2.0,<3.4; python_version<\"3.9\"",
+  "charset-normalizer>=2.0; python_version>=\"3.9\""
+]
+exp = [
+  "fusepy>=3.0.1",
+  "pywin32>=38; sys_platform == \"win32\""
+]
+extra = [
+  "PyYAML>=6.0",
+  "colorama>=0.4.6",
+  "comtypes>=1.4.0; sys_platform == \"win32\"",
+  "gputil>=1.4.0",
+  "psutil>=7.2.2"
+]
 font = [
-    "pillow>=9.5; python_implementation == 'CPython'",
-    "pillow>10,<11.1.0; python_implementation == 'PyPy'",
+  "pillow>10,<11.1.0; python_implementation == 'PyPy'",
+  "pillow>=9.5; python_implementation == 'CPython'"
 ]
 gl = [
-    "numpy>=1.22",
-    "PyGLM>=2.0,<2.8; python_implementation == 'CPython'",
-    "PyOpenGL>=3.1",
+  "PyGLM>=2.0,<2.8; python_implementation == 'CPython'",
+  "PyOpenGL>=3.1",
+  "numpy>=1.22"
 ]
-newgl = []
-secure_xml = ["defusedxml~=0.7"]
-encodings = [
-    "charset-normalizer>=2.0,<3.4; python_version<\"3.9\"",
-    "charset-normalizer>=2.0; python_version>=\"3.9\"",
+gl_exp = [
+  "moderngl",
 ]
-all = [
-    "pillow>=9.5",
-    "numpy>=1.22",
-    "PyOpenGL>=3.1",
-    "PyGLM>=2.0; python_implementation == 'CPython'",
-    "defusedxml~=0.7",
-    "charset-normalizer>=2.0",
+updater = [
+  "certifi>=2021.10.8",
+  "pycryptodome>=3.19.0",
+  "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
+  "requests>=2.25.0; python_version>=\"3.9\"",
 ]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "ruff>=0.5.3",
-    "mypy>=1.0.0",
-]
+
+[project.scripts]
+kotorcli = "pykotor.cli.__main__:main"
+pykotor = "pykotor.cli.__main__:main"
+pykotorcli = "pykotor.cli.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/OldRepublicDevs/PyKotor"
-Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
-Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
-Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
 Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
-
-# Poetry configuration for those who prefer it
-[tool.poetry]
-name = "pykotor"
-version = "2.1.0"
-description = "Read, modify and write files used by KotOR's game engine."
-authors = ["NickHugi", "Boden Crouch <halomastar@gmail.com>"]
-maintainers = ["Boden Crouch <halomastar@gmail.com>"]
-readme = "../../README.md"
-license = "LGPL-3.0-or-later"
-packages = [
-    { include = "pykotor", from = "src" },
-    { include = "utility", from = "src" },
-    { include = "loggerplus", from = "src" },
-]
-keywords = [
-    "kotor", "kotor1", "kotor2", "tsl",
-    "star-wars", "knights-of-the-old-republic",
-    "modding", "game-files", "pykotor",
-]
-
-[tool.poetry.dependencies]
-python = "^3.8"
-ply = ">=3.11,<4"
-pycryptodome = ">=3.19.0"
-
-[tool.poetry.extras]
-font = ["pillow"]
-gl = ["numpy", "PyOpenGL", "PyGLM"]
-secure_xml = ["defusedxml"]
-encodings = ["charset-normalizer"]
-all = ["pillow", "numpy", "PyOpenGL", "PyGLM", "defusedxml", "charset-normalizer"]
-
-[tool.poetry.urls]
-Homepage = "https://github.com/OldRepublicDevs/PyKotor"
 Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
-Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
 Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
+Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-where = ["src"]
 namespaces = true
-
-[project.scripts]
-pykotor = "pykotor.cli.__main__:main"
-pykotorcli = "pykotor.cli.__main__:main"
+where = ["src"]

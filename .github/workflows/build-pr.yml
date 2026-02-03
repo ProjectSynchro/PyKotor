@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       tool:
-        description: 'Tool to build (toolset, holopatcher, kotordiff, etc.)'
+        description: 'Tool to build (directory or project name). Use "all-affected" for changed tools.'
         required: false
         default: 'all-affected'
       full_build:
@@ -56,53 +56,46 @@ jobs:
           python3 << 'PYTHON_SCRIPT'
           import json
           import os
-          import re
+          import subprocess
           from pathlib import Path
-
-          def derive_build_name(tool_dir_name: str) -> str:
-              """Derive the build name from tool directory name."""
-              name_lower = tool_dir_name.lower()
-
-              # Handle known special cases for backward compatibility
-              special_mappings = {
-                  "holocrontoolset": "toolset",
-                  "holopatcher": "holopatcher",
-                  "batchpatcher": "batchpatcher",
-              }
-
-              if name_lower in special_mappings:
-                  return special_mappings[name_lower]
-
-              # Default: use the tool name in lowercase
-              return name_lower
 
           def find_config_file(tool_dir: Path, tool_name_lower: str) -> Path | None:
               """Find the config file for a tool."""
-              src_dir = tool_dir / "src" / tool_name_lower
+              src_root = tool_dir / "src"
+              if not src_root.exists():
+                return None
 
-              # Check for config.py directly in src/<tool>/
-              config_py = src_dir / "config.py"
-              if config_py.exists():
+              def scan_dir(candidate: Path) -> Path | None:
+                config_py = candidate / "config.py"
+                if config_py.exists():
                   return config_py
 
-              # Check for config/config_info.py
-              config_info_py = src_dir / "config" / "config_info.py"
-              if config_info_py.exists():
+                config_info_py = candidate / "config" / "config_info.py"
+                if config_info_py.exists():
                   return config_info_py
 
-              # Check for __main__.py with CURRENT_VERSION
-              main_py = src_dir / "__main__.py"
-              if main_py.exists():
-                  content = main_py.read_text()
-                  if 'CURRENT_VERSION' in content:
-                      return main_py
+                main_py = candidate / "__main__.py"
+                if main_py.exists() and "CURRENT_VERSION" in main_py.read_text():
+                  return main_py
 
-              # Check for __init__.py with __version__
-              init_py = src_dir / "__init__.py"
-              if init_py.exists():
-                  content = init_py.read_text()
-                  if '__version__' in content:
-                      return init_py
+                init_py = candidate / "__init__.py"
+                if init_py.exists() and "__version__" in init_py.read_text():
+                  return init_py
+
+                return None
+
+              preferred = src_root / tool_name_lower
+              if preferred.exists():
+                found = scan_dir(preferred)
+                if found:
+                  return found
+
+              for subdir in src_root.iterdir():
+                if not subdir.is_dir():
+                  continue
+                found = scan_dir(subdir)
+                if found:
+                  return found
 
               return None
 
@@ -131,44 +124,32 @@ jobs:
           for f in changed_files:
               print(f"  {f}")
 
-          # Discover all tools in Tools/
-          tools_dir = Path('Tools')
-          all_tools = []
+          # Discover all tools dynamically
+          discover_cmd = ["python3", ".github/scripts/discover_tools.py", "--format", "json"]
+          tools_json = subprocess.check_output(discover_cmd, text=True)
+          all_tools = json.loads(tools_json)
+          all_tool_infos = []
           changed_tools = []
 
-          if tools_dir.exists():
-              for tool_dir in sorted(tools_dir.iterdir()):
-                  if tool_dir.is_dir() and not tool_dir.name.startswith('.'):
-                      tool_name = tool_dir.name
-                      build_name = derive_build_name(tool_name)
-                      tool_name_lower = tool_name.lower()
+          for tool in all_tools:
+              tool_dir = Path(tool["path"])
+              tool_dir_name = tool["directory"]
+              tool_changed = any(f.startswith(f"Tools/{tool_dir_name}/") for f in changed_files)
+              tool_name_lower = tool_dir_name.lower()
 
-                      # Check if this tool has a compile script
-                      compile_script = Path(f'compile/compile_{build_name}.ps1')
-                      if not compile_script.exists():
-                          # Try .sh or .bat
-                          compile_script = Path(f'compile/compile_{build_name}.sh')
-                          if not compile_script.exists():
-                              compile_script = Path(f'compile/compile_{build_name}.bat')
+              tool_info = {
+                  "tool_dir": tool_dir_name,
+                  "build_name": tool.get("build_name") or tool.get("name") or tool_dir_name,
+                  "display_name": tool.get("display_name") or tool_dir_name,
+                  "path": tool.get("path") or f"Tools/{tool_dir_name}",
+                  "requires_qt": tool.get("requires_qt", False),
+                  "changed": tool_changed,
+                  "has_config": find_config_file(tool_dir, tool_name_lower) is not None,
+              }
 
-                      if not compile_script.exists():
-                          print(f"  Skipping {tool_name}: no compile script found")
-                          continue
-
-                      # Check if tool was changed
-                      tool_changed = any(f.startswith(f'Tools/{tool_name}/') for f in changed_files)
-
-                      tool_info = {
-                          'tool_dir': tool_name,
-                          'build_name': build_name,
-                          'display_name': tool_name,
-                          'changed': tool_changed,
-                          'has_config': find_config_file(tool_dir, tool_name_lower) is not None
-                      }
-
-                      all_tools.append(tool_info)
-                      if tool_changed:
-                          changed_tools.append(tool_info)
+                all_tool_infos.append(tool_info)
+                if tool_changed:
+                  changed_tools.append(tool_info)
 
           # Check for Libraries/ changes
           libraries_changed = any(f.startswith('Libraries/') for f in changed_files)
@@ -177,20 +158,29 @@ jobs:
           compile_changed = any(f.startswith('compile/') for f in changed_files)
 
           # If libraries or compile changed, mark all tools as affected
-          if libraries_changed or compile_changed:
-              for tool in all_tools:
-                  tool['changed'] = True
-              changed_tools = all_tools
+            if libraries_changed or compile_changed:
+              changed_tools = list(all_tool_infos)
+
+          # Filter by workflow input if provided
+          tool_input = os.environ.get("INPUT_TOOL", "").strip().lower()
+          if tool_input and tool_input != "all-affected":
+              changed_tools = [
+                  t for t in changed_tools
+                  if tool_input in {t["tool_dir"].lower(), t["build_name"].lower()}
+              ]
 
           # Build tools matrix for GitHub Actions
-          tools_matrix = []
-          for tool in changed_tools:
-              tools_matrix.append({
-                  'tool_dir': tool['tool_dir'],
-                  'build_name': tool['build_name'],
-                  'display_name': tool['display_name'],
-                  'has_config': tool['has_config']
-              })
+          tools_matrix = [
+              {
+                  "tool_dir": t["tool_dir"],
+                  "build_name": t["build_name"],
+                  "display_name": t["display_name"],
+                  "path": t["path"],
+                  "requires_qt": t["requires_qt"],
+                  "has_config": t["has_config"],
+              }
+              for t in changed_tools
+          ]
 
           any_tool = len(changed_tools) > 0
 
@@ -199,7 +189,7 @@ jobs:
           print(f"  Libraries changed: {libraries_changed}")
           print(f"  Compile scripts changed: {compile_changed}")
           print(f"  Tools affected: {len(changed_tools)}")
-          for tool in changed_tools:
+            for tool in changed_tools:
               print(f"    - {tool['display_name']} (build_name: {tool['build_name']})")
           print(f"  Any tool affected: {any_tool}")
 
@@ -210,6 +200,8 @@ jobs:
               f.write(f"compile={'true' if compile_changed else 'false'}\n")
               f.write(f"any_tool={'true' if any_tool else 'false'}\n")
           PYTHON_SCRIPT
+        env:
+          INPUT_TOOL: ${{ github.event.inputs.tool }}
 
   # Validate version consistency in config files
   version-check:
@@ -235,31 +227,41 @@ jobs:
 
           def find_config_file(tool_dir: Path, tool_name_lower: str) -> Path | None:
               """Find the config file for a tool."""
-              src_dir = tool_dir / "src" / tool_name_lower
+              src_root = tool_dir / "src"
+              if not src_root.exists():
+                return None
 
-              # Check for config.py directly in src/<tool>/
-              config_py = src_dir / "config.py"
-              if config_py.exists():
+              def scan_dir(candidate: Path) -> Path | None:
+                config_py = candidate / "config.py"
+                if config_py.exists():
                   return config_py
 
-              # Check for config/config_info.py
-              config_info_py = src_dir / "config" / "config_info.py"
-              if config_info_py.exists():
+                config_info_py = candidate / "config" / "config_info.py"
+                if config_info_py.exists():
                   return config_info_py
 
-              # Check for __main__.py with CURRENT_VERSION
-              main_py = src_dir / "__main__.py"
-              if main_py.exists():
-                  content = main_py.read_text()
-                  if 'CURRENT_VERSION' in content:
-                      return main_py
+                main_py = candidate / "__main__.py"
+                if main_py.exists() and "CURRENT_VERSION" in main_py.read_text():
+                  return main_py
 
-              # Check for __init__.py with __version__
-              init_py = src_dir / "__init__.py"
-              if init_py.exists():
-                  content = init_py.read_text()
-                  if '__version__' in content:
-                      return init_py
+                init_py = candidate / "__init__.py"
+                if init_py.exists() and "__version__" in init_py.read_text():
+                  return init_py
+
+                return None
+
+              preferred = src_root / tool_name_lower
+              if preferred.exists():
+                found = scan_dir(preferred)
+                if found:
+                  return found
+
+              for subdir in src_root.iterdir():
+                if not subdir.is_dir():
+                  continue
+                found = scan_dir(subdir)
+                if found:
+                  return found
 
               return None
 
@@ -276,21 +278,6 @@ jobs:
                           errors.append(f"{tool_name}: currentVersion not found")
                       else:
                           print(f"✓ {tool_name} currentVersion: {match.group(1)}")
-
-                      # Check for toolsetLatestVersion pattern (for toolset)
-                      if 'toolsetLatestVersion' in content:
-                          match = re.search(r'"toolsetLatestVersion":\s*"([^"]+)"', content)
-                          if not match:
-                              errors.append(f"{tool_name}: toolsetLatestVersion not found")
-                          else:
-                              print(f"✓ {tool_name} latestVersion: {match.group(1)}")
-
-                      if 'toolsetLatestBetaVersion' in content:
-                          match = re.search(r'"toolsetLatestBetaVersion":\s*"([^"]+)"', content)
-                          if not match:
-                              errors.append(f"{tool_name}: toolsetLatestBetaVersion not found")
-                          else:
-                              print(f"✓ {tool_name} betaVersion: {match.group(1)}")
 
                   # Check for CURRENT_VERSION
                   elif 'CURRENT_VERSION' in content:
@@ -375,10 +362,12 @@ jobs:
       - name: Build ${{ matrix.tool.display_name }} (validation)
         uses: ./.github/actions/build-tool
         with:
-          tool_name: ${{ matrix.tool.build_name }}
+          tool_path: ${{ matrix.tool.path }}
+          tool_display_name: ${{ matrix.tool.display_name }}
+          tool_requires_qt: ${{ matrix.tool.requires_qt }}
           python_version: '3.8'
           architecture: ${{ matrix.architecture }}
-          qt_version: ${{ matrix.tool.build_name == 'toolset' && 'PyQt6' || '' }}
+          qt_api: ${{ matrix.tool.requires_qt && 'PyQt6' || '' }}
           dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
           upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
           artifact_retention_days: '3'

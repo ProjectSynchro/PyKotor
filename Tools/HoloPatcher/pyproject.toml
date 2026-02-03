@@ -8,14 +8,10 @@ description = "A faster, cross-platform alternative to TSLPatcher written in Pyt
 version = "2.0.0a3"
 requires-python = ">= 3.8"
 dependencies = [
-    "pykotor>=2.0.2",
-    "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
-    "requests>=2.25.0; python_version>=\"3.9\"",
-    "charset-normalizer>=2.0,<3.4",  # auto-detect encoding of INI/RTF files
-    "pycryptodome",  # for autoupdate feature.
+    "pykotor[encodings,updater]>=2.1.0",
 ]
 authors = [{ name = "NickHugi" }]
-maintainers = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
+maintainers = [{ name = "th3w1zard1", email = "boden.crouch@gmail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { text = "LGPL-3.0-or-later" }
 keywords = [
@@ -58,33 +54,31 @@ Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 name = "holopatcher"
 description = "A faster, cross-platform alternative to TSLPatcher written in Python."
 version = "2.0.0a3"
-authors = ["NickHugi", "Boden Crouch <halomastar@gmail.com>"]
-maintainers = ["Boden Crouch <halomastar@gmail.com>"]
+authors = ["NickHugi", "th3w1zard1 <boden.crouch@gmail.com>"]
+maintainers = ["th3w1zard1 <boden.crouch@gmail.com>"]
 readme = "README.md"
 license = "LGPL-3.0-or-later"
 packages = [{ include = "holopatcher", from = "src" }]
 keywords = [
-    "kotor", "tslpatcher", "holopatcher",
-    "modding", "patcher", "pykotor",
+    "kotor", "kotor1", "kotor2", "tsl",
+    "star-wars", "knights-of-the-old-republic",
+    "modding", "patcher", "installer",
+    "tslpatcher", "holopatcher", "pykotor",
 ]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^2.0.2"
-requests = ">=2.25.0"
-charset-normalizer = ">=2.0,<3.5"
-
-[tool.poetry.extras]
-updates = ["requests", "pycryptodome"]
+pykotor = {version = "^2.1.0", extras = ["encodings", "updater"]}
 
 [tool.poetry.scripts]
 holopatcher = "holopatcher.__main__:main"
 
 [tool.poetry.urls]
-Homepage = "https://github.com/OldRepublicDevs/PyKotor"
-Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
+Homepage = "https://deadlystream.com/files/file/2243-holopatcher/"
+Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki/Installing-Mods-with-HoloPatcher"
 Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
 Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
+Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -94,3 +88,22 @@ where = ["src"]
 
 [tool.ruff]
 extend = "../../pyproject.toml"
+
+[tool.pyinstaller]
+console = true
+exclude-modules = [
+    "numpy",
+    "PyQt5",
+    "PyQt6",
+    "PySide2",
+    "PySide6",
+    "PIL",
+    "matplotlib",
+    "PyOpenGL",
+    "PyGLM",
+    "dl_translate",
+    "torch",
+]
+
+[tool.dependencies]
+linux-profiles = ["tk"]

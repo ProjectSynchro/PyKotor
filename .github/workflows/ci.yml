@@ -33,20 +33,11 @@ jobs:
                   if d.is_dir() and not d.name.startswith(".")
               ])
 
-          def derive_build_name(name: str) -> str:
-              lower = name.lower()
-              if lower == "holocrontoolset":
-                  return "toolset"
-              return lower
-
           libraries_root = Path("Libraries")
           tools_root = Path("Tools")
 
           libraries = [f"Libraries/{d}" for d in list_dirs(libraries_root)]
-          tools = []
-          for d in list_dirs(tools_root):
-              build = derive_build_name(d)
-              tools.append(f"Tools/{d}")
+            tools = [f"Tools/{d}" for d in list_dirs(tools_root)]
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
               fh.write(f"libraries_matrix={json.dumps(libraries)}\n")

@@ -1,20 +1,5 @@
 # Root workspace requirements
 # This file matches pyproject.toml and includes all libraries and tools
 
-# NOTE: pykotor is provided via PYTHONPATH (Libraries/PyKotor/src) for development.
-# Do NOT install pykotor from PyPI - it will override the local source code.
-# For production/standalone installs, pykotor is specified in pyproject.toml dependencies.
--e Libraries/PyKotor
-
 # Include library requirements
 -r Libraries/PyKotor/requirements.txt
-
-# Include tool requirements
--r Tools/HolocronToolset/requirements.txt
--r Tools/HoloPatcher/requirements.txt
--r Tools/HoloPazaak/requirements.txt
--r Tools/KotorDiff/requirements.txt
-
-# Unfinished tools:
-#-r Tools/BatchPatcher/requirements.txt
-#-r Tools/HolocronAI/requirements.txt

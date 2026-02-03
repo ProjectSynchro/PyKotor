@@ -102,6 +102,28 @@ jobs:
       shell: pwsh
 
     - uses: actions/checkout@v4
+    - name: Discover tool for dependency setup
+      id: discover-tool
+      shell: pwsh
+      run: |
+      python - << 'PYTHON_SCRIPT'
+      import json
+      import os
+      import subprocess
+
+      tools = json.loads(subprocess.check_output([
+        "python",
+        ".github/scripts/discover_tools.py",
+        "--format",
+        "json",
+      ], text=True))
+      if not tools:
+        raise SystemExit("No tools discovered")
+
+      tool = tools[0]
+      with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+        fh.write(f"tool_path={tool['path']}\n")
+      PYTHON_SCRIPT
     - name: Set up ${{ matrix.python_pypy }} ${{ matrix.python-version }}
       if: ${{ matrix.python_pypy == 'pypy' }}
       uses: actions/setup-python@v5
@@ -114,20 +136,40 @@ jobs:
       env:
         MATRIX_ARCH: ${{ matrix.architecture }}
       run: |
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -force_python_version ${{ matrix.python-version }}
-        & $pythonExePath -m pip install --upgrade pip
+        $venvName = ".venv_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+
+        # Policy: use shared wrappers only (compile/deps_tool.ps1); do not dot-source the venv helper directly.
+        $depsArgs = @(
+          '--tool-path', '${{ steps.discover-tool.outputs.tool_path }}',
+          '--venv-name', $venvName,
+          '--noprompt',
+          '--force-python-version', '${{ matrix.python-version }}',
+          '--pip-install-pyinstaller', ''
+        )
         if ("${{ matrix.python-version }}" -eq "3.7") {
-          pip install -r requirements-dev-py37.txt --prefer-binary
+          $depsArgs += @('--pip-requirements', 'requirements-dev-py37.txt')
         }
         else {
-          pip install -r requirements-dev.txt --prefer-binary
+          $depsArgs += @('--pip-requirements', 'requirements-dev.txt')
+        }
+
+        & ./compile/deps_tool.ps1 @depsArgs
+
+        $pythonExePath = if ($IsWindows) { ".\\$venvName\\Scripts\\python.exe" } else { "./$venvName/bin/python" }
+        if (-not (Test-Path -LiteralPath $pythonExePath)) {
+          throw "Expected venv python not found at '$pythonExePath'"
         }
       shell: pwsh
 
     - name: Run all unittests/pytests
       if: ${{ success() || failure() }}
       run: |
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+        $venvName = ".venv_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+        $pythonExePath = if ($IsWindows) { ".\\$venvName\\Scripts\\python.exe" } else { "./$venvName/bin/python" }
+        if (-not (Test-Path -LiteralPath $pythonExePath)) {
+          throw "Expected venv python not found at '$pythonExePath'"
+        }
+
         & $pythonExePath -m pytest tests -v -ra -o log_cli=true --capture=no --junitxml=pytest_report.xml --html=pytest_report.html --self-contained-html --tb=no --continue-on-collection-errors
       shell: pwsh
       continue-on-error: true

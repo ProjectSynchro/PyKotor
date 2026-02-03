@@ -30,20 +30,15 @@ jobs:
             const labels = [];
             const lcBody = body.toLowerCase();
 
-            // Discover tools dynamically from Tools/ (HolocronToolset -> toolset)
+            // Discover tools dynamically from Tools/
             const toolsDir = path.join(process.cwd(), 'Tools');
             let tools = [];
-            const deriveBuildName = (name) => {
-              const lower = name.toLowerCase();
-              if (lower === 'holocrontoolset') return 'toolset';
-              return lower;
-            };
             if (fs.existsSync(toolsDir)) {
               tools = fs.readdirSync(toolsDir, { withFileTypes: true })
                 .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
                 .map((d) => ({
                   dir: d.name,
-                  build: deriveBuildName(d.name),
+                  build: d.name.toLowerCase(),
                 }));
             }
 

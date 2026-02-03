@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tool:
-        description: 'Tool name (matches tool directory or build name; e.g., toolset, holopatcher, kotordiff)'
+        description: 'Tool name (matches tool directory or build name)'
         required: true
         type: string
       version:
@@ -36,6 +36,8 @@ jobs:
       tool_dir: ${{ steps.validate.outputs.tool_dir }}
       build_name: ${{ steps.validate.outputs.build_name }}
       display_name: ${{ steps.validate.outputs.display_name }}
+      tool_path: ${{ steps.validate.outputs.tool_path }}
+      requires_qt: ${{ steps.validate.outputs.requires_qt }}
     steps:
       - uses: actions/checkout@v4
 
@@ -46,6 +48,7 @@ jobs:
           import json
           import os
           import re
+          import subprocess
           import sys
           from pathlib import Path
 
@@ -68,48 +71,55 @@ jobs:
             print("valid=false", file=open(os.environ["GITHUB_OUTPUT"], "a"))
             sys.exit(1)
 
-          def derive_build_name(tool_dir_name: str) -> str:
-            name_lower = tool_dir_name.lower()
-            special_mappings = {
-              "holocrontoolset": "toolset",
-            }
-            return special_mappings.get(name_lower, name_lower)
-
           def find_config_file(tool_dir: Path, tool_name_lower: str) -> Path | None:
-            src_dir = tool_dir / "src" / tool_name_lower
-            config_py = src_dir / "config.py"
-            if config_py.exists():
-              return config_py
-            config_info_py = src_dir / "config" / "config_info.py"
-            if config_info_py.exists():
-              return config_info_py
-            main_py = src_dir / "__main__.py"
-            if main_py.exists():
-              content = main_py.read_text()
-              if "CURRENT_VERSION" in content:
+            src_root = tool_dir / "src"
+            if not src_root.exists():
+              return None
+
+            def scan_dir(candidate: Path) -> Path | None:
+              config_py = candidate / "config.py"
+              if config_py.exists():
+                return config_py
+              config_info_py = candidate / "config" / "config_info.py"
+              if config_info_py.exists():
+                return config_info_py
+              main_py = candidate / "__main__.py"
+              if main_py.exists() and "CURRENT_VERSION" in main_py.read_text():
                 return main_py
-            init_py = src_dir / "__init__.py"
-            if init_py.exists():
-              content = init_py.read_text()
-              if "__version__" in content:
+              init_py = candidate / "__init__.py"
+              if init_py.exists() and "__version__" in init_py.read_text():
                 return init_py
+              return None
+
+            preferred = src_root / tool_name_lower
+            if preferred.exists():
+              found = scan_dir(preferred)
+              if found:
+                return found
+
+            for subdir in src_root.iterdir():
+              if not subdir.is_dir():
+                continue
+              found = scan_dir(subdir)
+              if found:
+                return found
+
             return None
 
-          tools = []
-          for tool_path in sorted(tools_dir.iterdir()):
-            if tool_path.is_dir() and not tool_path.name.startswith("."):
-              t_lower = tool_path.name.lower()
-              build_name = derive_build_name(tool_path.name)
-              config_path = find_config_file(tool_path, t_lower)
-              tools.append(
-                {
-                  "tool_dir": tool_path.name,
-                  "tool_dir_lower": t_lower,
-                  "build_name": build_name,
-                  "config_file": str(config_path) if config_path else "",
-                  "display_name": tool_path.name,
-                }
-              )
+          discover_cmd = ["python3", ".github/scripts/discover_tools.py", "--format", "json"]
+          tools = json.loads(subprocess.check_output(discover_cmd, text=True))
+          tools = [
+            {
+              "tool_dir": t["directory"],
+              "tool_dir_lower": t["directory"].lower(),
+              "build_name": (t.get("build_name") or t.get("name") or t["directory"]).lower(),
+              "config_file": str(find_config_file(tools_dir / t["directory"], t["directory"].lower()) or ""),
+              "display_name": t.get("display_name") or t["directory"],
+              "path": t.get("path") or f"Tools/{t['directory']}",
+              "requires_qt": t.get("requires_qt", False),
+            }
+            for t in tools
+          ]
 
           matching = [
             t for t in tools
@@ -269,45 +279,19 @@ jobs:
         run: |
           BUILD_NAME="${{ needs.validate-version.outputs.build_name }}"
 
-          CANDIDATES=(
-            "compile/compile_${BUILD_NAME}.ps1"
-            "compile/compile_${BUILD_NAME}.sh"
-            "compile/compile_${BUILD_NAME}.bat"
-          )
-          DEPS_CANDIDATES=(
-            "compile/deps_${BUILD_NAME}.ps1"
-            "compile/deps_${BUILD_NAME}.sh"
-            "compile/deps_${BUILD_NAME}.bat"
-          )
+          echo "=== Checking build wrappers for ${BUILD_NAME} ==="
 
-          echo "=== Checking compile scripts for ${BUILD_NAME} ==="
-
-          FOUND_COMPILE=""
-          for c in "${CANDIDATES[@]}"; do
-            if [ -f "$c" ]; then
-              echo "✓ Compile script exists: $c"
-              FOUND_COMPILE="$c"
-              break
-            fi
-          done
-
-          if [ -z "$FOUND_COMPILE" ]; then
-            echo "❌ Compile script NOT found for ${BUILD_NAME}"
+          if [ ! -f "compile/compile_tool.ps1" ]; then
+            echo "❌ compile/compile_tool.ps1 NOT found"
             exit 1
           fi
+          echo "✓ compile/compile_tool.ps1 exists"
 
-          FOUND_DEPS="false"
-          for d in "${DEPS_CANDIDATES[@]}"; do
-            if [ -f "$d" ]; then
-              echo "✓ Dependencies script exists: $d"
-              FOUND_DEPS="true"
-              break
-            fi
-          done
-
-          if [ "$FOUND_DEPS" = "false" ]; then
-            echo "⚠️  Dependencies script not found (may not be required)"
+          if [ ! -f "compile/deps_tool.ps1" ]; then
+            echo "❌ compile/deps_tool.ps1 NOT found"
+            exit 1
           fi
+          echo "✓ compile/deps_tool.ps1 exists"
         shell: bash
 
   dry-run-build:
@@ -330,10 +314,12 @@ jobs:
       - name: Build validation (dry run)
         uses: ./.github/actions/build-tool
         with:
-          tool_name: ${{ needs.validate-version.outputs.build_name }}
+          tool_path: ${{ needs.validate-version.outputs.tool_path }}
+          tool_display_name: ${{ needs.validate-version.outputs.display_name }}
+          tool_requires_qt: ${{ needs.validate-version.outputs.requires_qt }}
           python_version: '3.8'
           architecture: x64
-          qt_version: ${{ needs.validate-version.outputs.build_name == 'toolset' && 'PyQt6' || '' }}
+          qt_api: ${{ needs.validate-version.outputs.requires_qt == 'true' && 'PyQt6' || '' }}
           dry_run: ${{ github.event.inputs.run_full_build != 'true' && 'true' || 'false' }}
           upload_artifact: ${{ github.event.inputs.run_full_build }}
           artifact_retention_days: '3'
@@ -364,10 +350,12 @@ jobs:
       - name: Build tool
         uses: ./.github/actions/build-tool
         with:
-          tool_name: ${{ needs.validate-version.outputs.build_name }}
+          tool_path: ${{ needs.validate-version.outputs.tool_path }}
+          tool_display_name: ${{ needs.validate-version.outputs.display_name }}
+          tool_requires_qt: ${{ needs.validate-version.outputs.requires_qt }}
           python_version: '3.8'
           architecture: ${{ matrix.architecture }}
-          qt_version: ${{ needs.validate-version.outputs.build_name == 'toolset' && 'PyQt6' || '' }}
+          qt_api: ${{ needs.validate-version.outputs.requires_qt == 'true' && 'PyQt6' || '' }}
           dry_run: 'false'
           upload_artifact: 'true'
           artifact_retention_days: '7'

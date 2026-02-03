@@ -12,7 +12,7 @@ license = { text = "MIT" }
 authors = [
     { name = "PyKotor Team" }
 ]
-maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
+maintainers = [{name = "th3w1zard1", email = "boden.crouch@gmail.com"}]
 keywords = [
     "kotor", "star-wars",
     "ai", "llm", "chat",
@@ -35,7 +35,7 @@ classifiers = [
     "Environment :: X11 Applications :: Qt",
 ]
 dependencies = [
-    "pykotor>=2.0.2",
+    "pykotor>=2.1.0",
 ]
 
 [project.scripts]
@@ -61,21 +61,33 @@ Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
 name = "holocron-ai"
 version = "0.1.1"
 description = "A Star Wars character AI chat interface using PyQt and LLMs"
-authors = ["PyKotor Team", "Boden Crouch <halomastar@gmail.com>"]
-maintainers = ["Boden Crouch <halomastar@gmail.com>"]
+authors = ["PyKotor Team", "th3w1zard1 <boden.crouch@gmail.com>"]
+maintainers = ["th3w1zard1 <boden.crouch@gmail.com>"]
 readme = "README.md"
 license = "MIT"
 packages = [{ include = "holocron_ai", from = "src" }]
+keywords = [
+    "kotor", "star-wars",
+    "ai", "llm", "chat",
+    "character", "roleplay",
+    "pyqt5", "pykotor",
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^2.0.2"
+pykotor = "^2.1.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0.0"
+ruff = ">=0.5.3"
 
 [tool.poetry.scripts]
 holocron-ai = "holocron_ai.__main__:main"
+holocron-ai-gui = "holocron_ai.__main__:main"
 
 [tool.poetry.urls]
 Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
 Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
 Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
 
@@ -91,3 +103,22 @@ disable = ["C0111", "C0103"]
 [tool.black]
 line-length = 88
 target-version = ['py38']
+
+[tool.pyinstaller]
+console = true
+exclude-modules = [
+    "numpy",
+    "PyQt5",
+    "PyQt6",
+    "PySide2",
+    "PySide6",
+    "PIL",
+    "matplotlib",
+    "PyOpenGL",
+    "PyGLM",
+    "dl_translate",
+    "torch",
+]
+
+[tool.dependencies]
+# No special system packages needed for HolocronAI

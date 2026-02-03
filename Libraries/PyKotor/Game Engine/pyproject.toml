@@ -7,7 +7,7 @@ name = "pykotor-engine"
 version = "2.0.0"
 description = "Panda3D-based game engine for KotOR."
 authors = [{name = "NickHugi"}]
-maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
+maintainers = [{name = "th3w1zard1", email = "boden.crouch@gmail.com"}]
 readme = "README.md"
 license = {text = "LGPL-3.0-or-later"}
 keywords = [
@@ -84,8 +84,8 @@ Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 name = "pykotor-engine"
 version = "2.0.0"
 description = "Read, modify and write files used by KotOR's game engine."
-authors = ["NickHugi", "Boden Crouch <halomastar@gmail.com>"]
-maintainers = ["Boden Crouch <halomastar@gmail.com>"]
+authors = ["NickHugi", "th3w1zard1 <boden.crouch@gmail.com>"]
+maintainers = ["th3w1zard1 <boden.crouch@gmail.com>"]
 readme = "../../README.md"
 license = "LGPL-3.0-or-later"
 packages = [

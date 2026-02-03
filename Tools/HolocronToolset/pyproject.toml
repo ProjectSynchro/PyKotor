@@ -24,61 +24,60 @@ description = "A PyQt-backed program with a collection of tools and editors that
 version = "4.0.0b15"
 requires-python = ">=3.8"
 dependencies = [
-  "pykotor[all]>=2.1.0",
   "certifi>=2021.10.8",
+  "comtypes>=1.4.0; sys_platform == \"win32\"",
   "idna>=3.11",
+  "jsonpickle>=4.1.1",
   "Markdown>=3.4.4,<3.9; python_version<\"3.9\"",
   "Markdown>=3.4.4; python_version>=\"3.9\"",
   "numpy>=1.19.0,<1.25.0; python_version<\"3.9\"",
   "numpy>=1.19.0; python_version>=\"3.9\"",
-  "PyQt6>=6.6.1,<6.10.1; python_version==\"3.8\"",
-  "PyQt6>=6.10.1; python_version>=\"3.9\"",
-  "PyQt6-Qt6>=6.6.1,<6.10.1; python_version==\"3.8\"",
-  "PyQt6-Qt6>=6.10.1; python_version>=\"3.9\"",
-  "PyQt6-sip>=12.10,<13.10.3; python_version<\"3.10\"",
-  "PyQt6-sip>=13.10.3; python_version>=\"3.10\"",
+  "Pillow>=9.5; python_implementation == 'CPython'",
+  "Pillow>10,<11.1.0; python_implementation == 'PyPy'",
+  "pykotor[encodings,extras,font,gl,updater]>=2.1.0",
   "PyQt5-Qt5>=5.15; python_version==\"3.8\"",
   "PyQt5-sip>=12.10; python_version==\"3.8\"",
   "PyQt5>=5.15; python_version==\"3.8\"",
-  "PySide6; python_implementation == 'PyPy' and python_version >= '3.9'",
-  "PySide6>=6.10.1; python_implementation == 'PyPy' and python_version >= '3.9'",
+  "PyQt6-Qt6>=6.10.1; python_version>=\"3.9\"",
+  "PyQt6-Qt6>=6.6.1,<6.10.1; python_version==\"3.8\"",
+  "PyQt6-sip>=12.10,<13.10.3; python_version<\"3.10\"",
+  "PyQt6-sip>=13.10.3; python_version>=\"3.10\"",
+  "PyQt6>=6.10.1; python_version>=\"3.9\"",
+  "PyQt6>=6.6.1,<6.10.1; python_version==\"3.8\"",
   "PySide6_Addons>=6.10.1; python_implementation == 'PyPy' and python_version >= '3.9'",
   "PySide6_Essentials>=6.10.1; python_implementation == 'PyPy' and python_version >= '3.9'",
+  "PySide6; python_implementation == 'PyPy' and python_version >= '3.9'",
+  "PySide6>=6.10.1; python_implementation == 'PyPy' and python_version >= '3.9'",
   "qtpy>=2.4.3",
   "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
   "requests>=2.25.0; python_version>=\"3.9\"",
+  "send2trash>=1.8.3",
   "urllib3>=1.26.0,<2.0.0; python_version<\"3.9\"",
   "urllib3>=1.26.0; python_version>=\"3.9\"",
-  "jsonpickle>=4.1.1",
-  "send2trash>=1.8.3",
-  "comtypes>=1.4.0; sys_platform == \"win32\"",
-  "PyYAML>=6.0",
-  "Pillow>=9.5; python_implementation == 'CPython'",
-  "Pillow>10,<11.1.0; python_implementation == 'PyPy'",
 ]
-authors = [{ name = "NickHugi" }]
-maintainers = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
+authors = [{ name = "Nick Hugi" }, { name = "th3w1zard1" }]
+maintainers = [{ name = "th3w1zard1", email = "boden.crouch@gmail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { text = "LGPL-3.0-or-later" }
 keywords = [
+  "3d",
+  "bioware",
+  "dlg",
+  "editor",
+  "gff",
+  "holocron",
+  "knights-of-the-old-republic",
   "kotor",
   "kotor1",
   "kotor2",
-  "tsl",
-  "star-wars",
-  "knights-of-the-old-republic",
   "modding",
-  "toolset",
-  "editor",
-  "gff",
-  "dlg",
   "module-designer",
-  "pyqt5",
   "opengl",
-  "3d",
-  "holocron",
   "pykotor",
-  "bioware",
+  "pyqt5",
+  "star-wars",
+  "toolset",
+  "tsl",
 ]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -106,20 +105,6 @@ classifiers = [
 [project.scripts]
 holocrontoolset = "toolset.__main__:main"
 
-[project.gui-scripts]
-holocrontoolset-gui = "toolset.__main__:main"
-
-[project.optional-dependencies]
-updater = ["requests>=2.27,<2.32", "certifi==2026.1.4", "pycryptodome>=3.19.0"]
-qt6 = ["PyQt6>=6.6.1"]
-pyside6 = ["PySide6>=6.6.3.1"]
-dev = [
-  "pytest-qt>=4.2.0",
-  "pytest-xvfb>=3.0.0",
-  "types-Pillow",
-  "types-Send2Trash",
-]
-
 [project.urls]
 Homepage = "https://github.com/OldRepublicDevs/PyKotor"
 Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
@@ -132,26 +117,54 @@ Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 name = "holocrontoolset"
 version = "4.0.0b15"
 description = "A PyQt-backed program with a collection of tools and editors that make it easy to work with kotor files"
-authors = ["NickHugi", "Boden Crouch <halomastar@gmail.com>"]
+authors = ["Nick Hugi", "th3w1zard1 <boden.crouch@gmail.com>"]
+maintainers = ["th3w1zard1 <boden.crouch@gmail.com>"]
 readme = "README.md"
+license = "LGPL-3.0-or-later"
 packages = [{ include = "toolset", from = "src" }]
+keywords = [
+  "3d",
+  "bioware",
+  "dlg",
+  "editor",
+  "gff",
+  "holocron",
+  "knights-of-the-old-republic",
+  "kotor",
+  "kotor1",
+  "kotor2",
+  "modding",
+  "module-designer",
+  "opengl",
+  "pykotor",
+  "pyqt5",
+  "star-wars",
+  "toolset",
+  "tsl",
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^2.1.0"
-idna = "*"
-urllib3 = ">=1.26,<2.7"
-Markdown = ">=3.3,<3.11"
-qtpy = "*"
-send2trash = "*"
+pykotor = {version = "^2.1.0", extras = ["encodings", "extras", "font", "gl", "updater"]}
+certifi = ">=2021.10.8"
+comtypes = {version = ">=1.4.0", markers = "sys_platform == 'win32'"}
+idna = ">=3.11"
+jsonpickle = ">=4.1.1"
+Markdown = ">=3.4.4"
+numpy = ">=1.19.0"
+Pillow = ">=9.5"
+qtpy = ">=2.4.3"
+requests = ">=2.25.0"
+send2trash = ">=1.8.3"
+urllib3 = ">=1.26.0"
+websockets = {version = ">=12.0", optional = true}
 
 # Optional dependencies
-pycryptodome = { version = "^3.19.0", optional = true }
-requests = { version = "^2.31.0", optional = true }
-PyQt5 = { version = "^5.15", optional = true }
-PyQt6 = { version = "^6.6.1", optional = true }
-PySide2 = { version = ">=5.15.2,<6.0.0", python = ">=3.8,<3.11", optional = true }
-PySide6 = { version = "^6.6.3.1", python = ">=3.8,<3.13", optional = true }
+pycryptodome = {version = "^3.19.0", optional = true}
+PyQt5 = {version = "^5.15", optional = true}
+PyQt6 = {version = "^6.6.1", optional = true}
+PySide2 = {version = ">=5.15.2,<6.0.0", python = ">=3.8,<3.11", optional = true}
+PySide6 = {version = "^6.6.3.1", python = ">=3.8,<3.13", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest-qt = "^4.2.0"
@@ -160,12 +173,21 @@ types-Pillow = "*"
 types-Send2Trash = "*"
 
 [tool.poetry.extras]
-qt = ["pyqt5 | pyqt6 | pyside2 | pyside6"]
-updater = ["pycryptodome", "requests"]
 qt5 = ["PyQt5"]
 qt6 = ["PyQt6"]
 pyside2 = ["PySide2"]
 pyside6 = ["PySide6"]
+updater = ["pycryptodome", "requests"]
+
+[tool.poetry.scripts]
+holocrontoolset = "toolset.__main__:main"
+
+[tool.poetry.urls]
+Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
+Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
+Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
+Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 
 ########################################################
 ## UV workspace configuration                         ##
@@ -255,3 +277,23 @@ split_arguments_when_comma_terminated = true
 
 [tool.pylintrc]
 max-line-length = 175
+
+[tool.pyinstaller]
+name = "toolset"
+windowed = true
+icon = "src/resources/icons/sith.ico"
+exclude-modules = [
+    "numpy",
+    "PyOpenGL",
+    "PyGLM",
+    "dl_translate",
+    "torch",
+]
+hidden-imports = [
+    "PIL._tkinter_finder",
+]
+
+[tool.dependencies]
+qt-api = "PyQt6"
+linux-profiles = ["qt_gui"]
+windows-packages = ["comtypes", "pywin32"]

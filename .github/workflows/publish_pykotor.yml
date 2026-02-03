@@ -36,85 +36,36 @@ jobs:
           python3 << 'PYTHON_SCRIPT'
           import json
           import os
-          from pathlib import Path
-
-          tools_dir = Path("Tools")
-          tools = []
-
-          def derive_build_name(name: str) -> str:
-              lower = name.lower()
-              special = {"holocrontoolset": "toolset"}
-              return special.get(lower, lower)
-
-          def has_compile_script(build_name: str) -> bool:
-              return any(Path(path).exists() for path in [
-                  f"compile/compile_{build_name}.ps1",
-                  f"compile/compile_{build_name}.sh",
-                  f"compile/compile_{build_name}.bat",
-              ])
-
-          def has_main_entrypoint(tool_path: Path) -> bool:
-              """Check if tool has a __main__.py entrypoint that can be compiled with compile_tool.py"""
-              # Look for src/<toolname>/__main__.py pattern
-              tool_name_lower = tool_path.name.lower()
-              main_path = tool_path / "src" / tool_name_lower / "__main__.py"
-              if main_path.exists():
-                  return True
-              # Also check for alternative patterns (e.g., holocron_ai vs holocronai)
-              for src_subdir in (tool_path / "src").iterdir():
-                  if src_subdir.is_dir() and (src_subdir / "__main__.py").exists():
-                      return True
-              return False
+          import subprocess
 
           # Check if we're in test mode (limit to one tool)
           test_mode = os.environ.get("ACT_TEST_MODE", "").lower() == "true"
           test_tool = os.environ.get("ACT_TEST_TOOL", "").strip()
 
-          if tools_dir.exists():
-              for tool_path in sorted(tools_dir.iterdir()):
-                  if tool_path.is_dir() and not tool_path.name.startswith("."):
-                      # Skip 'tests' directory - it's not a tool
-                      if tool_path.name.lower() == "tests":
-                          continue
+            tools = json.loads(subprocess.check_output([
+              "python3",
+              ".github/scripts/discover_tools.py",
+              "--format",
+              "json",
+            ], text=True))
 
-                      # In test mode, only process the specified tool (or first tool if none specified)
-                      if test_mode:
-                          if test_tool:
-                              if tool_path.name.lower() != test_tool.lower() and derive_build_name(tool_path.name) != test_tool.lower():
-                                  continue
-                          else:
-                              # Only process first tool in test mode if no specific tool specified
-                              if len(tools) > 0:
-                                  continue
-
-                      build_name = derive_build_name(tool_path.name)
-
-                      # Check if tool has a compile script OR can use compile_tool.py
-                      if has_compile_script(build_name):
-                          # Has explicit compile script
-                          tools.append({
-                              "tool_dir": tool_path.name,
-                              "build_name": build_name,
-                              "display_name": tool_path.name,
-                              "use_compile_tool": False,
-                          })
-                      elif has_main_entrypoint(tool_path):
-                          # Can use compile_tool.py dynamically
-                          tools.append({
-                              "tool_dir": tool_path.name,
-                              "build_name": build_name,
-                              "display_name": tool_path.name,
-                              "use_compile_tool": True,
-                          })
-                      else:
-                          print(f"Skipping {tool_path.name}: no compile script found and no __main__.py entrypoint")
-                          continue
-          else:
-              print("❌ Tools directory not found")
+            # In test mode, only process the specified tool (or first tool if none specified)
+            if test_mode:
+              if test_tool:
+                tools = [
+                  t for t in tools
+                  if test_tool.lower() in {
+                    t["directory"].lower(),
+                    (t.get("build_name") or t.get("name") or t["directory"]).lower(),
+                  }
+                ]
+              else:
+                tools = tools[:1]
 
           print("Detected tools:")
-          for t in tools:
-              print(f" - {t['display_name']} (build: {t['build_name']})")
+            for t in tools:
+              build_name = (t.get("build_name") or t.get("name") or t["directory"]).lower()
+              print(f" - {t['display_name']} (build: {build_name})")
 
           tools_json = json.dumps(tools)
           print(f"Tools matrix JSON: {tools_json}")
@@ -143,7 +94,8 @@ jobs:
 
           # Generate full matrix
           full_matrix = []
-          for tool in tools:
+            for tool in tools:
+              build_name = (tool.get("build_name") or tool.get("name") or tool["directory"]).lower()
               for os_name in os_runners:
                   for py_ver in python_versions:
                       for arch in architectures:
@@ -152,13 +104,14 @@ jobs:
                               continue
                           # Only add Windows entries to full_matrix (for VC redist URLs)
                           # Other OS entries are handled by the main matrix
-                          if os_name == "windows-latest":
+                            if os_name == "windows-latest":
                               full_matrix.append({
                                   "tool": tool,
                                   "os": os_name,
                                   "python-version": py_ver,
                                   "architecture": arch,
-                                  "qt_version": "pyqt6",
+                                "build_name": build_name,
+                                "qt_version": "pyqt6",
                                   "arch": arch,
                                   "vc_redist2015": f"https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.{'x86' if arch == 'x86' else 'x64'}.exe",
                                   "vc_redist-latest": f"https://aka.ms/vs/17/release/vc_redist.{'x86' if arch == 'x86' else 'x64'}.exe",
@@ -413,35 +366,25 @@ jobs:
         run: |
           # Matrix now contains tool object directly
           $buildName = "${{ matrix.tool.build_name }}"
-          $toolDir = "${{ matrix.tool.tool_dir }}"
-          $useCompileTool = "${{ matrix.tool.use_compile_tool }}" -eq "True"
+          $toolDir = "${{ matrix.tool.directory }}"
+          $toolPath = "${{ matrix.tool.path }}"
+          $compileScript = "compile/compile_tool.ps1"
+          $depsScript = "compile/deps_tool.ps1"
 
-          $compileScript = ""
-          $depsScript = ""
-
-          if ($useCompileTool) {
-            # Use compile_tool.py dynamically
-            $compileScript = "compile/compile_tool.py"
-            # Check for deps script, but it's optional
-            $depsCandidates = @("compile/deps_${buildName}.ps1","compile/deps_${buildName}.sh","compile/deps_${buildName}.bat","compile/deps_tool.ps1","compile/deps_tool.sh","compile/deps_tool.bat")
-            foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
-          } else {
-            # Use explicit compile script
-          $compileCandidates = @("compile/compile_${buildName}.ps1","compile/compile_${buildName}.sh","compile/compile_${buildName}.bat")
-          $depsCandidates = @("compile/deps_${buildName}.ps1","compile/deps_${buildName}.sh","compile/deps_${buildName}.bat")
-          foreach ($c in $compileCandidates) { if (Test-Path $c) { $compileScript = $c; break } }
-          foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
+          if (-not (Test-Path $compileScript)) {
+            Write-Error "Required build wrapper missing: $compileScript"
+            exit 1
           }
-
-          if (-not $compileScript -or -not (Test-Path $compileScript)) {
-            Write-Error "Compile script not found for $buildName (use_compile_tool=$useCompileTool)";
+          if (-not (Test-Path $depsScript)) {
+            Write-Error "Required build wrapper missing: $depsScript"
             exit 1
           }
 
           echo "compile_script=$compileScript" >> $Env:GITHUB_OUTPUT
           echo "deps_script=$depsScript" >> $Env:GITHUB_OUTPUT
-          echo "use_compile_tool=$useCompileTool" >> $Env:GITHUB_OUTPUT
+          echo "use_compile_tool=True" >> $Env:GITHUB_OUTPUT
           echo "tool_dir=$toolDir" >> $Env:GITHUB_OUTPUT
+          echo "tool_path=$toolPath" >> $Env:GITHUB_OUTPUT
           echo "Using compile script $compileScript"
           if ($depsScript) { echo "Using deps script $depsScript" } else { echo "No deps script found" }
 
@@ -450,7 +393,7 @@ jobs:
         shell: bash
         run: |
           # Workaround: Pre-install Python without pip package (python3.X-pip doesn't exist in deadsnakes PPA)
-          # This prevents install_python_venv.ps1 from failing and prompting for input
+          # This prevents venv creation from failing and prompting for input
           PYTHON_VERSION="${{ matrix.python-version }}"
           PYTHON_MAJOR_MINOR=$(echo $PYTHON_VERSION | cut -d. -f1,2)
 
@@ -512,6 +455,8 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $buildName = "${{ matrix.tool.build_name }}"
+          $toolDir = "${{ matrix.tool.directory }}"
+          $toolPath = "${{ matrix.tool.path }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $Env:PYKOTOR_VENV_NAME = $venvName
 
@@ -520,120 +465,54 @@ jobs:
             $Env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $Env:LD_LIBRARY_PATH
           }
 
-          try {
-            Write-Host "Sourcing install_python_venv.ps1 (venv_name=$venvName, python=${{ matrix.python-version }}, arch=${{ matrix.architecture }}, os=${{ runner.os }})"
-            . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }} -logLevel Debug
-
-            if (-not $Env:pythonExePath) {
-              Write-Error "install_python_venv.ps1 did not set env:pythonExePath"
-              Write-Host "Listing venv directory (if present): $venvName"
-              if (Test-Path $venvName) { Get-ChildItem -Path $venvName -Recurse -Depth 2 | Select-Object FullName | Select-Object -First 50 }
-              exit 1
-            }
-
-            Write-Host "pythonExePath=$Env:pythonExePath"
-            & $Env:pythonExePath --version
-
-            # Persist across subsequent steps (each step is a fresh process)
-            Add-Content -Path $Env:GITHUB_ENV -Value "pythonExePath=$($Env:pythonExePath)"
-            Add-Content -Path $Env:GITHUB_ENV -Value "PYKOTOR_VENV_NAME=$venvName"
-            if ($Env:VIRTUAL_ENV) { Add-Content -Path $Env:GITHUB_ENV -Value "VIRTUAL_ENV=$($Env:VIRTUAL_ENV)" }
-            if ($Env:PYKOTOR_VENV_PATH) { Add-Content -Path $Env:GITHUB_ENV -Value "PYKOTOR_VENV_PATH=$($Env:PYKOTOR_VENV_PATH)" }
-
-            Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "### Python/Venv"
-            Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "- Venv: `$venvName`"
-            Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "- Python: `$($Env:pythonExePath)`"
-
-            # On Linux and macOS, ensure pip is available (bootstrap if needed)
-            if ("${{ runner.os }}" -eq "Linux" -or "${{ runner.os }}" -eq "macOS") {
-              # Try to bootstrap pip if it's not available
-              $pipCheck = & $Env:pythonExePath -m pip --version 2>&1
-              if ($LASTEXITCODE -ne 0) {
-                Write-Host "Pip not available, bootstrapping with ensurepip..."
-                & $Env:pythonExePath -m ensurepip --upgrade --default-pip
-                if ($LASTEXITCODE -ne 0) {
-                  Write-Error "Failed to bootstrap pip"
-                  exit 1
-                }
-              }
-            }
-
-            & $Env:pythonExePath -m pip install --upgrade pip
-            if ($LASTEXITCODE -ne 0) {
-              Write-Error "Failed to upgrade pip"
-              exit 1
-            }
-
-            if ("${{ runner.os }}" -eq "Windows") {
-              if ("${{ matrix.python-version }}" -eq "3.12" -or "${{ matrix.python-version }}" -eq "3.11") {
-                & $Env:pythonExePath -m pip install "pyinstaller==5.13.2" --prefer-binary
-              } else {
-                & $Env:pythonExePath -m pip install "pyinstaller==5.4" --prefer-binary
-              }
-            } else {
-              & $Env:pythonExePath -m pip install pyinstaller -U --prefer-binary
-            }
-
-            if ($LASTEXITCODE -ne 0) {
-              Write-Error "Failed to install pyinstaller"
-              exit 1
-            }
-          } catch {
-            Write-Host -ForegroundColor Red "Error creating virtual environment: $($_.Exception.Message)"
-            Write-Host -ForegroundColor Red "Stack trace: $($_.ScriptStackTrace)"
-            exit 1
-          }
-
-      - name: Install tool dependencies
-        if: ${{ (success() || failure()) && (steps.locate-scripts.outputs.deps_script != '') }}
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          $script = "${{ steps.locate-scripts.outputs.deps_script }}"
-          $buildName = "${{ matrix.tool.build_name }}"
-          $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-
-          if (-not $Env:pythonExePath) {
-            Write-Error "env:pythonExePath is missing. Expected Create virtual environment step to populate GITHUB_ENV."
-            Write-Host "Available environment variables:" -ForegroundColor Yellow
-            Get-ChildItem Env: | Where-Object { $_.Name -like "*python*" -or $_.Name -like "*venv*" } | ForEach-Object { Write-Host "  $($_.Name)=$($_.Value)" }
-            exit 1
-          }
-
-          # Add Python to PATH for deps scripts
-          $pythonDir = Split-Path -Parent $Env:pythonExePath
+          $pyinstallerSpec = "pyinstaller"
           if ("${{ runner.os }}" -eq "Windows") {
-            $Env:PATH = "$pythonDir;$Env:PATH"
-          } else {
-            $Env:PATH = "$pythonDir" + ":" + $Env:PATH
-          }
-
-          Write-Host "Running deps script $script"
-          Write-Host "Venv name: $venvName"
-          Write-Host "pythonExePath=$Env:pythonExePath"
-          Write-Host "Python directory added to PATH: $pythonDir"
-
-          try {
-            if ($script.EndsWith(".ps1")) {
-              . "./$script" -noprompt -venv_name $venvName
-            } elseif ($script.EndsWith(".sh")) {
-              bash "./$script" -noprompt -venv_name $venvName
-            } elseif ($script.EndsWith(".bat")) {
-              cmd /c ".\\$script -noprompt -venv_name $venvName"
+            if ("${{ matrix.python-version }}" -eq "3.12" -or "${{ matrix.python-version }}" -eq "3.11") {
+              $pyinstallerSpec = "pyinstaller==5.13.2"
             } else {
-              Write-Error "Unknown deps script type: $script"
-              exit 1
+              $pyinstallerSpec = "pyinstaller==5.4"
             }
-
-            if ($LASTEXITCODE -ne 0) {
-              Write-Error "Deps script failed with exit code $LASTEXITCODE"
-              exit $LASTEXITCODE
-            }
-          } catch {
-            Write-Host -ForegroundColor Red "Error running deps script: $($_.Exception.Message)"
-            Write-Host -ForegroundColor Red "Stack trace: $($_.ScriptStackTrace)"
-            exit 1
           }
+
+          $depsArgs = @(
+            "--tool-path", $toolPath,
+            "--venv-name", $venvName,
+            "--noprompt",
+            "--force-python-version", "${{ matrix.python-version }}",
+            "--pip-requirements", "./Libraries/PyKotor/requirements.txt",
+            "--pip-install-pyinstaller", $pyinstallerSpec
+          )
+
+          if ("${{ matrix.tool.requires_qt }}" -eq "true") {
+            $depsArgs += @("--qt-api", "PyQt6")
+          }
+
+          Write-Host "Running deps_tool.ps1: $($depsArgs -join ' ')"
+          & ./compile/deps_tool.ps1 @depsArgs
+          if ($LASTEXITCODE -ne 0) {
+            throw "deps_tool.ps1 failed with exit code $LASTEXITCODE"
+          }
+
+          $repoRoot = (Get-Location).Path
+          $venvPython = if ("${{ runner.os }}" -eq "Windows") {
+            Join-Path $repoRoot "$venvName/Scripts/python.exe"
+          } else {
+            Join-Path $repoRoot "$venvName/bin/python"
+          }
+          if (-not (Test-Path -LiteralPath $venvPython)) {
+            throw "Venv python not found at $venvPython"
+          }
+
+          Write-Host "pythonExePath=$venvPython"
+          & $venvPython --version
+
+          # Persist across subsequent steps (each step is a fresh process)
+          Add-Content -Path $Env:GITHUB_ENV -Value "pythonExePath=$venvPython"
+          Add-Content -Path $Env:GITHUB_ENV -Value "PYKOTOR_VENV_NAME=$venvName"
+
+          Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "### Python/Venv"
+          Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "- Venv: `$venvName`"
+          Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "- Python: `$venvPython`"
 
       - name: Compile tool
         shell: pwsh
@@ -641,7 +520,6 @@ jobs:
           MATRIX_ARCH: ${{ matrix.architecture }}
         run: |
           $ErrorActionPreference = "Stop"
-          $compile = "${{ steps.locate-scripts.outputs.compile_script }}"
           $buildName = "${{ matrix.tool.build_name }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $upxDir = $Env:UPX_DIR
@@ -667,129 +545,32 @@ jobs:
             $Env:PATH = "$pythonDir" + ":" + $Env:PATH
           }
 
-          Write-Host "Using compile script $compile"
+          Write-Host "Using compile wrapper compile/compile_tool.ps1"
           Write-Host "Venv name: $venvName"
           Write-Host "UPX directory: $upxDir"
           Write-Host "pythonExePath=$Env:pythonExePath"
           Write-Host "Python directory added to PATH: $pythonDir"
+          $toolPath = "${{ steps.locate-scripts.outputs.tool_path }}"
 
-          $useCompileTool = "${{ steps.locate-scripts.outputs.use_compile_tool }}" -eq "True"
-          $toolDir = "${{ steps.locate-scripts.outputs.tool_dir }}"
+          $compileArgs = @(
+            "--tool-path", $toolPath,
+            "--venv-name", $venvName,
+            "--skip-venv",
+            "--python-exe", $Env:pythonExePath,
+            "--noprompt"
+          )
 
-          try {
-            if ($useCompileTool -and $compile.EndsWith(".py")) {
-              # Use compile_tool.py dynamically
-              $toolPath = "Tools/$toolDir"
-              $entrypoint = ""
+          if ("${{ matrix.tool.requires_qt }}" -eq "true") {
+            $compileArgs += @("--qt-api", "PyQt6", "--exclude-other-qt")
+          }
 
-              # Find the entrypoint (src/<toolname>/__main__.py)
-              $toolNameLower = $toolDir.ToLower()
-              $possibleEntrypoints = @(
-                "$toolNameLower/__main__.py",
-                "$toolDir/__main__.py"
-              )
+          if ($upxDir) { $compileArgs += @("--upx-dir", $upxDir) }
 
-              foreach ($ep in $possibleEntrypoints) {
-                $epPath = Join-Path $toolPath "src/$ep"
-                if (Test-Path $epPath) {
-                  $entrypoint = $ep
-                  break
-                }
-              }
-
-              # If not found, search for any __main__.py in src subdirectories
-              if (-not $entrypoint) {
-                $srcDir = Join-Path $toolPath "src"
-                if (Test-Path $srcDir) {
-                  $mainFiles = Get-ChildItem -Path $srcDir -Recurse -Filter "__main__.py" -ErrorAction SilentlyContinue
-                  if ($mainFiles) {
-                    $relativePath = $mainFiles[0].FullName.Replace((Resolve-Path $srcDir).Path + [System.IO.Path]::DirectorySeparatorChar, "")
-                    $entrypoint = $relativePath.Replace([System.IO.Path]::DirectorySeparatorChar, "/")
-                  }
-                }
-              }
-
-              if (-not $entrypoint) {
-                Write-Error "Could not find __main__.py entrypoint for tool $toolDir"
-                exit 1
-              }
-
-              Write-Host "Using compile_tool.py with entrypoint: $entrypoint"
-
-              # Build compile_tool.py command using the Python from venv
-              # We've already created the venv, so skip venv creation in compile_tool.py
-              # Ensure pythonExePath is quoted if it contains spaces
-              $pythonExePathQuoted = if ($Env:pythonExePath -match '\s') {
-                "`"$Env:pythonExePath`""
-              } else {
-                $Env:pythonExePath
-              }
-
-              $compileArgs = @(
-                "$compile",
-                "--tool-path", $toolPath,
-                "--entrypoint", $entrypoint,
-                "--venv-name", $venvName,
-                "--skip-venv",
-                "--python-exe", $pythonExePathQuoted,
-                "--noprompt"
-              )
-
-              if ($upxDir) {
-                $compileArgs += @("--upx-dir", $upxDir)
-              }
-
-              Write-Host "Running: $Env:pythonExePath $($compileArgs -join ' ')"
-              Write-Host "Python executable exists: $(Test-Path $Env:pythonExePath)"
-              if (-not (Test-Path $Env:pythonExePath)) {
-                Write-Error "Python executable not found at: $Env:pythonExePath"
-                exit 1
-              }
-
-              # Execute compile_tool.py with explicit error handling
-              $exitCode = 0
-              try {
-                & $Env:pythonExePath $compileArgs
-                $exitCode = $LASTEXITCODE
-              } catch {
-                Write-Host -ForegroundColor Red "Error executing compile_tool.py: $($_.Exception.Message)"
-                Write-Host -ForegroundColor Red "Stack trace: $($_.ScriptStackTrace)"
-                $exitCode = 1
-              }
-
-              if ($exitCode -ne 0) {
-                Write-Error "compile_tool.py failed with exit code $exitCode"
-                exit $exitCode
-              }
-            } elseif ($compile.EndsWith(".ps1")) {
-              if ($upxDir) {
-                . "./$compile" -noprompt -venv_name $venvName -upx_dir $upxDir
-              } else {
-                . "./$compile" -noprompt -venv_name $venvName
-              }
-            } elseif ($compile.EndsWith(".sh")) {
-              if ($upxDir) {
-                $Env:UPX_DIR = $upxDir
-              }
-              bash "./$compile" -noprompt -venv_name $venvName
-            } elseif ($compile.EndsWith(".bat")) {
-              if ($upxDir) {
-                $Env:UPX_DIR = $upxDir
-              }
-              cmd /c ".\\$compile -noprompt -venv_name $venvName"
-            } else {
-              Write-Error "Unknown compile script type: $compile"
-              exit 1
-            }
-
-            if ($LASTEXITCODE -ne 0) {
-              Write-Error "Compilation failed with exit code $LASTEXITCODE"
-              exit $LASTEXITCODE
-            }
-          } catch {
-            Write-Host -ForegroundColor Red "Error during compilation: $($_.Exception.Message)"
-            Write-Host -ForegroundColor Red "Stack trace: $($_.ScriptStackTrace)"
-            exit 1
+          Write-Host "Running: ./compile/compile_tool.ps1 $($compileArgs -join ' ')"
+          & ./compile/compile_tool.ps1 @compileArgs
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Compilation failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
           }
 
       - name: Upload compiled binaries attempt 1
@@ -849,7 +630,7 @@ jobs:
           $ErrorActionPreference = "Stop"
           $buildName = "${{ matrix.tool.build_name }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-          $toolDir = "Tools/${{ matrix.tool.tool_dir }}"
+          $toolDir = "${{ matrix.tool.path }}"
 
           # Set LD_LIBRARY_PATH for Linux
           if ("${{ runner.os }}" -eq "Linux") {

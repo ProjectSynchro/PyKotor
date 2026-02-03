@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tool:
-        description: 'Tool name (matches tool directory or build name; e.g., toolset, holopatcher, kotordiff)'
+        description: 'Tool name (matches tool directory or build name)'
         required: true
         type: string
       version:
@@ -49,6 +49,7 @@ jobs:
           import json
           import os
           import re
+          import subprocess
           import sys
           from pathlib import Path
 
@@ -68,48 +69,53 @@ jobs:
             print("❌ Tools directory not found")
             sys.exit(1)
 
-          def derive_build_name(tool_dir_name: str) -> str:
-            name_lower = tool_dir_name.lower()
-            special_mappings = {
-              "holocrontoolset": "toolset",
-            }
-            return special_mappings.get(name_lower, name_lower)
-
           def find_config_file(tool_dir: Path, tool_name_lower: str) -> Path | None:
-            src_dir = tool_dir / "src" / tool_name_lower
-            config_py = src_dir / "config.py"
-            if config_py.exists():
-              return config_py
-            config_info_py = src_dir / "config" / "config_info.py"
-            if config_info_py.exists():
-              return config_info_py
-            main_py = src_dir / "__main__.py"
-            if main_py.exists():
-              content = main_py.read_text()
-              if "CURRENT_VERSION" in content:
+            src_root = tool_dir / "src"
+            if not src_root.exists():
+              return None
+
+            def scan_dir(candidate: Path) -> Path | None:
+              config_py = candidate / "config.py"
+              if config_py.exists():
+                return config_py
+              config_info_py = candidate / "config" / "config_info.py"
+              if config_info_py.exists():
+                return config_info_py
+              main_py = candidate / "__main__.py"
+              if main_py.exists() and "CURRENT_VERSION" in main_py.read_text():
                 return main_py
-            init_py = src_dir / "__init__.py"
-            if init_py.exists():
-              content = init_py.read_text()
-              if "__version__" in content:
+              init_py = candidate / "__init__.py"
+              if init_py.exists() and "__version__" in init_py.read_text():
                 return init_py
+              return None
+
+            preferred = src_root / tool_name_lower
+            if preferred.exists():
+              found = scan_dir(preferred)
+              if found:
+                return found
+
+            for subdir in src_root.iterdir():
+              if not subdir.is_dir():
+                continue
+              found = scan_dir(subdir)
+              if found:
+                return found
+
             return None
 
-          tools = []
-          for tool_path in sorted(tools_dir.iterdir()):
-            if tool_path.is_dir() and not tool_path.name.startswith("."):
-              t_lower = tool_path.name.lower()
-              build_name = derive_build_name(tool_path.name)
-              config_path = find_config_file(tool_path, t_lower)
-              tools.append(
-                {
-                  "tool_dir": tool_path.name,
-                  "tool_dir_lower": t_lower,
-                  "build_name": build_name,
-                  "config_file": str(config_path) if config_path else "",
-                  "display_name": tool_path.name,
-                }
-              )
+          discover_cmd = ["python3", ".github/scripts/discover_tools.py", "--format", "json"]
+          tools = json.loads(subprocess.check_output(discover_cmd, text=True))
+          tools = [
+            {
+              "tool_dir": t["directory"],
+              "tool_dir_lower": t["directory"].lower(),
+              "build_name": (t.get("build_name") or t.get("name") or t["directory"]).lower(),
+              "config_file": str(find_config_file(tools_dir / t["directory"], t["directory"].lower()) or ""),
+              "display_name": t.get("display_name") or t["directory"],
+            }
+            for t in tools
+          ]
 
           matching = [
             t for t in tools

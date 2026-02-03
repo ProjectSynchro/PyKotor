@@ -23,7 +23,7 @@ class Ui_MainWindow(object):
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.splitter.setObjectName("splitter")
         self.tabWidget = QtWidgets.QTabWidget(self.splitter)
-        self.tabWidget.setMinimumSize(QtCore.QSize(150, 0))
+        self.tabWidget.setMinimumSize(QtCore.QSize(250, 0))
         self.tabWidget.setObjectName("tabWidget")
         self.tab = QtWidgets.QWidget()
         self.tab.setObjectName("tab")

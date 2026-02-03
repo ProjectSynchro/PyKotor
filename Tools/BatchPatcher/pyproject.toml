@@ -8,21 +8,18 @@ description = "A translator/font creator tool useful for patching/working with m
 version = "2.2.1"
 requires-python = ">=3.8"
 dependencies = [
-  "pykotor>=2.0.2",
-  "setuptools>=67.8.0",
-  "deep_translator==1.11.4",
+  "pykotor[encodings,updater]>=2.1.0",
+  "arabic-reshaper>=3.0.0",
+  "deep_translator>=1.11.4",
   "deepl-cli>=1",
-  "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
-  "requests>=2.25.0; python_version>=\"3.9\"",
-  "opencv-contrib-python==4.8.0.76",
-  "notify-py==0.3.43",
+  "notify-py>=0.3.43",
+  "opencv-contrib-python>=4.8.0.76",
   "playwright>=1.40.0,<1.49.1; python_version==\"3.8\"",
   "playwright>=1.49.1,<2; python_version>=\"3.9\"",
-  "pyquery==2.0.1",
-  "arabic-reshaper==3.0.0",
+  "pyquery>=2.0.1"
 ]
-authors = [{ name = "NickHugi" }]
-maintainers = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
+authors = [{ name = "Nick Hugi" }, { name = "th3w1zard1" }]
+maintainers = [{ name = "th3w1zard1", email = "boden.crouch@gmail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { text = "LGPL-3.0-or-later" }
 keywords = [
@@ -53,12 +50,6 @@ classifiers = [
 [project.scripts]
 batchpatcher = "batchpatcher.__main__:main"
 
-[project.optional-dependencies]
-dev = [
-  "pytest>=7.0.0",
-  "ruff>=0.5.3",
-]
-
 [project.urls]
 Homepage = "https://github.com/OldRepublicDevs/PyKotor"
 Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
@@ -71,27 +62,60 @@ Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 name = "batchpatcher"
 version = "2.2.1"
 description = "A translator/font creator tool useful for patching/working with many files at once."
-authors = ["NickHugi", "Boden Crouch <halomastar@gmail.com>"]
-maintainers = ["Boden Crouch <halomastar@gmail.com>"]
+authors = ["Nick Hugi", "th3w1zard1 <boden.crouch@gmail.com>"]
+maintainers = ["th3w1zard1 <boden.crouch@gmail.com>"]
 readme = "README.md"
 license = "LGPL-3.0-or-later"
 packages = [{ include = "batchpatcher", from = "src" }]
+keywords = [
+  "kotor", "kotor1", "kotor2", "tsl",
+  "star-wars", "knights-of-the-old-republic",
+  "batch", "translator", "font",
+  "localization", "i18n", "pykotor",
+]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-pykotor = "^2.0.2"
-opencv-contrib-python = "4.13.0.90"
+python = "^3.8"
+pykotor = {version = "^2.1.0", extras = ["encodings", "updater"]}
+arabic-reshaper = ">=3.0.0"
+deep_translator = ">=1.11.4"
+deepl-cli = ">=1"
+notify-py = ">=0.3.43"
+opencv-contrib-python = ">=4.8.0.76"
+playwright = ">=1.40.0"
+pyquery = ">=2.0.1"
 
 [tool.poetry.scripts]
 batchpatcher = "batchpatcher.__main__:main"
 
 [tool.poetry.urls]
 Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
 Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
 Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
+Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pyinstaller]
+console = true
+exclude-modules = [
+    "PyQt5",
+    "PyQt6",
+    "PySide2",
+    "PySide6",
+    "PyOpenGL",
+    "PyGLM",
+    "dl_translate",
+    "torch",
+    "numpy",
+]
+
+[tool.dependencies]
+playwright-browsers = ["chromium"]
+windows-packages = ["comtypes", "pywin32"]
+linux-profiles = ["tk"]

@@ -271,12 +271,14 @@ class TestToolWindowSlots:
         with patch.object(tool_window, "active", None):
             tool_window.on_textures_changed("texturepack")
 
-    def test_change_active_installation_with_int(self, tool_window, qtbot):
-        """Test change_active_installation accepts int from currentIndexChanged signal."""
+    def test_change_active_installation_with_index(self, tool_window, qtbot):
+        """Test change_active_installation accepts QModelIndex from selection change signal."""
+        from qtpy.QtCore import QModelIndex
+
         # This will try to load installation, so we need to mock it
         with patch.object(tool_window, "settings") as mock_settings:
             mock_settings.installations.return_value = {}
-            tool_window.change_active_installation(0)  # Should handle index 0 (None)
+            tool_window.change_active_installation(QModelIndex(), QModelIndex())
 
     def test_open_module_designer_with_bool(self, tool_window, qtbot):
         """Test open_module_designer accepts bool from triggered signal."""

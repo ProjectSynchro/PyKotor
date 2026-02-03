@@ -9,16 +9,12 @@ description = "Model Context Protocol server exposing Knights of the Old Republi
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.11"
 license = {text = "LGPL-3.0-or-later"}
-authors = [
-    {name = "th3w1zard1"}
-]
-maintainers = [
-    {name = "th3w1zard1", email = "halomastar@gmail.com"}
-]
+authors = [{ name = "th3w1zard1" }]
+maintainers = [{ name = "th3w1zard1", email = "boden.crouch@gmail.com" }]
 keywords = [
+    "ai", "llm", "agent",
     "kotor", "kotor1", "kotor2", "tsl",
     "mcp", "model-context-protocol",
-    "ai", "llm", "agent",
     "modding", "game-resources",
 ]
 classifiers = [
@@ -37,7 +33,7 @@ classifiers = [
 ]
 dependencies = [
     "mcp>=0.1.1",
-    "pykotor>=2.0.2",
+    "pykotor[encodings,updater]>=2.1.0",
     "uvicorn[standard]>=0.30.0",
 ]
 
@@ -109,4 +105,50 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "F403"]
 "test_*.py" = ["PLR2004", "S101"]
+
+# Poetry configuration
+[tool.poetry]
+name = "kotormcp"
+version = "0.1.1"
+description = "Model Context Protocol server exposing Knights of the Old Republic resources for AI agents."
+authors = ["th3w1zard1 <boden.crouch@gmail.com>"]
+maintainers = ["th3w1zard1 <boden.crouch@gmail.com>"]
+readme = "README.md"
+license = "LGPL-3.0-or-later"
+packages = [{ include = "kotormcp", from = "src" }]
+keywords = [
+    "ai", "llm", "agent",
+    "kotor", "kotor1", "kotor2", "tsl",
+    "mcp", "model-context-protocol",
+    "modding", "game-resources",
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+mcp = ">=0.1.1"
+pykotor = {version = "^2.1.0", extras = ["encodings", "updater"]}
+uvicorn = {version = ">=0.30.0", extras = ["standard"]}
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0.0"
+pytest-cov = ">=4.0.0"
+ruff = ">=0.5.3"
+mypy = ">=1.0.0"
+
+[tool.poetry.scripts]
+kotormcp = "kotormcp.server:main"
+
+[tool.poetry.urls]
+Homepage = "https://github.com/th3w1zard1/KotorMCP"
+Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
+Repository = "https://github.com/th3w1zard1/KotorMCP.git"
+Issues = "https://github.com/th3w1zard1/KotorMCP/issues"
+Changelog = "https://github.com/th3w1zard1/KotorMCP/releases"
+
+[tool.pyinstaller]
+console = true
+entrypoint = "kotormcp/server.py"
+
+[tool.dependencies]
+# No special system packages needed for KotorMCP
 

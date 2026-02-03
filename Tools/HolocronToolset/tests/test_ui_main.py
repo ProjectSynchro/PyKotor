@@ -11,9 +11,10 @@ except ImportError:
     pytest.skip("pykotor.gl not available", allow_module_level=True)
 
 from qtpy.QtGui import QAction
-from qtpy.QtWidgets import QComboBox, QPushButton
+from qtpy.QtWidgets import QApplication, QPushButton
 from toolset.gui.windows.main import ToolWindow
 from toolset.data.installation import HTInstallation
+from utility.gui.qt.widgets.itemviews.treeview import RobustTreeView
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -29,7 +30,8 @@ def test_main_window_init(qtbot: QtBot):
     assert window.isVisible()
     assert "Holocron Toolset" in window.windowTitle()
     assert window.active is None
-    assert window.ui.gameCombo.count() >= 1  # Should have [None] at least
+    assert window.ui.installationTree.model() is window.installation_tree_model
+    assert isinstance(window.ui.installationTree, RobustTreeView)
 
 
 def test_main_window_set_installation(qtbot: QtBot, installation: HTInstallation):
@@ -45,14 +47,13 @@ def test_main_window_set_installation(qtbot: QtBot, installation: HTInstallation
     installations[installation.name].tsl = installation.tsl  # type: ignore[attr-defined]
     window.reload_installations()
 
-    # Find the index of our test installation
-    index = window.ui.gameCombo.findText(installation.name)
-    assert index != -1
-
-    # Select the installation without invoking the async loader dialog (headless safe)
-    window.ui.gameCombo.currentIndexChanged.disconnect(window.change_active_installation)
-    window.ui.gameCombo.setCurrentIndex(index)
-    window.ui.gameCombo.currentIndexChanged.connect(window.change_active_installation)
+    # Ensure the installation is present in the tree model
+    model = window.installation_tree_model
+    assert model.rowCount() >= 1
+    assert any(
+        model.data(model.index(row, 0)) == installation.name
+        for row in range(model.rowCount())
+    )
 
     # Manually set active installation and enable tabs to mimic a successful load
     window.installations[installation.name] = installation
@@ -65,6 +66,44 @@ def test_main_window_set_installation(qtbot: QtBot, installation: HTInstallation
 
     # Check if tabs are populated (basic check)
     assert window.ui.modulesWidget.ui.sectionCombo.count() >= 0
+
+
+def test_tree_selection_drives_tabs(qtbot: QtBot, installation: HTInstallation):
+    """Selecting nodes in the installation tree should switch tabs."""
+    window = ToolWindow()
+    qtbot.addWidget(window)
+    window.show()
+
+    installations = window.settings.installations()
+    installations[installation.name] = InstallationConfig(name=installation.name)
+    installations[installation.name].path = str(installation.path())  # type: ignore[attr-defined]
+    installations[installation.name].tsl = installation.tsl  # type: ignore[attr-defined]
+    window.reload_installations()
+
+    window.installations[installation.name] = installation
+    window.active = installation
+    window.ui.resourceTabs.setEnabled(True)
+
+    model = window.installation_tree_model
+    install_index = None
+    for row in range(model.rowCount()):
+        idx = model.index(row, 0)
+        if model.data(idx, 0) == installation.name:
+            install_index = idx
+            break
+    assert install_index is not None
+
+    modules_index = None
+    for row in range(model.rowCount(install_index)):
+        idx = model.index(row, 0, install_index)
+        if str(model.data(idx, 0)).lower() == "modules":
+            modules_index = idx
+            break
+
+    if modules_index is not None:
+        window.ui.installationTree.setCurrentIndex(modules_index)
+        QApplication.processEvents()
+        assert window.get_active_resource_tab() == window.ui.modulesTab
 
 
 def test_menu_actions_state(qtbot: QtBot, installation: HTInstallation):

@@ -40,6 +40,68 @@ class TestFilesystemViewComprehensive:
         assert model.columnCount() > 0
         assert model.rootPath() is None
 
+    def test_model_multiple_installations(self, qt_api: str, qtbot: QtBot, tmp_path: Path):
+        """Test multi-root installation support in the filesystem model."""
+        from toolset.gui.widgets.kotor_filesystem_model import KotorFileSystemModel, InstallationItem
+        from toolset.gui.widgets.settings.installations import InstallationConfig
+
+        install_a = tmp_path / "install_a"
+        install_b = tmp_path / "install_b"
+        install_a.mkdir()
+        install_b.mkdir()
+        (install_a / "override").mkdir()
+        (install_b / "modules").mkdir()
+
+        config_a = InstallationConfig("TestA")
+        config_a.path = str(install_a)
+        config_a.tsl = False
+        config_b = InstallationConfig("TestB")
+        config_b.path = str(install_b)
+        config_b.tsl = True
+
+        model = KotorFileSystemModel()
+        model.set_installations({"TestA": config_a, "TestB": config_b})
+
+        assert model.rowCount() == 2
+        names = {model.data(model.index(row, 0)) for row in range(model.rowCount())}
+        assert names == {"TestA", "TestB"}
+
+        first_index = model.index(0, 0)
+        install_item = model.installation_from_index(first_index)
+        assert isinstance(install_item, InstallationItem)
+        assert install_item.name in names
+
+        # Non-zero columns on parent should report 0 rows
+        assert model.rowCount(model.index(0, 1)) == 0
+
+    def test_model_flags_and_tooltip(self, qt_api: str, qtbot: QtBot, tmp_path: Path):
+        """Validate flags and tooltip path reporting for model indexes."""
+        from toolset.gui.widgets.kotor_filesystem_model import KotorFileSystemModel
+        from toolset.gui.widgets.settings.installations import InstallationConfig
+        from qtpy.QtCore import Qt
+
+        root_dir = tmp_path / "install_root"
+        root_dir.mkdir()
+        (root_dir / "Modules").mkdir()
+        (root_dir / "test.txt").write_text("data")
+
+        config = InstallationConfig("FlagsTest")
+        config.path = str(root_dir)
+        config.tsl = False
+
+        model = KotorFileSystemModel()
+        model.set_installations({"FlagsTest": config})
+
+        install_index = model.index(0, 0)
+        assert install_index.isValid()
+        flags = model.flags(install_index)
+        assert flags & Qt.ItemFlag.ItemIsEnabled
+        assert flags & Qt.ItemFlag.ItemIsSelectable
+
+        tooltip = model.data(install_index, Qt.ItemDataRole.ToolTipRole)
+        assert tooltip is not None
+        assert str(root_dir) in str(tooltip)
+
     def test_model_set_root_path(self, qt_api: str, qtbot: QtBot, installation: HTInstallation):
         """Test setting root path on the model."""
         from toolset.gui.widgets.kotor_filesystem_model import ResourceFileSystemModel
@@ -538,7 +600,9 @@ class TestFilesystemViewComprehensive:
         qtbot.addWidget(window)
         
         # Set installation
-        window.change_active_installation(0)
+        from qtpy.QtCore import QModelIndex
+
+        window.change_active_installation(QModelIndex(), QModelIndex())
         QApplication.processEvents()  # Wait for installation to load
         
         # Initially should be filesystem view (default)
@@ -569,7 +633,9 @@ class TestFilesystemViewComprehensive:
         qtbot.addWidget(window)
         
         # Set installation
-        window.change_active_installation(0)
+        from qtpy.QtCore import QModelIndex
+
+        window.change_active_installation(QModelIndex(), QModelIndex())
         QApplication.processEvents()
         
         # Should start in filesystem view

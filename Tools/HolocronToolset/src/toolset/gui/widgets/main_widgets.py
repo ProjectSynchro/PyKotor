@@ -37,7 +37,7 @@ from toolset.gui.widgets.texture_preview import load_resource_preview_mipmap, qi
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QModelIndex, QRect
-    from qtpy.QtGui import QMouseEvent, QResizeEvent, QShowEvent
+    from qtpy.QtGui import QMouseEvent, QResizeEvent, QShowEvent, QWheelEvent
     from qtpy.QtWidgets import QScrollBar, QMenu
 
     from pykotor.resource.formats.tpc.tpc_data import TPC
@@ -154,6 +154,7 @@ class ResourceList(MainWindowList):
     ):
         """Set the installation for the resource list."""
         self._installation: HTInstallation = installation
+        self.modules_model.set_base_path(installation.path())
 
     def set_resources(
         self,
@@ -197,6 +198,17 @@ class ResourceList(MainWindowList):
         self.section_model.clear()
         for section in sections:
             self.section_model.insertRow(self.section_model.rowCount(), section)
+
+    def set_group_by_category(self, value: bool):
+        if self.modules_model.group_by_category() == value:
+            return
+
+        base_path = self.modules_model.base_path()
+        self.modules_model = ResourceModel(group_by_category=value)
+        self.modules_model.set_base_path(base_path)
+        self.modules_model.proxy_model().setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.ui.resourceTree.setModel(self.modules_model.proxy_model())  # pyright: ignore[reportArgumentType]
+        self.ui.resourceTree.sortByColumn(0, Qt.SortOrder.AscendingOrder)  # pyright: ignore[reportArgumentType]
 
     def set_resource_selection(
         self,
@@ -511,31 +523,54 @@ class ResourceModel(QStandardItemModel):
     This class provides an easy way to add resources while sorting them into categories.
     """
 
-    def __init__(self):
+    def __init__(self, *, group_by_category: bool = True):
         """Initialize the resource model."""
         super().__init__()
+        self._group_by_category: bool = group_by_category
         self._category_items: dict[str, QStandardItem] = {}
+        self._path_nodes: dict[tuple[str, ...], QStandardItem] = {}
+        self._base_path: Path | None = None
         self._proxy_model: ResourceProxyModel = ResourceProxyModel(self)
         self._proxy_model.setSourceModel(self)
         self._proxy_model.setRecursiveFilteringEnabled(True)
         self.setColumnCount(2)
-        self.setHorizontalHeaderLabels(["ResRef", "Type"])
+        self.setHorizontalHeaderLabels(["ResRef", "Type"] if self._group_by_category else ["Path", "Type"])
 
     def proxy_model(self) -> ResourceProxyModel:
         return self._proxy_model
+
+    def group_by_category(self) -> bool:
+        return self._group_by_category
+
+    def base_path(self) -> Path | None:
+        return self._base_path
+
+    def set_base_path(self, base_path: Path | None):
+        self._base_path = base_path
+
+    def set_group_by_category(self, value: bool):
+        if self._group_by_category == value:
+            return
+        self._group_by_category = value
+        self.clear()
+        self.setColumnCount(2)
+        self.setHorizontalHeaderLabels(["ResRef", "Type"] if self._group_by_category else ["Path", "Type"])
 
     def clear(self):
         """Clear the resource model."""
         super().clear()
         self._category_items.clear()
+        self._path_nodes.clear()
         self.setColumnCount(2)
-        self.setHorizontalHeaderLabels(["ResRef", "Type"])
+        self.setHorizontalHeaderLabels(["ResRef", "Type"] if self._group_by_category else ["Path", "Type"])
 
     def _add_resource_into_category(
         self,
         resource_type: ResourceType,
         custom_category: str | None = None,
     ) -> QStandardItem:
+        if not self._group_by_category:
+            raise RuntimeError("Category grouping is disabled for this model.")
         chosen_category: str = resource_type.category if custom_category is None else custom_category
         if chosen_category not in self._category_items:
             category_item = QStandardItem(chosen_category)
@@ -551,9 +586,23 @@ class ResourceModel(QStandardItemModel):
         resource: FileResource,
         custom_category: str | None = None,
     ):
-        self._add_resource_into_category(resource.restype(), custom_category).appendRow(
+        if self._group_by_category:
+            self._add_resource_into_category(resource.restype(), custom_category).appendRow(
+                [
+                    ResourceStandardItem(resource.resname(), resource=resource),
+                    QStandardItem(resource.restype().extension.upper()),
+                ]
+            )
+            return
+
+        parts = self._path_parts_for_resource(resource)
+        parent = self.invisibleRootItem()
+        for i, part in enumerate(parts[:-1]):
+            parent = self._get_or_create_path_node(parent, part, tuple(parts[: i + 1]))
+
+        parent.appendRow(
             [
-                ResourceStandardItem(resource.resname(), resource=resource),
+                ResourceStandardItem(parts[-1], resource=resource),
                 QStandardItem(resource.restype().extension.upper()),
             ]
         )
@@ -568,6 +617,20 @@ class ResourceModel(QStandardItemModel):
         This is much faster than calling add_resource() individually for each resource
         because it groups resources by category and adds them in batches.
         """
+        if not self._group_by_category:
+            for resource in resources:
+                parts = self._path_parts_for_resource(resource)
+                parent = self.invisibleRootItem()
+                for i, part in enumerate(parts[:-1]):
+                    parent = self._get_or_create_path_node(parent, part, tuple(parts[: i + 1]))
+                parent.appendRow(
+                    [
+                        ResourceStandardItem(parts[-1], resource=resource),
+                        QStandardItem(resource.restype().extension.upper()),
+                    ]
+                )
+            return
+
         # Group resources by category
         resources_by_category: dict[str, list[FileResource]] = {}
         for resource in resources:
@@ -606,11 +669,27 @@ class ResourceModel(QStandardItemModel):
         ]
 
     def all_resources_items(self) -> list[ResourceStandardItem]:
+        if not self._group_by_category:
+            resources: list[ResourceStandardItem] = []
+
+            def walk(node: QStandardItem):
+                for i in range(node.rowCount()):
+                    child = node.child(i, 0)
+                    if isinstance(child, ResourceStandardItem):
+                        resources.append(child)
+                    elif isinstance(child, QStandardItem):
+                        walk(child)
+
+            walk(self.invisibleRootItem())
+            return resources
         resources: tuple[QStandardItem | None, ...] = tuple(category.child(i, 0) for category in self._category_items.values() for i in range(category.rowCount()))
         return [item for item in resources if isinstance(item, ResourceStandardItem)]
 
     def remove_unused_categories(self):
         """Remove unused categories from the resource model."""
+        if not self._group_by_category:
+            self._prune_empty_path_nodes()
+            return
         for row in range(self.rowCount())[::-1]:
             item: QStandardItem | None = self.item(row)
             assert item is not None, "Item should not be None"
@@ -621,6 +700,72 @@ class ResourceModel(QStandardItemModel):
                 continue
             del self._category_items[text]
             self.removeRow(row)
+
+    def _format_resource_path(self, resource: FileResource) -> str:
+        resource_path = resource.filepath()
+        if resource_path.name.lower() != resource.filename().lower():
+            return f"{resource_path}::{resource.filename()}"
+        return str(resource_path)
+
+    def _relative_parts(self, path: Path) -> list[str]:
+        if self._base_path is not None:
+            try:
+                return list(path.relative_to(self._base_path).parts)
+            except ValueError:
+                pass
+        return list(path.parts)
+
+    def _path_parts_for_resource(self, resource: FileResource) -> list[str]:
+        display_path = self._format_resource_path(resource)
+        if "::" in display_path:
+            container, entry = display_path.split("::", 1)
+            parts = self._relative_parts(Path(container))
+            parts.append(entry)
+            return parts
+        return self._relative_parts(Path(display_path))
+
+    def _get_or_create_path_node(
+        self,
+        parent: QStandardItem,
+        name: str,
+        path_key: tuple[str, ...],
+    ) -> QStandardItem:
+        if path_key in self._path_nodes:
+            return self._path_nodes[path_key]
+        node = QStandardItem(name)
+        node.setSelectable(False)
+        parent.appendRow([node, QStandardItem("")])
+        self._path_nodes[path_key] = node
+        return node
+
+    def _prune_empty_path_nodes(self):
+        def prune(node: QStandardItem):
+            for row in range(node.rowCount() - 1, -1, -1):
+                child = node.child(row, 0)
+                if isinstance(child, ResourceStandardItem):
+                    continue
+                if isinstance(child, QStandardItem):
+                    prune(child)
+                    if child.rowCount() == 0:
+                        node.removeRow(row)
+
+        prune(self.invisibleRootItem())
+        self._rebuild_path_nodes()
+
+    def _rebuild_path_nodes(self):
+        self._path_nodes.clear()
+
+        def walk(node: QStandardItem, parts: tuple[str, ...]):
+            for i in range(node.rowCount()):
+                child = node.child(i, 0)
+                if isinstance(child, ResourceStandardItem):
+                    continue
+                if isinstance(child, QStandardItem):
+                    child_parts = parts + (child.text(),)
+                    self._path_nodes[child_parts] = child
+                    walk(child, child_parts)
+
+        walk(self.invisibleRootItem(), ())
 
 
 class TextureList(MainWindowList):
@@ -676,6 +821,29 @@ class TextureList(MainWindowList):
         self._scroll_throttle_timer.setSingleShot(True)
         self._scroll_throttle_timer.timeout.connect(self._throttled_queue_load_visible_icons)
         self._pending_scroll_load: bool = False
+        self._icon_size: int = self.ui.resourceList.iconSize().width()
+        self.ui.resourceList.viewport().installEventFilter(self)
+
+    def eventFilter(self, obj: QObject, event: QtCore.QEvent) -> bool:  # pyright: ignore[reportIncompatibleMethodOverride]
+        if obj is self.ui.resourceList.viewport() and event.type() == QtCore.QEvent.Type.Wheel:
+            wheel_event = cast("QWheelEvent", event)
+            if wheel_event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                delta = wheel_event.angleDelta().y()
+                if delta:
+                    self._adjust_icon_size(1 if delta > 0 else -1)
+                    return True
+        return super().eventFilter(obj, event)
+
+    def _adjust_icon_size(self, direction: int):
+        step = 8 * direction
+        new_size = max(32, min(256, self._icon_size + step))
+        if new_size == self._icon_size:
+            return
+        self._icon_size = new_size
+        icon_size = QtCore.QSize(new_size, new_size)
+        grid_size = QtCore.QSize(int(new_size * 1.45), int(new_size * 1.45))
+        self.ui.resourceList.setIconSize(icon_size)
+        self.ui.resourceList.setGridSize(grid_size)
 
     def __del__(self):
         """Shutdown the executor when the texture list is deleted."""
@@ -719,6 +887,15 @@ class TextureList(MainWindowList):
             # Use throttled handler to prevent rapid queue operations on Windows
             vert_scroll_bar.valueChanged.connect(self._throttled_scroll_handler)
         self.sig_icon_loaded.connect(self.on_icon_loaded)
+
+    def change_section(
+        self,
+        section: str,
+    ):
+        for i in range(self.ui.sectionCombo.count()):
+            if section not in self.ui.sectionCombo.itemText(i):
+                continue
+            self.ui.sectionCombo.setCurrentIndex(i)
 
     def set_installation(self, installation: HTInstallation):
         """Set the installation for the resource list."""

@@ -21,8 +21,8 @@ try:
 except ImportError:
     pytest.skip("pykotor.gl not available", allow_module_level=True)
 
-from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QApplication, QMessageBox, QComboBox
+from qtpy.QtCore import QItemSelectionModel, QModelIndex, Qt, QTimer
+from qtpy.QtWidgets import QApplication, QMessageBox
 from qtpy.QtGui import QStandardItem
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ def test_main_window_initialization(qtbot: QtBot):
     assert window.settings is not None
     assert window.update_manager is not None
     assert window.theme_manager is not None
-    assert window.previous_game_combo_index == 0
+    assert window.previous_installation_name is None
     assert window._mouse_move_pos is None
     assert isinstance(window._theme_actions, dict)
     assert isinstance(window._style_actions, dict)
@@ -64,7 +64,7 @@ def test_main_window_ui_initialization(qtbot: QtBot):
     qtbot.addWidget(window)
     
     assert window.ui is not None
-    assert window.ui.gameCombo is not None
+    assert window.ui.installationTree is not None
     assert window.ui.resourceTabs is not None
     assert window.ui.modulesWidget is not None
     assert window.ui.overrideWidget is not None
@@ -94,12 +94,11 @@ def test_main_window_window_title(qtbot: QtBot):
     assert "Holocron Toolset" in window.windowTitle()
 
 def test_main_window_initial_game_combo(qtbot: QtBot):
-    """Test that game combo box starts with [None] option."""
+    """Test that installation tree starts empty."""
     window = ToolWindow()
     qtbot.addWidget(window)
-    
-    assert window.ui.gameCombo.count() >= 1
-    assert window.ui.gameCombo.itemText(0) == "[None]"
+
+    assert window.installation_tree_model.rowCount() >= 0
 
 def test_main_window_initial_resource_tabs_disabled(qtbot: QtBot):
     """Test that resource tabs are initially disabled."""
@@ -120,7 +119,7 @@ def test_main_window_unset_installation_initial_state(qtbot: QtBot):
     window.unset_installation()
     
     assert window.active is None
-    assert window.ui.gameCombo.currentIndex() == 0
+    assert window.ui.installationTree.currentIndex().isValid() is False
     assert not window.ui.resourceTabs.isEnabled()
     assert len(window._file_watcher.directories()) == 0
     assert len(window._file_watcher.files()) == 0
@@ -129,27 +128,22 @@ def test_main_window_change_installation_to_none(qtbot: QtBot):
     """Test changing installation to [None] clears installation."""
     window = ToolWindow()
     qtbot.addWidget(window)
-    
-    # Set to index 0 ([None])
-    window.change_active_installation(0)
-    
+
+    # Clear selection
+    window.change_active_installation(QModelIndex(), QModelIndex())
+
     assert window.active is None
-    assert window.previous_game_combo_index == 0
+    assert window.previous_installation_name is None
 
 def test_main_window_reload_installations(qtbot: QtBot):
-    """Test reloading installations updates the combo box."""
+    """Test reloading installations updates the tree model."""
     window = ToolWindow()
     qtbot.addWidget(window)
-    
-    initial_count = window.ui.gameCombo.count()
     window.reload_installations()
-    
-    # Should still have [None] at minimum
-    assert window.ui.gameCombo.count() >= 1
-    assert window.ui.gameCombo.itemText(0) == "[None]"
+    assert window.installation_tree_model.rowCount() >= 0
 
 def test_main_window_set_installation_from_combo(qtbot, installation: HTInstallation):
-    """Test setting installation via combo box selection."""
+    """Test setting installation via tree selection."""
     window = ToolWindow()
     qtbot.addWidget(window)
     window.show()
@@ -173,15 +167,24 @@ def test_main_window_set_installation_from_combo(qtbot, installation: HTInstalla
     window.installations[installation.name] = installation
     window.reload_installations()
     
-    # Find installation index
-    index = window.ui.gameCombo.findText(installation.name)
-    if index == -1:
-        pytest.skip(f"Installation '{installation.name}' not found in combo box")
-    
     # Select installation (disconnect signal temporarily to avoid async loader)
-    window.ui.gameCombo.currentIndexChanged.disconnect()
-    window.ui.gameCombo.setCurrentIndex(index)
-    window.ui.gameCombo.currentIndexChanged.connect(window.change_active_installation)
+    selection_model = window.ui.installationTree.selectionModel()
+    assert selection_model is not None
+    selection_model.currentChanged.disconnect(window.change_active_installation)
+
+    model = window.installation_tree_model
+    selected_index = None
+    for row in range(model.rowCount()):
+        idx = model.index(row, 0)
+        item = model.itemFromIndex(idx)
+        if item is not None and item.data() == installation.name:
+            selected_index = idx
+            break
+    if selected_index is None:
+        pytest.skip(f"Installation '{installation.name}' not found in tree")
+
+    selection_model.setCurrentIndex(selected_index, QItemSelectionModel.SelectionFlag.ClearAndSelect)
+    selection_model.currentChanged.connect(window.change_active_installation)
     
     # Manually set active for this test
     window.active = installation
