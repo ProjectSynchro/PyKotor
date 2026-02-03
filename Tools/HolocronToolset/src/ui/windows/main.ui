@@ -6,119 +6,289 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>512</width>
-    <height>471</height>
+    <width>1600</width>
+    <height>900</height>
    </rect>
-  </property>
-  <property name="acceptDrops">
-   <bool>true</bool>
   </property>
   <property name="windowTitle">
    <string>Holocron Toolset</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
-    <property name="sizeConstraint">
-     <enum>QLayout::SetMinimumSize</enum>
+   <layout class="QVBoxLayout" name="centralLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
     </property>
     <item>
      <widget class="QSplitter" name="mainSplitter">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="QWidget" name="treePanel">
-       <layout class="QVBoxLayout" name="treePanelLayout">
+      <property name="childrenCollapsible">
+       <bool>false</bool>
+      </property>
+      
+      <!-- LEFT PANEL: Project/Asset Browser -->
+      <widget class="QWidget" name="leftPanel">
+       <layout class="QVBoxLayout" name="leftPanelLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
         <property name="leftMargin">
-         <number>0</number>
+         <number>4</number>
         </property>
         <property name="topMargin">
-         <number>0</number>
+         <number>4</number>
         </property>
         <property name="rightMargin">
          <number>0</number>
         </property>
         <property name="bottomMargin">
+         <number>4</number>
+        </property>
+        
+        <!-- Toolbar for project view -->
+        <item>
+         <widget class="QWidget" name="projectToolbar">
+          <layout class="QHBoxLayout" name="projectToolbarLayout">
+           <property name="spacing">
+            <number>2</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QToolButton" name="btnCollapseAll">
+             <property name="toolTip">
+              <string>Collapse All</string>
+             </property>
+             <property name="text">
+              <string>-</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="btnExpandAll">
+             <property name="toolTip">
+              <string>Expand All</string>
+             </property>
+             <property name="text">
+              <string>+</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="btnRefresh">
+             <property name="toolTip">
+              <string>Refresh</string>
+             </property>
+             <property name="text">
+              <string>⟳</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="toolbarSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="searchBox">
+             <property name="placeholderText">
+              <string>Search...</string>
+             </property>
+             <property name="clearButtonEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        
+        <!-- Project tree view -->
+        <item>
+         <widget class="QTreeView" name="projectTree">
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::ExtendedSelection</enum>
+          </property>
+          <property name="sortingEnabled">
+           <bool>true</bool>
+          </property>
+          <property name="animated">
+           <bool>true</bool>
+          </property>
+          <property name="headerHidden">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      
+      <!-- CENTER PANEL: Asset Viewport/Content Browser -->
+      <widget class="QWidget" name="centerPanel">
+       <layout class="QVBoxLayout" name="centerPanelLayout">
+        <property name="spacing">
          <number>0</number>
         </property>
+        <property name="leftMargin">
+         <number>4</number>
+        </property>
+        <property name="topMargin">
+         <number>4</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>4</number>
+        </property>
+        
+        <!-- View toolbar -->
         <item>
-         <layout class="QHBoxLayout" name="viewModeLayout">
-          <item>
-           <widget class="QPushButton" name="viewModeTreeButton">
-            <property name="text">
-             <string>Tree</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-            <property name="toolTip">
-             <string>Tree view mode</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="viewModeListButton">
-            <property name="text">
-             <string>List</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="toolTip">
-             <string>List view mode</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="viewModeIconButton">
-            <property name="text">
-             <string>Icons</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="toolTip">
-             <string>Icon view mode</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="viewModeTableButton">
-            <property name="text">
-             <string>Table</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="toolTip">
-             <string>Table view mode</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="viewModeSpacer">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
+         <widget class="QWidget" name="viewToolbar">
+          <layout class="QHBoxLayout" name="viewToolbarLayout">
+           <property name="spacing">
+            <number>2</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>4</number>
+           </property>
+           
+           <!-- Navigation breadcrumb -->
+           <item>
+            <widget class="QLabel" name="breadcrumbLabel">
+             <property name="text">
+              <string>Path: /</string>
+             </property>
+            </widget>
+           </item>
+           
+           <item>
+            <spacer name="viewToolbarSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           
+           <!-- View mode buttons -->
+           <item>
+            <widget class="QToolButton" name="btnViewTree">
+             <property name="toolTip">
+              <string>Tree View</string>
+             </property>
+             <property name="text">
+              <string>≡</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="btnViewList">
+             <property name="toolTip">
+              <string>List View</string>
+             </property>
+             <property name="text">
+              <string>☰</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="btnViewGrid">
+             <property name="toolTip">
+              <string>Grid View</string>
+             </property>
+             <property name="text">
+              <string>⊞</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="btnViewTable">
+             <property name="toolTip">
+              <string>Table View</string>
+             </property>
+             <property name="text">
+              <string>⊟</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </item>
+        
+        <!-- Stacked view container -->
         <item>
          <widget class="QStackedWidget" name="viewStack">
-          <property name="currentIndex">
-           <number>0</number>
-          </property>
+          
+          <!-- Page 0: Tree View -->
           <widget class="QWidget" name="treeViewPage">
            <layout class="QVBoxLayout" name="treeViewLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
             <property name="leftMargin">
              <number>0</number>
             </property>
@@ -132,54 +302,27 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QTreeView" name="resourceTree" />
-            </item>
-           </layout>
-          </widget>
-          <widget class="QWidget" name="listViewPage">
-           <layout class="QVBoxLayout" name="listViewLayout">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QListView" name="resourceList" />
-            </item>
-           </layout>
-          </widget>
-          <widget class="QWidget" name="iconViewPage">
-           <layout class="QVBoxLayout" name="iconViewLayout">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QListView" name="resourceIconView">
-              <property name="viewMode">
-               <enum>QListView::IconMode</enum>
+             <widget class="QTreeView" name="assetTreeView">
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::ExtendedSelection</enum>
+              </property>
+              <property name="sortingEnabled">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="tableViewPage">
-           <layout class="QVBoxLayout" name="tableViewLayout">
+          
+          <!-- Page 1: List View -->
+          <widget class="QWidget" name="listViewPage">
+           <layout class="QVBoxLayout" name="listViewLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
             <property name="leftMargin">
              <number>0</number>
             </property>
@@ -193,7 +336,382 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QTableView" name="resourceTable" />
+             <widget class="QListView" name="assetListView">
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::ExtendedSelection</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          
+          <!-- Page 2: Grid/Icon View -->
+          <widget class="QWidget" name="gridViewPage">
+           <layout class="QVBoxLayout" name="gridViewLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QListView" name="assetGridView">
+              <property name="viewMode">
+               <enum>QListView::IconMode</enum>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>128</width>
+                <height>128</height>
+               </size>
+              </property>
+              <property name="gridSize">
+               <size>
+                <width>140</width>
+                <height>140</height>
+               </size>
+              </property>
+              <property name="resizeMode">
+               <enum>QListView::Adjust</enum>
+              </property>
+              <property name="uniformItemSizes">
+               <bool>true</bool>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::ExtendedSelection</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          
+          <!-- Page 3: Table View -->
+          <widget class="QWidget" name="tableViewPage">
+           <layout class="QVBoxLayout" name="tableViewLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QTableView" name="assetTableView">
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::ExtendedSelection</enum>
+              </property>
+              <property name="sortingEnabled">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      
+      <!-- RIGHT PANEL: Inspector/Properties -->
+      <widget class="QWidget" name="rightPanel">
+       <layout class="QVBoxLayout" name="rightPanelLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <property name="leftMargin">
+         <number>4</number>
+        </property>
+        <property name="topMargin">
+         <number>4</number>
+        </property>
+        <property name="rightMargin">
+         <number>4</number>
+        </property>
+        <property name="bottomMargin">
+         <number>4</number>
+        </property>
+        
+        <!-- Inspector header -->
+        <item>
+         <widget class="QLabel" name="inspectorLabel">
+          <property name="text">
+           <string>Inspector</string>
+          </property>
+          <property name="styleSheet">
+           <string>font-weight: bold; font-size: 11pt;</string>
+          </property>
+         </widget>
+        </item>
+        
+        <!-- Scroll area for properties -->
+        <item>
+         <widget class="QScrollArea" name="inspectorScrollArea">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <widget class="QWidget" name="inspectorContents">
+           <layout class="QVBoxLayout" name="inspectorLayout">
+            <property name="spacing">
+             <number>8</number>
+            </property>
+            
+            <!-- Preview Section -->
+            <item>
+             <widget class="QGroupBox" name="previewGroup">
+              <property name="title">
+               <string>Preview</string>
+              </property>
+              <layout class="QVBoxLayout" name="previewLayout">
+               <item>
+                <widget class="QLabel" name="previewLabel">
+                 <property name="minimumSize">
+                  <size>
+                   <width>200</width>
+                   <height>200</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>No preview available</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            
+            <!-- Asset Info Section -->
+            <item>
+             <widget class="QGroupBox" name="assetInfoGroup">
+              <property name="title">
+               <string>Asset Information</string>
+              </property>
+              <layout class="QFormLayout" name="assetInfoLayout">
+               <item row="0" column="0">
+                <widget class="QLabel" name="labelName">
+                 <property name="text">
+                  <string>Name:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QLabel" name="assetName">
+                 <property name="text">
+                  <string>-</string>
+                 </property>
+                 <property name="textInteractionFlags">
+                  <set>Qt::TextSelectableByMouse</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="labelType">
+                 <property name="text">
+                  <string>Type:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLabel" name="assetType">
+                 <property name="text">
+                  <string>-</string>
+                 </property>
+                 <property name="textInteractionFlags">
+                  <set>Qt::TextSelectableByMouse</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="labelSize">
+                 <property name="text">
+                  <string>Size:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QLabel" name="assetSize">
+                 <property name="text">
+                  <string>-</string>
+                 </property>
+                 <property name="textInteractionFlags">
+                  <set>Qt::TextSelectableByMouse</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="labelPath">
+                 <property name="text">
+                  <string>Path:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QLabel" name="assetPath">
+                 <property name="text">
+                  <string>-</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                 <property name="textInteractionFlags">
+                  <set>Qt::TextSelectableByMouse</set>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            
+            <!-- Actions Section -->
+            <item>
+             <widget class="QGroupBox" name="actionsGroup">
+              <property name="title">
+               <string>Actions</string>
+              </property>
+              <layout class="QVBoxLayout" name="actionsLayout">
+               <item>
+                <widget class="QPushButton" name="btnOpen">
+                 <property name="text">
+                  <string>Open</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnExtract">
+                 <property name="text">
+                  <string>Extract...</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnDuplicate">
+                 <property name="text">
+                  <string>Duplicate</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnDelete">
+                 <property name="text">
+                  <string>Delete</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            
+            <!-- Export Options Section -->
+            <item>
+             <widget class="QGroupBox" name="exportOptionsGroup">
+              <property name="title">
+               <string>Export Options</string>
+              </property>
+              <layout class="QVBoxLayout" name="exportOptionsLayout">
+               <!-- TPC Options -->
+               <item>
+                <widget class="QGroupBox" name="tpcOptionsGroup">
+                 <property name="title">
+                  <string>TPC Export</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>false</bool>
+                 </property>
+                 <layout class="QVBoxLayout" name="tpcOptionsLayout">
+                  <item>
+                   <widget class="QCheckBox" name="chkTpcDecompile">
+                    <property name="text">
+                     <string>Decompile to TGA</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="chkTpcExtractTxi">
+                    <property name="text">
+                     <string>Extract TXI metadata</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               
+               <!-- MDL Options -->
+               <item>
+                <widget class="QGroupBox" name="mdlOptionsGroup">
+                 <property name="title">
+                  <string>MDL Export</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>false</bool>
+                 </property>
+                 <layout class="QVBoxLayout" name="mdlOptionsLayout">
+                  <item>
+                   <widget class="QCheckBox" name="chkMdlDecompile">
+                    <property name="text">
+                     <string>Decompile to ASCII</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="chkMdlExtractTextures">
+                    <property name="text">
+                     <string>Extract textures</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            
+            <!-- Spacer to push everything to top -->
+            <item>
+             <spacer name="inspectorSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </widget>
@@ -201,124 +719,23 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="actionPanel">
-       <layout class="QVBoxLayout" name="actionPanelLayout">
-        <item>
-         <spacer name="actionPanelTopSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Fixed</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>45</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QPushButton" name="openButton">
-          <property name="text">
-           <string>Open Selected</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="extractButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Extract Selected</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="tpcGroup">
-          <property name="title">
-           <string>TPC</string>
-          </property>
-          <layout class="QVBoxLayout" name="tpcGroupLayout">
-           <item>
-            <widget class="QCheckBox" name="tpcDecompileCheckbox">
-             <property name="text">
-              <string>Decompile</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="tpcTxiCheckbox">
-             <property name="text">
-              <string>Extract TXI</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="mdlGroup">
-          <property name="title">
-           <string>MDL</string>
-          </property>
-          <layout class="QVBoxLayout" name="mdlGroupLayout">
-           <item>
-            <widget class="QCheckBox" name="mdlDecompileCheckbox">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="toolTip">
-              <string>Decompile MDL to ASCII format</string>
-             </property>
-             <property name="text">
-              <string>Decompile</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="mdlTexturesCheckbox">
-             <property name="text">
-              <string>Extract Textures</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <spacer name="actionPanelBottomSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
-      </widget>
+      
      </widget>
     </item>
    </layout>
   </widget>
+  
+  <!-- Menu Bar -->
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>512</width>
-     <height>22</height>
+     <width>1600</width>
+     <height>21</height>
     </rect>
    </property>
+   
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
@@ -327,74 +744,80 @@
      <property name="title">
       <string>New</string>
      </property>
-     <addaction name="actionNewDLG" />
-     <addaction name="actionNewNSS" />
-     <addaction name="actionNewUTC" />
-     <addaction name="actionNewUTP" />
-     <addaction name="actionNewUTD" />
-     <addaction name="actionNewUTI" />
-     <addaction name="actionNewUTS" />
-     <addaction name="actionNewUTT" />
-     <addaction name="actionNewUTM" />
-     <addaction name="actionNewUTW" />
-     <addaction name="actionNewUTE" />
-     <addaction name="actionNewTLK" />
-     <addaction name="separator" />
-     <addaction name="actionNewGFF" />
-     <addaction name="actionNewERF" />
-     <addaction name="actionNewTXT" />
-     <addaction name="actionNewSSF" />
+     <addaction name="actionNewDLG"/>
+     <addaction name="actionNewNSS"/>
+     <addaction name="actionNewUTC"/>
+     <addaction name="actionNewUTP"/>
+     <addaction name="actionNewUTD"/>
+     <addaction name="actionNewUTI"/>
+     <addaction name="actionNewUTT"/>
+     <addaction name="actionNewUTM"/>
+     <addaction name="actionNewUTW"/>
+     <addaction name="actionNewUTE"/>
+     <addaction name="actionNewUTS"/>
+     <addaction name="separator"/>
+     <addaction name="actionNewTLK"/>
+     <addaction name="actionNewGFF"/>
+     <addaction name="actionNewERF"/>
+     <addaction name="actionNewTXT"/>
+     <addaction name="actionNewSSF"/>
     </widget>
     <widget class="QMenu" name="menuRecentFiles">
      <property name="title">
       <string>Recent Files</string>
      </property>
     </widget>
-    <addaction name="menuNew" />
-    <addaction name="openAction" />
-    <addaction name="menuRecentFiles" />
-    <addaction name="separator" />
-    <addaction name="actionSettings" />
-    <addaction name="separator" />
-    <addaction name="actionExit" />
+    <addaction name="menuNew"/>
+    <addaction name="openAction"/>
+    <addaction name="separator"/>
+    <addaction name="menuRecentFiles"/>
+    <addaction name="separator"/>
+    <addaction name="actionSettings"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
    </widget>
+   
    <widget class="QMenu" name="menuEdit">
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="separator" />
-    <addaction name="actionEditTLK" />
-    <addaction name="actionEditJRL" />
    </widget>
+   
    <widget class="QMenu" name="menuView">
     <property name="title">
      <string>View</string>
     </property>
-    <addaction name="actionLegacyLayout" />
    </widget>
+   
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionModuleDesigner"/>
+    <addaction name="actionIndoorMapBuilder"/>
+    <addaction name="separator"/>
+    <addaction name="actionEditTLK"/>
+    <addaction name="actionEditJRL"/>
+    <addaction name="separator"/>
+    <addaction name="actionFileSearch"/>
+    <addaction name="actionKotorDiff"/>
+    <addaction name="actionTSLPatchDataEditor"/>
+    <addaction name="separator"/>
+    <addaction name="actionCloneModule"/>
+   </widget>
+   
    <widget class="QMenu" name="menuTheme">
     <property name="title">
      <string>Theme</string>
     </property>
    </widget>
+   
    <widget class="QMenu" name="menuLanguage">
     <property name="title">
      <string>Language</string>
     </property>
    </widget>
-   <widget class="QMenu" name="menuTools">
-    <property name="title">
-     <string>Tools</string>
-    </property>
-    <addaction name="actionModuleDesigner" />
-    <addaction name="actionIndoorMapBuilder" />
-    <addaction name="separator" />
-    <addaction name="actionKotorDiff" />
-    <addaction name="actionTSLPatchDataEditor" />
-    <addaction name="separator" />
-    <addaction name="actionFileSearch" />
-    <addaction name="actionCloneModule" />
-   </widget>
+   
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
@@ -403,37 +826,35 @@
      <property name="title">
       <string>Discord</string>
      </property>
-     <addaction name="actionDiscordHolocronToolset" />
-     <addaction name="actionDiscordKotOR" />
-     <addaction name="actionDiscordDeadlyStream" />
+     <addaction name="actionDiscordHolocronToolset"/>
+     <addaction name="actionDiscordKotOR"/>
+     <addaction name="actionDiscordDeadlyStream"/>
     </widget>
-    <addaction name="actionHelpAbout" />
-    <addaction name="menuDiscord" />
-    <addaction name="actionInstructions" />
-    <addaction name="actionHelpUpdates" />
+    <addaction name="actionInstructions"/>
+    <addaction name="separator"/>
+    <addaction name="actionHelpUpdates"/>
+    <addaction name="separator"/>
+    <addaction name="menuDiscord"/>
+    <addaction name="separator"/>
+    <addaction name="actionHelpAbout"/>
    </widget>
-   <addaction name="menuFile" />
-   <addaction name="menuEdit" />
-   <addaction name="menuView" />
-   <addaction name="menuTools" />
-   <addaction name="menuTheme" />
-   <addaction name="menuLanguage" />
-   <addaction name="menuHelp" />
+   
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuView"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuTheme"/>
+   <addaction name="menuLanguage"/>
+   <addaction name="menuHelp"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar" />
-  <action name="cloneModuleAction">
+  
+  <!-- Status Bar -->
+  <widget class="QStatusBar" name="statusbar"/>
+  
+  <!-- Actions -->
+  <action name="openAction">
    <property name="text">
-    <string>Clone Module</string>
-   </property>
-  </action>
-  <action name="actionRecent_Files">
-   <property name="text">
-    <string>Recent Files</string>
-   </property>
-  </action>
-  <action name="actionExit">
-   <property name="text">
-    <string>Exit</string>
+    <string>Open...</string>
    </property>
   </action>
   <action name="actionSettings">
@@ -441,72 +862,71 @@
     <string>Settings</string>
    </property>
   </action>
-  <action name="actionAbout">
+  <action name="actionExit">
    <property name="text">
-    <string>About</string>
+    <string>Exit</string>
    </property>
   </action>
-  <action name="actionOpen">
-   <property name="text">
-    <string>Open</string>
-   </property>
-  </action>
-  <action name="actionCheck_for_Updates">
-   <property name="text">
-    <string>Check for Updates</string>
-   </property>
-  </action>
-  <action name="actionCreature">
-   <property name="text">
-    <string>Creature</string>
-   </property>
-  </action>
-  <action name="actionItem">
-   <property name="text">
-    <string>Item</string>
-   </property>
-  </action>
-  <action name="actionDoor">
-   <property name="text">
-    <string>Door</string>
-   </property>
-  </action>
-  <action name="actionPlaceable">
-   <property name="text">
-    <string>Placeable</string>
-   </property>
-  </action>
-  <action name="actionMerchant">
-   <property name="text">
-    <string>Merchant</string>
-   </property>
-  </action>
-  <action name="actionEncounter">
-   <property name="text">
-    <string>Encounter</string>
-   </property>
-  </action>
-  <action name="actionTrigger">
-   <property name="text">
-    <string>Trigger</string>
-   </property>
-  </action>
-  <action name="actionWaypoint">
-   <property name="text">
-    <string>Waypoint</string>
-   </property>
-  </action>
-  <action name="actionDialog">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
+  
+  <!-- New Resource Actions -->
+  <action name="actionNewDLG">
    <property name="text">
     <string>Dialog</string>
    </property>
   </action>
-  <action name="openAction">
+  <action name="actionNewNSS">
    <property name="text">
-    <string>Open</string>
+    <string>Script</string>
+   </property>
+  </action>
+  <action name="actionNewUTC">
+   <property name="text">
+    <string>Creature</string>
+   </property>
+  </action>
+  <action name="actionNewUTP">
+   <property name="text">
+    <string>Placeable</string>
+   </property>
+  </action>
+  <action name="actionNewUTD">
+   <property name="text">
+    <string>Door</string>
+   </property>
+  </action>
+  <action name="actionNewUTI">
+   <property name="text">
+    <string>Item</string>
+   </property>
+  </action>
+  <action name="actionNewUTT">
+   <property name="text">
+    <string>Trigger</string>
+   </property>
+  </action>
+  <action name="actionNewUTM">
+   <property name="text">
+    <string>Merchant</string>
+   </property>
+  </action>
+  <action name="actionNewUTW">
+   <property name="text">
+    <string>Waypoint</string>
+   </property>
+  </action>
+  <action name="actionNewUTE">
+   <property name="text">
+    <string>Encounter</string>
+   </property>
+  </action>
+  <action name="actionNewUTS">
+   <property name="text">
+    <string>Sound</string>
+   </property>
+  </action>
+  <action name="actionNewTLK">
+   <property name="text">
+    <string>TalkTable</string>
    </property>
   </action>
   <action name="actionNewGFF">
@@ -524,12 +944,58 @@
     <string>TXT</string>
    </property>
   </action>
-  <action name="actionEditTLK">
-   <property name="enabled">
-    <bool>false</bool>
+  <action name="actionNewSSF">
+   <property name="text">
+    <string>SSF</string>
    </property>
+  </action>
+  
+  <!-- Tool Actions -->
+  <action name="actionModuleDesigner">
+   <property name="text">
+    <string>Module Designer</string>
+   </property>
+  </action>
+  <action name="actionIndoorMapBuilder">
+   <property name="text">
+    <string>Indoor Map Builder</string>
+   </property>
+  </action>
+  <action name="actionEditTLK">
    <property name="text">
     <string>Edit Talk Table</string>
+   </property>
+  </action>
+  <action name="actionEditJRL">
+   <property name="text">
+    <string>Edit Journal</string>
+   </property>
+  </action>
+  <action name="actionFileSearch">
+   <property name="text">
+    <string>File Search</string>
+   </property>
+  </action>
+  <action name="actionKotorDiff">
+   <property name="text">
+    <string>KotorDiff</string>
+   </property>
+  </action>
+  <action name="actionTSLPatchDataEditor">
+   <property name="text">
+    <string>TSLPatchData Editor</string>
+   </property>
+  </action>
+  <action name="actionCloneModule">
+   <property name="text">
+    <string>Clone Module</string>
+   </property>
+  </action>
+  
+  <!-- Help Actions -->
+  <action name="actionInstructions">
+   <property name="text">
+    <string>Instructions</string>
    </property>
   </action>
   <action name="actionHelpUpdates">
@@ -540,209 +1006,6 @@
   <action name="actionHelpAbout">
    <property name="text">
     <string>About</string>
-   </property>
-  </action>
-  <action name="actionNewSSF">
-   <property name="text">
-    <string>SSF</string>
-   </property>
-  </action>
-  <action name="actionNewUTC">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset>
-     <normalon>:/images/icons/kx/creature.png</normalon>
-    </iconset>
-   </property>
-   <property name="text">
-    <string>Creature</string>
-   </property>
-  </action>
-  <action name="actionCloneModule">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Clone Module</string>
-   </property>
-  </action>
-  <action name="actionNewUTP">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
-     <normaloff>:/images/icons/kx/placeable.png</normaloff>:/images/icons/kx/placeable.png</iconset>
-   </property>
-   <property name="text">
-    <string>Placeable</string>
-   </property>
-  </action>
-  <action name="actionNewUTD">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
-     <normaloff>:/images/icons/kx/door.png</normaloff>:/images/icons/kx/door.png</iconset>
-   </property>
-   <property name="text">
-    <string>Door</string>
-   </property>
-  </action>
-  <action name="actionNewUTW">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
-     <normaloff>:/images/icons/kx/waypoint.png</normaloff>:/images/icons/kx/waypoint.png</iconset>
-   </property>
-   <property name="text">
-    <string>Waypoint</string>
-   </property>
-  </action>
-  <action name="actionNewUTT">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
-     <normaloff>:/images/icons/kx/trigger.png</normaloff>:/images/icons/kx/trigger.png</iconset>
-   </property>
-   <property name="text">
-    <string>Trigger</string>
-   </property>
-  </action>
-  <action name="actionNewUTE">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
-     <normaloff>:/images/icons/kx/encounter.png</normaloff>:/images/icons/kx/encounter.png</iconset>
-   </property>
-   <property name="text">
-    <string>Encounter</string>
-   </property>
-  </action>
-  <action name="actionNewUTS">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
-     <normaloff>:/images/icons/kx/sound.png</normaloff>:/images/icons/kx/sound.png</iconset>
-   </property>
-   <property name="text">
-    <string>Sound</string>
-   </property>
-  </action>
-  <action name="actionNewUTM">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
-     <normaloff>:/images/icons/kx/merchant.png</normaloff>:/images/icons/kx/merchant.png</iconset>
-   </property>
-   <property name="text">
-    <string>Merchant</string>
-   </property>
-  </action>
-  <action name="actionNewTLK">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
-     <normaloff>:/images/icons/kx/tlk.png</normaloff>:/images/icons/kx/tlk.png</iconset>
-   </property>
-   <property name="text">
-    <string>TalkTable</string>
-   </property>
-  </action>
-  <action name="actionNewUTI">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
-     <normaloff>:/images/icons/kx/item.png</normaloff>:/images/icons/kx/item.png</iconset>
-   </property>
-   <property name="text">
-    <string>Item</string>
-   </property>
-  </action>
-  <action name="actionNewDLG">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
-     <normaloff>:/images/icons/kx/dialog.png</normaloff>:/images/icons/kx/dialog.png</iconset>
-   </property>
-   <property name="text">
-    <string>Dialog</string>
-   </property>
-  </action>
-  <action name="actionNewNSS">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
-     <normaloff>:/images/icons/kx/script.png</normaloff>:/images/icons/kx/script.png</iconset>
-   </property>
-   <property name="text">
-    <string>Script</string>
-   </property>
-  </action>
-  <action name="actionEditJRL">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Edit Journal</string>
-   </property>
-  </action>
-  <action name="actionFileSearch">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>File Search</string>
-   </property>
-  </action>
-  <action name="actionGeometryEditor">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Geometry Editor</string>
-   </property>
-  </action>
-  <action name="actionIndoorMapBuilder">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Indoor Map Builder</string>
-   </property>
-  </action>
-  <action name="actionEditModule">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Edit Module</string>
-   </property>
-  </action>
-  <action name="actionInstructions">
-   <property name="text">
-    <string>Instructions</string>
    </property>
   </action>
   <action name="actionDiscordHolocronToolset">
@@ -760,44 +1023,8 @@
     <string>Deadly Stream</string>
    </property>
   </action>
-  <action name="actionModuleDesigner">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Module Designer</string>
-   </property>
-  </action>
-  <action name="actionKotorDiff">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>KotorDiff</string>
-   </property>
-  </action>
-  <action name="actionTSLPatchDataEditor">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>TSLPatchData Editor</string>
-   </property>
-  </action>
-  <action name="actionLegacyLayout">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Legacy Layout</string>
-   </property>
-   <property name="toolTip">
-    <string>Switch to the legacy resource list view</string>
-   </property>
-  </action>
+  
  </widget>
- <resources>
-  <include location="../../resources/resources.qrc" />
- </resources>
- <connections />
+ <resources/>
+ <connections/>
 </ui>

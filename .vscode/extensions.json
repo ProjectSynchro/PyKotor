@@ -12,6 +12,7 @@
         "tylerleonhardt.vscode-inline-values-powershell",
         "seanwu.vscode-qt-for-python",
         "littlefoxteam.vscode-python-test-adapter",
-        "ms-python.vscode-python-envs"
+        "ms-python.vscode-python-envs",
+        "anysphere.cursorpyright"
     ]
 }

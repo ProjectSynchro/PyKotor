@@ -19,14 +19,14 @@ if UTILITY_PATH.exists() and UTILITY_PATH.is_dir() and str(UTILITY_PATH) not in 
     sys.path.append(str(UTILITY_PATH))
 
 from pykotor.engine.core import KotorEngine
-from pykotor.engine.graphics import GUIManager
+from pykotor.engine.graphics.gui import GUIManager
 
 if TYPE_CHECKING:
     from pykotor.engine.graphics.gui import GUIManager
 
 
 K1_PATH = Path("C:/Program Files (x86)/Steam/steamapps/common/swkotor")
-K2_PATH = Path("C:/Program Files (x86)/Steam/steamapps/common/kotor2")
+K2_PATH = Path("C:/Program Files (x86)/Steam/steamapps/common/Knights of the Old Republic II")
 
 
 def test_load_gui_k1() -> None:

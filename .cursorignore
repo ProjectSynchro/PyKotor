@@ -55,7 +55,7 @@ tslpatchdata/
 typings/*
 vendor/KotOR_IO
 
-!.cursor
+!.cursor/
 !.cursorignore
 !.cursorrules
 !.editorconfig

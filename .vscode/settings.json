@@ -102,7 +102,7 @@
     "${workspaceFolder}/Tools/KotorDiff/src"
   ],
   "python.envFile": "${workspaceFolder}/.env",
-  "python.languageServer": "Pylance",
+  "python.languageServer": "Default",
   "python.linting.enabled": true,
   "python.linting.pylintEnabled": false,
   "python.testing.pytestArgs": [
@@ -125,5 +125,6 @@
       "-NoLogo"
     ],
     "path": "pwsh.exe"
-  }
+  },
+  "python-envs.defaultEnvManager": "ms-python.python:system"
 }

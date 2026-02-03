@@ -22,7 +22,7 @@ for path in (PYKOTOR_SRC, UTILITY_SRC):
 
 from utility.system.app_process.util import is_frozen as is_frozen_app_process
 from utility.system.os_helper import get_app_dir, is_frozen
-from utility.tkinter.app_entry import is_frozen as is_frozen_tkinter
+from utility.gui.tkinter.app_entry import is_frozen as is_frozen_tkinter
 
 
 class TestSysAttributesStrictTyping:

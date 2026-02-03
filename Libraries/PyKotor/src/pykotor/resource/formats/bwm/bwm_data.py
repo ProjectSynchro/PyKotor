@@ -326,14 +326,14 @@ class BWM(ComparableMixin):
             A list of Vector3 objects. Uniqueness is identity-based; the order
             is first-seen while iterating faces.
         """
+        seen: set[int] = set()
         vertices: list[Vector3] = []
         for face in self.faces:
-            if not face.v1.within(vertices):
-                vertices.append(face.v1)
-            if not face.v2.within(vertices):
-                vertices.append(face.v2)
-            if not face.v3.within(vertices):
-                vertices.append(face.v3)
+            for v in (face.v1, face.v2, face.v3):
+                vid = id(v)
+                if vid not in seen:
+                    seen.add(vid)
+                    vertices.append(v)
         return vertices
 
     def aabbs(self) -> list[BWMNodeAABB]:

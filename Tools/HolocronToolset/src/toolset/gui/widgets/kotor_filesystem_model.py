@@ -60,7 +60,7 @@ if toolset_path.exists():
 
 from pathlib import Path  # noqa: E402
 
-from qtpy.QtCore import QAbstractItemModel, QDir, QModelIndex, QObject, Qt  # noqa: E402, F401
+from qtpy.QtCore import QAbstractItemModel, QDir, QModelIndex, QObject, Qt, Signal  # noqa: E402, F401
 from qtpy.QtGui import QColor, QDrag, QIcon, QImage, QPalette, QPixmap  # noqa: E402
 from qtpy.QtWidgets import (  # noqa: E402
     QFileSystemModel,  # pyright: ignore[reportPrivateImportUsage]
@@ -811,6 +811,9 @@ T = TypeVar("T", bound=Union[SupportsRichComparison, str])
 
 
 class KotorFileSystemModel(QAbstractItemModel):
+    # Signals
+    address_changed = Signal()  # Emitted when the address bar should be updated
+    
     COLUMN_TO_STAT_MAP: ClassVar[dict[str, str]] = {
         "Size on Disk": "size_on_disk",
         "Size Ratio": "size_ratio",
@@ -846,6 +849,9 @@ class KotorFileSystemModel(QAbstractItemModel):
         self._detailed_headers: list[str] = [*self._headers]
         self._detailed_headers.extend(h for h in self.COLUMN_TO_STAT_MAP if h not in self._headers)
         self._filter: QDir.Filter | int = QDir.Filter.AllEntries | QDir.Filter.NoDotAndDotDot | QDir.Filter.AllDirs | QDir.Filter.Files
+        self._thumbnail_cache: dict[str, QIcon] = {}
+        self._thumbnail_cache_order: list[str] = []
+        self._thumbnail_cache_limit: int = 512
 
     @property
     def NumColumns(self) -> int:
@@ -893,9 +899,7 @@ class KotorFileSystemModel(QAbstractItemModel):
         if _alwaysEndReset:
             self.endResetModel()
         print("<SDM> [resetInternalData scope] Model data has been reset.")
-        container = self.get_container_widget()
-        if container is not None:
-            container.updateAddressBar()  # TODO(th3w1zard1): emit a signal for this.
+        self.address_changed.emit()
 
     def setRootPath(self, path: os.PathLike | str):
         self.resetInternalData(_alwaysEndReset=False)
@@ -1001,6 +1005,10 @@ class KotorFileSystemModel(QAbstractItemModel):
             return self.get_default_data(index)
 
         if role == Qt.ItemDataRole.DecorationRole and index.column() == 0:
+            if isinstance(item, ResourceItem):
+                thumb = self._get_thumbnail_icon(item.resource)
+                if thumb is not None:
+                    return thumb
             return item.iconData()
 
         if role == Qt.ItemDataRole.ToolTipRole:
@@ -1017,6 +1025,54 @@ class KotorFileSystemModel(QAbstractItemModel):
             self.setData(index, iconData, ICONS_DATA_ROLE)
 
         return None
+
+    def _get_thumbnail_icon(self, resource: FileResource) -> QIcon | None:
+        """Generate or fetch cached thumbnail icon for supported assets."""
+        restype = resource.restype()
+        ext = restype.extension.lower()
+        if ext not in {"tpc", "tga"}:
+            return None
+
+        source = resource.source()
+        cache_key = source or f"{resource.resname()}.{ext}"
+        if cache_key in self._thumbnail_cache:
+            return self._thumbnail_cache[cache_key]
+
+        data = resource.data()
+        if not data:
+            return None
+
+        pixmap: QPixmap | None = None
+        try:
+            if ext == "tpc":
+                from pykotor.resource.formats.tpc import read_tpc, TPCTextureFormat
+
+                tpc = read_tpc(data)
+                if tpc.convert(TPCTextureFormat.RGB):
+                    img = QImage(tpc.get().data, tpc.width, tpc.height, QImage.Format.Format_RGB888)
+                else:
+                    img = QImage(tpc.get().data, tpc.width, tpc.height, QImage.Format.Format_RGBA8888)
+                pixmap = QPixmap.fromImage(img)
+            else:
+                pixmap = QPixmap()
+                pixmap.loadFromData(data)
+        except Exception:
+            return None
+
+        if pixmap is None or pixmap.isNull():
+            return None
+
+        size = 128
+        scaled = pixmap.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        icon = QIcon(scaled)
+        self._thumbnail_cache[cache_key] = icon
+        self._thumbnail_cache_order.append(cache_key)
+
+        if len(self._thumbnail_cache_order) > self._thumbnail_cache_limit:
+            oldest = self._thumbnail_cache_order.pop(0)
+            self._thumbnail_cache.pop(oldest, None)
+
+        return icon
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:
         if not index.isValid():
