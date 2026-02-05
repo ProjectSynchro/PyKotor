@@ -95,6 +95,14 @@ class TestRIM(unittest.TestCase):
             self.assertRaises(IsADirectoryError, write_rim, RIM(), ".", ResourceType.RIM)
         self.assertRaises(ValueError, write_rim, RIM(), ".", ResourceType.INVALID)
 
+    def test_malformed_header(self):
+        """Test that malformed headers (entry count > 0, offset out of bounds) raise ValueError."""
+        import struct
+        # RIM (4) + V1.0 (4) + 0 (4) + 1 (4) + 1000 (4)
+        header = b"RIM V1.0" + struct.pack("<I", 0) + struct.pack("<I", 1) + struct.pack("<I", 1000)
+        header += b"\0" * (150 - len(header))
+        self.assertRaises(ValueError, read_rim, header)
+
 
 if __name__ == "__main__":
     unittest.main()
