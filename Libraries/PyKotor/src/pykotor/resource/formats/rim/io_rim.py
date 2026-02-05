@@ -88,15 +88,6 @@ class RIMBinaryReader(ResourceReader):
                 # reone lowercases resref at line 47
                 # NOTE: Field order differs - PyKotor reads restype before resids, reone reads differently
                 resref_str = self._reader.read_string(16).rstrip("\0")
-                
-                # Check for validity usually mostly for debugging, but harmless to keep if robust
-                # If we read data as ID/Type, it might be fine, but ResRef string must be valid
-                try:
-                    resref_str.encode('ascii')
-                except UnicodeEncodeError:
-                     # If high ascii/garbage, likely bad parse
-                     pass
-                     
                 resrefs.append(resref_str.lower())
                 restypes.append(self._reader.read_uint32())
                 resids.append(self._reader.read_uint32())
