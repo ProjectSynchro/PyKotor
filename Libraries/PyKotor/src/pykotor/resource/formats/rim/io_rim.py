@@ -18,6 +18,8 @@ class RIMBinaryReader(ResourceReader):
     References:
     ----------
         Based on swkotor.exe RIM structure:
+        - CExoResourceImageFile::AddResourceImageContents @ 0x0040f990 - Reads RIM headers
+          (Verified: Header=120, Count @ 0x0C, Keys @ 0x10, KeySize=32)
         - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
         - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds encapsulated file contents to key table
         - "Table being rebuilt, this RIM is being leaked: %s" @ 0x0073d8a8 - RIM leak warning message
@@ -55,33 +57,53 @@ class RIMBinaryReader(ResourceReader):
             msg = "The RIM version that was loaded is not supported."
             raise ValueError(msg)
 
-        self._reader.skip(4)
-        entry_count = self._reader.read_uint32()
-        offset_to_keys = self._reader.read_uint32()
+        self._reader.skip(4) # Skip 0x08 (4 bytes)
+        entry_count = self._reader.read_uint32() # 0x0C
+        offset_to_keys = self._reader.read_uint32() # 0x10
+        
+        # Resilience: Vanilla files have 0 for offsets, meaning "Implicit" (Header + Keys)
+        # If 0, we calculate them (Header size 120). If non-zero, we respect the file's values.
+        if offset_to_keys == 0:
+            offset_to_keys = 120
+        
+        self._read_entries(entry_count, offset_to_keys)
 
+        return self._rim
+
+    def _read_entries(self, entry_count: int, offset_to_keys: int):
         resrefs: list[str] = []
         resids: list[int] = []
         restypes: list[int] = []
         resoffsets: list[int] = []
         ressizes: list[int] = []
-        self._reader.seek(offset_to_keys)
-        for _ in range(entry_count):
+        
+        if offset_to_keys < self._size:
+            self._reader.seek(offset_to_keys)
+            for _ in range(entry_count):
             
-            # reone lowercases resref at line 47
-            # NOTE: Field order differs - PyKotor reads restype before resids, reone reads differently
-            resref_str = self._reader.read_string(16).rstrip("\0")
-            resrefs.append(resref_str.lower())
-            restypes.append(self._reader.read_uint32())
-            resids.append(self._reader.read_uint32())
-            resoffsets.append(self._reader.read_uint32())
-            ressizes.append(self._reader.read_uint32())
+                # reone lowercases resref at line 47
+                # NOTE: Field order differs - PyKotor reads restype before resids, reone reads differently
+                resref_str = self._reader.read_string(16).rstrip("\0")
+                
+                # Check for validity usually mostly for debugging, but harmless to keep if robust
+                # If we read data as ID/Type, it might be fine, but ResRef string must be valid
+                try:
+                    resref_str.encode('ascii')
+                except UnicodeEncodeError:
+                     # If high ascii/garbage, likely bad parse
+                     pass
+                     
+                resrefs.append(resref_str.lower())
+                restypes.append(self._reader.read_uint32())
+                resids.append(self._reader.read_uint32())
+                resoffsets.append(self._reader.read_uint32())
+                ressizes.append(self._reader.read_uint32())
 
         for i in range(entry_count):
             self._reader.seek(resoffsets[i])
             resdata = self._reader.read_bytes(ressizes[i])
             self._rim.set_data(resrefs[i], ResourceType.from_id(restypes[i]), resdata)
 
-        return self._rim
 
 
 class RIMBinaryWriter(ResourceWriter):
@@ -99,14 +121,22 @@ class RIMBinaryWriter(ResourceWriter):
     @autoclose
     def write(self, *, auto_close: bool = True):  # noqa: FBT001, FBT002, ARG002  # pyright: ignore[reportUnusedParameters]
         entry_count = len(self._rim)
+        # Vanilla uses implicit offsets (0 in header), but we can write explicit ones for clarity if supported,
+        # OR write 0 to simulate vanilla exactly. 
+        # Mod spec suggests 0 is standard.
+        header_offset_to_keys = 0 
+        header_offset_to_resources = 0 
+        
+        # Actual locations
         offset_to_keys = RIMBinaryWriter.FILE_HEADER_SIZE
 
         self._writer.write_string("RIM ")
         self._writer.write_string("V1.0")
-        self._writer.write_uint32(0)
-        self._writer.write_uint32(entry_count)
-        self._writer.write_uint32(offset_to_keys)
-        self._writer.write_bytes(b"\0" * 100)
+        self._writer.write_uint32(0) # 0x08
+        self._writer.write_uint32(entry_count) # 0x0C
+        self._writer.write_uint32(header_offset_to_keys) # 0x10
+        self._writer.write_uint32(header_offset_to_resources) # 0x14
+        self._writer.write_bytes(b"\0" * 96) # Padding to 120
 
         data_offset = offset_to_keys + RIMBinaryWriter.KEY_ELEMENT_SIZE * entry_count
         for resid, resource in enumerate(self._rim):

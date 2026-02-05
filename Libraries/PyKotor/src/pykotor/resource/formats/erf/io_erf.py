@@ -84,6 +84,15 @@ class ERFBinaryReader(ResourceReader):
         self._reader.skip(4)
         offset_to_keys: int = self._reader.read_uint32()
         offset_to_resources: int = self._reader.read_uint32()
+        
+        # Resilience: Some ERF/MOD files might use implicit 160 offset if these are 0
+        if offset_to_keys == 0:
+            offset_to_keys = 160
+            
+        if offset_to_resources == 0:
+            # If keys are at 160, resources are after (entry_count * 24)
+            offset_to_resources = offset_to_keys + (entry_count * 24)
+
         self._reader.skip(8)
         description_strref: int = self._reader.read_uint32()
         if description_strref == 0 and file_type == ERFType.MOD.value:  # estimated guess based on observed files
