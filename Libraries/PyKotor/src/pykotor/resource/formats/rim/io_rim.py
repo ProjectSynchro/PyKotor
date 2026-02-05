@@ -77,6 +77,10 @@ class RIMBinaryReader(ResourceReader):
         resoffsets: list[int] = []
         ressizes: list[int] = []
         
+        if entry_count > 0 and offset_to_keys >= self._size:
+            msg = "The RIM file is malformed: offset to keys is out of bounds."
+            raise ValueError(msg)
+
         if offset_to_keys < self._size:
             self._reader.seek(offset_to_keys)
             for _ in range(entry_count):
@@ -99,10 +103,10 @@ class RIMBinaryReader(ResourceReader):
                 resoffsets.append(self._reader.read_uint32())
                 ressizes.append(self._reader.read_uint32())
 
-        for i in range(entry_count):
-            self._reader.seek(resoffsets[i])
-            resdata = self._reader.read_bytes(ressizes[i])
-            self._rim.set_data(resrefs[i], ResourceType.from_id(restypes[i]), resdata)
+            for i in range(len(resrefs)):
+                self._reader.seek(resoffsets[i])
+                resdata = self._reader.read_bytes(ressizes[i])
+                self._rim.set_data(resrefs[i], ResourceType.from_id(restypes[i]), resdata)
 
 
 
