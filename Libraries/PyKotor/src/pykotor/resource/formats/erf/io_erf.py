@@ -128,9 +128,9 @@ class ERFBinaryReader(ResourceReader):
         self._reader.seek(offset_to_keys)
         for _ in range(entry_count):
             
-            # reone lowercases resrefs at line 63
+            # reone lowercases resrefs at line 63, but we preserve case for round-trip fidelity
             resref_str = self._reader.read_string(16).rstrip("\0")
-            resrefs.append(resref_str.lower())
+            resrefs.append(resref_str)
             resids.append(self._reader.read_uint32())
             restypes.append(self._reader.read_uint16())
             self._reader.skip(2)
@@ -178,6 +178,9 @@ class ERFBinaryWriter(ResourceWriter):
             
         offset_to_localized_strings = 0
         if language_count > 0:
+            offset_to_localized_strings = ERFBinaryWriter.FILE_HEADER_SIZE
+        elif self.erf.erf_type == ERFType.ERF:
+            # Heuristic: Generic ERF files (texture packs) tend to use 160 even if empty
             offset_to_localized_strings = ERFBinaryWriter.FILE_HEADER_SIZE
             
         offset_to_keys: int = ERFBinaryWriter.FILE_HEADER_SIZE + localized_string_block_size
