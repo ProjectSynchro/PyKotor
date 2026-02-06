@@ -85,10 +85,10 @@ class RIMBinaryReader(ResourceReader):
             self._reader.seek(offset_to_keys)
             for _ in range(entry_count):
             
-                # reone lowercases resref at line 47
+                # reone lowercases resref at line 47, but we preserve case for round-trip fidelity
                 # NOTE: Field order differs - PyKotor reads restype before resids, reone reads differently
                 resref_str = self._reader.read_string(16).rstrip("\0")
-                resrefs.append(resref_str.lower())
+                resrefs.append(resref_str)
                 restypes.append(self._reader.read_uint32())
                 resids.append(self._reader.read_uint32())
                 resoffsets.append(self._reader.read_uint32())
@@ -116,10 +116,8 @@ class RIMBinaryWriter(ResourceWriter):
     @autoclose
     def write(self, *, auto_close: bool = True):  # noqa: FBT001, FBT002, ARG002  # pyright: ignore[reportUnusedParameters]
         entry_count = len(self._rim)
-        # Vanilla uses implicit offsets (0 in header), but we can write explicit ones for clarity if supported,
-        # OR write 0 to simulate vanilla exactly. 
-        # Mod spec suggests 0 is standard.
-        header_offset_to_keys = 0 
+        # Vanilla uses explicit offsets for keys (120), but 0 for resources (implicit)
+        header_offset_to_keys = RIMBinaryWriter.FILE_HEADER_SIZE
         header_offset_to_resources = 0 
         
         # Actual locations
@@ -133,14 +131,42 @@ class RIMBinaryWriter(ResourceWriter):
         self._writer.write_uint32(header_offset_to_resources) # 0x14
         self._writer.write_bytes(b"\0" * 96) # Padding to 120
 
-        data_offset = offset_to_keys + RIMBinaryWriter.KEY_ELEMENT_SIZE * entry_count
+        # Align data start to 16 bytes (Vanilla RIM behavior)
+        keys_end = offset_to_keys + RIMBinaryWriter.KEY_ELEMENT_SIZE * entry_count
+        key_padding = (16 - (keys_end % 16)) % 16
+        
+        current_data_offset = keys_end + key_padding
+        resource_offsets = []
+
+        # Pass 1: Calculate Offsets with strict vanilla alignment
+        for resource in self._rim:
+            resource_offsets.append(current_data_offset)
+            
+            # Vanilla Resource Padding Logic:
+            # 1. Write Data
+            # 2. Align to 4 bytes
+            # 3. Write 16 bytes of null padding
+            # This applies to ALL resources, including the last one (based on file size analysis)
+            
+            data_len = len(resource.data)
+            current_data_offset += data_len
+            
+            padding = (4 - (current_data_offset % 4)) % 4
+            current_data_offset += padding + 16
+
         for resid, resource in enumerate(self._rim):
             self._writer.write_string(str(resource.resref), string_length=16)
             self._writer.write_uint32(resource.restype.type_id)
             self._writer.write_uint32(resid)
-            self._writer.write_uint32(data_offset)
+            self._writer.write_uint32(resource_offsets[resid])
             self._writer.write_uint32(len(resource.data))
-            data_offset += len(resource.data)
+
+        self._writer.write_bytes(b"\0" * key_padding)
 
         for resource in self._rim:
             self._writer.write_bytes(resource.data)
+            
+            # Write Padding matches calculation
+            current_pos = self._writer.position()
+            padding = (4 - (current_pos % 4)) % 4
+            self._writer.write_bytes(b"\0" * (padding + 16))
