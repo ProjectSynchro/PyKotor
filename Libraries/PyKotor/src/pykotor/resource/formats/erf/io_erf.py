@@ -18,14 +18,23 @@ class ERFBinaryReader(ResourceReader):
     References:
     ----------
         Based on swkotor.exe ERF structure:
+        - CExoResourceImageFile::AddResourceImageContents @ 0x0040f990 - Reads RIM headers
+          (Verified: Header=120, Count @ 0x0C, Keys @ 0x10, KeySize=32)
         - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
         - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
-          * Tries resource types in order: NWM, MOD, SAV, ERF
-          * Opens file with "rb" mode
-          * Reads header and resource entries
+          * Validates header "MOD V1.0" or similar
+          * Reads 160 bytes (0xA0) onto stack [local_b8]
+          * Offsets verified via Ghidra Decompilation:
+            - Type [0x00]: iStack_c4
+            - Version [0x04]: iStack_c0
+            - EntryCount [0x10]: uStack_b4
+            - KeyOffset [0x18]: uStack_ac
         - "MOD V1.0" string @ 0x0074539c - MOD file version identifier
+        - "Table being rebuilt, this RIM is being leaked: %s" @ 0x0073d8a8 - RIM leak warning message
         
-        Note: ERF files are container formats that store multiple game resources. Used for MOD files,
+    Note:
+    ----
+        ERF files are container formats that store multiple game resources. Used for MOD files,
         save games, and other resource collections.
         Missing Features:
         ----------------
@@ -79,12 +88,17 @@ class ERFBinaryReader(ResourceReader):
 
         self._erf = ERF(erf_type)
 
-        self._reader.skip(8)
+        language_count: int = self._reader.read_uint32()
+        localized_string_size: int = self._reader.read_uint32()
         entry_count: int = self._reader.read_uint32()
-        self._reader.skip(4)
+        offset_to_localized_strings: int = self._reader.read_uint32()
         offset_to_keys: int = self._reader.read_uint32()
         offset_to_resources: int = self._reader.read_uint32()
         
+        self._erf.build_year = self._reader.read_uint32()
+        self._erf.build_day = self._reader.read_uint32()
+        self._erf.description_strref = self._reader.read_uint32()
+
         # Resilience: Some ERF/MOD files might use implicit 160 offset if these are 0
         if offset_to_keys == 0:
             offset_to_keys = 160
@@ -93,10 +107,20 @@ class ERFBinaryReader(ResourceReader):
             # If keys are at 160, resources are after (entry_count * 24)
             offset_to_resources = offset_to_keys + (entry_count * 24)
 
-        self._reader.skip(8)
-        description_strref: int = self._reader.read_uint32()
-        if description_strref == 0 and file_type == ERFType.MOD.value:  # estimated guess based on observed files
-            self._erf.is_save = True
+        # Read Localized Strings
+        if language_count > 0 and offset_to_localized_strings > 0:
+            self._reader.seek(offset_to_localized_strings)
+            block_end = offset_to_localized_strings + localized_string_size
+            # The count is number of entries, not bytes. But the entries are variable size.
+            # Entry: [LangID (4)][Size (4)][String (Size)]
+            for _ in range(language_count):
+                if self._reader.position() >= block_end:
+                    break
+                lang_id = self._reader.read_uint32()
+                str_size = self._reader.read_uint32()
+                # Use windows-1252 as safe default for legacy BioWare strings
+                text = self._reader.read_string(str_size, encoding="windows-1252")
+                self._erf.localized_strings[lang_id] = text
 
         resrefs: list[str] = []
         resids: list[int] = []
@@ -142,41 +166,63 @@ class ERFBinaryWriter(ResourceWriter):
     @autoclose
     def write(self, *, auto_close: bool = True):  # noqa: FBT001, FBT002, ARG002  # pyright: ignore[reportUnusedParameters]
         entry_count: int = len(self.erf)
-        offset_to_keys: int = ERFBinaryWriter.FILE_HEADER_SIZE
+        
+        # Calculate Localized String Block Size
+        language_count = len(self.erf.localized_strings)
+        localized_string_block_size = 0
+        sorted_langs = sorted(self.erf.localized_strings.items()) # Ensure deterministic order
+        
+        for _, text in sorted_langs:
+            # Entry: 4 (ID) + 4 (Size) + len(text)
+            localized_string_block_size += 8 + len(text.encode('windows-1252')) 
+            
+        offset_to_localized_strings = 0
+        if language_count > 0:
+            offset_to_localized_strings = ERFBinaryWriter.FILE_HEADER_SIZE
+            
+        offset_to_keys: int = ERFBinaryWriter.FILE_HEADER_SIZE + localized_string_block_size
         offset_to_resources: int = offset_to_keys + ERFBinaryWriter.KEY_ELEMENT_SIZE * entry_count
-        offset_to_localized_strings: int = 0x0
-        description_strref_dword_value: int = 0xFFFFFFFF
-        if self.erf.is_save:
-            # might matter.
-            offset_to_localized_strings = 0xA0
-            description_strref_dword_value = 0x00000000
-        elif self.erf.erf_type is ERFType.ERF:
-            # default, also doesn't matter
-            offset_to_localized_strings = 0x69
-            description_strref_dword_value = 0xCDCDCDCD
-        elif self.erf.erf_type is ERFType.MOD:
-            # mod's aren't in the vanilla game, doesn't matter
-            offset_to_localized_strings = 0x0
-            description_strref_dword_value = 0xFFFFFFFF
+        
+        # Use stored values if available, otherwise fallback to defaults/logic
+        description_strref = self.erf.description_strref
+        
+        # Legacy auto-logic for new files if not set
+        if description_strref == -1: # Default from init
+             if self.erf.is_save:
+                description_strref = 0x00000000
+             elif self.erf.erf_type is ERFType.ERF:
+                description_strref = 0xFFFFFFFF # Standard Empty
+             elif self.erf.erf_type is ERFType.MOD:
+                # 0xFFFFFFFF is standard for most modules (Verified via bulk scan of rimtesting/modules)
+                # Note: TSL LIPS files consistently use 0xCDCDCDCD (Debug Fill), but we default to standard empty.
+                description_strref = 0xFFFFFFFF 
 
         self._writer.write_string(self.erf.erf_type.value)
         self._writer.write_string("V1.0")
-        self._writer.write_uint32(0)
-        self._writer.write_uint32(0)
+        self._writer.write_uint32(language_count)
+        self._writer.write_uint32(localized_string_block_size)
         self._writer.write_uint32(entry_count)
         self._writer.write_uint32(offset_to_localized_strings)
         self._writer.write_uint32(offset_to_keys)
         self._writer.write_uint32(offset_to_resources)
-        self._writer.write_uint32(0)
-        self._writer.write_uint32(0)
-        self._writer.write_uint32(description_strref_dword_value)
+        self._writer.write_uint32(self.erf.build_year)
+        self._writer.write_uint32(self.erf.build_day)
+        self._writer.write_uint32(description_strref)
         self._writer.write_bytes(b"\0" * 116)
+
+        # Write Localized Strings
+        for lang_id, text in sorted_langs:
+            encoded_text = text.encode('windows-1252')
+            self._writer.write_uint32(lang_id)
+            self._writer.write_uint32(len(encoded_text))
+            self._writer.write_bytes(encoded_text)
 
         for resid, resource in enumerate(self.erf):
             self._writer.write_string(str(resource.resref), string_length=16)
             self._writer.write_uint32(resid)
             self._writer.write_uint16(resource.restype.type_id)
             self._writer.write_uint16(0)
+            
         data_offset: int = offset_to_resources + ERFBinaryWriter.RESOURCE_ELEMENT_SIZE * entry_count
         for resource in self.erf:
             self._writer.write_uint32(data_offset)
