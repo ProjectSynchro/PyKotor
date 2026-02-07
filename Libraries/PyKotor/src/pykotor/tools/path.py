@@ -8,7 +8,6 @@ legacy compatibility points that older callers still import from here.
 
 from collections.abc import Generator, Iterable
 from functools import lru_cache
-import logging
 import os
 import pathlib
 import re
@@ -16,11 +15,10 @@ import sys
 from typing import TYPE_CHECKING
 import warnings
 
+from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs, reportMissingModuleSource]
+
 if TYPE_CHECKING:
     from pykotor.common.misc import Game
-
-# Configure logging
-logger = logging.getLogger(__name__)
 
 # Directory cache
 # Key: directory path string, Value: (mtime, dict mapping lowercase->list)
@@ -33,6 +31,7 @@ _UNIX_EXTRA_SLASHES_RE = re.compile(r"/{2,}")
 
 def _warn_deprecated_endpoint(endpoint: str, replacement: str) -> None:
     """Emit a deprecation warning for legacy path.py compatibility endpoints."""
+    RobustLogger().debug("Deprecated path API used: %s", endpoint)
     warnings.warn(
         f"`{endpoint}` is deprecated and will be removed in a future release. {replacement}",
         DeprecationWarning,
@@ -56,6 +55,7 @@ def is_filesystem_case_sensitive(
             test_file_upper: pathlib.Path = temp_path / "CASE_TEST_FILE"
             return not test_file_upper.exists()
     except Exception:  # noqa: BLE001
+        RobustLogger().debug("Failed to detect filesystem case sensitivity for '%s'.", path, exc_info=True)
         return None
 
 
@@ -69,7 +69,8 @@ def _get_dir_contents(path_str: str) -> dict[str, list[str]]:
         stat = os.stat(path_str)
         mtime_ns = getattr(stat, "st_mtime_ns", int(stat.st_mtime * 1_000_000_000))
     except OSError:
-        # Directory doesn't exist or not accessible
+        # Directory doesn't exist or is not accessible
+        RobustLogger().debug("Cannot stat directory while building case map: '%s'.", path_str, exc_info=True)
         return {}
 
     # Directory-level cache keyed by mtime_ns.
@@ -87,7 +88,7 @@ def _get_dir_contents(path_str: str) -> dict[str, list[str]]:
                     mapping[lower] = []
                 mapping[lower].append(entry.name)
     except OSError:
-        pass
+        RobustLogger().debug("Cannot scan directory while building case map: '%s'.", path_str, exc_info=True)
 
     # Keep cache bounded.
     if path_str not in _DIR_CACHE and len(_DIR_CACHE) >= _DIR_CACHE_MAX_SIZE:
@@ -98,7 +99,10 @@ def _get_dir_contents(path_str: str) -> dict[str, list[str]]:
 
 def clear_cache() -> None:
     """Clear directory case-resolution cache."""
+    cached_entries = len(_DIR_CACHE)
     _DIR_CACHE.clear()
+    if cached_entries:
+        RobustLogger().info("Cleared CaseAwarePath directory cache (%s entries).", cached_entries)
 
 
 class CaseAwarePath(pathlib.Path):
@@ -214,10 +218,23 @@ class CaseAwarePath(pathlib.Path):
                                 best_score = score
                                 best_match = m
                         actual_name = best_match
+                        RobustLogger().debug(
+                            "Ambiguous case-insensitive match for '%s' under '%s'; chose '%s' from %s.",
+                            part,
+                            current_path,
+                            actual_name,
+                            matches,
+                        )
 
                 current_path = os.path.join(current_path, actual_name)
             else:
                 remaining = parts[i:]
+                RobustLogger().debug(
+                    "No case-insensitive match for segment '%s' under '%s'; preserving remaining segments %s.",
+                    part,
+                    current_path,
+                    remaining,
+                )
                 current_path = os.path.join(current_path, *remaining)
                 break
 
@@ -339,6 +356,7 @@ class CaseAwarePath(pathlib.Path):
         try:
             return self.is_dir()
         except (OSError, ValueError):
+            RobustLogger().debug("safe_isdir suppressed exception for path '%s'.", self, exc_info=True)
             return None
 
     def safe_isfile(self) -> bool | None:
@@ -346,6 +364,7 @@ class CaseAwarePath(pathlib.Path):
         try:
             return self.is_file()
         except (OSError, ValueError):
+            RobustLogger().debug("safe_isfile suppressed exception for path '%s'.", self, exc_info=True)
             return None
 
     def safe_exists(self) -> bool | None:
@@ -353,6 +372,7 @@ class CaseAwarePath(pathlib.Path):
         try:
             return self.exists()
         except (OSError, ValueError):
+            RobustLogger().debug("safe_exists suppressed exception for path '%s'.", self, exc_info=True)
             return None
 
     def safe_iterdir(self) -> Generator[CaseAwarePath, None, None]:
@@ -363,6 +383,7 @@ class CaseAwarePath(pathlib.Path):
             except StopIteration:
                 return
             except Exception:  # noqa: BLE001
+                RobustLogger().debug("safe_iterdir suppressed iteration exception for path '%s'.", self, exc_info=True)
                 continue
 
     def safe_rglob(self, pattern: str) -> Generator[CaseAwarePath, None, None]:
@@ -373,6 +394,12 @@ class CaseAwarePath(pathlib.Path):
             except StopIteration:
                 return
             except Exception:  # noqa: BLE001
+                RobustLogger().debug(
+                    "safe_rglob suppressed iteration exception for path '%s' pattern '%s'.",
+                    self,
+                    pattern,
+                    exc_info=True,
+                )
                 continue
 
     def split_filename(self, dots: int = 1) -> tuple[str, str]:
@@ -544,12 +571,13 @@ def get_default_paths() -> dict[str, dict[Game, list[str]]]:  # TODO(th3w1zard1)
         },
         "Linux": {
             Game.K1: [
+                # Steam
                 "~/.local/share/steam/common/steamapps/swkotor",
-                "~/.local/share/steam/common/steamapps/swkotor",
-                "~/.local/share/steam/common/swkotor",
-                "~/.steam/debian-installation/steamapps/common/swkotor",  # verified
-                "~/.steam/root/steamapps/common/swkotor",  # executable name is `KOTOR1` no extension
+                "~/.steam/root/steamapps/common/swkotor",
+                "~/.steam/debian-installation/steamapps/common/swkotor",
+                # Flatpak Steam
                 "~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/swkotor",
+                # WSL Defaults
                 "/mnt/C/Program Files/Steam/steamapps/common/swkotor",
                 "/mnt/C/Program Files (x86)/Steam/steamapps/common/swkotor",
                 "/mnt/C/Program Files/LucasArts/SWKotOR",
@@ -558,15 +586,15 @@ def get_default_paths() -> dict[str, dict[Game, list[str]]]:  # TODO(th3w1zard1)
                 "/mnt/C/Amazon Games/Library/Star Wars - Knights of the Old",
             ],
             Game.K2: [
+                # Steam
                 "~/.local/share/Steam/common/steamapps/Knights of the Old Republic II",
-                "~/.local/share/Steam/common/steamapps/kotor2",
-                "~/.local/share/aspyr-media/kotor2",
-                "~/.local/share/aspyr-media/Knights of the Old Republic II",
-                "~/.local/share/Steam/common/Knights of the Old Republic II",
-                "~/.steam/debian-installation/steamapps/common/Knights of the Old Republic II",
-                "~/.steam/debian-installation/steamapps/common/kotor2",
                 "~/.steam/root/steamapps/common/Knights of the Old Republic II",
+                "~/.steam/debian-installation/steamapps/common/Knights of the Old Republic II",
+                # Aspyr Port Saves
+                "~/.local/share/aspyr-media/kotor2",
+                # Flatpak Steam
                 "~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/Knights of the Old Republic II/steamassets",
+                # WSL Defaults
                 "/mnt/C/Program Files/Steam/steamapps/common/Knights of the Old Republic II",
                 "/mnt/C/Program Files (x86)/Steam/steamapps/common/Knights of the Old Republic II",
                 "/mnt/C/Program Files/LucasArts/SWKotOR2",
