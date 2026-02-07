@@ -403,7 +403,8 @@ class Installation:
         -------
             dict[str, list[FileResource]]: A dict keyed by filename to the encapsulated resources
         """
-        r_path = Path(path)
+        r_path = CaseAwarePath(path)
+
         if not r_path.is_dir():
             self._log.info("The '%s' folder did not exist when loading the installation at '%s', skipping...", r_path.name, self._path)
             return {}
@@ -441,7 +442,8 @@ class Installation:
         -------
             list[FileResource]: The list where resources at the path have been stored.
         """
-        r_path = Path(path)
+        r_path = CaseAwarePath(path)
+
         if not r_path.is_dir():
             self._log.info("The '%s' folder did not exist when loading the installation at '%s', skipping...", r_path.name, self._path)
             return []
@@ -629,9 +631,10 @@ class Installation:
         self,
         file: os.PathLike | str,
     ):
-        filepath: Path = Path(file)
+        filepath: CaseAwarePath = CaseAwarePath(file)
         parent_folder = filepath.parent
         rel_folderpath: str = str(parent_folder.relative_to(self.override_path())) if parent_folder.name else "."
+
         if rel_folderpath not in self._override_data:
             self.load_override(rel_folderpath)
 
@@ -916,7 +919,8 @@ class Installation:
             raise OSError(msg) from e
         else:
             if optional:
-                return Path(self._path, folder_names[0])
+                return CaseAwarePath(self._path, folder_names[0])
+
         msg = f"Could not find the '{' or '.join(folder_names)}' folder in '{self._path}'."
         raise FileNotFoundError(msg)
 

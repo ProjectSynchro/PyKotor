@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Iterator
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs, reportMissingModuleSource]
 from pykotor.resource.type import ResourceType
+from pykotor.tools.path import CaseAwarePath
 
 # Removed unused imports: is_bif_file, is_capsule_file (now using direct string operations)
 
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
 # Global file data cache with modification time tracking
 # Key: (filepath, offset, size) -> Value: (data, mtime)
-_FILE_DATA_CACHE: dict[tuple[Path, int, int], tuple[bytes, float]] = {}
+_FILE_DATA_CACHE: dict[tuple[CaseAwarePath, int, int], tuple[bytes, float]] = {}
 
 # Capsule extensions that can contain nested resources
 # These are archives that can be opened and have resources extracted from them
@@ -57,7 +58,8 @@ def clear_file_data_cache() -> None:
     _FILE_DATA_CACHE.clear()
 
 
-def _find_real_filesystem_path(filepath: Path) -> tuple[Path | None, list[str]]:
+def _find_real_filesystem_path(filepath: CaseAwarePath) -> tuple[CaseAwarePath | None, list[str]]:
+
     """Find the real filesystem path within a potentially nested capsule path.
 
     Given a path like 'C:/games/SAVEGAME.sav/inner.sav/resource.utc', this function
@@ -90,7 +92,8 @@ def _find_real_filesystem_path(filepath: Path) -> tuple[Path | None, list[str]]:
     # Slow path: walk up the path to find where the filesystem ends and virtual path begins
     parts = filepath.parts
     for i in range(len(parts), 0, -1):
-        candidate = Path(*parts[:i])
+        candidate = CaseAwarePath(*parts[:i])
+
         if candidate.is_file():
             # Found a real file - remaining parts are inside this file (nested capsule path)
             remaining = list(parts[i:])
@@ -100,9 +103,10 @@ def _find_real_filesystem_path(filepath: Path) -> tuple[Path | None, list[str]]:
 
 
 def _extract_from_nested_capsules(
-    real_path: Path,
+    real_path: CaseAwarePath,
     nested_parts: list[str],
 ) -> bytes:
+
     """Extract data from potentially nested capsules.
 
     Given a real filesystem path to a capsule and a list of nested path components,
@@ -304,7 +308,7 @@ class FileResource:
         self._restype: ResourceType = restype
         self._size: int = size
         self._offset: int = offset
-        self._filepath: Path = Path(filepath)
+        self._filepath: CaseAwarePath = CaseAwarePath(filepath)
 
         # Optimize: check file type using string operations on the path string
         # This avoids creating additional Path objects and is much faster
@@ -349,8 +353,9 @@ class FileResource:
 
     @classmethod
     def from_path(cls, path: os.PathLike | str) -> Self:
-        path_obj: Path = Path(path)
+        path_obj: CaseAwarePath = CaseAwarePath(path)
         resname, restype = path_obj.stem, ResourceType.from_extension(path_obj.suffix)
+
         return cls(
             resname=resname,
             restype=restype,
@@ -385,15 +390,20 @@ class FileResource:
         """
         return str(self._identifier)
 
-    def filepath(self) -> Path:
+    def source(self) -> CaseAwarePath:
+        """Alias for filepath() to maintain compatibility with Toolset EXPECTATIONS."""
+        return self._filepath
+
+    def filepath(self) -> CaseAwarePath:
         """Returns the physical path to a file the data can be loaded from.
 
         Please note that self.filepath().name will not always be the same as str(self.identifier()) or self.filename(). See self.path_ident() for more information.
         """
         return self._filepath
 
-    def path_ident(self) -> Path:
-        """Returns a pathlib.Path identifier for this resource.
+
+    def path_ident(self) -> CaseAwarePath:
+        """Returns a CaseAwarePath identifier for this resource.
 
         More specifically:
         - if inside ERF/BIF/RIM/MOD/SAV, i.e. if the check `any((self.inside_capsule, self.inside_bif))` passes:
