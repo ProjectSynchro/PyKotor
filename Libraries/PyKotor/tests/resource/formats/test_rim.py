@@ -27,6 +27,9 @@ from pykotor.resource.type import ResourceType
 # Inlined test.rim binary content
 BINARY_TEST_DATA = b'RIM V1.0\x00\x00\x00\x00\x03\x00\x00\x00x\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x001\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x00\x00\x00\x00\xd8\x00\x00\x00\x03\x00\x00\x002\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x01\x00\x00\x00\xdb\x00\x00\x00\x03\x00\x00\x003\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x02\x00\x00\x00\xde\x00\x00\x00\x03\x00\x00\x00abcdefghi'
 
+# Inlined vanilla.rim binary content (Implicit 0 offsets)
+VANILLA_BINARY_TEST_DATA = b'RIM V1.0\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x001\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x00\x00\x00\x00\xd8\x00\x00\x00\x03\x00\x00\x002\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x01\x00\x00\x00\xdb\x00\x00\x00\x03\x00\x00\x003\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x02\x00\x00\x00\xde\x00\x00\x00\x03\x00\x00\x00abcdefghi'
+
 # Inlined test_corrupted.rim binary content
 CORRUPT_BINARY_TEST_DATA = b'RIM V1.0\x00\x00\x00\x00dgfgdfgfddg\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x001\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x00\x00\x00\x00\xd8\x00\x00\x00\x03\x00\x00\x002\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x01\x00\x00\x00\xdb\x00\x00\x00\x03\x00\x00\x003\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x02\x00\x00\x00\xde\x00\x00\x00\x03\x00\x00\x00abcdefghi'
 
@@ -35,13 +38,26 @@ DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
 
 class TestRIM(unittest.TestCase):
     def test_binary_io(self):
-        rim: RIM = RIMBinaryReader(BINARY_TEST_DATA).load()
-        self.validate_io(rim)
+        """Test both standard and vanilla-compliant binary data through a full round-trip."""
+        common_expected = {"1": b"abc", "2": b"def", "3": b"ghi"}
+        scenarios = [
+            ("Specified Offsets", BINARY_TEST_DATA, common_expected),
+            ("Implicit Offsets", VANILLA_BINARY_TEST_DATA, common_expected),
+        ]
 
-        data: bytearray = bytearray()
-        write_rim(rim, data)
-        rim = read_rim(data)
-        self.validate_io(rim)
+        for name, data, expected in scenarios:
+            with self.subTest(scenario=name):
+                # Phase 1: Load and Validate
+                rim: RIM = RIMBinaryReader(data).load()
+                self.validate_io(rim, expected)
+
+                # Phase 2: Save and Reload
+                buffer: bytearray = bytearray()
+                write_rim(rim, buffer)
+                reloaded = read_rim(buffer)
+
+                # Phase 3: Validate Reloaded
+                self.validate_io(reloaded, expected)
 
     def test_file_io(self):
         """Test reading from a temporary file to ensure file-based reading still works."""
@@ -54,18 +70,15 @@ class TestRIM(unittest.TestCase):
 
         try:
             rim: RIM = RIMBinaryReader(tmp_path).load()
-            self.validate_io(rim)
+            self.validate_io(rim, {"1": b"abc", "2": b"def", "3": b"ghi"})
         finally:
             os.unlink(tmp_path)
 
-    def validate_io(
-        self,
-        rim: RIM,
-    ):
-        assert len(rim) == 3, f"{len(rim)!r} != 3"
-        assert rim.get("1", ResourceType.TXT) == b"abc", f"{rim.get('1', ResourceType.TXT)!r} != b'abc'"
-        assert rim.get("2", ResourceType.TXT) == b"def", f"{rim.get('2', ResourceType.TXT)!r} != b'def'"
-        assert rim.get("3", ResourceType.TXT) == b"ghi", f"{rim.get('3', ResourceType.TXT)!r} != b'ghi'"
+    def validate_io(self, rim: RIM, expected_content: dict[str, bytes]):
+        """Helper to validate that a RIM object contains the expected resources and data."""
+        self.assertEqual(len(rim), len(expected_content))
+        for resref, data in expected_content.items():
+            self.assertEqual(rim.get(resref, ResourceType.TXT), data)
 
     def test_read_raises(self):
         if os.name == "nt":
@@ -81,6 +94,14 @@ class TestRIM(unittest.TestCase):
         else:
             self.assertRaises(IsADirectoryError, write_rim, RIM(), ".", ResourceType.RIM)
         self.assertRaises(ValueError, write_rim, RIM(), ".", ResourceType.INVALID)
+
+    def test_malformed_header(self):
+        """Test that malformed headers (entry count > 0, offset out of bounds) raise ValueError."""
+        import struct
+        # RIM (4) + V1.0 (4) + 0 (4) + 1 (4) + 1000 (4)
+        header = b"RIM V1.0" + struct.pack("<I", 0) + struct.pack("<I", 1) + struct.pack("<I", 1000)
+        header += b"\0" * (150 - len(header))
+        self.assertRaises(ValueError, read_rim, header)
 
 
 if __name__ == "__main__":

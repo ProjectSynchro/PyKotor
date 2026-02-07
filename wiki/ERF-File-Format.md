@@ -91,10 +91,14 @@ Most mod tools either zero out these fields or set them to the current date when
 
 The Description [StrRef](TLK-File-Format#string-references-strref) field (offset 0x0028 / 0x28) varies depending on the ERF variant:
 
-- **MOD files**: `-1` (no [TLK](TLK-File-Format) reference, uses localized strings instead)
+- **MOD files**: `0xFFFFFFFF` (-1) is the standard for BioWare modules. 
+    - *Exception*: TSL LIPS files consistently use `0xCDCDCDCD` (Debug Fill). 
+    - *Exception*: Some KOTOR 1 modules (e.g. `unk_m41` series) use `0`.
 - **SAV files**: `0` (typically no description)
 - **NWM files**: `-1` (**Neverwinter Nights module format, NOT used in KotOR**)
 - **ERF/HAK files**: Unpredictable (may contain valid [StrRef](TLK-File-Format#string-references-strref) or `-1`)
+
+**Technical Note**: The engine determines if a file is a Save Game based on context (loading from `saves/` vs `modules/` and presence of `SAVES:` resource alias), **NOT** by any flag or value in the ERF header.
 
 **Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:11-46`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs#L11-L46)  
 **Reference**: [`vendor/xoreos-docs/specs/torlack/mod.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/mod.html) - Tim Smith (Torlack)'s reverse-engineered ERF format documentation
@@ -107,7 +111,7 @@ Localized strings provide descriptions in multiple languages:
 | ------------ | ------- | ---- | ---------------------------------------------------------------- |
 | Language ID  | [uint32](GFF-File-Format#gff-data-types)  | 4    | Language identifier (see Language enum)                          |
 | string size  | [uint32](GFF-File-Format#gff-data-types)  | 4    | Length of string in bytes                                       |
-| string data  | [char](GFF-File-Format#gff-data-types)[]  | N    | UTF-8 encoded text                                               |
+| string data  | [char](GFF-File-Format#gff-data-types)[]  | N    | `windows-1252` encoded text (Varying length)                     |
 
 **Localized string Usage:**
 
@@ -124,10 +128,10 @@ ERF localized strings provide multi-language descriptions for the archive itself
 - Additional languages for Asian releases
 
 **Important Notes:**
-
 - Most ERF files have zero localized strings (Language count = 0)
 - MOD files may include localized module names for the load screen
-- Localized strings are optional metadata and don't affect resource access
+- **Engine Behavior**: The game engine's resource loader (`CExoKeyTable::AddEncapsulatedContents`) **ignores** these fields. They are likely used only by the specific UI components (like the Module Selection screen).
+- **Encoding**: Strings should be encoded as `windows-1252` (CP1252) to support legacy BioWare character sets.
 - The Description [StrRef](TLK-File-Format#string-references-strref) field (in header) provides an alternative via [TLK](TLK-File-Format) reference
 
 **Reference**: [`vendor/reone/src/libs/resource/format/erfreader.cpp:47-65`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/erfreader.cpp#L47-L65)
@@ -248,6 +252,35 @@ Generic ERF files serve miscellaneous purposes:
 - Developer test archives
 
 **Reference**: [`vendor/reone/src/libs/resource/format/erfreader.cpp:27-34`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/erfreader.cpp#L27-L34)
+
+---
+
+## Engine Internal Behavior
+
+Reverse engineering of the game engine (specifically `CExoKeyTable::AddEncapsulatedContents` at `0x0040f3c0` in `swkotor.exe`) reveals how the engine actually parses these files.
+
+### Critical vs. Metadata Fields
+
+The engine's resource manager is surprisingly strict, reading the 160-byte header but **ignoring** most fields. It only validates/uses:
+- **file type** and **Version** (Verified against expected values)
+- **Entry Count** (Used to allocate memory for the key table)
+- **offset to [KEY](KEY-File-Format) List** (Used to seek to the key data)
+
+The following fields are **parsed but ignored** by the resource manager (though they may be used by the UI/Menus):
+- `Language count` and `Localized string size`
+- `offset to Localized string List`
+- `Build Year` and `Build Day`
+- `Description [StrRef](TLK-File-Format#string-references-strref)`
+
+### Save Game Detection
+
+Contrary to popular belief, the engine does **not** identify Save Games based on the file type signature (`SAV ` vs `ERF `) or the `Description StrRef` being `0`.
+- **Mechanism**: The engine distinguishes save games based on **file context** (loading from the `saves/` directory) and the resource system usage (aliasing `SAVES:` path).
+- **Implication**: Setting `Description StrRef` to `0` in a `MOD` file does *not* make it a save file. Legitimate modules (e.g., `unk_m41` series) use `0` as their StrRef.
+
+### TSL Specific Quirks
+
+- **LIPS MODs**: In *Knights of the Old Republic II: The Sith Lords*, MOD files related to lip-syncing (`lips_*.mod`) consistently use `0xCDCDCDCD` for the `Description StrRef`. This value (`-842150451`) is a common "uninitialized memory" fill pattern in Microsoft C++ debug runtimes, suggesting these files were built with a debug version of the toolset.
 
 ---
 

@@ -8,23 +8,31 @@ RIM files store all resources inline with metadata, making them self-contained a
 References:
 ----------
         Based on swkotor.exe RIM structure:
+        - CExoResourceImageFile::AddResourceImageContents @ 0x0040f990 - Reads RIM headers
+          (Verified: Header=120, Count @ 0x0C, Keys @ 0x10, KeySize=32)
         - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
         - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds encapsulated file contents to key table
         - "Table being rebuilt, this RIM is being leaked: %s" @ 0x0073d8a8 - RIM leak warning message
         
         Note: RIM files use similar structure to ERF files but are read-only templates.
         The engine loads RIM files as module blueprints and exports to ERF for runtime mutation.
+        RIM files in original game often use "Implicit Offsets" where the offset to keys (0x10) 
+        is 0, implying it starts immediately after the 120-byte header.
+
         RIM file format specification
         Binary Format:
         -------------
-        Header (20 bytes):
+        Header (120 bytes):
         Offset | Size | Type   | Description
         -------|------|--------|-------------
         0x00   | 4    | char[] | File Type ("RIM ")
         0x04   | 4    | char[] | File Version ("V1.0")
         0x08   | 4    | uint32 | Unknown (typically 0x00000000)
         0x0C   | 4    | uint32 | Resource Count
-        0x10   | 4    | uint32 | Offset to Resource Table
+        0x10   | 4    | uint32 | Offset to Resource Table (0 = Implicit 120)
+        0x14   | 1    | byte   | IsExtension (0x01 if extension RIM)
+        0x15   | 99   | byte[] | Reserved / Padding
+        
         Resource Entry (32 bytes each):
         Offset | Size | Type   | Description
         -------|------|--------|-------------
@@ -33,11 +41,9 @@ References:
         0x14   | 4    | uint32 | Resource ID (index, usually sequential)
         0x18   | 4    | uint32 | Offset to Resource Data
         0x1C   | 4    | uint32 | Resource Size
+
         Resource Data:
         Raw binary data for each resource at specified offsets
-        Extended Header (104 bytes total after standard 20-byte header):
-        Contains IsExtension flag (byte 0x14) and 99 reserved bytes
-        Extension RIMs have filenames ending in 'x' (e.g., module001x.rim)
 """
 
 from __future__ import annotations

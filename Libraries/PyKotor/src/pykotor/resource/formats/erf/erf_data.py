@@ -13,6 +13,14 @@ References:
           * Tries resource types in order: NWM, MOD, SAV, ERF
           * Opens file with "rb" mode
           * Reads header and resource entries
+          * Ghidra Stack Analysis (Stack Mapping to Header):
+            - 0x00 Type: Checked via iStack_c4
+            - 0x04 Version: Checked via iStack_c0 (Matches "V1.0")
+            - 0x10 Entry Count: uStack_b4
+            - 0x18 Key Offset: uStack_ac
+            - 0x20 Build Year: Allocated but unused
+            - 0x24 Build Day: Allocated but unused
+            - 0x28 Desc StrRef: Allocated but unused
         - "MOD V1.0" string @ 0x0074539c - MOD file version identifier
         ERF file format specification
         Binary Format:
@@ -35,7 +43,7 @@ References:
         Localized String Entry (variable length per language):
         - 4 bytes: Language ID (see Language enum)
         - 4 bytes: String Size (length in bytes)
-        - N bytes: String Data (UTF-8 encoded text)
+        - N bytes: String Data (windows-1252 encoded text)
         Key Entry (24 bytes each):
         Offset | Size | Type   | Description
         -------|------|--------|-------------
@@ -175,11 +183,27 @@ class ERF(BiowareArchive):
             Save games use MOD signature but have different structure
             Affects how certain fields are interpreted (e.g., build date)
             PyKotor-specific flag for save game handling
+        
+        build_year: Years since 1900 (e.g., 103 = 2003)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:84 (BuildYear)
+            
+        build_day: Day of the year (1-366)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:85 (BuildDay)
+            
+        description_strref: TLK String Reference for module description
+            Reference: ERF File Format Specification (Offset 0x28)
+            Note: Kotor.NET stops reading at 0x24 (BuildDay), skipping this field.
+            Defaults: -1 for MOD/NWM, 0 for SAV
+            
+        localized_strings: Dictionary providing descriptions in multiple languages (LanguageID -> String)
+            Reference: ERF File Format Specification (Offsets 0x08, 0x0C, 0x14)
+            Note: reone (erfreader.cpp:28) and Kotor.NET (ERFBinaryStructure.cs:100) skip these fields.
+            Used primarily in MOD files for module names/loading screens
     """
 
     BINARY_TYPE = ResourceType.ERF
     ARCHIVE_TYPE: type[ArchiveResource] = ERFResource
-    COMPARABLE_FIELDS = ("erf_type", "is_save_erf")
+    COMPARABLE_FIELDS = ("erf_type", "is_save_erf", "build_year", "build_day", "description_strref", "localized_strings")
     COMPARABLE_SET_FIELDS = ("_resources",)
 
     def __init__(
@@ -187,6 +211,10 @@ class ERF(BiowareArchive):
         erf_type: ERFType = ERFType.ERF,
         *,
         is_save: bool = False,
+        build_year: int = 0,
+        build_day: int = 0,
+        description_strref: int = -1,
+        localized_strings: dict[int, str] | None = None,
     ):
         super().__init__()
 
@@ -201,6 +229,11 @@ class ERF(BiowareArchive):
         # Save games use MOD signature but have different behavior
         self.is_save: bool = is_save
 
+        self.build_year: int = build_year
+        self.build_day: int = build_day
+        self.description_strref: int = description_strref
+        self.localized_strings: dict[int, str] = localized_strings if localized_strings is not None else {}
+
     @property
     def is_save_erf(self) -> bool:
         """Alias for ComparableMixin compatibility."""
@@ -211,7 +244,8 @@ class ERF(BiowareArchive):
         self.is_save = value
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.erf_type!r}, is_save={self.is_save})"
+        return f"{self.__class__.__name__}({self.erf_type!r}, is_save={self.is_save}, " \
+               f"desc_strref={self.description_strref})"
 
     def __eq__(self, other: object):
         from pykotor.resource.formats.rim import RIM  # Prevent circular imports  # noqa: PLC0415
@@ -221,7 +255,7 @@ class ERF(BiowareArchive):
         return set(self._resources) == set(other._resources)
 
     def __hash__(self) -> int:
-        return hash((self.erf_type, tuple(self._resources), self.is_save))
+        return hash((self.erf_type, tuple(self._resources), self.is_save, self.description_strref))
 
     def get_resource_offset(self, resource: ArchiveResource) -> int:
         from pykotor.resource.formats.erf.io_erf import ERFBinaryWriter
