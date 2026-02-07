@@ -43,6 +43,7 @@ from pykotor.resource.formats.tlk.tlk_auto import read_tlk, write_tlk
 from pykotor.resource.formats.tlk.tlk_data import TLK
 from pykotor.resource.formats.twoda.twoda_auto import read_2da, write_2da
 from pykotor.resource.formats.twoda.twoda_data import TwoDA
+from pykotor.tools.path import CaseAwarePath
 
 
 class TestPathTypeDetection:
@@ -520,6 +521,21 @@ class TestPathResolution:
         resolved = _resolve_path(str(rim_file))
         assert isinstance(resolved, Path)
         assert resolved == rim_file
+
+    def test_resolve_path_relative_case_mismatch(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        """Demonstrate that _resolve_path uses plain Path semantics for case mismatches."""
+        if sys.platform == "win32":
+            pytest.skip("Case-mismatch existence semantics differ on Windows filesystems.")
+        (tmp_path / "A" / "B").mkdir(parents=True)
+        monkeypatch.chdir(tmp_path)
+
+        resolved = _resolve_path("a/b")
+        assert isinstance(resolved, Path)
+        assert resolved == Path("a/b")
+        assert resolved.exists() is False
+
+        # CaseAwarePath resolves case-insensitively on POSIX.
+        assert CaseAwarePath("a/b").exists() is True
 
 
 class TestDiffCommand:
