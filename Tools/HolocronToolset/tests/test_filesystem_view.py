@@ -579,7 +579,7 @@ class TestFilesystemViewComprehensive:
         model = widget.fs_model
         
         # Reset the model
-        model.resetInternalData()
+        model.reloadModelData()
         QApplication.processEvents()
         
         # Model should still have root path
