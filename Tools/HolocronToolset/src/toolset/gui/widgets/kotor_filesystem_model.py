@@ -581,7 +581,7 @@ class ResourceFileSystemWidget(QWidget):
         self.updateAddressBar()
 
     def onRefreshButtonClicked(self):
-        self.fs_model.resetInternalData()
+        self.fs_model.reloadModelData()
 
     def resize_all_columns(self):
         """Adjust the view size based on content."""
@@ -709,7 +709,7 @@ class ResourceFileSystemWidget(QWidget):
             sm.addAction(t).triggered.connect(lambda i=i: self.fsTreeView.sortByColumn(i, Qt.SortOrder.AscendingOrder))  # pyright: ignore[reportOptionalMemberAccess]
             print("<SDM> [onEmptySpaceContextMenu scope] i: ", i)
 
-        m.addAction("Refresh").triggered.connect(lambda *args, **kwargs: self.fs_model.resetInternalData())  # pyright: ignore[reportOptionalMemberAccess]
+        m.addAction("Refresh").triggered.connect(lambda *args, **kwargs: self.fs_model.reloadModelData())  # pyright: ignore[reportOptionalMemberAccess]
         nm: _QMenu | None = m.addMenu("New")  # pyright: ignore[reportAttributeAccessIssue, reportAssignmentType]
 
         nm.addAction("Folder").triggered.connect(self.create_root_folder)  # pyright: ignore[reportOptionalMemberAccess]
@@ -780,7 +780,7 @@ class ResourceFileSystemWidget(QWidget):
         m.addSeparator()
         ResourceItems(resources=list(resources), viewport=lambda: self.parent()).run_context_menu(point, installation=active_installation, menu=m)
         print("<SDM> [fileSystemModelContextMenu scope] resources: ", resources)
-        self.fs_model.resetInternalData()
+        self.fs_model.reloadModelData()
 
     def startDrag(self, actions: Qt.DropAction):  # pyright: ignore[reportOptionalMemberAccess]
         print("startDrag")
@@ -888,30 +888,39 @@ class KotorFileSystemModel(QAbstractItemModel):
     def rootPaths(self) -> list[Path]:
         return [child.path for child in self._root.children if isinstance(child, TreeItem)]
 
-    def resetInternalData(self, *, _alwaysEndReset: bool = True):
-        """Resets the internal data of the model, forcing a reload of the view. i.e.: restat's all files on disk and reloads them into the ui anew."""
+    def resetInternalData(self):  # noqa: N802
+        """Qt reset hook; avoid calling begin/end reset from here to prevent recursion."""
+        self._thumbnail_cache.clear()
+        self._thumbnail_cache_order.clear()
+
+    def reloadModelData(self):
+        """Force a full model reset and reload of filesystem tree metadata."""
         self.beginResetModel()
 
         # Clear the current root item and reset it
         if self._root.childCount() > 0:
             self._root.children.clear()
 
-        if _alwaysEndReset:
-            self.endResetModel()
+        self.endResetModel()
         print("<SDM> [resetInternalData scope] Model data has been reset.")
         self.address_changed.emit()
 
     def setRootPath(self, path: os.PathLike | str):
-        self.resetInternalData(_alwaysEndReset=False)
+        self.beginResetModel()
+        if self._root.childCount() > 0:
+            self._root.children.clear()
         root_item = self.create_fertile_tree_item(Path(path))
         self._root = RootItem([root_item])
         print("<SDM> [setRootPath scope] root: ", root_item.path)
 
-        root_item.loadChildren(self)
         self.endResetModel()
+        self.address_changed.emit()
+        root_item.loadChildren(self)
 
     def set_installations(self, installations: dict[str, InstallationConfig]):
-        self.resetInternalData(_alwaysEndReset=False)
+        self.beginResetModel()
+        if self._root.childCount() > 0:
+            self._root.children.clear()
         children: list[TreeItem] = []
         for installation in installations.values():
             path = Path(installation.path)
@@ -919,10 +928,11 @@ class KotorFileSystemModel(QAbstractItemModel):
                 continue
             children.append(InstallationItem(installation.name, path, installation.tsl))
         self._root = RootItem(children)
+        self.endResetModel()
+        self.address_changed.emit()
         for child in self._root.children:
             if isinstance(child, DirItem):
                 child.loadChildren(self)
-        self.endResetModel()
 
     def create_fertile_tree_item(self, file: Path | FileResource) -> DirItem:
         """Creates a tree item that can have children."""

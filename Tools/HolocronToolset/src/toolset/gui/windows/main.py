@@ -146,7 +146,7 @@ class AssetFilterProxyModel(QSortFilterProxyModel):
         return False
 
     def _matches_item(self, item: TreeItem) -> bool:
-        name = item.data(0).lower() if hasattr(item, "data") else str(item).lower()
+        name = str(item.data()).lower() if hasattr(item, "data") else str(item).lower()
         path = str(getattr(item, "path", "")).lower()
 
         ext_filter = cast(set[str], self._filters.get("ext", set()))
@@ -764,7 +764,7 @@ class ToolWindow(QMainWindow):
         while current.isValid():
             item = self.fs_model.itemFromIndex(current)
             if item:
-                path_parts.insert(0, item.data(0))
+                path_parts.insert(0, str(item.data()))
             current = current.parent()
 
         breadcrumb = " > ".join(path_parts)
@@ -819,10 +819,10 @@ class ToolWindow(QMainWindow):
         
         elif isinstance(item, (DirItem, CategoryItem)):
             # Show directory info
-            self.ui.assetName.setText(item.data(0))
+            self.ui.assetName.setText(str(item.data()))
             self.ui.assetType.setText(tr("Directory"))
             self.ui.assetSize.setText(tr("N/A"))
-            self.ui.assetPath.setText(item.data(1) if hasattr(item, 'path') else "")
+            self.ui.assetPath.setText(str(item.path) if hasattr(item, "path") else "")
             self.ui.previewLabel.setText(tr("No Preview Available"))
         
         else:
